@@ -26,7 +26,7 @@ using namespace std;
 
 /** which patch of the release is this?
  */
-#define CHOMBO_PATCH_NUMBER 6
+#define CHOMBO_PATCH_NUMBER 7
 
 /**
    \mainpage Chombo: Block-Structured Adaptive Mesh Refinement Library

@@ -10,7 +10,7 @@
 
 #include "AMRPoissonOpF_F.H"
 #include "PoissonOp4.H"
-#include "PoissonOp4F_F.H"
+#include "NewPoissonOp4F_F.H"
 #include "NamespaceHeader.H"
 
 void PoissonOp4::define(const RealVect& a_dx,
