@@ -27,6 +27,88 @@ template < > void LevelData<FluxBox>::degenerateLocalOnly( LevelData<FluxBox>& a
 
 #ifdef CH_USE_PROTO
 
+////////////////////////////////////////////////////////////////
+//Utility functions for the interface functions
+IntVect PointToIntVect(const ::Proto::Point& a_pt)
+{
+    IntVect iv;
+    for(int i=0; i<CH_SPACEDIM; i++)
+        iv.setVal(i,a_pt[i]);
+    return iv;
+}
+
+::Proto::Point IntVectToPoint(const IntVect& a_iv)
+{
+    Point pt;
+    for(int i=0; i<CH_SPACEDIM; i++)
+        pt[i]=iv[i];
+    return pt;
+}
+
+/**
+ * @brief Generate a list of boxes and the corresponding processor ids from the Proto DisjointBoxLayout
+ * @param a_dbl a defined disjoint box layout
+ * @param a_boxes list of all boxes in a_dbl (filled by this function)
+ * @param a_proc_ids list of processor ids corresponding to boxes in a_boxes. a_boxes[i] belongs to a_proc_ids[i] (filled by this function)
+ */
+void getBoxesAndProcessors(::Proto::DisjointBoxLayout& a_dbl, Vector<Box>& a_boxes, Vector<int>& a_proc_ids)
+{
+    ::Proto::Point boxSize=a_dbl.boxSize();
+    const shared_ptr<::Proto::DBLInternals> dblInternals=a_dbl.dblInternals();
+    const vector<pair<::Proto::Point,int>>& allBoxes=dblInternals.allBoxes();
+    for(auto ptProcPair: allBoxes)
+    {
+        a_proc_ids.push_back(ptProcPair.second);
+        const ::Proto::Point& pt=ptProcPair.first;
+        const ::Proto::Point lo(pt*boxSize);
+        const ::Proto::Point hi((pt+::Proto::Point::Ones())*boxSize-::Proto::Point::Ones());
+        a_boxes.emplace_back(PointToIntVect(lo),PointToIntVect(hi));
+    }
+}
+
+/**
+ * @brief Copies src into dest. src and dest must have the same number of components and live on the same box.
+ * This function is currently SLOW.
+ * @param src source of copy
+ * @param dest box data that lives on CPU (host)
+ */
+template<unsigned int C>
+void copyFArrayBoxToBoxData(const FArrayBox& src, BoxData<Real,C>& dest)
+{
+    //This is a slow version because it calls into accessor functions instead of working with the raw buffers.
+    //We can write a faster version that uses the raw buffers if we know the layout of the two data buffers
+    ::Proto::BoxIterator bit(dest.box());
+    for(bit.begin(); !bit.done(); ++bit)
+    {
+        Point& pt=*bit;
+        IntVect iv=PointToIntVect(pt);
+        for(int ic=0; ic<C; ic++)
+            *dest.data(pt,ic)=src(iv,ic);
+    }
+}
+
+/**
+ * @brief Copies src into dest. src and dest must have the same number of components and live on the same box.
+ * This function is currently SLOW.
+ * @param src source of copy. Lives on CPU (host)
+ * @param dest destination of copy (filled by function)
+ */
+template<unsigned int C>
+void copyBoxDataToFArrayBox(const BoxData<Real,C>& src, FArrayBox& dest)
+{
+    ::Proto::BoxIterator bit(src.box());
+    for(bit.begin(); !bit.done(); ++bit)
+    {
+        Point& pt=*bit;
+        IntVect iv=PointToIntVect(pt);
+        for(int ic=0; ic<C; ic++)
+            dest(pt,ic)=*src.data(iv,ic);
+    }
+}
+
+
+///////////////////////////////////////////////////////////////
+//Interface functions
 /**
  * @brief Define a LevelData ld with the same box layout as the LevelBoxData lbd.
  * In particular, after this function is called, ld and lbd will be defined on the same set of boxes and
