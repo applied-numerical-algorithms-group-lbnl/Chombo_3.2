@@ -25,6 +25,43 @@ using std::sort;
 
 template < > void LevelData<FluxBox>::degenerateLocalOnly( LevelData<FluxBox>& a_to, const SliceSpec& a_ss ) const;
 
+#ifdef CH_USE_PROTO
+
+/**
+ * @brief Define a LevelData ld with the same box layout as the LevelBoxData lbd.
+ * In particular, after this function is called, ld and lbd will be defined on the same set of boxes and
+ * the same distribution of boxes across processors.
+ * @param ld undefined LevelData. After the function call, ld will be defined and have the following properties
+ *   1) same box layout as lbd
+ *   2) same number of components as lbd
+ *   3) same number of ghost cells (in each direction) as lbd
+ * @param lbd defined LevelBoxData . Note: lbd lives on the host and has cell-centered data.
+ */
+template<unsigned int C>
+void LevelData<FArrayBox>::define(const ::Proto::LevelBoxData<Real,C>& a_lbd)
+{/**FILL IN**/}
+
+/**
+ * @brief Copy the contents (valid+ghost data) of a_lbd into this object.
+ * This object must be defined using the same Proto DisjointBoxLayout object as a_lbd (i.e. getProtoDBL()==a_lbd.getDBL()) 
+ * It must also have C components and the same number of ghost cells as a_lbd
+ * @param a_lbd LevelBoxData that lives on the host and contains cell-centered data
+ */
+template<unsigned int C>
+void LevelData<FArrayBox>::copyFrom(const ::Proto::LevelBoxData<Real,C>& a_lbd)
+{/**FILL IN**/}
+
+/**
+ * @brief Copy the contents (valid+ghost data) of this object into a_lbd.
+ * This object must be defined using the same Proto DisjointBoxLayout object as a_lbd (i.e. getProtoDBL()==a_lbd.getDBL()) 
+ * It must also have C components and the same number of ghost cells as a_lbd
+ * @param a_lbd LevelBoxData that lives on the host and contains cell-centered data
+ */
+template<unsigned int C>
+void LevelData<FArrayBox>::copyTo(const ::Proto::LevelBoxData<Real,C>& a_lbd)
+{/**FILL IN**/}
+#endif
+
 //-----------------------------------------------------------------------
 template<class T>
 LevelData<T>::LevelData()
