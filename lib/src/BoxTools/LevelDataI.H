@@ -121,7 +121,11 @@ void copyBoxDataToFArrayBox(const BoxData<Real,C>& src, FArrayBox& dest)
  */
 template<unsigned int C>
 void LevelData<FArrayBox>::define(const ::Proto::LevelBoxData<Real,C>& a_lbd)
-{/**FILL IN**/}
+{
+    getBoxesAndProcessors(lbd->getDBL(),boxes,proc_ids);
+    ld.define(DisjointBoxLayout(boxes,proc_ids),C,lbd->getGhostVector());
+    ld.setProtoDBL(lbd->getDBL());
+}
 
 /**
  * @brief Copy the contents (valid+ghost data) of a_lbd into this object.
@@ -141,7 +145,19 @@ void LevelData<FArrayBox>::copyFrom(const ::Proto::LevelBoxData<Real,C>& a_lbd)
  */
 template<unsigned int C>
 void LevelData<FArrayBox>::copyTo(const ::Proto::LevelBoxData<Real,C>& a_lbd)
-{/**FILL IN**/}
+{
+    CH_assert(src.getProtoDBL()==dest.getDBL());
+    //TODO: Put checks that src and dest have the same number of components and the same number of ghost cells
+    DataIterator dit_ld(src.disjointBoxLayout());
+    ::Proto::DataIterator dit_lbd(dest.getDBL());
+    for(dit_lbd.begin(); *dit_lbd!=dit_lbd.end(); ++dit_lbd)
+    {
+        DataIndex di_ld=dit_ld[dit_lbd.getInt()]; //TODO: Check this: it may not be right because there are indices related to the local processor (the index that matters for looping through box data) and the indices related to the global box layout (all the boxes over all the processors)
+        ::Proto::BoxData<Real,C>& dest_bd=dest[*dit_lbd];
+        FArrayBox& src_bf=src[di_ld];
+        copyFArrayBoxToBoxData(src_bf,dest_bd);
+    }
+}
 #endif
 
 //-----------------------------------------------------------------------
