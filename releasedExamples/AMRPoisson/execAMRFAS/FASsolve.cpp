@@ -36,11 +36,11 @@
 int s_verbosity = 1;
 
 enum probTypes {exact,
-  inexact,
+  inexact, gaussians,
   numProbTypes};
 
 
-int s_probtype = exact;
+int s_probtype = gaussians;
 
 //  -----------------------------------------
 // boundary condition stuff
@@ -146,8 +146,6 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
 
       if (s_probtype == exact)
       {
-
-
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
         {
@@ -166,7 +164,6 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
       }
       else if (s_probtype == inexact)
       {
-
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
         {
@@ -183,9 +180,64 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
 
         }
       }
+      else if (s_probtype == gaussians)
+      {
+              int numGaussians = 3;
+              Vector<RealVect> center(numGaussians,RealVect::Zero);
+              Vector<Real> scale(numGaussians, 1.0);
+              Vector<Real> strength(numGaussians, 1.0);
+
+              for (int n=0; n<numGaussians; n++)
+              {
+                if (n==0)
+                {
+                   strength[0] = 1.0;
+                   scale[0] = 1.0e-2;
+                   center[0] = 0.25*RealVect::Unit;
+                 }
+                 else if (n == 1)
+                 {
+                   strength[1] = 3.0;
+                   scale[1] = 1.0e-2;
+                   center[1] = RealVect(D_DECL(0.5,0.75, 0.75));
+                 }
+                 else if (n == 2)
+                 {
+                   strength[2] = 2.0;
+                   scale[2] = 1.0e-2;
+                   center[2] = RealVect(D_DECL(0.75,0.5, 0.5));
+                 }
+                  else
+                  {
+                     MayDay::Error("too many Gaussian sources attempted");
+                  }
+              }
+
+              thisRhs.setVal(0.0);
+
+              BoxIterator bit(thisRhs.box());
+              for (bit.begin(); bit.ok(); ++bit)
+              {
+                IntVect iv = bit();
+                RealVect loc(iv);
+                loc *= a_amrDx[lev];
+                loc += ccOffset;
+
+                for (int n=0; n<numGaussians; n++)
+                {
+                  RealVect dist = loc - center[n];
+                  Real radSqr = D_TERM(dist[0]*dist[0],
+                                       +dist[1]*dist[1],
+                                       +dist[2]*dist[2]);
+
+                   Real val = strength[n]*exp(-radSqr/scale[n]);
+                   thisRhs(iv,0) += val;
+                 }
+              }
+      }
       else
       {
-        MayDay::Error("undefined problem type");
+          MayDay::Error("undefined problem type");
       }
     } // end loop over grids on this level
   } // end loop over levels
@@ -607,7 +659,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
       // solving poisson problem here
       Real alpha = 0.0;
-      Real beta = -1.0;
+      Real beta =  1.0;
 
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
@@ -638,8 +690,8 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters
-  ppSolver.query("num_pre", a_amrSolver->m_pre);
-  ppSolver.query("num_post", a_amrSolver->m_post);
+  //ppSolver.query("num_pre", a_amrSolver->m_pre);
+  //ppSolver.query("num_post", a_amrSolver->m_post);
 
 }
 
@@ -668,22 +720,17 @@ int runSolver()
   ppSolver.query("FASmultigrid", FASmultigrid);
 
   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-
-  if (FASmultigrid)
-  {
+  if (FASmultigrid) {
+    pout() << "using  AMRFASMultiGrid\n";
     amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
-  }
-  else
-  {
+  } else {
+    pout() << "using  AMRMultiGrid\n";
     amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
   }
-
-
   BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
   bottomSolver.m_verbosity = s_verbosity-2;
   setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
               refRatios, amrDx, finestLevel);
-
 
   // allocate solution and RHS, initialize RHS
   int numLevels = amrGrids.size();
@@ -704,17 +751,15 @@ int runSolver()
     error[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
-  bool zeroInitialGuess = true;
   setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
   setExact(exact, amrDomains, refRatios, amrDx, finestLevel );
-
   // Start with exact solution
-  zeroInitialGuess = false;
   setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
 
   // do solve
   int iterations = 1;
   ppMain.get("iterations", iterations);
+  bool zeroInitialGuess = false;
   ppSolver.query("zeroInitialGuess", zeroInitialGuess);
 
   for (int iiter = 0; iiter < iterations; iiter++)

@@ -530,59 +530,7 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
 }
 
 
-void
-setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
-            LinearSolver<LevelData<FArrayBox> >& a_bottomSolver,
-            const Vector<DisjointBoxLayout>& a_amrGrids,
-            const Vector<ProblemDomain>& a_amrDomains,
-            const Vector<int>& a_refRatios,
-            const Vector<Real>& a_amrDx,
-            int a_finestLevel)
-{
-  CH_TIME("setupSolver");
-
-  ParmParse ppSolver("solver");
-
-  int numLevels = a_finestLevel+1;
-
-  AMRPoissonOpFactory opFactory;
-
-  // solving poisson problem here
-  Real alpha =0.0;
-  Real beta = 1.0;
-
-  opFactory.define(a_amrDomains[0],
-                   a_amrGrids,
-                   a_refRatios,
-                   a_amrDx[0],
-                   &ParseBC, alpha, beta);
-
-  AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-  a_amrSolver->define(a_amrDomains[0], castFact,
-                     &a_bottomSolver, numLevels);
-
-  // multigrid solver parameters
-  int numSmooth, numMG, maxIter;
-  Real eps, hang;
-  ppSolver.get("num_smooth", numSmooth);
-  ppSolver.get("num_mg",     numMG);
-  ppSolver.get("max_iterations", maxIter);
-  ppSolver.get("tolerance", eps);
-  ppSolver.get("hang",      hang);
-
-  Real normThresh = 1.0e-30;
-  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                               numMG, maxIter, eps, hang, normThresh);
-  a_amrSolver->m_verbosity = s_verbosity-1;
-
-  // optional parameters
-  ppSolver.query("num_pre", a_amrSolver->m_pre);
-  ppSolver.query("num_post", a_amrSolver->m_post);
-  ppSolver.query("num_bottom", a_amrSolver->m_bottom);
-}
-
- int runSolver()
+int runSolver()
  {
    CH_TIME("runSolver");
 
@@ -600,17 +548,49 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
    setupGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
 
+   int numLevels = finestLevel+1;
+
    // initialize solver
-   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
    BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
    bottomSolver.m_verbosity = s_verbosity-2;
-   setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-               refRatios, amrDx, finestLevel);
+
+   // Poisson Operator
+   AMRPoissonOpFactory opFactory;
+   Real alpha = 0.0;
+   Real beta  = 1.0;
+   opFactory.define(amrDomains[0],
+                    amrGrids,
+                    refRatios,
+                    amrDx[0],
+                    &ParseBC, alpha, beta);
+   AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+   // AMRMultiGrid
+   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
+   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+
+   amrSolver->define(amrDomains[0], castFact,
+                     &bottomSolver, numLevels);
+
+   // multigrid solver parameters
+   ParmParse ppSolver("solver");
+   int numSmooth, numMG, maxIter;
+   Real eps, hang;
+   int numBottom;
+   ppSolver.query("num_bottom", numBottom);
+   ppSolver.get("num_smooth", numSmooth);
+   ppSolver.get("num_mg",     numMG);
+   ppSolver.get("max_iterations", maxIter);
+   ppSolver.get("tolerance", eps);
+   ppSolver.get("hang",      hang);
+
+   Real normThresh = 1.0e-30;
+   amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
+                               numMG, maxIter, eps, hang, normThresh);
+   amrSolver->m_verbosity = s_verbosity-1;
 
 
    // allocate solution and RHS, initialize RHS
-   int numLevels = amrGrids.size();
    Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
    Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
    // this is for convenience

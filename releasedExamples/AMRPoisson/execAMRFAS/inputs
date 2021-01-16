@@ -1,41 +1,39 @@
 #main parameters
-main.verbosity = 4 # higher number means more verbose output
+main.verbosity = 10 # higher number means more verbose output
 main.iterations = 1 # number of times to do Poisson solve
 main.writePlotFiles = 1 # if 1, write hdf5 plotfiles
-main.problem = 0
+#main.problem = 0
 
 #AMR grid generation parameters
-grids.num_cells = 64 64 64 # number of cells on base level
+grids.num_cells = 32 32 32 32 # number of cells on base level
 grids.max_level = 2 # finest allowable AMR level 
 grids.max_box_size = 10000
 grids.domain_size = 1.0 1.0 1.0
   
 grids.block_factor = 8
-grids.bufferSize = 4
-grids.fillRatio = 0.9 # how efficiently to make refined meshes.
+grids.buffer_size = 1
+grids.fillRatio = 0.85 # how efficiently to make refined meshes.
 grids.ref_ratio = 2 2 2
-grids.refine_threshold = 0.35
+grids.refine_threshold = 0.25
 
 # periodicity over-rides BC's
 grids.is_periodic = 0 0 0 # 1 if periodic, 0 if not
 
 # Multigrid options
-solver.zeroInitialGuess = false
+solver.zeroInitialGuess = true
 solver.FASmultigrid = 1 # true - use FAS multigrid. False - use linear multigrid
-solver.nonlinearOp = 1 # true - use the nonlinear operator. False - use poisson operator
+solver.nonlinearOp = 0 # true - use the nonlinear operator. False - use poisson operator
 
 # Multigrid solver parameters
 solver.num_smooth = 4
 solver.num_mg     = 1
-solver.num_bottom = 8
-#solver.num_pre = 64
-#solver.num_post = 64
+solver.num_bottom = 1
 
-solver.max_iterations = 10
+solver.max_iterations = 100
 solver.tolerance  = 1.0e-9
 solver.hang       = 1.0e-10
 
-solver.gamma = 100.0
+solver.gamma = 0.0
 
 #bcs for lfaces 1==const neumann, 0 == const dirc
 bc_lo              = 0 0 0   
@@ -49,11 +47,10 @@ bc_value = 0.0
 # example of grids read from the inputs file
 # rather than being dynamically adaptive
 grids.read_in_grids       = false
-grids.read_in_grids       = false
-grids.level_1_box_count   = 1
-grids.level_1_box_0_lo   = 48 48 48
-grids.level_1_box_0_hi   = 159 159 159
-
+#grids.read_in_grids       = true
+grids.level_1_box_count   = 2
+grids.level_1_box_0_lo   = 8 8 8
+grids.level_1_box_0_hi   = 23 23 23
 #grids.level_1_box_count   = 2
 #grids.level_1_box_0_lo   = 8 8 8
 #grids.level_1_box_0_hi   = 31 31 31

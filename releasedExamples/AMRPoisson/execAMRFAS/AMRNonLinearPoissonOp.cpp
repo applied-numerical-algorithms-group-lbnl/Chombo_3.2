@@ -28,7 +28,6 @@
 #include "NamespaceHeader.H"
 
 int AMRNonLinearPoissonOp::s_exchangeMode = 1; // 1: no overlap (default); 0: ...
-//int AMRNonLinearPoissonOp::s_relaxMode = 0;
 int AMRNonLinearPoissonOp::s_relaxMode = 1; // 1: GSRB (not implemented); 4: Jacobi(not implemented), 6: GS (not red black)
 int AMRNonLinearPoissonOp::s_maxCoarse = 2;
 
@@ -234,9 +233,9 @@ void AMRNonLinearPoissonOp::residual(LevelData<FArrayBox>&       a_lhs,
   CH_TIME("AMRNonLinearPoissonOp::residual");
 
   if (a_homogeneous)
-  {
-          homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
-  }
+    {
+      homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
+    }
   residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
 }
 
@@ -246,18 +245,18 @@ void AMRNonLinearPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
                   const LevelData<FArrayBox>& a_rhs,
                   bool a_homogeneous)
 {
-         CH_TIME("AMRNonLinearPoissonOp::residualNF");
+  CH_TIME("AMRNonLinearPoissonOp::residualNF");
 
-          if (a_homogeneous)
-          {
-                  homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
-          }
-          else if (a_phiCoarse != NULL)
-          {
-                  m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
-          }
+  if (a_homogeneous)
+    {
+      homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
+    }
+  else if (a_phiCoarse != NULL)
+   {
+      m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
+   }
 
-          residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
+  residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
 }
 
 
@@ -312,7 +311,6 @@ void AMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
 {
 
   CH_TIME("AMRNonLinearPoissonOp::preCond");
-//  MayDay::Error("AMRNonLinearPoissonOp::preCond not implemented");
 
   // diagonal term of this operator is (alpha - 4 * beta/h/h) in 2D,
   // (alpha - 6 * beta/h/h) in 3D,
@@ -633,8 +631,8 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
   relax(a_e, a_residual, a_iterations);
 
 }
+
 // ---------------------------------------------------------
-// Only option 6 - Gauss Seidel - is currently implemented
 void AMRNonLinearPoissonOp::relax(LevelData<FArrayBox>&       a_e,
                          const LevelData<FArrayBox>& a_residual,
                          int                         a_iterations)
@@ -760,13 +758,13 @@ void AMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCo
         res.setVal(0.0);
         
         FORT_RESTRICTRESNL(CHF_FRA_SHIFT(res, civ),
-                           CHF_CONST_FRA_SHIFT(phi, iv),
-                           CHF_CONST_FRA_SHIFT(rhs, iv),
-                           CHF_CONST_REAL(m_alpha),
-                           CHF_CONST_REAL(m_beta),
-                           CHF_CONST_REAL(m_gamma),
-                           CHF_BOX_SHIFT(region, iv),
-                           CHF_CONST_REAL(m_dx));
+                         CHF_CONST_FRA_SHIFT(phi, iv),
+                         CHF_CONST_FRA_SHIFT(rhs, iv),
+                         CHF_CONST_REAL(m_alpha),
+                         CHF_CONST_REAL(m_beta),
+                         CHF_CONST_REAL(m_gamma),
+                         CHF_BOX_SHIFT(region, iv),
+                         CHF_CONST_REAL(m_dx));
       }
   }//end pragma
 }
@@ -898,16 +896,10 @@ void AMRNonLinearPoissonOp::AMROperatorNC(LevelData<FArrayBox>&              a_L
   // apply physical boundary conditions in applyOpI
   applyOpI(a_LofPhi, a_phi, a_homogeneousPhysBC);
 
-//  Real sum = ::computeSum(a_LofPhi, NULL, -1, m_dx);
-//  pout() << "LofPhi sum before reflux = " << sum << endl;
-
   if (a_phiFine.isDefined())
   {
     CH_assert(a_finerOp != NULL);
     reflux(a_phiFine, a_phi, a_LofPhi, a_finerOp);
-
-//    sum = ::computeSum(a_LofPhi, NULL, -1, m_dx);
-//    pout() << "LofPhi sum after reflux = " << sum << endl;
   }
 }
 
@@ -934,10 +926,10 @@ void AMRNonLinearPoissonOp::AMROperatorNF(LevelData<FArrayBox>&       a_LofPhi,
 
 // ---------------------------------------------------------
 void AMRNonLinearPoissonOp::AMRRestrict(LevelData<FArrayBox>&       a_resCoarse,
-                                        const LevelData<FArrayBox>& a_residual,
-                                        const LevelData<FArrayBox>& a_correction,
-                                        const LevelData<FArrayBox>& a_coarseCorrection,
-                                        bool a_skip_res )
+                               const LevelData<FArrayBox>& a_residual,
+                               const LevelData<FArrayBox>& a_correction,
+                               const LevelData<FArrayBox>& a_coarseCorrection,
+                               bool a_skip_res )
 {
   CH_TIME("AMRNonLinearPoissonOp::AMRRestrict");
 
@@ -950,12 +942,12 @@ void AMRNonLinearPoissonOp::AMRRestrict(LevelData<FArrayBox>&       a_resCoarse,
 // hacks to do BCs right
 // ---------------------------------------------------------
 void AMRNonLinearPoissonOp::AMRRestrictS(LevelData<FArrayBox>&       a_resCoarse, // output
-                                         const LevelData<FArrayBox>& a_residual,  // input
-                                         const LevelData<FArrayBox>& a_correction, // for residual
-                                         const LevelData<FArrayBox>& a_coarseCorrection, // C-F interp.
-                                         LevelData<FArrayBox>&       a_scratch,   // temp buffer
-                                         bool a_skip_res // flag skipping computing residual, used for lhs restrictions (FAS)
-                                         ) 
+                                const LevelData<FArrayBox>& a_residual,  // input
+                                const LevelData<FArrayBox>& a_correction, // for residual
+                                const LevelData<FArrayBox>& a_coarseCorrection, // C-F interp.
+                                LevelData<FArrayBox>&       a_scratch,   // temp buffer
+                                bool a_skip_res // flag skipping computing residual, used for lhs restrictions (FAS)
+                                ) 
 {
   CH_TIME("AMRNonLinearPoissonOp::AMRRestrictS");
 
@@ -1205,11 +1197,11 @@ void AMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
                           AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
   CH_TIMERS("AMRNonLinearPoissonOp::reflux");
+  CH_TIMER("AMRNonLinearPoissonOp::reflux::incrementCoarse", t2);
 
   m_levfluxreg.setToZero();
   Interval interv(0,a_phi.nComp()-1);
 
-  CH_TIMER("AMRNonLinearPoissonOp::reflux::incrementCoarse", t2);
   CH_START(t2);
 
   DataIterator dit = a_phi.dataIterator();
@@ -1302,7 +1294,6 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs )
 {
   CH_TIME("AMRNonLinearPoissonOp::levelGSRB");
-//  MayDay::Error("AMRNonLinearPoissonOp::levelGSRB not implemented");
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -1337,13 +1328,13 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 #pragma omp parallel
       {
 #pragma omp for
-        for (int ibox=0; ibox < nbox; ibox++)
+  for (int ibox=0; ibox < nbox; ibox++)
           {
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
-
+            
             m_bc( phiFab, region, m_domain, m_dx, true );
-
+            
             if (m_alpha == 0.0 && m_beta == 1.0 )
               {
                 FORT_GSRBLAPLACIANNL(CHF_FRA(phiFab),
@@ -1355,7 +1346,7 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
               }
             else
               {
-              MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
+                MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
                 FORT_GSRBHELMHOLTZNL(CHF_FRA(phiFab),
                                    CHF_CONST_FRA(a_rhs[dit[ibox]]),
                                    CHF_BOX(region),
@@ -1370,6 +1361,52 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
     } // end loop through red-black
 }
 
+// ---------------------------------------------------------
+void AMRNonLinearPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
+                                   const LevelData<FArrayBox>& a_rhs)
+{
+  MayDay::Error("AMRNonLinearPoissonOp::levelMultiColor not implemented");
+
+}
+
+
+// ---------------------------------------------------------
+void AMRNonLinearPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
+                             const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRNonLinearPoissonOp::looseGSRB");
+
+  MayDay::Error("AMRNonLinearPoissonOp::looseGSRB not implemented");
+
+}
+
+// ---------------------------------------------------------
+void AMRNonLinearPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
+                               const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRNonLinearPoissonOp::overlapGSRB");
+  MayDay::Error("AMRNonLinearPoissonOp::overlapGSRB not implemented");
+}
+
+/***/
+// ---------------------------------------------------------
+void AMRNonLinearPoissonOp::levelGSRBLazy( LevelData<FArrayBox>&       a_phi,
+                                  const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRNonLinearPoissonOp::levelGSRBLazy");
+  MayDay::Error("AMRNonLinearPoissonOp::levelGSRBLazy not implemented");
+
+}
+
+// ---------------------------------------------------------
+void AMRNonLinearPoissonOp::levelJacobi(LevelData<FArrayBox>&       a_phi,
+                               const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRNonLinearPoissonOp::levelJacobi");
+  MayDay::Error("AMRNonLinearPoissonOp::levelJacobi not implemented");
+}
+
+// ---------------------------------------------------------
 void AMRNonLinearPoissonOp::levelGS( LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs )
 {
@@ -1441,344 +1478,8 @@ void AMRNonLinearPoissonOp::levelGS( LevelData<FArrayBox>&       a_phi,
 
 }
 
-// ---------------------------------------------------------
-void AMRNonLinearPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
-                                   const LevelData<FArrayBox>& a_rhs)
-{
-  MayDay::Error("AMRNonLinearPoissonOp::levelMultiColor not implemented");
 
-//  CH_assert(a_phi.isDefined());
-//  CH_assert(a_rhs.isDefined());
-//  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-//  CH_assert(a_phi.nComp() == a_rhs.nComp());
-//  // do first red, then black passes
-//  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-//  for (int icolor = 0; icolor < m_colors.size(); icolor++)
-//    {
-//      const IntVect& color= m_colors[icolor];
-//      homogeneousCFInterp(a_phi);
-//
-//      a_phi.exchange(a_phi.interval(), m_exchangeCopier);
-//      //after this lphi = L(phi)
-//      //this call contains bcs and exchange
-//
-//      for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
-//        {
-//          Box dblBox  = dbl[dit];
-//
-//          IntVect loIV = dblBox.smallEnd();
-//          IntVect hiIV = dblBox.bigEnd();
-//
-//          for (int idir = 0; idir < SpaceDim; idir++)
-//            {
-//              if (loIV[idir] % 2 != color[idir])
-//                {
-//                  loIV[idir]++;
-//                }
-//            }
-//
-//          m_bc(a_phi[dit], dbl[dit], m_domain, m_dx, true);
-//
-//          if (loIV <= hiIV)
-//            {
-//              Box coloredBox(loIV, hiIV);
-//              MayDay::Error("AMRNonLinearPoissonOp: FORT_GSMCAMRPOPNL not tested");
-//              FORT_GSMCAMRPOPNL(CHF_FRA1(a_phi[dit], 0),
-//                              CHF_CONST_FRA1(a_rhs[dit], 0),
-//                              CHF_BOX(coloredBox),
-//                              CHF_REAL(m_dx),
-//                              CHF_REAL(m_alpha),
-//                              CHF_REAL(m_beta),
-//                              CHF_CONST_REAL(m_gamma) );
-//            }
-//        }
-//    } // end loop through red-black
-}
 
-// ---------------------------------------------------------
-void AMRNonLinearPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
-                             const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("AMRNonLinearPoissonOp::looseGSRB");
-
-  MayDay::Error("AMRNonLinearPoissonOp::looseGSRB not implemented");
-
-//  CH_assert(a_phi.isDefined());
-//  CH_assert(a_rhs.isDefined());
-//  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-//  CH_assert(a_phi.nComp() == a_rhs.nComp());
-//
-//  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-//
-//  DataIterator dit = a_phi.dataIterator();
-//  int nbox=dit.size();
-//  //fill in intersection of ghostcells and a_phi's boxes
-//  {
-//    CH_TIME("AMRNonLinearPoissonOp::looseGSRB::homogeneousCFInterp");
-//    homogeneousCFInterp(a_phi);
-//  }
-//
-//  {
-//    CH_TIME("AMRNonLinearPoissonOp::looseGSRB::exchange");
-//    if (s_exchangeMode == 0)
-//      a_phi.exchange(a_phi.interval(), m_exchangeCopier);
-//    else if (s_exchangeMode == 1)
-//      a_phi.exchangeNoOverlap(m_exchangeCopier);
-//    else
-//      MayDay::Abort("exchangeMode");
-//  }
-//
-//  // now step through grids...
-//#pragma omp parallel
-//  {
-//#pragma omp for
-//    for(int ibox = 0; ibox < nbox; ibox++)
-//      {
-//      // invoke physical BC's where necessary
-//      {
-//
-//        m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx, true);
-//      }
-//
-//      const Box& region = dbl[dit[ibox]];
-//
-//      if (m_alpha == 0.0 && m_beta == 1.0)
-//        {
-//        MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
-//          int whichPass = 0;
-//          FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit[ibox]]),
-//                             CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_INT(whichPass),
-//                                CHF_CONST_REAL(m_gamma));
-//
-//          whichPass = 1;
-//          FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit[ibox]]),
-//                             CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_INT(whichPass),
-//                                CHF_CONST_REAL(m_gamma));
-//        }
-//      else
-//        {
-//          int whichPass = 0;
-//          MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
-//          FORT_GSRBHELMHOLTZNL(CHF_FRA(a_phi[dit[ibox]]),
-//                             CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_REAL(m_alpha),
-//                             CHF_CONST_REAL(m_beta),
-//                                CHF_CONST_REAL(m_gamma),
-//                             CHF_CONST_INT(whichPass));
-//
-//          whichPass = 1;
-//          FORT_GSRBHELMHOLTZNL(CHF_FRA(a_phi[dit[ibox]]),
-//                             CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_REAL(m_alpha),
-//                             CHF_CONST_REAL(m_beta),
-//                                CHF_CONST_REAL(m_gamma),
-//                             CHF_CONST_INT(whichPass));
-//        }
-//      } // end loop through grids
-//  }//end pragma
-}
-
-// ---------------------------------------------------------
-void AMRNonLinearPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("AMRNonLinearPoissonOp::overlapGSRB");
-  MayDay::Error("AMRNonLinearPoissonOp::overlapGSRB not implemented");
-//
-//  CH_assert(a_phi.isDefined());
-//  CH_assert(a_rhs.isDefined());
-//  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-//  CH_assert(a_phi.nComp() == a_rhs.nComp());
-//  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-//
-//  if (dbl.size() == 1 || m_alpha != 1 || m_beta != 0)
-//    looseGSRB(a_phi, a_rhs);
-//
-//  a_phi.exchangeBegin(m_exchangeCopier);
-//
-//  homogeneousCFInterp(a_phi);
-//
-//  // now step through grids...
-//  DataIterator dit = a_phi.dataIterator();
-//  int nbox=dit.size();
-//#pragma omp parallel
-//  {
-//#pragma omp for
-//    for(int ibox = 0; ibox < nbox; ibox++)
-//      {
-//      MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
-//
-//      // invoke physical BC's where necessary
-//      m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx, true);
-//      Box region = dbl[dit[ibox]];
-//      region.grow(-1); // just do the interior on the first run through
-//      int whichPass = 0;
-//      FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit[ibox]]),
-//                         CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                         CHF_BOX(region),
-//                         CHF_CONST_REAL(m_dx),
-//                         CHF_CONST_INT(whichPass),
-//                                CHF_CONST_REAL(m_gamma));
-//
-//      whichPass = 1;
-//      FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit[ibox]]),
-//                         CHF_CONST_FRA(a_rhs[dit[ibox]]),
-//                         CHF_BOX(region),
-//                         CHF_CONST_REAL(m_dx),
-//                         CHF_CONST_INT(whichPass),
-//                                CHF_CONST_REAL(m_gamma));
-//      }
-//  }//end pragma
-//
-//  a_phi.exchangeEnd();
-//
-//  // now step through grid edges
-//
-//  for (dit.begin(); dit.ok(); ++dit)
-//    {
-//
-//      const Box& b = dbl[dit];
-//      for (int dir=0; dir<CH_SPACEDIM; ++dir)
-//      {
-//        for (SideIterator side; side.ok(); ++side)
-//        {
-//          MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
-//
-//          int whichPass = 0;
-//          Box region = adjCellBox(b, dir, side(), 1);
-//          region.shift(dir, -sign(side()));
-//          for (int i=0; i<dir; i++) region.grow(i, -1);
-//          FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit]),
-//                             CHF_CONST_FRA(a_rhs[dit]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_INT(whichPass),
-//                             CHF_CONST_REAL(m_gamma));
-//
-//          whichPass = 1;
-//          FORT_GSRBLAPLACIANNL(CHF_FRA(a_phi[dit]),
-//                             CHF_CONST_FRA(a_rhs[dit]),
-//                             CHF_BOX(region),
-//                             CHF_CONST_REAL(m_dx),
-//                             CHF_CONST_INT(whichPass),
-//                             CHF_CONST_REAL(m_gamma));
-//        }
-//      }
-//    }
-}
-
-/***/
-// ---------------------------------------------------------
-//static bool nextColorLoc(IntVect&       a_color,
-//                         const IntVect& a_limit)
-//{
-//  a_color[0]++;
-//
-//  for (int i=0; i<CH_SPACEDIM-1; ++i)
-//    {
-//      if (a_color[i] > a_limit[i])
-//        {
-//          a_color[i] = 0;
-//          a_color[i+1]++;
-//        }
-//    }
-//  if (a_color[CH_SPACEDIM-1] > a_limit[CH_SPACEDIM-1])
-//    {
-//      return false;
-//    }
-//
-//  return true;
-//}
-
-/***/
-// ---------------------------------------------------------
-void AMRNonLinearPoissonOp::levelGSRBLazy( LevelData<FArrayBox>&       a_phi,
-                                  const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("AMRNonLinearPoissonOp::levelGSRBLazy");
-  MayDay::Error("AMRNonLinearPoissonOp::levelGSRBLazy not implemented");
-
-//  CH_assert(a_phi.isDefined());
-//  CH_assert(a_rhs.isDefined());
-//  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-//  CH_assert(a_phi.nComp() == a_rhs.nComp());
-//  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-//
-//  IntVect color = IntVect::Zero;
-//  IntVect limit = IntVect::Unit;
-//  color[0]=-1;
-//
-//  // Loop over all possibilities (in all dimensions)
-//  while (nextColorLoc(color, limit))
-//    {
-//      LevelData<FArrayBox> lphi;
-//      m_levelOps.create(lphi, a_rhs);
-//      //after this lphi = L(phi)
-//      //this call contains bcs and exchange
-//      applyOp(lphi, a_phi, true);
-//
-//      for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
-//        {
-//          Box dblBox  = dbl[dit];
-//
-//          IntVect loIV = dblBox.smallEnd();
-//          IntVect hiIV = dblBox.bigEnd();
-//
-//          for (int idir = 0; idir < SpaceDim; idir++)
-//            {
-//              if (loIV[idir] % 2 != color[idir])
-//                {
-//                  loIV[idir]++;
-//                }
-//            }
-//
-//          if (loIV <= hiIV)
-//            {
-//            MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
-//
-//              Box coloredBox(loIV, hiIV);
-//              FORT_GSRBLAZYNL(CHF_FRA1(a_phi[dit], 0),
-//                            CHF_CONST_FRA1( lphi[dit], 0),
-//                            CHF_CONST_FRA1(a_rhs[dit], 0),
-//                            CHF_BOX(coloredBox),
-//                            CHF_REAL(m_alpha),
-//                            CHF_REAL(m_beta),
-//                            CHF_CONST_REAL(m_gamma),
-//                            CHF_REAL(m_dx));
-//            }
-//        }
-//    } // end loop through red-black
-}
-
-// ---------------------------------------------------------
-void AMRNonLinearPoissonOp::levelJacobi(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("AMRNonLinearPoissonOp::levelJacobi");
-  MayDay::Error("AMRNonLinearPoissonOp::levelJacobi not implemented");
-
-//  LevelData<FArrayBox> resid;
-//  create(resid, a_rhs);
-//
-//  // Get the residual
-//  residual(resid,a_phi,a_rhs,true);
-//
-//  // Create the weight
-//  Real weight = m_alpha - 2.0*SpaceDim * m_beta / (m_dx*m_dx);
-//
-//  // Do the Jacobi relaxation
-//  incr(a_phi, resid, -0.666/weight);
-}
 
 // ---------------------------------------------------------
 void AMRNonLinearPoissonOp::homogeneousCFInterp(LevelData<FArrayBox>& a_phif)
@@ -1833,7 +1534,6 @@ void AMRNonLinearPoissonOp::homogeneousCFInterp(LevelData<FArrayBox>& a_phif,
       FArrayBox& phiFab = a_phif[a_datInd];
       if (phiFab.box().size(a_idir) == 3)
         {
-
           FORTNT_INTERPHOMOLINEAR(CHF_FRA(phiFab),
                                   CHF_BOX(cfivs_ptr->packedBox()),
                                   CHF_CONST_REAL(m_dx),

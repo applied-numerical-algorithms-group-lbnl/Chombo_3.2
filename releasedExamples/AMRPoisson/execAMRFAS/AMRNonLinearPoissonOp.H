@@ -132,10 +132,10 @@ public:
                         bool                        a_homogeneous = false);
 
   virtual void residualNF(LevelData<FArrayBox>& a_lhs,
-                  LevelData<FArrayBox>& a_phi,
-                  const LevelData<FArrayBox>* a_phiCoarse,
-                  const LevelData<FArrayBox>& a_rhs,
-                  bool a_homogeneous = false);
+                          LevelData<FArrayBox>& a_phi,
+                          const LevelData<FArrayBox>* a_phiCoarse,
+                          const LevelData<FArrayBox>& a_rhs,
+                          bool a_homogeneous = false);
 
  /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void residualI(LevelData<FArrayBox>&       a_lhs,
@@ -229,9 +229,9 @@ public:
 
   // For FAS stuff - do CF interpolation then relax as normal
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
-                  const LevelData<FArrayBox>* a_phiCoarse,
-                  const LevelData<FArrayBox>& a_rhs,
-                  int a_iterations);
+                       const LevelData<FArrayBox>* a_phiCoarse,
+                       const LevelData<FArrayBox>& a_rhs,
+                       int a_iterations);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -602,8 +602,6 @@ private:
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
-
-
 };
 
 #include "NamespaceFooter.H"
