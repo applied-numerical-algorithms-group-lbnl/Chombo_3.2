@@ -377,6 +377,50 @@ C     ------------------------------------------------------------------
       end
 
 C     -----------------------------------------------------------------
+C     subroutine RESTRICT
+C     computes restriction of some field to a coarser multgrid level
+C        phiCoarse[2h] = I[h->2h] (phi[h])
+C     INPUTS/OUTPUTS:
+C     phiCoarse       <=  phiCoarse[2h]
+C     phiFine       =>  phiFine[h]
+C     region    =>  Box over which rhs is defined (in h index space)
+C     dx        =>  grid spacing in h
+C     ------------------------------------------------------------------
+
+      subroutine RESTRICT(
+     &     CHF_FRA[phiCoarse],
+     &     CHF_CONST_FRA[phiFine],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+
+
+      REAL_T denom,dxinv,lofphi
+      integer n,ncomp
+
+      integer CHF_DDECL[i;j;k]
+      integer CHF_DDECL[ii;jj;kk]
+
+      ncomp = CHF_NCOMP[phiFine]
+
+      denom = D_TERM(2, *2, *2)
+
+      do n = 0, ncomp-1
+        CHF_MULTIDO[region; i; j; k]
+          CHF_DTERM[
+          ii = i/2 ;
+          jj = j/2 ;
+          kk = k/2 ]
+
+          phiCoarse(CHF_IX[ii;jj;kk],n) = phiCoarse(CHF_IX[ii;jj;kk],n)
+     &                            + (phiFine(CHF_IX[i;j;k],n)) / denom
+        CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+C     -----------------------------------------------------------------
 C     subroutine RESTRICTRES
 C     computes restriction of residual to a coarser multgrid level
 C        res[2h] = I[h->2h] (rhs[h] - L(phi[h]))
