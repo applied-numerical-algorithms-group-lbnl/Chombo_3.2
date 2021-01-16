@@ -18,6 +18,7 @@
 #include "CH_OpenMP.H"
 #include "AMRMultiGrid.H"
 #include "Misc.H"
+#include "computeSum.H"
 
 #include "AMRPoissonOp.H"
 #include "AMRPoissonOpF_F.H"
@@ -27,7 +28,6 @@
 #include "NamespaceHeader.H"
 
 int AMRPoissonOp::s_exchangeMode = 1; // 1: no overlap (default); 0: ...
-//int AMRPoissonOp::s_relaxMode = 0;
 int AMRPoissonOp::s_relaxMode = 1; // 1: GSRB; 4: Jacobi
 int AMRPoissonOp::s_maxCoarse = 2;
 
@@ -170,6 +170,8 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
   m_alpha = 0.0;
   m_beta  = 1.0;
 
+  m_use_FAS = true;
+
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
   // m_exchangeCopier.trimEdges(a_grids, IntVect::Unit);
@@ -242,16 +244,16 @@ void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
                   bool a_homogeneous)
 {
   CH_TIME("AMRPoissonOp::residualNF");
-  
+
   if (a_homogeneous)
     {
       homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
     }
   else if (a_phiCoarse != NULL)
-    {
+   {
       m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
-    }
-  
+   }
+
   residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
 }
 
@@ -304,6 +306,7 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs)
 {
+
   CH_TIME("AMRPoissonOp::preCond");
 
   // diagonal term of this operator is (alpha - 4 * beta/h/h) in 2D,
@@ -318,7 +321,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
   DataIterator dit = a_phi.dataIterator();
   int nbox = dit.size();
 
-#pragma omp parallel for 
+#pragma omp parallel for
     for(int ibox=0; ibox<nbox; ibox++)
       {
       a_phi[dit[ibox]].copy(a_rhs[dit[ibox]]);
@@ -326,6 +329,29 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
       }
  //end pragma
   relax(a_phi, a_rhs, 2);
+}
+
+void AMRPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
+                        LevelData<FArrayBox>& a_phi,
+                        LevelData<FArrayBox>* a_phiCoarse,
+                        bool a_homogeneous)
+{
+  CH_TIME("AMRPoissonOp::applyOpMg");
+
+  // Do CF stuff if we have a coarser level that's not just a single grid cell
+   if (a_phiCoarse != NULL)
+   {
+     const ProblemDomain& probDomain = a_phiCoarse->disjointBoxLayout().physDomain();
+     const Box& domBox = probDomain.domainBox();
+     //    IntVect hi = domBox.b
+     if (domBox.bigEnd() != domBox.smallEnd())
+     {
+       m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
+     }
+   }
+
+   applyOpI(a_lhs, a_phi, a_homogeneous);
+
 }
 
 // ---------------------------------------------------------
@@ -589,9 +615,16 @@ void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
                          int                         a_iterations)
 {
   if (a_eCoarse != NULL)
-    {
-      m_interpWithCoarser.coarseFineInterp(a_e, *a_eCoarse);
-    }
+  {
+    m_interpWithCoarser.coarseFineInterp(a_e, *a_eCoarse);
+  }
+  else
+  {
+      if (m_use_FAS) {
+          homogeneousCFInterp(a_e);
+      }
+  }
+
   relax(a_e, a_residual, a_iterations);
 
 }
@@ -646,6 +679,33 @@ void AMRPoissonOp::createCoarser(LevelData<FArrayBox>&       a_coarse,
     coarsen(m_coarsenedMGrids, a_fine.disjointBoxLayout(), 2); //multigrid, so coarsen by 2
   a_coarse.define(m_coarsenedMGrids, a_fine.nComp(), ghost);
 }
+
+
+void AMRPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
+                                      const LevelData<FArrayBox>& a_phiFine)
+{
+  //    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
+
+  const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
+
+  for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
+  {
+    const FArrayBox&       phiFine = a_phiFine[dit];
+    FArrayBox&       phiCoarse = a_phiCoarse[dit];
+
+    Box region = dblFine.get(dit());
+    const IntVect& iv = region.smallEnd();
+    IntVect civ = coarsen(iv, 2);
+
+    phiCoarse.setVal(0.0);
+
+    FORT_RESTRICT(CHF_FRA_SHIFT(phiCoarse, civ),
+                  CHF_CONST_FRA_SHIFT(phiFine, iv),
+                  CHF_BOX_SHIFT(region, iv),
+                  CHF_CONST_REAL(m_dx));
+  }
+}
+
 
 // ---------------------------------------------------------
 void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
@@ -1004,6 +1064,20 @@ void AMRPoissonOp::AMRProlongS_2(LevelData<FArrayBox>&       a_correction,
   AMRPoissonOp* coarserAMRPOp = (AMRPoissonOp*) a_crsOp;
   
   a_coarseCorrection.copyTo( a_temp.interval(), a_temp, a_temp.interval(), a_copier );
+  
+  if (m_use_FAS) {
+      // I think we should be using a coarse data iterator for applying the coarse BC?
+      for (DataIterator cdit = a_temp.dataIterator(); cdit.ok(); ++cdit)
+      {
+        FArrayBox& coarse = a_temp[cdit];
+        coarserAMRPOp->m_bc( coarse, cdbl[cdit], coarserAMRPOp->m_domain, coarserAMRPOp->m_dx, true );
+      }
+
+      // The corner copier passed in as an argument doesn't always work, whilst this one seems better
+      CornerCopier cornerCopy(cdbl, cdbl, coarserAMRPOp->m_domain, a_temp.ghostVect(), true);
+
+      a_temp.exchange(cornerCopy);
+  }
   //a_temp.exchange( a_temp.interval(), a_cornerCopier ); -- needed for AMR
 #pragma omp parallel
   {
@@ -1015,7 +1089,9 @@ void AMRPoissonOp::AMRProlongS_2(LevelData<FArrayBox>&       a_correction,
         FArrayBox& phi =  a_correction[dit[ibox]];
         FArrayBox& coarse = a_temp[dit[ibox]];
         
-        coarserAMRPOp->m_bc( coarse, cdbl[dit[ibox]], coarserAMRPOp->m_domain, coarserAMRPOp->m_dx, true );
+        if (!m_use_FAS) {
+            coarserAMRPOp->m_bc( coarse, cdbl[dit[ibox]], coarserAMRPOp->m_domain, coarserAMRPOp->m_dx, true );
+        }
 
         Box region = dbl[dit[ibox]];
         const IntVect& iv = region.smallEnd();
@@ -1213,6 +1289,30 @@ void AMRPoissonOp::write(const LevelData<FArrayBox>* a_data,
 
 /***/
 // ---------------------------------------------------------
+static bool nextColorLoc(IntVect&       a_color,
+                         const IntVect& a_limit)
+{
+  a_color[0]++;
+
+  for (int i=0; i<CH_SPACEDIM-1; ++i)
+    {
+      if (a_color[i] > a_limit[i])
+        {
+          a_color[i] = 0;
+          a_color[i+1]++;
+        }
+    }
+  if (a_color[CH_SPACEDIM-1] > a_limit[CH_SPACEDIM-1])
+    {
+      return false;
+    }
+
+  return true;
+}
+
+
+/***/
+// ---------------------------------------------------------
 void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs )
 {
@@ -1235,7 +1335,9 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("AMRPoissonOp::levelGSRB::homogeneousCFInterp");
-        homogeneousCFInterp(a_phi);
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+        }
       }
 
       {
@@ -1249,8 +1351,8 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
       }
 #pragma omp parallel
       {
-#pragma omp for 
-	for (int ibox=0; ibox < nbox; ibox++)
+#pragma omp for
+  for (int ibox=0; ibox < nbox; ibox++)
           {
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
@@ -1258,23 +1360,23 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
             m_bc( phiFab, region, m_domain, m_dx, true );
             
             if (m_alpha == 0.0 && m_beta == 1.0 )
-	      {
-		FORT_GSRBLAPLACIAN(CHF_FRA(phiFab),
-				   CHF_CONST_FRA(a_rhs[dit[ibox]]),
-				   CHF_BOX(region),
-				   CHF_CONST_REAL(m_dx),
-				   CHF_CONST_INT(whichPass));
-	      }
+              {
+                FORT_GSRBLAPLACIAN(CHF_FRA(phiFab),
+                                   CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                   CHF_BOX(region),
+                                   CHF_CONST_REAL(m_dx),
+                                   CHF_CONST_INT(whichPass));
+              }
             else
-	      {
-		FORT_GSRBHELMHOLTZ(CHF_FRA(phiFab),
-				   CHF_CONST_FRA(a_rhs[dit[ibox]]),
-				   CHF_BOX(region),
-				   CHF_CONST_REAL(m_dx),
-				   CHF_CONST_REAL(m_alpha),
-				   CHF_CONST_REAL(m_beta),
-				   CHF_CONST_INT(whichPass));
-	      }
+              {
+                FORT_GSRBHELMHOLTZ(CHF_FRA(phiFab),
+                                   CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                   CHF_BOX(region),
+                                   CHF_CONST_REAL(m_dx),
+                                   CHF_CONST_REAL(m_alpha),
+                                   CHF_CONST_REAL(m_beta),
+                                   CHF_CONST_INT(whichPass));
+              }
           } // end loop through grids
       }//end pragma
     } // end loop through red-black
@@ -1330,6 +1432,7 @@ void AMRPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
     } // end loop through red-black
 }
 
+/***/
 // ---------------------------------------------------------
 void AMRPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
                              const LevelData<FArrayBox>& a_rhs)
@@ -1494,29 +1597,6 @@ void AMRPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
         }
       }
     }
-}
-
-/***/
-// ---------------------------------------------------------
-static bool nextColorLoc(IntVect&       a_color,
-                         const IntVect& a_limit)
-{
-  a_color[0]++;
-
-  for (int i=0; i<CH_SPACEDIM-1; ++i)
-    {
-      if (a_color[i] > a_limit[i])
-        {
-          a_color[i] = 0;
-          a_color[i+1]++;
-        }
-    }
-  if (a_color[CH_SPACEDIM-1] > a_limit[CH_SPACEDIM-1])
-    {
-      return false;
-    }
-
-  return true;
 }
 
 /***/
@@ -1900,6 +1980,7 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
 
   m_alpha = a_alpha;
   m_beta = a_beta;
+  m_use_FAS = true;
 }
 
 // ---------------------------------------------------------
@@ -1985,6 +2066,8 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
 
   newOp->m_dxCrse = dxCrse;
 
+  newOp->m_use_FAS = true;
+
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
 
@@ -2009,7 +2092,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   if (ref == 0)
     {
       // coarsest AMR level
-      if (m_domains.size() == 1)
+      //ANNA FAS I dunno
+      //if (m_domains.size() == 1)
+      if ((m_domains.size() == 1) || (!m_boxes[1].isClosed()) )
         {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],
@@ -2027,7 +2112,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
                         m_exchangeCopiers[0], m_cfregion[0]);
         }
     }
-  else if (ref ==  m_domains.size()-1)
+  // ANNA FAS I dunno
+  //else if (ref ==  m_domains.size()-1)
+  else if ((ref ==  m_domains.size()-1) || (!m_boxes[ref+1].isClosed()))
     {
       dxCrse = m_dx[ref-1];
 
@@ -2060,6 +2147,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   newOp->m_bCoef = m_beta;
 
   newOp->m_dxCrse = dxCrse;
+
+  newOp->m_use_FAS = true;
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }

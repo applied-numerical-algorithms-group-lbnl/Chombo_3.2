@@ -153,6 +153,13 @@ public:
                        const LevelData<FArrayBox>& a_phi,
                        bool                        a_homogeneous = false);
 
+  // FAS Multigrid needs access to a method which will apply an operator
+ virtual void applyOpMg(LevelData<FArrayBox>& a_lhs,
+                        LevelData<FArrayBox>& a_phi,
+                        LevelData<FArrayBox>* a_phiCoarse,
+                        bool a_homogeneous);
+
+
   /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void applyOpI(LevelData<FArrayBox>&       a_lhs,
                         const LevelData<FArrayBox>& a_phi,
@@ -224,8 +231,6 @@ public:
                      int                         a_iterations);
 
   /// Do CF interpolation then relax as normal
-  /** useful for full-multigrid/FAS schemes
-   */
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
                        const LevelData<FArrayBox>* a_phiCoarse,
                        const LevelData<FArrayBox>& a_rhs,
@@ -242,6 +247,9 @@ public:
                                 LevelData<FArrayBox>&       a_phiFine,
                                 const LevelData<FArrayBox>& a_rhsFine);
 
+  virtual void restrictR(LevelData<FArrayBox>& a_phiCoarse,
+                         const LevelData<FArrayBox>& a_phiFine);
+  
   /**
      correct the fine solution based on coarse correction
      a_phiThisLevel += I[2h->h](a_correctCoarse)
@@ -434,6 +442,8 @@ public:
   // set by the factory
   Real  m_dxCrse;
 
+  bool m_use_FAS;
+
   Vector<IntVect> m_colors;
   static int s_exchangeMode;
   static int s_relaxMode;
@@ -571,6 +581,8 @@ private:
 
   Real m_alpha;
   Real m_beta;
+
+  bool m_use_FAS;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
