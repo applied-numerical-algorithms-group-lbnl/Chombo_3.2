@@ -659,13 +659,15 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
       // solving poisson problem here
       Real alpha = 0.0;
-      Real beta =  1.0;
+      Real beta = -1.0;
+      bool FASmultigrid = false;
+      ppSolver.query("FASmultigrid", FASmultigrid);
 
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
                        a_refRatios,
                        a_amrDx[0],
-                       &ParseBC, alpha, beta);
+                       &ParseBC, alpha, beta, FASmultigrid);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

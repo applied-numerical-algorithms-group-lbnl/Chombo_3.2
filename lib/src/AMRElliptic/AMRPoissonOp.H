@@ -548,7 +548,8 @@ public:
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
               Real                             a_alpha = 0.0,
-              Real                             a_beta  = 1.0);
+              Real                             a_beta  = 1.0,
+              bool                             a_use_FAS=false);
 
   // regular multigrid definition function --deprecated
   void define(const ProblemDomain&     a_domain,
@@ -557,7 +558,8 @@ public:
               BCHolder                 a_bc,
               int                      a_maxDepth = -1,
               Real                     a_alpha = 0.0,
-              Real                     a_beta  = 1.0);
+              Real                     a_beta  = 1.0,
+              bool                     a_use_FAS=false);
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,

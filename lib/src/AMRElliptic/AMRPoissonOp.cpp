@@ -170,7 +170,9 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
   m_alpha = 0.0;
   m_beta  = 1.0;
 
-  m_use_FAS = true;
+  m_use_FAS = false;
+ 
+  pout() << "AMRPoissonOp::define use FAS ? " << m_use_FAS << "\n";
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -1940,9 +1942,12 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
                                  const Real&                      a_coarsedx,
                                  BCHolder                         a_bc,
                                  Real                             a_alpha,
-                                 Real                             a_beta)
+                                 Real                             a_beta,
+                                 bool                             a_use_FAS)
 {
   CH_TIME("AMRPoissonOpFactory::define");
+
+  pout() << "AMRPoissonOpFactory::define use FAS ? " << m_use_FAS << "\n";
 
   m_boxes = a_grids;
 
@@ -1980,7 +1985,7 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
 
   m_alpha = a_alpha;
   m_beta = a_beta;
-  m_use_FAS = true;
+  m_use_FAS = a_use_FAS;
 }
 
 // ---------------------------------------------------------
@@ -1991,13 +1996,14 @@ void AMRPoissonOpFactory::define(const ProblemDomain&     a_domain,
                                  BCHolder                 a_bc,
                                  int                      a_maxDepth,
                                  Real                     a_alpha,
-                                 Real                     a_beta)
+                                 Real                     a_beta,
+                                 bool                     a_use_FAS)
 {
 
   Vector<DisjointBoxLayout> grids(1);
   grids[0] = a_grid;
   Vector<int> refRatio(1, 2);
-  define(a_domain, grids, refRatio, a_dx, a_bc, a_alpha, a_beta);
+  define(a_domain, grids, refRatio, a_dx, a_bc, a_alpha, a_beta, a_use_FAS);
 }
 
 // ---------------------------------------------------------
@@ -2066,7 +2072,9 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
 
   newOp->m_dxCrse = dxCrse;
 
-  newOp->m_use_FAS = true;
+  newOp->m_use_FAS = m_use_FAS;
+
+  pout() << "AMRPoissonOpFactory::MGnewOp use FAS ? " << m_use_FAS << "\n";
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
@@ -2148,7 +2156,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
 
   newOp->m_dxCrse = dxCrse;
 
-  newOp->m_use_FAS = true;
+  newOp->m_use_FAS = m_use_FAS;
+
+  pout() << "AMRPoissonOpFactory::AMRnewOp use FAS ? " << m_use_FAS << "\n";
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }
