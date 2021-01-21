@@ -21,13 +21,14 @@ using std::endl;
 #include "NewPoissonOp.H"
 #include "AMRPoissonOp.H"
 #include "BCFunc.H"
-#include "BiCGStabSolver.H"
+#include "GMRESSolver.H"
 #include "RelaxSolver.H"
+#include "FABView.H"
 
 #include "UsingNamespace.H"
 
 /// Global variables for handling output:
-static const char* pgmname = "testBiCGStab" ;
+static const char* pgmname = "testGMRES" ;
 static const char* indent = "   ";
 static const char* indent2 = "      " ;
 static bool verbose = true ;
@@ -74,7 +75,7 @@ static int blockingFactor = 8;
 static Real xshift = 0.0;
 
 int
-testBiCGStab();
+testGMRES();
 
 int
 main(int argc ,char* argv[])
@@ -90,7 +91,7 @@ main(int argc ,char* argv[])
     pout () << indent2 << "Beginning " << pgmname << " ..." << endl ;
 
   int overallStatus = 0;
-  int status = testBiCGStab();
+  int status = testGMRES();
 
   if ( status == 0 )
   {
@@ -104,7 +105,7 @@ main(int argc ,char* argv[])
 
   xshift = 0.2;
   blockingFactor = 4;
-  status = testBiCGStab();
+  status = testGMRES();
 
   if ( status == 0 )
   {
@@ -265,49 +266,10 @@ struct setvalue
 Real setvalue::val = 0;
 
 int
-testBiCGStab()
+testGMRES()
 {
 
   ProblemDomain regularDomain(domain);
-  pout()<<"\n GSRB unigrid solver \n";
-  // GSRB single grid solver test
-  {
-    Box phiBox = domain;
-    phiBox.grow(1);
-
-    FArrayBox phi(phiBox, 1);
-    FArrayBox rhs(domain, 1);
-    FArrayBox error(domain, 1);
-    FArrayBox phi_exact(domain, 1);
-    FArrayBox residual(domain, 1);
-    FArrayBox correction(phiBox, 1);
-
-    phi.setVal(0.0);
-    correction.setVal(0.0);
-    rhs.setVal(2*CH_SPACEDIM);
-
-    parabola(domain, 1, phi_exact);
-    RealVect pos(IntVect::Unit);
-    pos*=dx;
-
-    NewPoissonOp op;
-
-    op.define(pos, regularDomain, DirParabolaBC);
-
-    for (int i=0; i<15; ++i)
-      {
-        op.residual(residual, phi, rhs);
-        Real rnorm = residual.norm();
-        op.preCond(correction, residual);
-        op.incr(phi, correction, 1.0);
-
-        op.axby(error, phi, phi_exact, 1, -1);
-        Real norm = error.norm(0);
-        pout()<<indent<<"Residual L2 norm "<<rnorm<<"  Error max norm = "
-              <<norm<<std::endl;
-      }
-  }
-
   pout()<<"\n unigrid solver \n";
 
   // single grid solver test
@@ -332,7 +294,7 @@ testBiCGStab()
     NewPoissonOp op;
 
     op.define(pos, regularDomain, DirParabolaBC);
-    BiCGStabSolver<FArrayBox> solver;
+    GMRESSolver<FArrayBox> solver;
 
     solver.define(&op, true);
 
@@ -349,16 +311,16 @@ testBiCGStab()
 
         correction.setVal(0.0);
         solver.solve(correction, residual);
-
-        pout()<<indent<<"solver iterations = " << solver.m_iter
-              << " solver initial rnorm = "<< solver.m_initial_residual
-              <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
-        
         op.incr(phi, correction, 1);
         op.residual(residual, phi, rhs);
         rnorm = residual.norm();
         op.axby(error, phi, phi_exact, 1, -1);
         Real norm = error.norm(0);
+
+        pout()<<indent<<"solver iterations = " << solver.m_iter
+              << " solver initial rnorm = "<< solver.m_initial_residual
+              <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
+
         pout()<<indent<<"residual L2 norm "<< rnorm
               <<"  Error max norm = "<<norm<<std::endl;
       }
@@ -373,7 +335,6 @@ testBiCGStab()
     for (int i=0; i<iter; ++i)
       {
         solver.solve(phi, rhs);
-
         pout()<<indent<<"solver iterations = " << solver.m_iter
               << " solver initial rnorm = "<< solver.m_initial_residual
               <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
@@ -418,11 +379,9 @@ testBiCGStab()
 
     amrop.define(dbl, pos[0], regularDomain, DirParabolaBC);
 
-    BiCGStabSolver<LevelData<FArrayBox> > bsolver;
-    RelaxSolver<LevelData<FArrayBox> > rsolver;
+    GMRESSolver<LevelData<FArrayBox> > bsolver;
 
     bsolver.define(&amrop, true);
-    rsolver.define(&amrop, true);
 
     int iter = 1;
     amrop.scale(phi, 0.0);
@@ -432,9 +391,9 @@ testBiCGStab()
     Real enorm = amrop.norm(error, 0);
 
     pout()<< "homogeneous solver mode : solver.solve(correction, residual)\n"
-          << "solver.i_max= "<<bsolver.m_imax<<" iter = "<<iter<<std::endl;
+          << "solver.i_max= "<<bsolver.m_imax<<" iter = "<<bsolver.m_iter<<std::endl;
     pout()<<"\nInitial residual norm "<<rnorm<<" Error max norm "<<enorm<<"\n\n";
-    pout()<<indent2<<"BiCGStab\n";
+    pout()<<indent2<<"GMRES\n";
     for (int i=0; i<iter; ++i)
       {
         amrop.scale(correction, 0.0);
@@ -453,32 +412,17 @@ testBiCGStab()
       }
     amrop.scale(phi, 0.0);
     amrop.residual(residual, phi, rhs, false);
-    pout()<<indent2<<"RelaxSolver\n";
-    for (int i=0; i<iter; ++i)
-      {
-        amrop.scale(correction, 0.0);
-        rsolver.solve(correction, residual);
-        amrop.incr(phi, correction, 1.0);
-        amrop.axby(error, phi, phi_exact, 1, -1);
-        amrop.residual(residual, phi, rhs, false);
-        rnorm = amrop.norm(residual, 2);
-        enorm = amrop.norm(error, 0);
-        pout()<<indent<<"residual norm "<<rnorm<<"   Error max norm = "<<enorm<<std::endl;
-      }
-
 
     pout()<< "\n\ninhomogeneous solver mode : solver.solve(phi, rhs)\n"
           << "solver.i_max= "<<bsolver.m_imax<<" iter = "<<iter<<std::endl;
     bsolver.setHomogeneous(false);
-    rsolver.setHomogeneous(false);
 
     amrop.scale(phi, 0.0);
     amrop.residual(residual, phi, rhs, false);
-    pout()<<indent2<<"BiCGStab\n";
+    pout()<<indent2<<"GMRES\n";
     for (int i=0; i<iter; ++i)
       {
         bsolver.solve(phi, rhs);
-
         pout()<<indent<<"solver iterations = " << bsolver.m_iter
               << " solver initial rnorm = "<< bsolver.m_initial_residual
               <<"  solver final rnorm = "<< bsolver.m_residual  <<std::endl;
@@ -491,17 +435,6 @@ testBiCGStab()
        }
     amrop.scale(phi, 0.0);
     amrop.residual(residual, phi, rhs, false);
-    pout()<<indent2<<"RelaxSolver\n";
-    for (int i=0; i<iter; ++i)
-      {
-        rsolver.solve(phi, rhs);
-        amrop.axby(error, phi, phi_exact, 1, -1);
-        amrop.residual(residual, phi, rhs, false);
-        rnorm = amrop.norm(residual, 2);
-        enorm = amrop.norm(error, 0);
-        pout()<<indent<<"residual norm "<<rnorm<<"   Error max norm = "<<enorm<<std::endl;
-      }
-
   }
 
   return 0;
