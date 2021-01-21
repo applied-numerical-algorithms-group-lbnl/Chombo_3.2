@@ -104,6 +104,8 @@ computeOperatorNoBCs(LevelData<FArrayBox>& a_lhs,
                      const LevelData<FArrayBox>& a_phi)
 {
 
+  CH_TIME("ViscousTensorOp::computeOperatorNoBCs");
+  
   //  Real dx = m_dx;
   const DisjointBoxLayout dbl= a_phi.getBoxes();
   DataIterator dit = a_phi.dataIterator();
@@ -147,12 +149,14 @@ restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                  LevelData<FArrayBox>&       a_phiFine,
                  const LevelData<FArrayBox>& a_rhsFine)
 {
+  CH_TIME("ViscousTensorOp::restrictResidual");
   // temp storage
   LevelData<FArrayBox> resFine;
   create(resFine, a_rhsFine);
+  //exchange called on a_phiFine here
   homogeneousCFInterp(a_phiFine);
-  //bcs and exchange done within applyOp
-  residual(resFine, a_phiFine, a_rhsFine, true);
+  //bcs done within applyOp
+  residualNoExchange(resFine, a_phiFine, a_rhsFine, true);
   int ncomp = SpaceDim;
   const DisjointBoxLayout dblFine = a_phiFine.disjointBoxLayout();
   for (DataIterator dit = dblFine.dataIterator(); dit.ok(); ++dit)
@@ -171,6 +175,9 @@ ViscousTensorOp::
 prolongIncrement(LevelData<FArrayBox>&       a_phiThisLevel,
                  const LevelData<FArrayBox>& a_correctCoarse)
 {
+
+  CH_TIME("ViscousTensorOp::prolongIncrement");
+  
   DisjointBoxLayout dbl = a_phiThisLevel.disjointBoxLayout();
   int mgref = 2; //this is a multigrid func
 
@@ -307,8 +314,12 @@ AMRResidualNF(LevelData<FArrayBox>&       a_residual,
               const LevelData<FArrayBox>& a_rhs,
               bool a_homogeneousPhysBC)
 {
+  CH_TIME("ViscousTensorOp::AMRResidualNF");
+  
+  // cfinterp calls exchange for a_phi
   this->cfinterp(a_phi, a_phiCoarse);
-  this->residual(a_residual, a_phi, a_rhs, a_homogeneousPhysBC ); //apply boundary conditions
+  // so no need to call exchange here
+  this->residualNoExchange(a_residual, a_phi, a_rhs, a_homogeneousPhysBC ); //apply boundary conditions
 }
 
 /***/
@@ -323,10 +334,12 @@ AMRResidual(LevelData<FArrayBox>&       a_residual,
             AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 
 {
-  //fillgrad is called in applyop
+  CH_TIME("ViscousTensorOp::AMRResidual");
+  
+  //fillgrad is called in applyop -- this also calls exchange on a_phi
   this->cfinterp(a_phi, a_phiCoarse);
 
-  applyOp(a_residual, a_phi, a_homogeneousPhysBC);
+  applyOpNoExchange(a_residual, a_phi, a_homogeneousPhysBC);
 
   if (a_finerOp != NULL)
     {
@@ -358,6 +371,8 @@ AMRResidualNC(LevelData<FArrayBox>&       a_residual,
               bool a_homogeneousPhysBC,
               AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
+
+  CH_TIME("ViscousTensorOp::AMRResidualNC");
   //no coarse-fine interpolation here--fillgrad is called in applyop
   m_levelOps.setToZero(m_grad);
   applyOp(a_residual, a_phi, a_homogeneousPhysBC);
@@ -382,7 +397,9 @@ AMRRestrict(LevelData<FArrayBox>&       a_resCoarse,
             const LevelData<FArrayBox>& a_correction,
             const LevelData<FArrayBox>& a_coarseCorrection, 
             bool a_skip_res )
-{  
+{
+  CH_TIME("ViscousTensorOp::AMRRestrict");
+  
   CH_assert(!a_skip_res);
   LevelData<FArrayBox> r;
   create(r, a_residual);
@@ -410,6 +427,8 @@ ViscousTensorOp::
 AMRProlong(LevelData<FArrayBox>& a_correction,
            const LevelData<FArrayBox>& a_coarseCorrection)
 {
+  CH_TIME("ViscousTensorOp::AMRProlong");
+  
   DisjointBoxLayout c;
   coarsen(c,  a_correction.disjointBoxLayout(), m_refToCoar);
   LevelData<FArrayBox> eCoar(c, a_correction.nComp(),a_coarseCorrection.ghostVect());
@@ -518,6 +537,7 @@ AMRUpdateResidual(LevelData<FArrayBox>&       a_residual,
                   const LevelData<FArrayBox>& a_correction,
                   const LevelData<FArrayBox>& a_coarseCorrection)
 {
+  CH_TIME("ViscousTensorOp::AMRUpdateResidual");
   LevelData<FArrayBox> r;
   this->create(r, a_residual);
   this->AMRResidualNF(r, a_correction, a_coarseCorrection, a_residual, true);
@@ -530,6 +550,7 @@ createCoarsened(LevelData<FArrayBox>&       a_lhs,
                 const LevelData<FArrayBox>& a_rhs,
                 const int &                 a_refRat)
 {
+  CH_TIME("ViscousTensorOp::createCoarsened");
   int ncomp = a_rhs.nComp();
   IntVect ghostVect = a_rhs.ghostVect();
 
@@ -547,6 +568,7 @@ createCoarsened(LevelData<FArrayBox>&       a_lhs,
 void ViscousTensorOp::preCond(LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs)
 {
+  CH_TIME("ViscousTensorOp::preCond");
   //slc : down here, we don't want to change from the default behaviour
   m_relaxTolerance = 0.0;
   m_relaxMinIter = 40;
@@ -560,6 +582,7 @@ applyOp(LevelData<FArrayBox>&       a_lhs,
         const LevelData<FArrayBox>& a_phi,
         bool                        a_homogeneous )
 {
+  CH_TIME("ViscousTensorOp::applyOp");
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   Real dx = m_dx;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
@@ -575,6 +598,31 @@ applyOp(LevelData<FArrayBox>&       a_lhs,
   computeOperatorNoBCs(a_lhs, phi);
 }
 
+
+/***/
+void
+ViscousTensorOp::
+applyOpNoExchange(LevelData<FArrayBox>&       a_lhs,
+                  const LevelData<FArrayBox>& a_phi,
+                  bool                        a_homogeneous )
+{
+  CH_TIME("ViscousTensorOp::applyOpNoExchange");
+  LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
+  Real dx = m_dx;
+  const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
+  DataIterator dit = phi.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous, dit());
+    }
+  
+  //contains an exchange
+  this->fillGradNoExchange(a_phi);
+
+  computeOperatorNoBCs(a_lhs, phi);
+}
+
+
 /***/
 void
 ViscousTensorOp::
@@ -582,6 +630,7 @@ divergenceCC(LevelData<FArrayBox>&       a_div,
              const LevelData<FArrayBox>& a_phi,
              const LevelData<FArrayBox>* a_phiC)
 {
+  CH_TIME("ViscousTensorOp::divergenceCC");
   //fill ghost cells of phi
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   //if necessary, apply coarse-fine boundary conditions
@@ -617,6 +666,7 @@ void ViscousTensorOp::reflux(const LevelData<FArrayBox>& a_phiFine,
                              LevelData<FArrayBox>& residual,
                              AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
+  CH_TIME("ViscousTensorOp::reflux");  
   int ncomp = SpaceDim;
   ProblemDomain fineDomain = refine(m_domain, m_refToFine);
   LevelFluxRegister levfluxreg(a_phiFine.disjointBoxLayout(),
@@ -652,8 +702,9 @@ void ViscousTensorOp::reflux(const LevelData<FArrayBox>& a_phiFine,
 
   //interpolate finer phi and compute gradients.
   ViscousTensorOp* finerAMRPOp = (ViscousTensorOp*) a_finerOp;
+  // cfinterp contains an exchange for phi, so we can call fillGradNoExchange
   finerAMRPOp->cfinterp(p, a_phi);
-  finerAMRPOp->fillGrad(p);
+  finerAMRPOp->fillGradNoExchange(p);
 
   IntVect phiGhost = p.ghostVect();
 
@@ -878,6 +929,7 @@ void ViscousTensorOp::getFlux(FArrayBox&       a_flux,
                               int              a_dir,
                               int a_ref)
 {
+  CH_TIME("ViscousTensorOp::getflux");  
   ProblemDomain domain(m_domain);
   domain.refine(a_ref);
   Real dx(m_dx);
@@ -901,6 +953,7 @@ void ViscousTensorOp::getFluxFromDivAndGrad(FArrayBox&       a_flux,
                                             int              a_dir)
 
 {
+  CH_TIME("ViscousTensorOp::getFluxFromDivAndGrad");  
   //copy the divergence into the diagonal component of the flux
   //diagonal component of the flux is the a_dir comp
   int dstcomp = a_dir;
@@ -941,10 +994,26 @@ residual(LevelData<FArrayBox>&       a_lhs,
          const LevelData<FArrayBox>& a_rhs,
          bool a_homogeneous)
 {
+  CH_TIME("ViscousTensorOp::residual");    
   applyOp(a_lhs, a_phi, a_homogeneous);
   incr(a_lhs, a_rhs, -1);
   scale(a_lhs, -1.0);
 }
+
+/***/
+void
+ViscousTensorOp::
+residualNoExchange(LevelData<FArrayBox>&       a_lhs,
+                   const LevelData<FArrayBox>& a_phi,
+                   const LevelData<FArrayBox>& a_rhs,
+                   bool a_homogeneous)
+{
+  CH_TIME("ViscousTensorOp::residualNoExchange");      
+  applyOpNoExchange(a_lhs, a_phi, a_homogeneous);
+  incr(a_lhs, a_rhs, -1);
+  scale(a_lhs, -1.0);
+}
+
 /***/
 Real
 ViscousTensorOp::
@@ -954,6 +1023,7 @@ AMRNorm(const LevelData<FArrayBox>& a_coarResid,
         const int& a_ord)
 
 {
+  CH_TIME("ViscousTensorOp::AMRNorm");
   const DisjointBoxLayout& coarGrids = a_coarResid.disjointBoxLayout();
   const DisjointBoxLayout& fineGrids = a_fineResid.disjointBoxLayout();
 
@@ -1078,11 +1148,12 @@ relax(LevelData<FArrayBox>&       a_phi,
       for (int icolor = 0; icolor < m_colors.size(); icolor++)
         {
           const IntVect& color= m_colors[icolor];
+          // this calls exchange whether or not there is a coarse level
           homogeneousCFInterp(a_phi);
 
           //after this lphi = L(phi)
-          //this call contains bcs and exchange
-          applyOp(lphi, a_phi, true);
+          //this call contains bcs but no exchange
+          applyOpNoExchange(lphi, a_phi, true);
 
           for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
             {
@@ -1487,8 +1558,8 @@ AMROperatorNC(LevelData<FArrayBox>&       a_LofPhi,
               bool a_homogeneousPhysBC,
               AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
-
-  //no coarse-fine interpolation here
+  CH_TIME("ViscousTensorOp::AMROperatorNC");
+  //no coarse-fine interpolation here -- this contains an exchange for phi
   applyOp(a_LofPhi, a_phi, a_homogeneousPhysBC);
 
   // set BCs for fillGrad
@@ -1511,11 +1582,21 @@ AMROperatorNF(LevelData<FArrayBox>& a_LofPhi,
               const LevelData<FArrayBox>& a_phiCoarse,
               bool a_homogeneousPhysBC)
 {
+  CH_TIME("ViscousTensorOp::AMROperatorNF");  
   //fillgrad is called in applyop
+  // if a_phiCoarse is defined we also do an exchange here
   cfinterp(a_phi, a_phiCoarse);
 
+  // if no exchange done in cfinterp, do it explicity now
+  if (!a_phiCoarse.isDefined())
+    {
+      LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
+      phi.exchange();
+    }
+  
+  
   //apply boundary conditions in applyOp
-  this->applyOp(a_LofPhi, a_phi, a_homogeneousPhysBC );
+  this->applyOpNoExchange(a_LofPhi, a_phi, a_homogeneousPhysBC );
 }
 
 void
@@ -1527,6 +1608,7 @@ AMROperator(      LevelData<FArrayBox>& a_LofPhi,
                   bool a_homogeneousPhysBC,
                   AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
+  CH_TIME("ViscousTensorOp::AMROperator");  
   //fillgrad is called in applyop
   cfinterp(a_phi, a_phiCoarse);
 
@@ -1664,10 +1746,30 @@ cfinterp(const LevelData<FArrayBox>&       a_phi,
     }
 }
 /**/
+
+// version of fillGrad which doesn't call exchange on phi
+void
+ViscousTensorOp::
+fillGradNoExchange(const LevelData<FArrayBox>&       a_phi)
+{
+  CH_TIME("ViscousTensorOp::fillGradNoExchange");
+  const DisjointBoxLayout& grids = a_phi.disjointBoxLayout();
+  //compute gradient of phi for parts NOT in ghost cells
+  for (DataIterator dit = grids.dataIterator(); dit.ok(); ++dit)
+    {
+      cellGrad(m_grad[dit()],
+               a_phi [dit()],
+               grids.get(dit()));
+    }
+  m_grad.exchange();
+}
+
+/**/
 void
 ViscousTensorOp::
 fillGrad(const LevelData<FArrayBox>&       a_phi)
 {
+  CH_TIME("ViscousTensorOp::fillGrad");  
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   phi.exchange(phi.interval(), m_exchangeCopier);
   const DisjointBoxLayout& grids = a_phi.disjointBoxLayout();
@@ -1680,6 +1782,7 @@ fillGrad(const LevelData<FArrayBox>&       a_phi)
     }
   m_grad.exchange();
 }
+
 /**/
 void
 ViscousTensorOp::

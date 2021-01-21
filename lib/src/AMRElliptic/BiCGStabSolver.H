@@ -114,6 +114,27 @@ public:
 
   ///
   /**
+     public member data: iteration number. This is a member so that it can be
+     queried after a solve, for example.
+  */
+  int m_iter;
+
+  ///
+  /** 
+      public member data: current residual norm. This is a member so that 
+      it can be queried after a solve, for example
+  */
+  Real m_residual;
+
+  ///
+  /** 
+      public member data: initial residual norm. This is a member so that 
+      it can be queried after a solve, for example
+  */
+  Real m_initial_residual;
+  
+  ///
+  /**
      public member data:  what the algorithm should consider "close to zero"
    */
   Real m_small;
@@ -133,6 +154,8 @@ public:
 
 };
 
+
+
 // *******************************************************
 // BiCGStabSolver Implementation
 // *******************************************************
@@ -150,6 +173,9 @@ BiCGStabSolver<T>::BiCGStabSolver()
    m_convergenceMetric(-1.0),
    m_hang(1E-8),
    m_exitStatus(-1),
+   m_iter(-1),
+   m_residual(-1e300),
+   m_initial_residual(-1e300),
    m_small(1.0E-30),
    m_numRestarts(5),
    m_normType(2)
@@ -205,7 +231,7 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   m_op->setToZero(p_tilde);
   m_op->setToZero(s_tilde);
 
-  int i = 0;
+  m_iter = 0;
 
   // rho[0] = r_i , rho[1] = r_(i-1), etc.
   Real rho[4]=
@@ -215,7 +241,8 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   Real norm[2];
   norm[0] = m_op->norm(r, m_normType);
   Real initial_norm = norm[0];
-  Real initial_rnorm = norm[0];
+  m_initial_residual = norm[0];
+  m_residual = norm[0];
   norm[1] = norm[0];
 
   Real alpha[2] =
@@ -250,9 +277,9 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   CH_STOP(timeInitialize);
 
   CH_START(timeMainLoop);
-  while ((i<m_imax && norm[0] > m_eps*norm[1]) && (norm[1] > 0))
+  while ((m_iter<m_imax && norm[0] > m_eps*norm[1]) && (norm[1] > 0))
     {
-      i++;
+      m_iter++;
 
       norm[1] = norm[0];
       alpha[1]= alpha[0];
@@ -298,6 +325,8 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
                      << " -- Residual norm = "
                      << norm[0] << "\n";
             }
+
+          m_residual = norm[0];
 
           CH_STOP(timeMainLoop);
 
@@ -370,10 +399,11 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
       {
         pout() << "norm[0] = " << norm[0]
                << " initial_norm = " << initial_norm
-               << " initial_rnorm = " << initial_rnorm << endl;
+               << " initial_rnorm = " << m_initial_residual << endl;
       }
-
-      if (norm[0] > m_eps*initial_norm && norm[0] > m_reps*initial_rnorm)
+      m_residual = norm[0];
+      
+      if (norm[0] > m_eps*initial_norm && norm[0] > m_reps*m_initial_residual)
         {
           m_op->preCond(s_tilde, r);
           m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
@@ -386,10 +416,11 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
 
       if (m_verbosity >= 4)
         {
-          pout() << "      BiCGStab::     iteration = "  << i        << ", error norm = " << norm[0] << ", rate = " << norm[1]/norm[0] << "\n";
+          pout() << "      BiCGStab::     iteration = "  << m_iter        << ", error norm = " << norm[0] << ", rate = " << norm[1]/norm[0] << "\n";
         }
+      m_residual = norm[0];
 
-      if (norm[0] <= m_eps*initial_norm || norm[0] <= m_reps*initial_rnorm)
+      if (norm[0] <= m_eps*initial_norm || norm[0] <= m_reps*m_initial_residual)
         {
           // converged to tolerance
           m_exitStatus = 1;
@@ -467,10 +498,12 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
 
   if (m_verbosity >= 4)
     {
-      pout() << "      BiCGStab:: " << i << " iterations, final Residual norm = "
+      pout() << "      BiCGStab:: " << m_iter << " iterations, final Residual norm = "
              << norm[0] << "\n";
     }
 
+  m_residual = norm[0];
+  
   m_op->incr(a_phi, e, 1.0);
 
   m_op->clear(r);
