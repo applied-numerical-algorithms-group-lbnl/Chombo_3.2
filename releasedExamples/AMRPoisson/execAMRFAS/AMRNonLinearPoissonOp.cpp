@@ -1328,7 +1328,7 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 #pragma omp parallel
       {
 #pragma omp for
-  for (int ibox=0; ibox < nbox; ibox++)
+        for (int ibox=0; ibox < nbox; ibox++)
           {
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
