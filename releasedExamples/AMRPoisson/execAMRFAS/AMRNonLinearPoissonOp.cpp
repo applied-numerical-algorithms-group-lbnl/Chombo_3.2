@@ -1346,7 +1346,6 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
               }
             else
               {
-                MayDay::Error("AMRNonLinearPoissonOp: FORTRAN routine not tested");
                 FORT_GSRBHELMHOLTZNL(CHF_FRA(phiFab),
                                    CHF_CONST_FRA(a_rhs[dit[ibox]]),
                                    CHF_BOX(region),
