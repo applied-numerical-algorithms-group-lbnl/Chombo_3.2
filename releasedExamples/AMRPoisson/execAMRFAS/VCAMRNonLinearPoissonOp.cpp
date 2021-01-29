@@ -195,6 +195,32 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs
     } // end loop over boxes
 }
 
+void AMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
+                                      const LevelData<FArrayBox>& a_phiFine)
+{
+  //    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
+
+  const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
+
+  for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
+  {
+    const FArrayBox&       phiFine = a_phiFine[dit];
+    FArrayBox&       phiCoarse = a_phiCoarse[dit];
+
+    Box region = dblFine.get(dit());
+    const IntVect& iv = region.smallEnd();
+    IntVect civ = coarsen(iv, 2);
+
+    phiCoarse.setVal(0.0);
+
+    FORT_RESTRICT(CHF_FRA_SHIFT(phiCoarse, civ),
+                  CHF_CONST_FRA_SHIFT(phiFine, iv),
+                  CHF_BOX_SHIFT(region, iv),
+                  CHF_CONST_REAL(m_dx));
+  }
+}
+
+
 void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                                       LevelData<FArrayBox>&       a_phiFine,
                                       const LevelData<FArrayBox>& a_rhsFine)
