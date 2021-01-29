@@ -38,6 +38,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[aCoef],
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_CONST_FRA[lambda],
      &     CHF_CONST_INT[redBlack])
 #elif CH_SPACEDIM == 2
@@ -51,6 +52,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_CONST_FRA[lambda],
      &     CHF_CONST_INT[redBlack])
 #elif CH_SPACEDIM == 3
@@ -65,13 +67,14 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
      &     CHF_CONST_FRA[bCoef2],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_CONST_FRA[lambda],
      &     CHF_CONST_INT[redBlack])
 #else
       Somthing_that_will_not_compile
 #endif
 
-      REAL_T dxinv,lofphi
+      REAL_T dxinv,sum_b,lofphi,denom
       integer n,ncomp,indtot,imin,imax
       integer CHF_DDECL[i;j;k]
 
@@ -99,6 +102,10 @@ C     ------------------------------------------------------------------
       endif                                  ]
 
       dxinv = one/(dx*dx)
+      sum_b = 0.0 
+      do idir = 0, CH_SPACEDIM-1 
+          sum_b = sum_b + two*dxinv
+      enddo
 
       do n = 0, ncomp - 1
 #if CH_SPACEDIM==3
@@ -138,9 +145,12 @@ C     petermc, 26 april 2001
      &             - bCoef2(CHF_IX[i  ;j  ;k  ],n)
      &               * (phi(CHF_IX[i  ;j  ;k  ],n)-phi(CHF_IX[i  ;j  ;k-1],n)) ]
      &             ) * dxinv
+     &          + gamma * phi(CHF_IX[i;j;k],n) * exp(phi(CHF_IX[i;j;k],n))
+
+              denom = lambda(CHF_IX[i;j;k],n) + gamma*(1+phi(CHF_IX[i;j;k],n))*exp(phi(CHF_IX[i;j;k],n))
 
               phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n)
-     &          - lambda(CHF_IX[i;j;k],n) * (lofphi - rhs(CHF_IX[i;j;k],n))
+     &          + (rhs(CHF_IX[i;j;k],n) - lofphi) / denom
             enddo
 #if CH_SPACEDIM > 1
           enddo
@@ -155,7 +165,7 @@ C     petermc, 26 april 2001
 
 C     -----------------------------------------------------------------
 C     subroutine VCNLCOMPUTEOP{1D,2D,3D}
-C     computes (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi)
+C     computes (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi) + gamma*phi*exp(phi)
 C
 C     INPUTS/OUTPUTS:
 C     lofphi    <=  operator applied to phi
@@ -180,6 +190,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[aCoef],
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 2
@@ -191,6 +202,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 3
@@ -203,6 +215,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
      &     CHF_CONST_FRA[bCoef2],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #else
@@ -257,6 +270,7 @@ C     ------------------------------------------------------------------
      &         - bCoef2(CHF_IX[i  ;j  ;k  ],n)
      &           * (phi(CHF_IX[i  ;j  ;k  ],n) - phi(CHF_IX[i  ;j  ;k-1],n)) ]
      &         ) * dxinv
+     &      + gamma * phi(CHF_IX[i;j;k],n) * exp(phi(CHF_IX[i;j;k],n))
         CHF_ENDDO
       enddo
 
@@ -266,7 +280,7 @@ C     ------------------------------------------------------------------
 C     -----------------------------------------------------------------
 C     subroutine VCNLCOMPUTERES{1D,2D,3D}
 C     computes:
-C         rhs - (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi)
+C         rhs - (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi) - gamma * phi * exp(phi)
 C
 C     INPUTS/OUTPUTS:
 C     res       <=  residual
@@ -293,6 +307,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[aCoef],
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 2
@@ -305,6 +320,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 3
@@ -318,6 +334,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
      &     CHF_CONST_FRA[bCoef2],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #else
@@ -373,7 +390,7 @@ C     ------------------------------------------------------------------
      &          - bCoef2(CHF_IX[i  ;j  ;k  ],n)
      &            * (phi(CHF_IX[i  ;j  ;k  ],n) - phi(CHF_IX[i  ;j  ;k-1],n)) ]
      &          ) * dxinv
-     &        )
+     &        + gamma * phi(CHF_IX[i;j;k],n) * exp(phi(CHF_IX[i;j;k],n)) )
         CHF_ENDDO
       enddo
 
@@ -404,6 +421,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[aCoef],
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 2
@@ -416,6 +434,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #elif CH_SPACEDIM == 3
@@ -429,6 +448,7 @@ C     ------------------------------------------------------------------
      &     CHF_CONST_FRA[bCoef0],
      &     CHF_CONST_FRA[bCoef1],
      &     CHF_CONST_FRA[bCoef2],
+     &     CHF_CONST_REAL[gamma],
      &     CHF_BOX[region],
      &     CHF_CONST_REAL[dx])
 #else
@@ -475,6 +495,7 @@ C     ------------------------------------------------------------------
      &         - bCoef2(CHF_IX[i  ;j  ;k  ],n)
      &           * (phi(CHF_IX[i  ;j  ;k  ],n)-phi(CHF_IX[i  ;j  ;k-1],n)) ]
      &         ) * dxinv
+     &      + gamma * phi(CHF_IX[i;j;k],n) * exp(phi(CHF_IX[i;j;k],n))
 
           res(CHF_IX[ii;jj;kk],n) = res(CHF_IX[ii;jj;kk],n)
      &                            + (rhs(CHF_IX[i;j;k],n) - lofphi) / denom

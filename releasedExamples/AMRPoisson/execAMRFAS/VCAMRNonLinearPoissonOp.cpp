@@ -36,6 +36,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   Real dx = m_dx;
+
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   {
@@ -55,11 +56,11 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
       const FluxBox& thisBCoef = (*m_bCoef)[dit];
 
 #if CH_SPACEDIM == 1
-      FORT_VCCOMPUTERES1D
+      FORT_VCNLCOMPUTERES1D
 #elif CH_SPACEDIM == 2
-      FORT_VCCOMPUTERES2D
+      FORT_VCNLCOMPUTERES2D
 #elif CH_SPACEDIM == 3
-      FORT_VCCOMPUTERES3D
+      FORT_VCNLCOMPUTERES3D
 #else
       This_will_not_compile!
 #endif
@@ -81,6 +82,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 #if CH_SPACEDIM >= 4
                           This_will_not_compile!
 #endif
+                          CHF_CONST_REAL(m_gamma),
                           CHF_BOX(region),
                           CHF_CONST_REAL(m_dx));
     } // end loop over boxes
@@ -162,11 +164,11 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs
       const FluxBox& thisBCoef = (*m_bCoef)[dit];
 
 #if CH_SPACEDIM == 1
-      FORT_VCCOMPUTEOP1D
+      FORT_VCNLCOMPUTEOP1D
 #elif CH_SPACEDIM == 2
-      FORT_VCCOMPUTEOP2D
+      FORT_VCNLCOMPUTEOP2D
 #elif CH_SPACEDIM == 3
-      FORT_VCCOMPUTEOP3D
+      FORT_VCNLCOMPUTEOP3D
 #else
       This_will_not_compile!
 #endif
@@ -187,6 +189,7 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs
 #if CH_SPACEDIM >= 4
                          This_will_not_compile!
 #endif
+                         CHF_CONST_REAL(m_gamma),
                          CHF_BOX(region),
                          CHF_CONST_REAL(m_dx));
     } // end loop over boxes
@@ -224,11 +227,11 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_res
       res.setVal(0.0);
 
 #if CH_SPACEDIM == 1
-      FORT_RESTRICTRESVC1D
+      FORT_RESTRICTRESVCNL1D
 #elif CH_SPACEDIM == 2
-      FORT_RESTRICTRESVC2D
+      FORT_RESTRICTRESVCNL2D
 #elif CH_SPACEDIM == 3
-      FORT_RESTRICTRESVC3D
+      FORT_RESTRICTRESVCNL3D
 #else
       This_will_not_compile!
 #endif
@@ -250,6 +253,7 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_res
 #if CH_SPACEDIM >= 4
                            This_will_not_compile!
 #endif
+                           CHF_CONST_REAL(m_gamma),
                            CHF_BOX_SHIFT(region, iv),
                            CHF_CONST_REAL(m_dx));
     }
@@ -300,7 +304,7 @@ void VCAMRNonLinearPoissonOp::resetLambda()
 
       for (int dir = 0; dir < SpaceDim; dir++)
       {
-        FORT_SUMFACES(CHF_FRA(lambdaFab),
+        FORT_SUMFACESNL(CHF_FRA(lambdaFab),
             CHF_CONST_REAL(m_beta),
             CHF_CONST_FRA(bCoefFab[dir]),
             CHF_BOX(curBox),
@@ -592,11 +596,11 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
           const FluxBox& thisBCoef  = (*m_bCoef)[dit];
 
 #if CH_SPACEDIM == 1
-          FORT_GSRBHELMHOLTZVC1D
+          FORT_GSRBHELMHOLTZVCNL1D
 #elif CH_SPACEDIM == 2
-          FORT_GSRBHELMHOLTZVC2D
+          FORT_GSRBHELMHOLTZVCNL2D
 #elif CH_SPACEDIM == 3
-          FORT_GSRBHELMHOLTZVC3D
+          FORT_GSRBHELMHOLTZVCNL3D
 #else
           This_will_not_compile!
 #endif
@@ -619,6 +623,7 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
 #if CH_SPACEDIM >= 4
                                  This_will_not_compile!
 #endif
+                                 CHF_CONST_REAL(m_gamma),
                                  CHF_CONST_FRA(m_lambda[dit]),
                                  CHF_CONST_INT(whichPass));
         } // end loop through grids
