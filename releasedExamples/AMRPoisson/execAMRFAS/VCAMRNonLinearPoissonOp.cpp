@@ -27,10 +27,10 @@
 
 #include "NamespaceHeader.H"
 
-void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
-                               const LevelData<FArrayBox>& a_phi,
-                               const LevelData<FArrayBox>& a_rhs,
-                               bool                        a_homogeneous)
+void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
+                               const LevelData<FArrayBox>&      a_phi,
+                               const LevelData<FArrayBox>&      a_rhs,
+                               bool                             a_homogeneous)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::residualI");
 
@@ -92,6 +92,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 // this preconditioner first initializes phihat to (IA)phihat = rhshat
 // (diagonization of L -- A is the matrix version of L)
 // then smooths with a couple of passes of levelGSRB
+// Preconditionior is not used for FAS solve !!
 void VCAMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs)
 {
@@ -244,9 +245,9 @@ void VCAMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
 }
 
 
-void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
-                                      LevelData<FArrayBox>&       a_phiFine,
-                                      const LevelData<FArrayBox>& a_rhsFine)
+void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCoarse,
+                                      LevelData<FArrayBox>&              a_phiFine,
+                                      const LevelData<FArrayBox>&        a_rhsFine)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::restrictResidual");
 
@@ -309,10 +310,12 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_res
 }
 
 void VCAMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
-                                      const Real& a_beta)
+                                              const Real& a_beta,
+                                              const Real& a_gamma)
 {
-  m_alpha = a_alpha;
-  m_beta  = a_beta;
+  m_alpha  = a_alpha;
+  m_beta   = a_beta;
+  m_gamma  = a_gamma;
 
   // Our relaxation parameter is officially out of date!
   m_lambdaNeedsResetting = true;
@@ -321,10 +324,12 @@ void VCAMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
 void VCAMRNonLinearPoissonOp::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                                const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
                                const Real&                                 a_alpha,
-                               const Real&                                 a_beta)
+                               const Real&                                 a_beta,
+                               const Real&                                 a_gamma)
 {
   m_alpha = a_alpha;
   m_beta  = a_beta;
+  m_gamma = a_gamma;
 
   m_aCoef = a_aCoef;
   m_bCoef = a_bCoef;
@@ -382,7 +387,6 @@ void VCAMRNonLinearPoissonOp::computeLambda()
   resetLambda();
 }
 
-#if 1
 //
 // VCAMRNonLinearPoissonOp::reflux()
 //   There are currently the new version (first) and the old version (second)
@@ -480,125 +484,8 @@ void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFin
   m_levfluxreg.reflux(a_residual, scale);
 }
 
-#else
-
-void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
-                            const LevelData<FArrayBox>&        a_phi,
-                            LevelData<FArrayBox>&              a_residual,
-                            AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
-{
-  CH_TIME("VCAMRNonLinearPoissonOp::reflux");
-
-  int ncomp = 1;
-  ProblemDomain fineDomain = refine(m_domain, m_refToFiner);
-  LevelFluxRegister levfluxreg(a_phiFine.disjointBoxLayout(),
-                               a_phi.disjointBoxLayout(),
-                               fineDomain,
-                               m_refToFiner,
-                               ncomp);
-
-  levfluxreg.setToZero();
-  Interval interv(0,a_phi.nComp()-1);
-
-  DataIterator dit = a_phi.dataIterator();
-  for (dit.reset(); dit.ok(); ++dit)
-    {
-      const FArrayBox& coarfab = a_phi[dit];
-      const FluxBox& coarBCoef  = (*m_bCoef)[dit];
-      const Box& gridBox = a_phi.getBoxes()[dit];
-
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          FArrayBox coarflux;
-          Box faceBox = surroundingNodes(gridBox, idir);
-          getFlux(coarflux, coarfab, coarBCoef , faceBox, idir);
-
-          Real scale = 1.0;
-          levfluxreg.incrementCoarse(coarflux, scale,dit(),
-                                     interv,interv,idir);
-        }
-    }
-  LevelData<FArrayBox>& p = ( LevelData<FArrayBox>&)a_phiFine;
-
-  // has to be its own object because the finer operator
-  // owns an interpolator and we have no way of getting to it
-  VCAMRNonLinearPoissonOp* finerAMRPOp = (VCAMRNonLinearPoissonOp*) a_finerOp;
-  QuadCFInterp& quadCFI = finerAMRPOp->m_interpWithCoarser;
-
-  quadCFI.coarseFineInterp(p, a_phi);
-  // p.exchange(a_phiFine.interval()); // BVS is pretty sure this is not necesary.
-  IntVect phiGhost = p.ghostVect();
-
-  DataIterator ditf = a_phiFine.dataIterator();
-  const  DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
-  for (ditf.reset(); ditf.ok(); ++ditf)
-    {
-      const FArrayBox& phifFab = a_phiFine[ditf];
-      const FluxBox& fineBCoef  = (*(finerAMRPOp->m_bCoef))[ditf];
-      const Box& gridbox = dblFine.get(ditf());
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          int normalGhost = phiGhost[idir];
-          SideIterator sit;
-          for (sit.begin(); sit.ok(); sit.next())
-            {
-              Side::LoHiSide hiorlo = sit();
-              Box fabbox;
-              Box facebox;
-
-              // assumption here that the stencil required
-              // to compute the flux in the normal direction
-              // is 2* the number of ghost cells for phi
-              // (which is a reasonable assumption, and probably
-              // better than just assuming you need one cell on
-              // either side of the interface
-              // (dfm 8-4-06)
-              if (sit() == Side::Lo)
-                {
-                  fabbox = adjCellLo(gridbox,idir, 2*normalGhost);
-                  fabbox.shift(idir, 1);
-                  facebox = bdryLo(gridbox, idir,1);
-                }
-              else
-                {
-                  fabbox = adjCellHi(gridbox,idir, 2*normalGhost);
-                  fabbox.shift(idir, -1);
-                  facebox = bdryHi(gridbox, idir, 1);
-                }
-
-              // just in case we need ghost cells in the transverse direction
-              // (dfm 8-4-06)
-              for (int otherDir=0; otherDir<SpaceDim; ++otherDir)
-                {
-                  if (otherDir != idir)
-                    {
-                      fabbox.grow(otherDir, phiGhost[otherDir]);
-                    }
-                }
-              CH_assert(!fabbox.isEmpty());
-
-              FArrayBox phifab(fabbox, a_phi.nComp());
-              phifab.copy(phifFab);
-
-              FArrayBox fineflux;
-              getFlux(fineflux, phifab, fineBCoef, facebox, idir,
-                      m_refToFiner);
-
-              Real scale = 1.0;
-              levfluxreg.incrementFine(fineflux, scale, ditf(),
-                                       interv, interv, idir, hiorlo);
-            }
-        }
-    }
-
-  Real scale =  1.0/m_dx;
-  levfluxreg.reflux(a_residual, scale);
-}
-
-#endif
-
 void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
+                                        const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::levelGSRB");
 
@@ -706,34 +593,15 @@ void VCAMRNonLinearPoissonOp::levelGSRBLazy(LevelData<FArrayBox>&       a_phi,
 void VCAMRNonLinearPoissonOp::levelJacobi(LevelData<FArrayBox>&       a_phi,
                                  const LevelData<FArrayBox>& a_rhs)
 {
-  CH_TIME("VCAMRNonLinearPoissonOp::levelJacobi");
-
-  // Recompute the relaxation coefficient if needed.
-  resetLambda();
-
-  LevelData<FArrayBox> resid;
-  create(resid, a_rhs);
-
-  // Get the residual
-  residual(resid,a_phi,a_rhs,true);
-
-  // Multiply by the weights
-  DataIterator dit = m_lambda.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-  {
-    resid[dit].mult(m_lambda[dit]);
-  }
-
-  // Do the Jacobi relaxation
-  incr(a_phi, resid, 0.5);
+  MayDay::Abort("VCAMRNonLinearPoissonOp::levelJacobi - Not implemented");
 }
 
-void VCAMRNonLinearPoissonOp::getFlux(FArrayBox&       a_flux,
-                             const FArrayBox& a_data,
-                             const FluxBox&   a_bCoef,
-                             const Box&       a_facebox,
-                             int              a_dir,
-                             int              a_ref) const
+void VCAMRNonLinearPoissonOp::getFlux(FArrayBox&  a_flux,
+                             const FArrayBox&     a_data,
+                             const FluxBox&       a_bCoef,
+                             const Box&           a_facebox,
+                             int                  a_dir,
+                             int                  a_ref) const
 {
   CH_TIME("VCAMRNonLinearPoissonOp::getFlux");
 
@@ -781,8 +649,7 @@ void VCAMRNonLinearPoissonOp::getFlux(FArrayBox&       a_flux,
 
 //-----------------------------------------------------------------------
 void
-VCAMRNonLinearPoissonOp::
-setTime(Real a_time)
+VCAMRNonLinearPoissonOp::setTime(Real a_time)
 {
   // Jot down the time.
   m_time = a_time;
@@ -814,15 +681,16 @@ VCAMRNonLinearPoissonOpFactory::VCAMRNonLinearPoissonOpFactory()
 
 //-----------------------------------------------------------------------
 //  AMR Factory define function
-void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&                           a_coarseDomain,
-                                   const Vector<DisjointBoxLayout>&               a_grids,
-                                   const Vector<int>&                             a_refRatios,
-                                   const Real&                                    a_coarsedx,
-                                   BCHolder                                       a_bc,
-                                   const Real&                                    a_alpha,
+void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coarseDomain,
+                                   const Vector<DisjointBoxLayout>&      a_grids,
+                                   const Vector<int>&                    a_refRatios,
+                                   const Real&                           a_coarsedx,
+                                   BCHolder                              a_bc,
+                                   const Real&                           a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
-                                   const Real&                                    a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef)
+                                   const Real&                           a_beta,
+                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+                                   const Real&                           a_gamma)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::define");
 
@@ -865,6 +733,8 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&                
 
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
+
+  m_gamma = a_gamma;
 }
 //-----------------------------------------------------------------------
 
@@ -872,13 +742,12 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&                
 // AMR Factory define function, with coefficient data allocated automagically
 // for operators.
 void
-VCAMRNonLinearPoissonOpFactory::
-define(const ProblemDomain& a_coarseDomain,
-       const Vector<DisjointBoxLayout>& a_grids,
-       const Vector<int>& a_refRatios,
-       const Real& a_coarsedx,
-       BCHolder a_bc,
-       const IntVect& a_ghostVect)
+VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
+                             const Vector<DisjointBoxLayout>& a_grids,
+                             const Vector<int>&               a_refRatios,
+                             const Real&                      a_coarsedx,
+                             BCHolder                         a_bc,
+                             const IntVect&                   a_ghostVect)
 {
   // This just allocates coefficient data, sets alpha = beta = 1, and calls
   // the other define() method.
@@ -899,15 +768,16 @@ define(const ProblemDomain& a_coarseDomain,
         (*bCoef[i])[dit()][idir].setVal(1.0);
     }
   }
-  Real alpha = 1.0, beta = 1.0;
+  // these choices are weird and not in accordance with the default Lapl
+  Real alpha = 1.0, beta = 1.0, gamma = 0.0;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef);
+         alpha, aCoef, beta, bCoef, gamma);
 }
 //-----------------------------------------------------------------------
 
 MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const ProblemDomain& a_indexSpace,
-                                                                  int                  a_depth,
-                                                                  bool                 a_homoOnly)
+                                                                          int                  a_depth,
+                                                                          bool                 a_homoOnly)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::MGnewOp");
 
@@ -965,6 +835,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
+  newOp->m_gamma = m_gamma;
 
   if (a_depth == 0)
     {
@@ -1100,6 +971,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
+  newOp->m_gamma = m_gamma;
 
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
@@ -1142,6 +1014,7 @@ void VCAMRNonLinearPoissonOpFactory::setDefaultValues()
   // Default to Laplacian operator
   m_alpha = 0.0;
   m_beta = -1.0;
+  m_gamma = 0.0;
 
   m_coefficient_average_type = CoarseAverage::arithmetic;
 }
@@ -1149,9 +1022,8 @@ void VCAMRNonLinearPoissonOpFactory::setDefaultValues()
 
 //-----------------------------------------------------------------------
 void
-VCAMRNonLinearPoissonOp::
-finerOperatorChanged(const MGLevelOp<LevelData<FArrayBox> >& a_operator,
-                     int a_coarseningFactor)
+VCAMRNonLinearPoissonOp::finerOperatorChanged(const MGLevelOp<LevelData<FArrayBox> >& a_operator,
+                                              int a_coarseningFactor)
 {
   const VCAMRNonLinearPoissonOp& op =
     dynamic_cast<const VCAMRNonLinearPoissonOp&>(a_operator);

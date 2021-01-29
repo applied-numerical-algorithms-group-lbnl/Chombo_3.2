@@ -95,13 +95,15 @@ public:
 
   /// For tga stuff
   virtual void setAlphaAndBeta(const Real& a_alpha,
-                               const Real& a_beta);
+                               const Real& a_beta,
+                               const Real& a_gamma);
 
   /// Also calls reset lambda
   virtual void setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                         const RefCountedPtr<LevelData<FluxBox>   >& a_bCoef,
                         const Real& a_alpha,
-                        const Real& a_beta);
+                        const Real& a_beta,
+                        const Real& a_gamma);
 
   /// Should be called before the relaxation parameter is needed.
   virtual void resetLambda();
