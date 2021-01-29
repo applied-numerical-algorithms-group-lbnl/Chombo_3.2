@@ -128,6 +128,29 @@ void VCAMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
   relax(a_phi, a_rhs, 2);
 }
 
+void VCAMRNonLinearPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
+                        LevelData<FArrayBox>& a_phi,
+                        LevelData<FArrayBox>* a_phiCoarse,
+                        bool a_homogeneous)
+{
+  CH_TIME("VCAMRNonLinearPoissonOp::applyOpMg");
+
+  // Do CF stuff if we have a coarser level that's not just a single grid cell
+   if (a_phiCoarse != NULL)
+   {
+     const ProblemDomain& probDomain = a_phiCoarse->disjointBoxLayout().physDomain();
+     const Box& domBox = probDomain.domainBox();
+     //    IntVect hi = domBox.b
+     if (domBox.bigEnd() != domBox.smallEnd())
+     {
+       m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
+     }
+   }
+
+   applyOpI(a_lhs, a_phi, a_homogeneous);
+
+}
+
 void VCAMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&      a_lhs,
                              const LevelData<FArrayBox>& a_phi,
                              bool                        a_homogeneous )
@@ -195,7 +218,7 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs
     } // end loop over boxes
 }
 
-void AMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
+void VCAMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
                                       const LevelData<FArrayBox>& a_phiFine)
 {
   //    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
