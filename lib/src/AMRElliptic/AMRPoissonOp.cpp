@@ -172,7 +172,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
   m_use_FAS = false;
  
-  pout() << "AMRPoissonOp::define use FAS ? " << m_use_FAS << "\n";
+  //pout() << "AMRPoissonOp::define use FAS ? " << m_use_FAS << "\n";
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -2074,7 +2074,7 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
 
   newOp->m_use_FAS = m_use_FAS;
 
-  pout() << "AMRPoissonOpFactory::MGnewOp use FAS ? " << m_use_FAS << "\n";
+  //pout() << "AMRPoissonOpFactory::MGnewOp use FAS ? " << m_use_FAS << "\n";
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
