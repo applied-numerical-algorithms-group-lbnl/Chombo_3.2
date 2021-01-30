@@ -719,6 +719,7 @@ int runSolver()
   int numLevels = finestLevel+1;
 
   if (whichOperator == 1) {
+      pout() << "...  with AMRNonLinearPoisson operator \n";
       AMRNonLinearPoissonOpFactory opFactory;
 
       // solving nonlinear poisson problem here
@@ -741,6 +742,7 @@ int runSolver()
                         &bottomSolver, numLevels);
 
   } else if (whichOperator == 0) {
+      pout() << "...  with AMRPoisson operator \n";
       AMRPoissonOpFactory opFactory;
 
       // solving poisson problem here
@@ -760,6 +762,7 @@ int runSolver()
       amrSolver->define(amrDomains[0], castFact,
                         &bottomSolver, numLevels);
   } else {
+      pout() << "...  with VCAMRNonLinearPoisson operator \n";
       RealVect dxLev = RealVect::Unit;
       dxLev *= amrDx[0]; 
       aCoef.resize(maxLevel +1);

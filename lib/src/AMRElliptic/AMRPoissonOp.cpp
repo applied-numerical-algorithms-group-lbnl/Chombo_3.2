@@ -1947,8 +1947,6 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
 {
   CH_TIME("AMRPoissonOpFactory::define");
 
-  pout() << "AMRPoissonOpFactory::define use FAS ? " << m_use_FAS << "\n";
-
   m_boxes = a_grids;
 
   m_refRatios = a_refRatios;
@@ -2158,7 +2156,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
 
   newOp->m_use_FAS = m_use_FAS;
 
-  pout() << "AMRPoissonOpFactory::AMRnewOp use FAS ? " << m_use_FAS << "\n";
+  if (m_use_FAS) {
+      pout() << "AMRPoissonOpFactory::AMRnewOp use FAS \n";
+  }
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }
