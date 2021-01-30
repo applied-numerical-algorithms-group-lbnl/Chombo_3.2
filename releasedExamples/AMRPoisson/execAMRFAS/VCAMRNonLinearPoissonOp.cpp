@@ -35,7 +35,8 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
   CH_TIME("VCAMRNonLinearPoissonOp::residualI");
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  Real dx = m_dx;
+
+  phi.exchangeNoOverlap(m_exchangeCopier);
 
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
@@ -44,11 +45,11 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
 
     for (dit.begin(); dit.ok(); ++dit)
     {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      m_bc(phi[dit], dbl[dit()],m_domain, m_dx, a_homogeneous);
     }
   }
 
-  phi.exchange(phi.interval(), m_exchangeCopier);
+  //phi.exchange(phi.interval(), m_exchangeCopier);
 
   for (dit.begin(); dit.ok(); ++dit)
     {
@@ -366,8 +367,6 @@ void VCAMRNonLinearPoissonOp::resetLambda()
             CHF_CONST_REAL(scale));
       }
 
-      // Take its reciprocal
-      lambdaFab.invert(1.0);
     }
 
     // Lambda is reset.
@@ -508,7 +507,8 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("VCAMRNonLinearPoissonOp::levelGSRB::homogeneousCFInterp");
-        homogeneousCFInterp(a_phi);
+        // For FAS, we don't want to do this?
+//        homogeneousCFInterp(a_phi);
       }
 
       {
@@ -919,10 +919,9 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
       }
     }
 
-  if (ref == 0)
-    {
+  if (ref == 0) {
       // coarsest AMR level
-      if (m_domains.size() == 1)
+      if (m_domains.size() == 1 || !m_boxes[1].isClosed()) 
         {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],
@@ -939,30 +938,24 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0],
                         nComp);
-    }
-  }
-  else if (ref ==  m_domains.size()-1)
-  {
-    dxCrse = m_dx[ref-1];
+      }
+  } else if ((ref ==  m_domains.size()-1) || (!m_boxes[ref+1].isClosed())) {
+      dxCrse = m_dx[ref-1];
 
-    // finest AMR level
-    newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
+      // finest AMR level
+      newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
                   m_refRatios[ref-1],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
                   nComp);
-  }
-  else if ( ref == m_domains.size())
-    {
+  } else if ( ref == m_domains.size()) {
       MayDay::Abort("Did not find a domain to match AMRnewOp(const ProblemDomain& a_indexSpace)");
 
-    }
-  else
-    {
+  } else {
       dxCrse = m_dx[ref-1];
 
       // intermediate AMR level, full define
-    newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
+      newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
                   m_refRatios[ref-1], m_refRatios[ref],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
