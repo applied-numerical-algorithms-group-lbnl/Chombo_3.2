@@ -845,9 +845,7 @@ int runSolver()
 
   for (int iiter = 0; iiter < iterations; iiter++)
   {
-    pout() << "about to go into solve" << endl;
     amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
-    pout() << "done solve" << endl;
   }
 
   // Compute error
