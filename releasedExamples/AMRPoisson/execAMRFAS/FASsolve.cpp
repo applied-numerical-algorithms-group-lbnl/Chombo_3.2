@@ -21,6 +21,7 @@
 #include "ProblemDomain.H"
 #include "BCFunc.H"
 #include "AMRNonLinearPoissonOp.H"
+#include "VCAMRNonLinearPoissonOp.H"
 #include "AMRPoissonOp.H"
 #include "AMRFASMultiGrid.H"
 #include "AMRMultiGrid.H"
@@ -40,7 +41,7 @@ enum probTypes {exact,
   numProbTypes};
 
 
-int s_probtype = gaussians;
+int s_probtype = exact;
 
 //  -----------------------------------------
 // boundary condition stuff
@@ -119,6 +120,63 @@ void ParseBC(FArrayBox& a_state,
   }
 }
 
+void
+setACoef(LevelData<FArrayBox>& a_aCoef,
+         const RealVect& a_dx)
+{
+  RealVect pos;
+  int num;
+  DataIterator dit = a_aCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FArrayBox& aCoef = a_aCoef[dit];
+      ForAllXBNN(Real, aCoef, aCoef.box(), 0, aCoef.nComp());
+      {
+        num = nR;
+        D_TERM(pos[0]=a_dx[0]*(iR+0.5);,
+               pos[1]=a_dx[1]*(jR+0.5);,
+               pos[2]=a_dx[2]*(kR+0.5));
+        aCoefR = pos[0];
+        // constant-coefficient
+        aCoefR = 1.0;
+      }EndFor;
+    } // end loop over grids
+}
+
+void
+setBCoef(LevelData<FluxBox>& a_bCoef,
+         const RealVect& a_dx)
+{
+  DataIterator dit = a_bCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FluxBox& thisBCoef = a_bCoef[dit];
+      for (int dir=0; dir<SpaceDim; dir++)
+        {
+          FArrayBox& dirFlux = thisBCoef[dir];
+          const Box& dirBox = dirFlux.box();
+          // this sets up a vector which is 0 in the dir
+          // direct and 0.5 in the other (cell-centered) directions
+          RealVect offsets = BASISREALV(dir);
+          RealVect pos;
+          offsets -= RealVect::Unit;
+          offsets *= -0.5;
+          int n;
+          ForAllXBNN(Real, dirFlux, dirBox, 0, dirFlux.nComp())
+            {
+              n = nR;
+              D_TERM(pos[0] = a_dx[0]*(iR+offsets[0]);,
+                     pos[1] = a_dx[1]*(jR+offsets[1]);,
+                     pos[2] = a_dx[2]*(kR+offsets[2]));
+              dirFluxR = D_TERM(pos[0], +pos[1], +pos[2]);
+              // constant-coefficient
+              dirFluxR = 1.0;
+            }EndFor
+        } // end loop over directions
+    }
+}
+
+
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
             Vector<ProblemDomain>& a_amrDomains,
             Vector<int>& a_refRatios,
@@ -130,6 +188,9 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
   Real gamma = 0;
   ParmParse pp("solver");
   pp.query("gamma", gamma);
+
+  Real alpha = 0.0;
+  Real beta = 1.0;
 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
@@ -158,7 +219,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
           Real mult_arg = D_TERM((x-x*x),*(y-y*y),*(z-z*z));
           Real plus_arg = D_TERM((x-x*x),+(y-y*y),+(z-z*z));
 
-          thisRhs(iv, 0) = ( 2*plus_arg + gamma*mult_arg*exp(mult_arg));
+          thisRhs(iv, 0) = ( alpha*mult_arg + beta*2*plus_arg + gamma*mult_arg*exp(mult_arg));
 
         }
       }
@@ -320,6 +381,7 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
            Vector<ProblemDomain>& a_amrDomains,
            Vector<int>& a_refRatios,
            Vector<Real>& a_amrDx,
+           int& a_maxLevel,
            int& a_finestLevel)
 {
   CH_TIME("setupGrids");
@@ -332,13 +394,13 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   Real fillRatio;
 
   ppGrids.get("max_level", maxLevel);
+  a_maxLevel = maxLevel;
   ppGrids.get("max_box_size",maxBoxSize);
   ppGrids.get("block_factor", blockFactor);
   ppGrids.get("fillRatio", fillRatio);
 
   // note that there only need to be numLevels-1 refinement ratios
-  a_refRatios.resize(maxLevel);
-  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel);
+  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel+1);
 
   Vector<int>  is_periodic_int;
   bool is_periodic[SpaceDim];
@@ -611,92 +673,6 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
 }
 
 
-void
-setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
-            LinearSolver<LevelData<FArrayBox> >& a_bottomSolver,
-            const Vector<DisjointBoxLayout>& a_amrGrids,
-            const Vector<ProblemDomain>& a_amrDomains,
-            const Vector<int>& a_refRatios,
-            const Vector<Real>& a_amrDx,
-            int a_finestLevel)
-{
-  CH_TIME("setupSolver");
-
-  ParmParse ppSolver("solver");
-
-  bool nonlinearOp = true;
-  ppSolver.query("nonlinearOp", nonlinearOp);
-
-  int numLevels = a_finestLevel+1;
-
-  if (nonlinearOp)
-  {
-  AMRNonLinearPoissonOpFactory opFactory;
-
-  // solving nonlinear poisson problem here
-  Real alpha = 0.0;
-  Real beta = 1.0;
-  Real gamma = -1.0;
-
-  ppSolver.query("gamma", gamma);
-
-  opFactory.define(a_amrDomains[0],
-                   a_amrGrids,
-                   a_refRatios,
-                   a_amrDx[0],
-                   &ParseBC, alpha, beta,gamma);
-
-
-  AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-  a_amrSolver->define(a_amrDomains[0], castFact,
-                      &a_bottomSolver, numLevels);
-
-  }
-  else
-  {
-        AMRPoissonOpFactory opFactory;
-
-      // solving poisson problem here
-      Real alpha = 0.0;
-      Real beta = -1.0;
-      bool FASmultigrid = false;
-      ppSolver.query("FASmultigrid", FASmultigrid);
-
-      opFactory.define(a_amrDomains[0],
-                       a_amrGrids,
-                       a_refRatios,
-                       a_amrDx[0],
-                       &ParseBC, alpha, beta, FASmultigrid);
-
-      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-      a_amrSolver->define(a_amrDomains[0], castFact,
-                          &a_bottomSolver, numLevels);
-  }
-
-  // multigrid solver parameters
-  int numSmooth, numMG, maxIter;
-  int numBottom;
-  ppSolver.query("num_bottom", numBottom);
-  Real eps, hang;
-  ppSolver.get("num_smooth", numSmooth);
-  ppSolver.get("num_mg",     numMG);
-  ppSolver.get("max_iterations", maxIter);
-  ppSolver.get("tolerance", eps);
-  ppSolver.get("hang",      hang);
-
-  Real normThresh = 1.0e-30;
-  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
-                                   numMG, maxIter, eps, hang, normThresh);
-  a_amrSolver->m_verbosity = s_verbosity-1;
-
-  // optional parameters
-  //ppSolver.query("num_pre", a_amrSolver->m_pre);
-  //ppSolver.query("num_post", a_amrSolver->m_post);
-
-}
-
 int runSolver()
 {
   CH_TIME("runSolver");
@@ -711,11 +687,13 @@ int runSolver()
   // set up grids&
   Vector<DisjointBoxLayout> amrGrids;
   Vector<ProblemDomain> amrDomains;
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef; 
+  Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef;
   Vector<int> refRatios;
   Vector<Real> amrDx;
-  int finestLevel;
+  int finestLevel, maxLevel;
 
-  setupGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
+  setupGrids(amrGrids, amrDomains, refRatios, amrDx, maxLevel, finestLevel);
 
   // initialize solver
   bool FASmultigrid = true;
@@ -731,11 +709,112 @@ int runSolver()
   }
   BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
   bottomSolver.m_verbosity = s_verbosity-2;
-  setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-              refRatios, amrDx, finestLevel);
+  //Begin setupSolver
+  int whichOperator = 0;
+  // 0 --> nonlinearOp    AMRNonLinearPoissonOp
+  // 1 --> linearOp       AMRPoissonOp
+  // 2 --> VCnonlinearOp  VCAMRNonLinearPoissonOp
+  ppSolver.query("Operator", whichOperator);
+
+  int numLevels = finestLevel+1;
+
+  if (whichOperator == 1) {
+      AMRNonLinearPoissonOpFactory opFactory;
+
+      // solving nonlinear poisson problem here
+      Real alpha = 0.0;
+      Real beta  = 1.0;
+      Real gamma = -1.0;
+
+      ppSolver.query("gamma", gamma);
+
+      opFactory.define(amrDomains[0],
+                       amrGrids,
+                       refRatios,
+                       amrDx[0],
+                       &ParseBC, alpha, beta, gamma);
+
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+      amrSolver->define(amrDomains[0], castFact,
+                        &bottomSolver, numLevels);
+
+  } else if (whichOperator == 0) {
+      AMRPoissonOpFactory opFactory;
+
+      // solving poisson problem here
+      Real alpha = 0.0;
+      Real beta = -1.0;
+      bool FASmultigrid = false;
+      ppSolver.query("FASmultigrid", FASmultigrid);
+
+      opFactory.define(amrDomains[0],
+                       amrGrids,
+                       refRatios,
+                       amrDx[0],
+                       &ParseBC, alpha, beta, FASmultigrid);
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+      amrSolver->define(amrDomains[0], castFact,
+                        &bottomSolver, numLevels);
+  } else {
+      RealVect dxLev = RealVect::Unit;
+      dxLev *= amrDx[0]; 
+      aCoef.resize(maxLevel +1);
+      bCoef.resize(maxLevel +1);
+      for (int lev=0; lev<= maxLevel; lev++) {
+          aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
+          bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
+         
+          setACoef(*aCoef[lev], dxLev);
+          setBCoef(*bCoef[lev], dxLev);
+
+          dxLev /= refRatios[lev];
+      }
+
+      VCAMRNonLinearPoissonOpFactory opFactory;
+
+      // solving VC nonlinear poisson problem here
+      Real alpha = 0.0;
+      Real beta  = 1.0;
+      Real gamma = -1.0;
+
+      ppSolver.query("gamma", gamma);
+
+      opFactory.define(amrDomains[0],
+                       amrGrids,
+                       refRatios,
+                       amrDx[0],
+                       &ParseBC, alpha, aCoef, 
+                       beta, bCoef, gamma);
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+      amrSolver->define(amrDomains[0], castFact,
+                        &bottomSolver, numLevels);
+  }
+
+  // multigrid solver parameters
+  int numSmooth, numMG, maxIter;
+  int numBottom;
+  ppSolver.query("num_bottom", numBottom);
+  Real eps, hang;
+  ppSolver.get("num_smooth", numSmooth);
+  ppSolver.get("num_mg",     numMG);
+  ppSolver.get("max_iterations", maxIter);
+  ppSolver.get("tolerance", eps);
+  ppSolver.get("hang",      hang);
+
+  Real normThresh = 1.0e-30;
+  amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
+                                   numMG, maxIter, eps, hang, normThresh);
+  amrSolver->m_verbosity = s_verbosity-1;
+  // END setupSolver
 
   // allocate solution and RHS, initialize RHS
-  int numLevels = amrGrids.size();
+  //int numLevels = amrGrids.size();
   Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
   Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
   // this is for convenience
