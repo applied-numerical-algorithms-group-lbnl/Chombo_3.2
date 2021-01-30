@@ -185,12 +185,15 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
 {
   CH_TIME("setRHS");
 
-  Real gamma = 0;
   ParmParse pp("solver");
-  pp.query("gamma", gamma);
 
   Real alpha = 0.0;
-  Real beta = 1.0;
+  Real beta  = 1.0;
+  Real gamma = -1.0;
+
+  pp.query("alpha", alpha);
+  pp.query("beta", beta);
+  pp.query("gamma", gamma);
 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
@@ -312,10 +315,6 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
               int a_finestLevel)
 {
   CH_TIME("setExact");
-
-  Real gamma = 0;
-  ParmParse pp("solver");
-  pp.query("gamma", gamma);
 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
@@ -727,6 +726,8 @@ int runSolver()
       Real beta  = 1.0;
       Real gamma = -1.0;
 
+      ppSolver.query("alpha", alpha);
+      ppSolver.query("beta", beta);
       ppSolver.query("gamma", gamma);
 
       opFactory.define(amrDomains[0],
@@ -748,6 +749,12 @@ int runSolver()
       // solving poisson problem here
       Real alpha = 0.0;
       Real beta = -1.0;
+
+      ppSolver.query("alpha", alpha);
+      ppSolver.query("beta", beta);
+
+      beta = -beta;
+
       bool FASmultigrid = false;
       ppSolver.query("FASmultigrid", FASmultigrid);
 
@@ -784,6 +791,8 @@ int runSolver()
       Real beta  = 1.0;
       Real gamma = -1.0;
 
+      ppSolver.query("alpha", alpha);
+      ppSolver.query("beta", beta);
       ppSolver.query("gamma", gamma);
 
       opFactory.define(amrDomains[0],
