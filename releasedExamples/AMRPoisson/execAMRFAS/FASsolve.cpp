@@ -121,6 +121,32 @@ void ParseBC(FArrayBox& a_state,
 }
 
 void
+setACoef_Trivial(LevelData<FArrayBox>& a_aCoef)
+{
+  DataIterator dit = a_aCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FArrayBox& aCoef = a_aCoef[dit];
+      aCoef.setVal(1.0);
+    } // end loop over grids
+}
+
+void
+setBCoef_Trivial(LevelData<FluxBox>& a_bCoef)
+{
+  DataIterator dit = a_bCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FluxBox& thisBCoef = a_bCoef[dit];
+      for (int dir=0; dir<SpaceDim; dir++)
+        {
+          FArrayBox& dirFlux = thisBCoef[dir];
+          dirFlux.setVal(1.0);
+        } // end loop over directions
+    } // end loop over grids
+}
+
+void
 setACoef(LevelData<FArrayBox>& a_aCoef,
          const RealVect& a_dx)
 {
@@ -137,8 +163,6 @@ setACoef(LevelData<FArrayBox>& a_aCoef,
                pos[1]=a_dx[1]*(jR+0.5);,
                pos[2]=a_dx[2]*(kR+0.5));
         aCoefR = pos[0];
-        // constant-coefficient
-        aCoefR = 1.0;
       }EndFor;
     } // end loop over grids
 }
@@ -169,8 +193,6 @@ setBCoef(LevelData<FluxBox>& a_bCoef,
                      pos[1] = a_dx[1]*(jR+offsets[1]);,
                      pos[2] = a_dx[2]*(kR+offsets[2]));
               dirFluxR = D_TERM(pos[0], +pos[1], +pos[2]);
-              // constant-coefficient
-              dirFluxR = 1.0;
             }EndFor
         } // end loop over directions
     }
@@ -179,6 +201,7 @@ setBCoef(LevelData<FluxBox>& a_bCoef,
 
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
             Vector<ProblemDomain>& a_amrDomains,
+            Vector<DisjointBoxLayout>& a_amrGrids,
             Vector<int>& a_refRatios,
             Vector<Real>& a_amrDx,
             int a_finestLevel)
@@ -195,18 +218,34 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
   pp.query("beta", beta);
   pp.query("gamma", gamma);
 
+  bool use_var_coefs = false;
+  pp.query("use_VC", use_var_coefs);
+
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef; 
+  aCoef.resize(a_finestLevel +1);
+
+  RealVect dxLev = RealVect::Unit;
+  dxLev *= a_amrDx[0]; 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
+    aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(a_amrGrids[lev], 1, IntVect::Unit));
+
+    setACoef(*aCoef[lev], dxLev);
+
+    dxLev /= a_refRatios[lev];
+
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
+    LevelData<FArrayBox>& levelaCoef = *(aCoef[lev]);
     const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
     // rhs is cell-centered...
     RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
 
-    DataIterator levelDit = levelGrids.dataIterator();
+    DataIterator levelDit = levelRhs.dataIterator();
     for (levelDit.begin(); levelDit.ok(); ++levelDit)
     {
       FArrayBox& thisRhs = levelRhs[levelDit];
+      FArrayBox& thisaCoef = levelaCoef[levelDit];
 
       if (s_probtype == exact)
       {
@@ -221,8 +260,21 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
           D_TERM(Real x = loc[0];, Real y = loc[1];, Real z = loc[2];)
           Real mult_arg = D_TERM((x-x*x),*(y-y*y),*(z-z*z));
           Real plus_arg = D_TERM((x-x*x),+(y-y*y),+(z-z*z));
+          //ONLY 2D - with betaCoef being x+y
+          Real div_x = (y-y*y)*(1 -4*x -2*y);
+          Real div_y = (x-x*x)*(1 -4*y -2*x);
 
-          thisRhs(iv, 0) = ( alpha*mult_arg + beta*2*plus_arg + gamma*mult_arg*exp(mult_arg));
+          if (use_var_coefs) {
+              thisRhs(iv, 0) = ( thisaCoef(iv, 0)*alpha*mult_arg 
+                             - beta * (div_x + div_y)
+                             //+ beta*2*plus_arg
+                             + gamma*mult_arg*exp(mult_arg));
+          } else {
+              thisRhs(iv, 0) = ( alpha*mult_arg 
+                             + beta*2*plus_arg 
+                             + gamma*mult_arg*exp(mult_arg));
+          }
+          //pout() << "...    pos RHS aCoef :"<< iv << " " << thisRhs(iv, 0) <<" "<< thisaCoef(iv, 0)  << "\n";
 
         }
       }
@@ -321,6 +373,7 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
     const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
+
     // rhs is cell-centered...
     RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
 
@@ -372,7 +425,6 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
     } // end loop over grids on this level
   } // end loop over levels
 }
-
 
 
 void
@@ -558,7 +610,8 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                                                   1, IntVect::Unit);
         }
 
-        setRHS(tempRHS, a_amrDomains, a_refRatios, a_amrDx,
+        //pout() << "RHS for the grids \n"; 
+        setRHS(tempRHS, a_amrDomains, a_amrGrids, a_refRatios, a_amrDx,
                a_finestLevel);
 
         Vector<IntVectSet> tags(a_finestLevel+1);
@@ -736,7 +789,6 @@ int runSolver()
                        amrDx[0],
                        &ParseBC, alpha, beta, gamma);
 
-
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
       amrSolver->define(amrDomains[0], castFact,
@@ -770,18 +822,36 @@ int runSolver()
                         &bottomSolver, numLevels);
   } else {
       pout() << "...  with VCAMRNonLinearPoisson operator \n";
+
+      bool use_var_coefs = false;
+      ppSolver.query("use_VC", use_var_coefs);
+
       RealVect dxLev = RealVect::Unit;
       dxLev *= amrDx[0]; 
-      aCoef.resize(maxLevel +1);
-      bCoef.resize(maxLevel +1);
-      for (int lev=0; lev<= maxLevel; lev++) {
-          aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
-          bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
-         
-          setACoef(*aCoef[lev], dxLev);
-          setBCoef(*bCoef[lev], dxLev);
+      if (use_var_coefs) {
+          aCoef.resize(maxLevel +1);
+          bCoef.resize(maxLevel +1);
+          for (int lev=0; lev<= maxLevel; lev++) {
+              aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
+              bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
+             
+              setACoef(*aCoef[lev], dxLev);
+              setBCoef(*bCoef[lev], dxLev);
 
-          dxLev /= refRatios[lev];
+              dxLev /= refRatios[lev];
+          }
+      } else {
+          aCoef.resize(maxLevel +1);
+          bCoef.resize(maxLevel +1);
+          for (int lev=0; lev<= maxLevel; lev++) {
+              aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
+              bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
+             
+              setACoef_Trivial(*aCoef[lev]);
+              setBCoef_Trivial(*bCoef[lev]);
+
+              dxLev /= refRatios[lev];
+          }
       }
 
       VCAMRNonLinearPoissonOpFactory opFactory;
@@ -844,7 +914,8 @@ int runSolver()
     error[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
-  setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
+  //pout() << "About to setupRHS\n"; 
+  setRHS(rhs, amrDomains, amrGrids, refRatios, amrDx, finestLevel );
   setExact(exact, amrDomains, refRatios, amrDx, finestLevel );
   // Start with exact solution
   setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
