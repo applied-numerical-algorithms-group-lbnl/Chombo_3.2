@@ -171,9 +171,8 @@ void
 setBCoef(LevelData<FluxBox>& a_bCoef,
          const RealVect& a_dx)
 {
-  DataIterator dit = a_bCoef.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-    {
+    DataIterator dit = a_bCoef.dataIterator();
+    for (dit.begin(); dit.ok(); ++dit) {
       FluxBox& thisBCoef = a_bCoef[dit];
       for (int dir=0; dir<SpaceDim; dir++)
         {
@@ -198,8 +197,50 @@ setBCoef(LevelData<FluxBox>& a_bCoef,
     }
 }
 
+void setNL_piece(Vector<LevelData<FArrayBox>* > a_NL,
+                 Vector<LevelData<FArrayBox>* > a_dNL,
+                 Vector<LevelData<FArrayBox>* > a_u,
+                 int a_finestLevel)
+{
+  CH_TIME("setNL_piece");
+
+  ParmParse pp("solver");
+
+  Real gamma = -1.0;
+  pp.query("gamma", gamma);
+
+  int whichOperator = 0;
+  pp.query("Operator", whichOperator);
+
+  for (int lev=0; lev<=a_finestLevel; lev++) {
+
+    LevelData<FArrayBox>& levelNL   = *(a_NL[lev]);
+    LevelData<FArrayBox>& leveldNL  = *(a_dNL[lev]);
+    LevelData<FArrayBox>& levelU    = *(a_u[lev]);
+
+    DataIterator levelDit = levelNL.dataIterator();
+    for (levelDit.begin(); levelDit.ok(); ++levelDit) {
+        FArrayBox& thisNL    = levelNL[levelDit];
+        FArrayBox& thisdNL   = leveldNL[levelDit];
+        FArrayBox& thisU    = levelU[levelDit];
+
+        BoxIterator bit(thisNL.box());
+        for (bit.begin(); bit.ok(); ++bit) {
+            IntVect iv = bit();
+            //if (whichOperator > 0) {
+                thisNL(iv, 0)  = ( gamma * thisU(iv, 0) * exp( thisU(iv, 0) ) );
+                thisdNL(iv, 0) = ( gamma * (1 + thisU(iv, 0)) * exp( thisU(iv, 0) ) );
+            //} else {
+            //    thisNL(iv, 0)  = 0.0;
+            //    thisdNL(iv, 0) = 0.0;
+            //}
+        }
+    } // end loop over grids on this level
+  } // end loop over levels
+}
 
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
+            Vector<LevelData<FArrayBox>* > a_NL,
             Vector<ProblemDomain>& a_amrDomains,
             Vector<DisjointBoxLayout>& a_amrGrids,
             Vector<int>& a_refRatios,
@@ -235,6 +276,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
     dxLev /= a_refRatios[lev];
 
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
+    LevelData<FArrayBox>& levelU   = *(a_NL[lev]);
     LevelData<FArrayBox>& levelaCoef = *(aCoef[lev]);
     const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
@@ -245,6 +287,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
     for (levelDit.begin(); levelDit.ok(); ++levelDit)
     {
       FArrayBox& thisRhs = levelRhs[levelDit];
+      FArrayBox& thisU   = levelU[levelDit];
       FArrayBox& thisaCoef = levelaCoef[levelDit];
 
       if (s_probtype == exact)
@@ -267,12 +310,11 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
           if (use_var_coefs) {
               thisRhs(iv, 0) = ( thisaCoef(iv, 0)*alpha*mult_arg 
                              - beta * (div_x + div_y)
-                             //+ beta*2*plus_arg
-                             + gamma*mult_arg*exp(mult_arg));
+                             + thisU(iv, 0));
           } else {
               thisRhs(iv, 0) = ( alpha*mult_arg 
                              + beta*2*plus_arg 
-                             + gamma*mult_arg*exp(mult_arg));
+                             + thisU(iv, 0));
           }
           //pout() << "...    pos RHS aCoef :"<< iv << " " << thisRhs(iv, 0) <<" "<< thisaCoef(iv, 0)  << "\n";
 
@@ -372,7 +414,6 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
   {
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
     const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
-
 
     // rhs is cell-centered...
     RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
@@ -600,18 +641,28 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
       bool moreLevels = true;
       while (moreLevels)
       {
+        pout() << "Im before the RHS setup\n";
         // tag based on grad(rhs)
         // first need to allocate RHS
         Vector<LevelData<FArrayBox>* > tempRHS(a_finestLevel+1, NULL);
+        Vector<LevelData<FArrayBox>* > tempNL(a_finestLevel+1, NULL);
+        Vector<LevelData<FArrayBox>* > tempdNL(a_finestLevel+1, NULL);
+        Vector<LevelData<FArrayBox>* > tempExact(a_finestLevel+1, NULL);
         for (int lev=0; lev<= a_finestLevel; lev++)
         {
           // note that we add a ghost cell to simplify gradients
           tempRHS[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
                                                   1, IntVect::Unit);
+          tempNL[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
+                                                  1, IntVect::Unit);
+          tempdNL[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
+                                                  1, IntVect::Unit);
+          tempExact[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
+                                                  1, IntVect::Unit);
         }
-
-        //pout() << "RHS for the grids \n"; 
-        setRHS(tempRHS, a_amrDomains, a_amrGrids, a_refRatios, a_amrDx,
+        setExact(tempExact, a_amrDomains, a_refRatios, a_amrDx, a_finestLevel);
+        setNL_piece(tempNL, tempdNL, tempExact, a_finestLevel);
+        setRHS(tempRHS, tempNL, a_amrDomains, a_amrGrids, a_refRatios, a_amrDx,
                a_finestLevel);
 
         Vector<IntVectSet> tags(a_finestLevel+1);
@@ -745,7 +796,9 @@ int runSolver()
   Vector<Real> amrDx;
   int finestLevel, maxLevel;
 
+  pout() << "Bef setupGrids\n";
   setupGrids(amrGrids, amrDomains, refRatios, amrDx, maxLevel, finestLevel);
+  pout() << "After setupGrids\n";
 
   // initialize solver
   bool FASmultigrid = true;
@@ -769,6 +822,20 @@ int runSolver()
   ppSolver.query("Operator", whichOperator);
 
   int numLevels = finestLevel+1;
+
+  // NonLinear portion
+  Vector<LevelData<FArrayBox>* > exact(maxLevel+1, NULL);
+  Vector<LevelData<FArrayBox>* > NLfunc(maxLevel+1, NULL);
+  Vector<LevelData<FArrayBox>* > NLdfunc(maxLevel+1, NULL);
+  for (int lev=0; lev<= maxLevel; lev++) {
+      const DisjointBoxLayout& levelGrids = amrGrids[lev];
+      exact[lev]   = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
+      NLfunc[lev]  = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
+      NLdfunc[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
+  }
+
+  setExact(exact, amrDomains, refRatios, amrDx, maxLevel);
+  setNL_piece(NLfunc, NLdfunc, exact, maxLevel);
 
   if (whichOperator == 1) {
       pout() << "...  with AMRNonLinearPoisson operator \n";
@@ -896,29 +963,24 @@ int runSolver()
   // END setupSolver
 
   // allocate solution and RHS, initialize RHS
-  //int numLevels = amrGrids.size();
-  Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
-  Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
+  Vector<LevelData<FArrayBox>* > phi(maxLevel+1, NULL);
+  Vector<LevelData<FArrayBox>* > rhs(maxLevel+1, NULL);
   // this is for convenience
-  Vector<LevelData<FArrayBox>* > resid(numLevels, NULL);
-  Vector<LevelData<FArrayBox>* > exact(numLevels, NULL);
-  Vector<LevelData<FArrayBox>* > error(numLevels, NULL);
+  Vector<LevelData<FArrayBox>* > resid(maxLevel+1, NULL);
+  Vector<LevelData<FArrayBox>* > error(maxLevel+1, NULL);
 
-  for (int lev=0; lev<=finestLevel; lev++)
+  for (int lev=0; lev<=maxLevel; lev++)
   {
     const DisjointBoxLayout& levelGrids = amrGrids[lev];
     phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
     resid[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-    exact[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
     error[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
-  //pout() << "About to setupRHS\n"; 
-  setRHS(rhs, amrDomains, amrGrids, refRatios, amrDx, finestLevel );
-  setExact(exact, amrDomains, refRatios, amrDx, finestLevel );
+  setRHS(rhs, NLfunc, amrDomains, amrGrids, refRatios, amrDx, maxLevel);
   // Start with exact solution
-  setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
+  //setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
 
   // do solve
   int iterations = 1;
