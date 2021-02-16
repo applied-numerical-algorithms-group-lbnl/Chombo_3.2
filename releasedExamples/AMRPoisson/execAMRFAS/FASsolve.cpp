@@ -31,6 +31,7 @@
 #include "memusage.H"
 #include "computeNorm.H"
 #include "FABView.H"
+#include "external_NLfunc.H"
 
 #include "UsingNamespace.H"
 
@@ -197,47 +198,6 @@ setBCoef(LevelData<FluxBox>& a_bCoef,
     }
 }
 
-void setNL_piece(Vector<LevelData<FArrayBox>* > a_NL,
-                 Vector<LevelData<FArrayBox>* > a_dNL,
-                 Vector<LevelData<FArrayBox>* > a_u,
-                 int a_finestLevel)
-{
-  CH_TIME("setNL_piece");
-
-  ParmParse pp("solver");
-
-  Real gamma = -1.0;
-  pp.query("gamma", gamma);
-
-  int whichOperator = 0;
-  pp.query("Operator", whichOperator);
-
-  for (int lev=0; lev<=a_finestLevel; lev++) {
-
-    LevelData<FArrayBox>& levelNL   = *(a_NL[lev]);
-    LevelData<FArrayBox>& leveldNL  = *(a_dNL[lev]);
-    LevelData<FArrayBox>& levelU    = *(a_u[lev]);
-
-    DataIterator levelDit = levelNL.dataIterator();
-    for (levelDit.begin(); levelDit.ok(); ++levelDit) {
-        FArrayBox& thisNL    = levelNL[levelDit];
-        FArrayBox& thisdNL   = leveldNL[levelDit];
-        FArrayBox& thisU    = levelU[levelDit];
-
-        BoxIterator bit(thisNL.box());
-        for (bit.begin(); bit.ok(); ++bit) {
-            IntVect iv = bit();
-            //if (whichOperator > 0) {
-                thisNL(iv, 0)  = ( gamma * thisU(iv, 0) * exp( thisU(iv, 0) ) );
-                thisdNL(iv, 0) = ( gamma * (1 + thisU(iv, 0)) * exp( thisU(iv, 0) ) );
-            //} else {
-            //    thisNL(iv, 0)  = 0.0;
-            //    thisdNL(iv, 0) = 0.0;
-            //}
-        }
-    } // end loop over grids on this level
-  } // end loop over levels
-}
 
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
             Vector<LevelData<FArrayBox>* > a_NL,
@@ -844,17 +804,15 @@ int runSolver()
       // solving nonlinear poisson problem here
       Real alpha = 0.0;
       Real beta  = 1.0;
-      Real gamma = -1.0;
 
       ppSolver.query("alpha", alpha);
       ppSolver.query("beta", beta);
-      ppSolver.query("gamma", gamma);
 
       opFactory.define(amrDomains[0],
                        amrGrids,
                        refRatios,
                        amrDx[0],
-                       &ParseBC, alpha, beta, gamma);
+                       &ParseBC, alpha, beta);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
@@ -926,18 +884,16 @@ int runSolver()
       // solving VC nonlinear poisson problem here
       Real alpha = 0.0;
       Real beta  = 1.0;
-      Real gamma = -1.0;
 
       ppSolver.query("alpha", alpha);
       ppSolver.query("beta", beta);
-      ppSolver.query("gamma", gamma);
 
       opFactory.define(amrDomains[0],
                        amrGrids,
                        refRatios,
                        amrDx[0],
                        &ParseBC, alpha, aCoef, 
-                       beta, bCoef, gamma);
+                       beta, bCoef);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

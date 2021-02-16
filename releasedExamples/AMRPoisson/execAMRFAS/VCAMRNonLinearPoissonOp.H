@@ -95,15 +95,13 @@ public:
 
   /// For tga stuff
   virtual void setAlphaAndBeta(const Real& a_alpha,
-                               const Real& a_beta,
-                               const Real& a_gamma);
+                               const Real& a_beta);
 
   /// Also calls reset lambda
   virtual void setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                         const RefCountedPtr<LevelData<FluxBox>   >& a_bCoef,
                         const Real& a_alpha,
-                        const Real& a_beta,
-                        const Real& a_gamma);
+                        const Real& a_beta);
 
   /// Should be called before the relaxation parameter is needed.
   virtual void resetLambda();
@@ -291,8 +289,7 @@ public:
               const Real&                                    a_alpha,
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
               const Real&                                    a_beta,
-              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-              const Real&                                    a_gamma);
+              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef);
 
   //! Defines a factory for VCAMRNonLinearPoissonOp which allows the operators to
   //! allocate their own coefficient data. \f$\alpha\f$ and \f$\beta\f$
@@ -337,8 +334,6 @@ private:
   Real m_alpha;
   Real m_beta;
  
-  Real m_gamma;
-
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;
 

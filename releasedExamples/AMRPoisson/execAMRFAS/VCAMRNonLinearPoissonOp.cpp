@@ -25,6 +25,8 @@
 #include "VCAMRNonLinearPoissonOpF_F.H"
 #include "DebugOut.H"
 
+#include "external_NLfunc.H"
+
 #include "NamespaceHeader.H"
 
 void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
@@ -39,6 +41,11 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
   phi.exchangeNoOverlap(m_exchangeCopier);
 
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
+
+  LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
+  LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
+  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+
   DataIterator dit = phi.dataIterator();
   {
     CH_TIME("VCAMRNonLinearPoissonOp::residualIBC");
@@ -83,7 +90,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
 #if CH_SPACEDIM >= 4
                           This_will_not_compile!
 #endif
-                          CHF_CONST_REAL(m_gamma),
+                          CHF_CONST_FRA(a_nlfunc[dit]),
                           CHF_BOX(region),
                           CHF_CONST_REAL(m_dx));
     } // end loop over boxes
@@ -171,23 +178,26 @@ void VCAMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&      a_lhs,
   applyOpNoBoundary(a_lhs, a_phi);
 }
 
-void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs,
-                                        const LevelData<FArrayBox>& a_phi)
+void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
+                                                const LevelData<FArrayBox>& a_phi)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::applyOpNoBoundary");
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
 
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
-  DataIterator dit = phi.dataIterator();
 
+  LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
+  LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
+  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+
+  DataIterator dit = phi.dataIterator();
   phi.exchange(phi.interval(), m_exchangeCopier);
 
   for (dit.begin(); dit.ok(); ++dit)
     {
       const Box& region = dbl[dit()];
       const FluxBox& thisBCoef = (*m_bCoef)[dit];
-
 #if CH_SPACEDIM == 1
       FORT_VCNLCOMPUTEOP1D
 #elif CH_SPACEDIM == 2
@@ -214,7 +224,7 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs
 #if CH_SPACEDIM >= 4
                          This_will_not_compile!
 #endif
-                         CHF_CONST_REAL(m_gamma),
+                         CHF_CONST_FRA(a_nlfunc[dit]),
                          CHF_BOX(region),
                          CHF_CONST_REAL(m_dx));
     } // end loop over boxes
@@ -254,6 +264,11 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCo
 
   homogeneousCFInterp(a_phiFine);
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
+
+  LevelData<FArrayBox>  a_nlfunc(dblFine, 1, IntVect::Zero);
+  LevelData<FArrayBox>  a_nlDfunc(dblFine, 1, IntVect::Zero);
+  setNL_Level(a_nlfunc, a_nlDfunc, a_phiFine);
+
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
       FArrayBox& phi = a_phiFine[dit];
@@ -267,6 +282,8 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCo
       FArrayBox&       phi = a_phiFine[dit];
       const FArrayBox& rhs = a_rhsFine[dit];
       FArrayBox&       res = a_resCoarse[dit];
+
+      FArrayBox&       nlfunc = a_nlfunc[dit];
 
       const FArrayBox& thisACoef = (*m_aCoef)[dit];
       const FluxBox&   thisBCoef = (*m_bCoef)[dit];
@@ -304,19 +321,17 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCo
 #if CH_SPACEDIM >= 4
                            This_will_not_compile!
 #endif
-                           CHF_CONST_REAL(m_gamma),
+                           CHF_CONST_FRA_SHIFT(nlfunc, iv),
                            CHF_BOX_SHIFT(region, iv),
                            CHF_CONST_REAL(m_dx));
     }
 }
 
 void VCAMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
-                                              const Real& a_beta,
-                                              const Real& a_gamma)
+                                              const Real& a_beta)
 {
   m_alpha  = a_alpha;
   m_beta   = a_beta;
-  m_gamma  = a_gamma;
 
   // Our relaxation parameter is officially out of date!
   m_lambdaNeedsResetting = true;
@@ -325,12 +340,10 @@ void VCAMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
 void VCAMRNonLinearPoissonOp::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                                const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
                                const Real&                                 a_alpha,
-                               const Real&                                 a_beta,
-                               const Real&                                 a_gamma)
+                               const Real&                                 a_beta)
 {
   m_alpha = a_alpha;
   m_beta  = a_beta;
-  m_gamma = a_gamma;
 
   m_aCoef = a_aCoef;
   m_bCoef = a_bCoef;
@@ -498,6 +511,10 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
 
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
 
+  LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
+  LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
+  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+
   DataIterator dit = a_phi.dataIterator();
 
   // do first red, then black passes
@@ -559,7 +576,8 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
 #if CH_SPACEDIM >= 4
                                  This_will_not_compile!
 #endif
-                                 CHF_CONST_REAL(m_gamma),
+                                 CHF_CONST_FRA(a_nlfunc[dit]),
+                                 CHF_CONST_FRA(a_nlDfunc[dit]),
                                  CHF_CONST_FRA(m_lambda[dit]),
                                  CHF_CONST_INT(whichPass));
         } // end loop through grids
@@ -689,8 +707,7 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
                                    const Real&                           a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                           a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-                                   const Real&                           a_gamma)
+                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::define");
 
@@ -734,7 +751,6 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
 
-  m_gamma = a_gamma;
 }
 //-----------------------------------------------------------------------
 
@@ -769,9 +785,9 @@ VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
     }
   }
   // these choices are weird and not in accordance with the default Lapl
-  Real alpha = 1.0, beta = 1.0, gamma = 0.0;
+  Real alpha = 1.0, beta = 1.0;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef, gamma);
+         alpha, aCoef, beta, bCoef);
 }
 //-----------------------------------------------------------------------
 
@@ -835,7 +851,6 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
-  newOp->m_gamma = m_gamma;
 
   if (a_depth == 0)
     {
@@ -964,7 +979,6 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
-  newOp->m_gamma = m_gamma;
 
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
@@ -1007,7 +1021,6 @@ void VCAMRNonLinearPoissonOpFactory::setDefaultValues()
   // Default to Laplacian operator
   m_alpha = 0.0;
   m_beta = -1.0;
-  m_gamma = 0.0;
 
   m_coefficient_average_type = CoarseAverage::arithmetic;
 }

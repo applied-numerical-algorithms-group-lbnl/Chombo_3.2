@@ -131,11 +131,11 @@ public:
                         const LevelData<FArrayBox>& a_rhs,
                         bool                        a_homogeneous = false);
 
-  virtual void residualNF(LevelData<FArrayBox>& a_lhs,
-                          LevelData<FArrayBox>& a_phi,
+  virtual void residualNF(LevelData<FArrayBox>&       a_lhs,
+                          LevelData<FArrayBox>&       a_phi,
                           const LevelData<FArrayBox>* a_phiCoarse,
                           const LevelData<FArrayBox>& a_rhs,
-                          bool a_homogeneous = false);
+                          bool                        a_homogeneous = false);
 
  /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void residualI(LevelData<FArrayBox>&       a_lhs,
@@ -162,7 +162,7 @@ public:
                         const LevelData<FArrayBox>& a_phi,
                         bool                        a_homogeneous = false);
 
-  virtual void applyOpNoBoundary(LevelData<FArrayBox>& a_lhs,
+  virtual void applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
                                  const LevelData<FArrayBox>& a_rhs) ;
 
   virtual void create(LevelData<FArrayBox>&       a_lhs,
@@ -447,7 +447,7 @@ public:
   /*@}*/
 
   /// public constants
-  Real m_alpha, m_beta, m_aCoef, m_bCoef, m_gamma;
+  Real m_alpha, m_beta, m_aCoef, m_bCoef;
 
   // needed for homogeneous interpolation
   // set by the factory
@@ -562,8 +562,7 @@ public:
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
               Real                             a_alpha = 0.0,
-              Real                             a_beta  = 1.0,
-              Real                             a_gamma = 0.0);
+              Real                             a_beta  = 1.0);
 
   // regular multigrid definition function --deprecated
   void define(const ProblemDomain&     a_domain,
@@ -572,8 +571,7 @@ public:
               BCHolder                 a_bc,
               int                      a_maxDepth = -1,
               Real                     a_alpha = 0.0,
-              Real                     a_beta  = 1.0,
-              Real                     a_gamma = 0.0);
+              Real                     a_beta  = 1.0);
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
@@ -597,8 +595,6 @@ private:
 
   Real m_alpha;
   Real m_beta;
-
-  Real m_gamma;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
