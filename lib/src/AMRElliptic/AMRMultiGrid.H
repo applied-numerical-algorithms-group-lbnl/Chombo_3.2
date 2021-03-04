@@ -478,17 +478,17 @@ protected:
 
   Vector<AMRLevelOp<T>*>          m_op;
   Vector<MultiGrid<T> *>          m_mg;
-  Vector<T*>  m_correction;
-  Vector<T*>  m_residual;
-  Vector<T*>  m_resC;
-  Vector<Copier> m_resCopier;
-  Vector<Copier> m_reverseCopier;
+  Vector<T*>                      m_correction;
+  Vector<T*>                      m_residual;
+  Vector<T*>                      m_resC;
+  Vector<Copier>                  m_resCopier;
+  Vector<Copier>                  m_reverseCopier;
 
-  NoOpSolver<T>    m_nosolve;
+  NoOpSolver<T>                   m_nosolve;
 
-  LinearSolver<T>* m_bottomSolver;
+  LinearSolver<T>*                m_bottomSolver;
 
-  Vector<char> m_hasInitBeenCalled;
+  Vector<char>                    m_hasInitBeenCalled;
 
   void clear();
 

@@ -93,7 +93,7 @@ void FASMultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
                              const ProblemDomain& a_domain,
                              int                  a_maxDepth,
                              MGLevelOp<T>*        a_finestOp)
-                             {
+{
   MultiGrid<T>::define(a_factory,a_bottomSolver,a_domain, a_maxDepth, a_finestOp);
 
   // Should never be homogeneous in the FAS case, as we're solving the full problem
@@ -236,8 +236,6 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
 
     // Subtract off new phi to get actual correction from this level
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, 1.0);
-
-
   }
   else
   {
@@ -254,7 +252,6 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
       this->m_op[depth+1]->create(phi_coarse,  *(this->m_correction[depth+1]));
       this->m_op[depth+1]->setToZero(phi_coarse);
 
-
       this->m_op[depth+1]->create(op_coarse,  *(this->m_correction[depth+1]));
       this->m_op[depth+1]->setToZero(op_coarse);
 
@@ -268,7 +265,6 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
 
 
       // restrict this new phi to a coarser grid and store it in 'm_correction'
-
       T scratch;
       this->m_op[depth]->create(scratch,  a_phi);
       this->m_op[depth]->setToZero(scratch);
