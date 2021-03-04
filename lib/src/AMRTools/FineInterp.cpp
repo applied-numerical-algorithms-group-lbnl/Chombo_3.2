@@ -353,7 +353,9 @@ FineInterp::interpGridData(BaseFab<Real>& a_fine,
       BaseFab<Real>& dir_slope = slopes[dir];
 
       Box linearInterpBox = b;
-      if (m_boundary_limit_type == PCInterp)
+      // AF super big ugly hack for issue related to strong steep ydir grads + dumb GC
+      //if (m_boundary_limit_type == PCInterp)
+      if (dir == 1)
         {
           linearInterpBox = b_mod;
         }
