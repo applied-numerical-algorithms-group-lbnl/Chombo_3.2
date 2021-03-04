@@ -601,7 +601,6 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
       bool moreLevels = true;
       while (moreLevels)
       {
-        pout() << "Im before the RHS setup\n";
         // tag based on grad(rhs)
         // first need to allocate RHS
         Vector<LevelData<FArrayBox>* > tempRHS(a_finestLevel+1, NULL);
@@ -756,9 +755,7 @@ int runSolver()
   Vector<Real> amrDx;
   int finestLevel, maxLevel;
 
-  pout() << "Bef setupGrids\n";
   setupGrids(amrGrids, amrDomains, refRatios, amrDx, maxLevel, finestLevel);
-  pout() << "After setupGrids\n";
 
   // initialize solver
   bool FASmultigrid = true;

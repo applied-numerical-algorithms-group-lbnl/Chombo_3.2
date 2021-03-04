@@ -626,9 +626,9 @@ void AMRNonLinearPoissonOp::setToZero(LevelData<FArrayBox>& a_lhs)
 }
 
 void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
-                         const LevelData<FArrayBox>* a_eCoarse,
-                         const LevelData<FArrayBox>& a_residual,
-                         int                         a_iterations)
+                                    const LevelData<FArrayBox>* a_eCoarse,
+                                    const LevelData<FArrayBox>& a_residual,
+                                    int                         a_iterations)
 {
   if (a_eCoarse != NULL)
   {
@@ -639,14 +639,15 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
     homogeneousCFInterp(a_e);
   }
 
+  pout() <<"....      calling AMRNonLinearPoissonOp::relaxNF \n";
   relax(a_e, a_residual, a_iterations);
 
 }
 
 // ---------------------------------------------------------
 void AMRNonLinearPoissonOp::relax(LevelData<FArrayBox>&       a_e,
-                         const LevelData<FArrayBox>& a_residual,
-                         int                         a_iterations)
+                                  const LevelData<FArrayBox>& a_residual,
+                                  int                         a_iterations)
 {
   CH_TIME("AMRNonLinearPoissonOp::relax");
 

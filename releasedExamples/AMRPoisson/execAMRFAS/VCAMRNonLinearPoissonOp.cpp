@@ -138,11 +138,12 @@ void VCAMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
 }
 
 void VCAMRNonLinearPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
-                        LevelData<FArrayBox>& a_phi,
-                        LevelData<FArrayBox>* a_phiCoarse,
-                        bool a_homogeneous)
+                                        LevelData<FArrayBox>& a_phi,
+                                        LevelData<FArrayBox>* a_phiCoarse,
+                                        bool a_homogeneous)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::applyOpMg");
+  pout() << "VCAMRNonLinearPoissonOp::applyOpMg \n";
 
   // Do CF stuff if we have a coarser level that's not just a single grid cell
    if (a_phiCoarse != NULL)
@@ -231,7 +232,7 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lh
 }
 
 void VCAMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
-                                      const LevelData<FArrayBox>& a_phiFine)
+                                        const LevelData<FArrayBox>& a_phiFine)
 {
   //    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
 
@@ -240,7 +241,7 @@ void VCAMRNonLinearPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
   {
     const FArrayBox&       phiFine = a_phiFine[dit];
-    FArrayBox&       phiCoarse = a_phiCoarse[dit];
+    FArrayBox&             phiCoarse = a_phiCoarse[dit];
 
     Box region = dblFine.get(dit());
     const IntVect& iv = region.smallEnd();
@@ -525,7 +526,7 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
       {
         CH_TIME("VCAMRNonLinearPoissonOp::levelGSRB::homogeneousCFInterp");
         // For FAS, we don't want to do this?
-//        homogeneousCFInterp(a_phi);
+        //        homogeneousCFInterp(a_phi);
       }
 
       {
