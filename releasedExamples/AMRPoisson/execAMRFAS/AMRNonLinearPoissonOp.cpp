@@ -19,12 +19,13 @@
 #include "AMRMultiGrid.H"
 #include "Misc.H"
 #include "computeSum.H"
-#include "external_NLfunc.H"
 
 #include "AMRNonLinearPoissonOp.H"
 #include "AMRNonLinearPoissonOpF_F.H"
 #include "CCProjectorF_F.H"
 #include "MACProjectorF_F.H"
+
+#include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
 
@@ -279,7 +280,8 @@ void AMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = phi.dataIterator();
   {
@@ -391,7 +393,8 @@ void AMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = phi.dataIterator();
   int nbox=dit.size();
@@ -430,7 +433,8 @@ void AMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = phi.dataIterator();
   int nbox=dit.size();
@@ -639,7 +643,6 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
     homogeneousCFInterp(a_e);
   }
 
-  pout() <<"....      calling AMRNonLinearPoissonOp::relaxNF \n";
   relax(a_e, a_residual, a_iterations);
 
 }
@@ -745,7 +748,8 @@ void AMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCo
 
   LevelData<FArrayBox>  a_nlfunc(dblFine, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dblFine, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phiFine);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phiFine);
 
   DataIterator dit = a_phiFine.dataIterator();
   int nbox=dit.size();
@@ -1322,7 +1326,8 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
@@ -1445,7 +1450,8 @@ void AMRNonLinearPoissonOp::levelGS( LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  ExternalObj a_extObj;
+  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();

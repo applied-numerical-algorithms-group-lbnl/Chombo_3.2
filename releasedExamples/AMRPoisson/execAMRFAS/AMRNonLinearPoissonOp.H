@@ -25,6 +25,8 @@
 #include "AMRIO.H"
 #include "CornerCopier.H"
 
+#include "ExternalObj.H"
+
 #include "NamespaceHeader.H"
 
 ///

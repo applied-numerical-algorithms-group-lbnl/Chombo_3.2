@@ -25,8 +25,6 @@
 #include "VCAMRNonLinearPoissonOpF_F.H"
 #include "DebugOut.H"
 
-#include "external_NLfunc.H"
-
 #include "NamespaceHeader.H"
 
 void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
@@ -44,7 +42,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = phi.dataIterator();
   {
@@ -102,7 +100,7 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
 // then smooths with a couple of passes of levelGSRB
 // Preconditionior is not used for FAS solve !!
 void VCAMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
-                              const LevelData<FArrayBox>& a_rhs)
+                                      const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::preCond");
 
@@ -143,7 +141,6 @@ void VCAMRNonLinearPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
                                         bool a_homogeneous)
 {
   CH_TIME("VCAMRNonLinearPoissonOp::applyOpMg");
-  pout() << "VCAMRNonLinearPoissonOp::applyOpMg \n";
 
   // Do CF stuff if we have a coarser level that's not just a single grid cell
    if (a_phiCoarse != NULL)
@@ -161,9 +158,9 @@ void VCAMRNonLinearPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
 
 }
 
-void VCAMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&      a_lhs,
-                             const LevelData<FArrayBox>& a_phi,
-                             bool                        a_homogeneous )
+void VCAMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
+                                       const LevelData<FArrayBox>& a_phi,
+                                       bool                        a_homogeneous )
 {
   CH_TIME("VCAMRNonLinearPoissonOp::applyOpI");
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
@@ -190,7 +187,7 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lh
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = phi.dataIterator();
   phi.exchange(phi.interval(), m_exchangeCopier);
@@ -268,7 +265,7 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCo
 
   LevelData<FArrayBox>  a_nlfunc(dblFine, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dblFine, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phiFine);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phiFine);
 
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
@@ -339,9 +336,9 @@ void VCAMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
 }
 
 void VCAMRNonLinearPoissonOp::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
-                               const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
-                               const Real&                                 a_alpha,
-                               const Real&                                 a_beta)
+                                       const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
+                                       const Real&                                 a_alpha,
+                                       const Real&                                 a_beta)
 {
   m_alpha = a_alpha;
   m_beta  = a_beta;
@@ -355,36 +352,32 @@ void VCAMRNonLinearPoissonOp::setCoefs(const RefCountedPtr<LevelData<FArrayBox> 
 
 void VCAMRNonLinearPoissonOp::resetLambda()
 {
-  if (m_lambdaNeedsResetting)
-  {
-    Real scale = 1.0 / (m_dx*m_dx);
+  if (m_lambdaNeedsResetting) {
+      Real scale = 1.0 / (m_dx*m_dx);
 
-    // Compute it box by box, point by point
-    for (DataIterator dit = m_lambda.dataIterator(); dit.ok(); ++dit)
-    {
-      FArrayBox&       lambdaFab = m_lambda[dit];
-      const FArrayBox& aCoefFab  = (*m_aCoef)[dit];
-      const FluxBox&   bCoefFab  = (*m_bCoef)[dit];
-      const Box& curBox = lambdaFab.box();
+      // Compute it box by box, point by point
+      for (DataIterator dit = m_lambda.dataIterator(); dit.ok(); ++dit) {
+          FArrayBox&       lambdaFab = m_lambda[dit];
+          const FArrayBox& aCoefFab  = (*m_aCoef)[dit];
+          const FluxBox&   bCoefFab  = (*m_bCoef)[dit];
+          const Box& curBox          = lambdaFab.box();
 
-      // Compute the diagonal term
-      lambdaFab.copy(aCoefFab);
-      lambdaFab.mult(m_alpha);
+          // Compute the diagonal term
+          lambdaFab.copy(aCoefFab);
+          lambdaFab.mult(m_alpha);
 
-      for (int dir = 0; dir < SpaceDim; dir++)
-      {
-        FORT_SUMFACESNL(CHF_FRA(lambdaFab),
-            CHF_CONST_REAL(m_beta),
-            CHF_CONST_FRA(bCoefFab[dir]),
-            CHF_BOX(curBox),
-            CHF_CONST_INT(dir),
-            CHF_CONST_REAL(scale));
+          for (int dir = 0; dir < SpaceDim; dir++) {
+              FORT_SUMFACESNL(CHF_FRA(lambdaFab),
+                  CHF_CONST_REAL(m_beta),
+                  CHF_CONST_FRA(bCoefFab[dir]),
+                  CHF_BOX(curBox),
+                  CHF_CONST_INT(dir),
+                  CHF_CONST_REAL(scale));
+          }
       }
 
-    }
-
-    // Lambda is reset.
-    m_lambdaNeedsResetting = false;
+      // Lambda is reset.
+      m_lambdaNeedsResetting = false;
   }
 }
 
@@ -407,9 +400,9 @@ void VCAMRNonLinearPoissonOp::computeLambda()
 //   now. - TJL (12/10/2007)
 //
 void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
-                            const LevelData<FArrayBox>&        a_phi,
-                            LevelData<FArrayBox>&              a_residual,
-                            AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
+                                     const LevelData<FArrayBox>&        a_phi,
+                                     LevelData<FArrayBox>&              a_residual,
+                                     AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
   CH_TIMERS("VCAMRNonLinearPoissonOp::reflux");
   CH_TIMER("VCAMRNonLinearPoissonOp::reflux::incrementCoarse", t2);
@@ -421,26 +414,23 @@ void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFin
   CH_START(t2);
 
   DataIterator dit = a_phi.dataIterator();
-  for (dit.reset(); dit.ok(); ++dit)
-  {
-    const FArrayBox& coarfab   = a_phi[dit];
-    const FluxBox&   coarBCoef = (*m_bCoef)[dit];
-    const Box&       gridBox   = a_phi.getBoxes()[dit];
+  for (dit.reset(); dit.ok(); ++dit) {
+      const FArrayBox& coarfab   = a_phi[dit];
+      const FluxBox&   coarBCoef = (*m_bCoef)[dit];
+      const Box&       gridBox   = a_phi.getBoxes()[dit];
 
-    if (m_levfluxreg.hasCF(dit()))
-    {
-      for (int idir = 0; idir < SpaceDim; idir++)
-      {
-        FArrayBox coarflux;
-        Box faceBox = surroundingNodes(gridBox, idir);
+      if (m_levfluxreg.hasCF(dit())) {
+          for (int idir = 0; idir < SpaceDim; idir++) {
+                FArrayBox coarflux;
+                Box faceBox = surroundingNodes(gridBox, idir);
 
-        getFlux(coarflux, coarfab, coarBCoef, faceBox, idir);
+                getFlux(coarflux, coarfab, coarBCoef, faceBox, idir);
 
-        Real scale = 1.0;
-        m_levfluxreg.incrementCoarse(coarflux, scale,dit(),
-            interv, interv, idir);
+                Real scale = 1.0;
+                m_levfluxreg.incrementCoarse(coarflux, scale,dit(),
+                                             interv, interv, idir);
+          }
       }
-    }
   }
 
   CH_STOP(t2);
@@ -462,20 +452,16 @@ void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFin
 
   DataIterator ditf = a_phiFine.dataIterator();
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
-  for (ditf.reset(); ditf.ok(); ++ditf)
-    {
+  for (ditf.reset(); ditf.ok(); ++ditf) {
       const FArrayBox& phifFab   = a_phiFine[ditf];
       const FluxBox&   fineBCoef = (*(finerAMRPOp->m_bCoef))[ditf];
       const Box&       gridbox   = dblFine.get(ditf());
 
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
+      for (int idir = 0; idir < SpaceDim; idir++) {
           //int normalGhost = phiGhost[idir];
           SideIterator sit;
-          for (sit.begin(); sit.ok(); sit.next())
-            {
-              if (m_levfluxreg.hasCF(ditf(), sit()))
-                {
+          for (sit.begin(); sit.ok(); sit.next()) {
+              if (m_levfluxreg.hasCF(ditf(), sit())) {
                   Side::LoHiSide hiorlo = sit();
                   Box fluxBox = bdryBox(gridbox,idir,hiorlo,1);
 
@@ -486,10 +472,10 @@ void VCAMRNonLinearPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFin
                   Real scale = 1.0;
                   m_levfluxreg.incrementFine(fineflux, scale, ditf(),
                                              interv, interv, idir, hiorlo);
-                }
-            }
-        }
-    }
+              }
+          }
+      }
+  }
 
   CH_STOP(t3);
 
@@ -514,7 +500,7 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  setNL_Level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
 
   DataIterator dit = a_phi.dataIterator();
 
@@ -708,7 +694,8 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
                                    const Real&                           a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                           a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef)
+                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+                                   ExternalObj* a_extObj, NL_level a_nllevel)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::define");
 
@@ -752,6 +739,8 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
 
+  m_extObj   = a_extObj;
+  m_nllevel  = a_nllevel;
 }
 //-----------------------------------------------------------------------
 
@@ -760,16 +749,18 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
 // for operators.
 void
 VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
-                             const Vector<DisjointBoxLayout>& a_grids,
-                             const Vector<int>&               a_refRatios,
-                             const Real&                      a_coarsedx,
-                             BCHolder                         a_bc,
-                             const IntVect&                   a_ghostVect)
+                                       const Vector<DisjointBoxLayout>& a_grids,
+                                       const Vector<int>&               a_refRatios,
+                                       const Real&                      a_coarsedx,
+                                       BCHolder                         a_bc,
+                                       const IntVect&                   a_ghostVect)
 {
   // This just allocates coefficient data, sets alpha = beta = 1, and calls
   // the other define() method.
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef(a_grids.size());
-  Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef(a_grids.size());
+  Vector<RefCountedPtr<LevelData<FArrayBox> > >  aCoef(a_grids.size());
+  Vector<RefCountedPtr<LevelData<FluxBox> > >    bCoef(a_grids.size());
+  ExternalObj* extObj;
+  NL_level  nllevel; 
   for (int i = 0; i < a_grids.size(); ++i)
   {
     aCoef[i] = RefCountedPtr<LevelData<FArrayBox> >(
@@ -788,7 +779,7 @@ VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
   // these choices are weird and not in accordance with the default Lapl
   Real alpha = 1.0, beta = 1.0;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef);
+         alpha, aCoef, beta, bCoef, extObj, nllevel);
 }
 //-----------------------------------------------------------------------
 
@@ -801,35 +792,29 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
   Real dxCrse = -1.0;
 
   int ref;
-
-  for (ref = 0; ref < m_domains.size(); ref++)
-    {
-      if (a_indexSpace.domainBox() == m_domains[ref].domainBox())
-      {
-        break;
+  for (ref = 0; ref < m_domains.size(); ref++) {
+      if (a_indexSpace.domainBox() == m_domains[ref].domainBox()) {
+          break;
       }
-    }
+  }
 
   CH_assert(ref !=  m_domains.size()); // didn't find domain
 
-  if (ref > 0)
-  {
-    dxCrse = m_dx[ref-1];
+  if (ref > 0) {
+      dxCrse = m_dx[ref-1];
   }
 
   ProblemDomain domain(m_domains[ref]);
   Real dx = m_dx[ref];
   int coarsening = 1;
 
-  for (int i = 0; i < a_depth; i++)
-    {
+  for (int i = 0; i < a_depth; i++) {
       coarsening *= 2;
       domain.coarsen(2);
-    }
+  }
 
-  if (coarsening > 1 && !m_boxes[ref].coarsenable(coarsening*VCAMRNonLinearPoissonOp::s_maxCoarse))
-  {
-    return NULL;
+  if (coarsening > 1 && !m_boxes[ref].coarsenable(coarsening*VCAMRNonLinearPoissonOp::s_maxCoarse)) {
+      return NULL;
   }
 
   dx *= coarsening;
@@ -840,27 +825,25 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
   Copier ex = m_exchangeCopiers[ref];
   CFRegion cfregion = m_cfregion[ref];
 
-  if (coarsening > 1)
-  {
-    ex.coarsen(coarsening);
-    cfregion.coarsen(coarsening);
+  if (coarsening > 1) {
+      ex.coarsen(coarsening);
+      cfregion.coarsen(coarsening);
   }
 
   VCAMRNonLinearPoissonOp* newOp = new VCAMRNonLinearPoissonOp;
 
   newOp->define(layout, dx, domain, m_bc, ex, cfregion);
 
-  newOp->m_alpha = m_alpha;
-  newOp->m_beta  = m_beta;
+  newOp->m_alpha     = m_alpha;
+  newOp->m_beta      = m_beta;
+  newOp->m_extObj   = m_extObj; 
+  newOp->m_nllevel   = m_nllevel;
 
-  if (a_depth == 0)
-    {
+  if (a_depth == 0) {
       // don't need to coarsen anything for this
       newOp->m_aCoef = m_aCoef[ref];
       newOp->m_bCoef = m_bCoef[ref];
-    }
-  else
-    {
+  } else {
       // need to coarsen coefficients
       RefCountedPtr<LevelData<FArrayBox> > aCoef( new LevelData<FArrayBox> );
       RefCountedPtr<LevelData<FluxBox> > bCoef( new LevelData<FluxBox> );
@@ -872,7 +855,6 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
       // may want to switch to harmonic averaging at some point
       CoarseAverage averager(m_aCoef[ref]->getBoxes(),
                              layout, aCoef->nComp(), coarsening);
-
       CoarseAverageFace faceAverager(m_bCoef[ref]->getBoxes(),
                                      bCoef->nComp(), coarsening);
 
@@ -913,12 +895,10 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
   int nComp = 1;
 
   // Find number of comps from m_bCoef, which should be defined on at least one level
-  for (int lev = 0; lev <m_bCoef.size(); lev++)
-  {
-    if (m_bCoef[lev] != NULL)
-    {
-      nComp = m_bCoef[lev]->nComp();
-      break;
+  for (int lev = 0; lev <m_bCoef.size(); lev++) {
+    if (m_bCoef[lev] != NULL) {
+        nComp = m_bCoef[lev]->nComp();
+        break;
     }
 
     // Should never reach this point
@@ -927,25 +907,20 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
 
   int ref;
 
-  for (ref = 0; ref< m_domains.size(); ref++)
-    {
-      if (a_indexSpace.domainBox() == m_domains[ref].domainBox())
-      {
-        break;
+  for (ref = 0; ref< m_domains.size(); ref++) {
+      if (a_indexSpace.domainBox() == m_domains[ref].domainBox()) {
+          break;
       }
-    }
+  }
 
   if (ref == 0) {
       // coarsest AMR level
-      if (m_domains.size() == 1 || !m_boxes[1].isClosed()) 
-        {
+      if (m_domains.size() == 1 || !m_boxes[1].isClosed())  {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0]);
-        }
-      else
-        {
+      } else {
           // finer level exists but no coarser
           int dummyRat = 1;  // argument so compiler can find right function
           int refToFiner = m_refRatios[0]; // actual refinement ratio
@@ -984,9 +959,11 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
 
-  if (newOp->m_aCoef != NULL)
-  {
-    newOp->computeLambda();
+  newOp->m_extObj    = m_extObj; 
+  newOp->m_nllevel   = m_nllevel;
+
+  if (newOp->m_aCoef != NULL) {
+      newOp->computeLambda();
   }
 
   newOp->m_dxCrse = dxCrse;
@@ -999,14 +976,12 @@ int VCAMRNonLinearPoissonOpFactory::refToFiner(const ProblemDomain& a_domain) co
   int retval = -1;
   bool found = false;
 
-  for (int ilev = 0; ilev < m_domains.size(); ilev++)
-    {
-      if (m_domains[ilev].domainBox() == a_domain.domainBox())
-        {
+  for (int ilev = 0; ilev < m_domains.size(); ilev++) {
+      if (m_domains[ilev].domainBox() == a_domain.domainBox()) {
           retval = m_refRatios[ilev];
           found = true;
-        }
-    }
+      }
+  }
 
   if (!found)
     {
@@ -1037,23 +1012,24 @@ VCAMRNonLinearPoissonOp::finerOperatorChanged(const MGLevelOp<LevelData<FArrayBo
 
   // Perform multigrid coarsening on the operator data.
   LevelData<FArrayBox>& acoefCoar = *m_aCoef;
+  LevelData<FluxBox>&   bcoefCoar = *m_bCoef;
   const LevelData<FArrayBox>& acoefFine = *(op.m_aCoef);
-  LevelData<FluxBox>& bcoefCoar = *m_bCoef;
-  const LevelData<FluxBox>& bcoefFine = *(op.m_bCoef);
-  if (a_coarseningFactor != 1)
-  {
-    CoarseAverage cellAverage(acoefFine.disjointBoxLayout(),
-                              acoefCoar.disjointBoxLayout(),
-                              1, a_coarseningFactor);
-    for (DataIterator dit = acoefCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
-      acoefCoar[dit()].setVal(0.);
-    cellAverage.averageToCoarse(acoefCoar, acoefFine);
+  const LevelData<FluxBox>&   bcoefFine = *(op.m_bCoef);
 
-    CoarseAverageFace faceAverage(bcoefFine.disjointBoxLayout(),
-                                  1, a_coarseningFactor);
-    for (DataIterator dit = bcoefCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
-      bcoefCoar[dit()].setVal(0.);
-    faceAverage.averageToCoarse(bcoefCoar, bcoefFine);
+  if (a_coarseningFactor != 1) {
+      // aCoef
+      CoarseAverage cellAverage(acoefFine.disjointBoxLayout(),
+                                acoefCoar.disjointBoxLayout(),
+                                1, a_coarseningFactor);
+      for (DataIterator dit = acoefCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
+        acoefCoar[dit()].setVal(0.);
+      cellAverage.averageToCoarse(acoefCoar, acoefFine);
+      // bCoef
+      CoarseAverageFace faceAverage(bcoefFine.disjointBoxLayout(),
+                                    1, a_coarseningFactor);
+      for (DataIterator dit = bcoefCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
+        bcoefCoar[dit()].setVal(0.);
+      faceAverage.averageToCoarse(bcoefCoar, bcoefFine);
   }
 
   // Handle inter-box ghost cells.

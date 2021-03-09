@@ -31,7 +31,7 @@
 #include "memusage.H"
 #include "computeNorm.H"
 #include "FABView.H"
-#include "external_NLfunc.H"
+#include "ExternalObj.H"
 
 #include "UsingNamespace.H"
 
@@ -620,7 +620,8 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                                                   1, IntVect::Unit);
         }
         setExact(tempExact, a_amrDomains, a_refRatios, a_amrDx, a_finestLevel);
-        setNL_piece(tempNL, tempdNL, tempExact, a_finestLevel);
+        ExternalObj a_extObj = ExternalObj();
+        a_extObj.NonLinear_piece(tempNL, tempdNL, tempExact, a_finestLevel);
         setRHS(tempRHS, tempNL, a_amrDomains, a_amrGrids, a_refRatios, a_amrDx,
                a_finestLevel);
 
@@ -792,7 +793,8 @@ int runSolver()
   }
 
   setExact(exact, amrDomains, refRatios, amrDx, maxLevel);
-  setNL_piece(NLfunc, NLdfunc, exact, maxLevel);
+  ExternalObj a_extObj = ExternalObj();
+  a_extObj.NonLinear_piece(NLfunc, NLdfunc, exact, maxLevel);
 
   if (whichOperator == 1) {
       pout() << "...  with AMRNonLinearPoisson operator \n";
@@ -885,12 +887,16 @@ int runSolver()
       ppSolver.query("alpha", alpha);
       ppSolver.query("beta", beta);
 
+      ExternalObj a_extObj = ExternalObj();
+      NL_level functTmp = &ExternalObj::NonLinear_level;
+
       opFactory.define(amrDomains[0],
                        amrGrids,
                        refRatios,
                        amrDx[0],
                        &ParseBC, alpha, aCoef, 
-                       beta, bCoef);
+                       beta, bCoef, 
+                       &a_extObj, functTmp);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

@@ -19,14 +19,21 @@
 
 #include "NamespaceHeader.H"
 
-void setNL_Level(LevelData<FArrayBox>&  a_NL,
-                 LevelData<FArrayBox>&  a_dNL,
-                 const LevelData<FArrayBox>&  a_u);
+class ExternalObj
+{
+public:
+    ExternalObj();
+    virtual ~ExternalObj();
 
-void setNL_piece(Vector<LevelData<FArrayBox>* > a_NL,
-                 Vector<LevelData<FArrayBox>* > a_dNL,
-                 Vector<LevelData<FArrayBox>* > a_u,
-                 int a_finestLevel);
+    void NonLinear_level(LevelData<FArrayBox>&  a_NL,
+                     LevelData<FArrayBox>&  a_dNL,
+                     const LevelData<FArrayBox>&  a_u);
+
+    void NonLinear_piece(Vector<LevelData<FArrayBox>* > a_NL,
+                     Vector<LevelData<FArrayBox>* > a_dNL,
+                     Vector<LevelData<FArrayBox>* > a_u,
+                     int a_finestLevel);
+};
 
 #include "NamespaceFooter.H"
 #endif

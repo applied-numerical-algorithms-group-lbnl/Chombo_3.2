@@ -13,9 +13,13 @@
 
 #include "AMRNonLinearPoissonOp.H"
 #include "CoefficientInterpolator.H"
+#include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
 
+#define MEMBER_FUNC_PTR(object,ptrToMember) ((object).*(ptrToMember))
+
+typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u);
 ///
 /**
    Operator for solving variable-coefficient
@@ -213,6 +217,9 @@ public:
       }
     
   }
+
+  NL_level m_nllevel = nullptr;
+  ExternalObj* m_extObj = nullptr;
   
 protected:
   LayoutData<CFIVS> m_loCFIVS[SpaceDim];
@@ -252,6 +259,7 @@ protected:
                        const Box&       a_facebox,
                        int              a_dir,
                        int              a_ref = 1) const ;
+
 };
 
 ///
@@ -289,7 +297,8 @@ public:
               const Real&                                    a_alpha,
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
               const Real&                                    a_beta,
-              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef);
+              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+              ExternalObj* m_extObj, NL_level a_nllevel);
 
   //! Defines a factory for VCAMRNonLinearPoissonOp which allows the operators to
   //! allocate their own coefficient data. \f$\alpha\f$ and \f$\beta\f$
@@ -336,6 +345,10 @@ private:
  
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;
+  
+  // Problem SPECIFIC
+  NL_level m_nllevel    = nullptr;
+  ExternalObj* m_extObj = nullptr;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_lambda;
 

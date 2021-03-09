@@ -8,13 +8,19 @@
  */
 #endif
 
-#include "external_NLfunc.H"
+#include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
 
-void setNL_Level(LevelData<FArrayBox>&        a_NL,
-                 LevelData<FArrayBox>&        a_dNL,
-                 const LevelData<FArrayBox>&  a_u)
+ExternalObj::ExternalObj()
+{}
+
+ExternalObj::~ExternalObj()
+{}
+
+void ExternalObj::NonLinear_level(LevelData<FArrayBox>&        a_NL,
+                              LevelData<FArrayBox>&        a_dNL,
+                              const LevelData<FArrayBox>&  a_u)
 {
   CH_TIME("setNL_Level");
 
@@ -26,8 +32,8 @@ void setNL_Level(LevelData<FArrayBox>&        a_NL,
   DataIterator levelDit = a_NL.dataIterator();
   for (levelDit.begin(); levelDit.ok(); ++levelDit) {
 
-      FArrayBox& thisNL    = a_NL[levelDit];
-      FArrayBox& thisdNL   = a_dNL[levelDit];
+      FArrayBox& thisNL          = a_NL[levelDit];
+      FArrayBox& thisdNL         = a_dNL[levelDit];
       const FArrayBox& thisU     = a_u[levelDit];
 
       BoxIterator bit(thisNL.box());
@@ -40,7 +46,7 @@ void setNL_Level(LevelData<FArrayBox>&        a_NL,
   } // end loop over grids on this level
 }
 
-void setNL_piece(Vector<LevelData<FArrayBox>* > a_NL,
+void ExternalObj::NonLinear_piece(Vector<LevelData<FArrayBox>* > a_NL,
                  Vector<LevelData<FArrayBox>* > a_dNL,
                  Vector<LevelData<FArrayBox>* > a_u,
                  int a_finestLevel)
@@ -84,3 +90,5 @@ void setNL_piece(Vector<LevelData<FArrayBox>* > a_NL,
     } // end loop over grids on this level
   } // end loop over levels
 }
+
+#include "NamespaceFooter.H" 
