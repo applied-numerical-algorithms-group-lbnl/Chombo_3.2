@@ -238,7 +238,6 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
     LevelData<FArrayBox>& levelU   = *(a_NL[lev]);
     LevelData<FArrayBox>& levelaCoef = *(aCoef[lev]);
-    const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
     // rhs is cell-centered...
     RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
