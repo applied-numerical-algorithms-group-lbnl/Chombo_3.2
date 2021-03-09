@@ -29,6 +29,9 @@
 
 #include "NamespaceHeader.H"
 
+#define MEMBER_FUNC_PTR(object,ptrToMember) ((object).*(ptrToMember))
+
+typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u);
 ///
 /**
    Operator for solving (alpha I + beta*Laplacian)(phi) = rho
@@ -451,6 +454,9 @@ public:
   /// public constants
   Real m_alpha, m_beta, m_aCoef, m_bCoef;
 
+  NL_level m_nllevel = nullptr;
+  ExternalObj* m_extObj = nullptr;
+
   // needed for homogeneous interpolation
   // set by the factory
   Real  m_dxCrse;
@@ -563,6 +569,8 @@ public:
               const Vector<int>&               a_refRatios,
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
+              ExternalObj*                     a_extObj,  
+              NL_level                         a_nllevel, 
               Real                             a_alpha = 0.0,
               Real                             a_beta  = 1.0);
 
@@ -597,6 +605,10 @@ private:
 
   Real m_alpha;
   Real m_beta;
+
+  // Problem SPECIFIC
+  NL_level m_nllevel    = nullptr;
+  ExternalObj* m_extObj = nullptr;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;

@@ -13,14 +13,9 @@
 
 #include "AMRNonLinearPoissonOp.H"
 #include "CoefficientInterpolator.H"
-#include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
 
-#define MEMBER_FUNC_PTR(object,ptrToMember) ((object).*(ptrToMember))
-
-typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u);
-///
 /**
    Operator for solving variable-coefficient
    (alpha * aCoef(x) * I - beta * Div(bCoef(x) . Grad)) phi = rho
@@ -218,9 +213,6 @@ public:
     
   }
 
-  NL_level m_nllevel = nullptr;
-  ExternalObj* m_extObj = nullptr;
-  
 protected:
   LayoutData<CFIVS> m_loCFIVS[SpaceDim];
   LayoutData<CFIVS> m_hiCFIVS[SpaceDim];

@@ -807,11 +807,16 @@ int runSolver()
       ppSolver.query("alpha", alpha);
       ppSolver.query("beta", beta);
 
+      ExternalObj a_extObj = ExternalObj();
+      NL_level functTmp = &ExternalObj::NonLinear_level;
+
       opFactory.define(amrDomains[0],
                        amrGrids,
                        refRatios,
                        amrDx[0],
-                       &ParseBC, alpha, beta);
+                       &ParseBC, 
+                       &a_extObj, functTmp, 
+                       alpha, beta);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

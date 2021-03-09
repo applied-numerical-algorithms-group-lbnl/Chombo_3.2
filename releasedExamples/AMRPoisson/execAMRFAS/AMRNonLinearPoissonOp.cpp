@@ -280,8 +280,7 @@ void AMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi); 
 
   DataIterator dit = phi.dataIterator();
   {
@@ -393,8 +392,7 @@ void AMRNonLinearPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi); 
 
   DataIterator dit = phi.dataIterator();
   int nbox=dit.size();
@@ -433,8 +431,7 @@ void AMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi); 
 
   DataIterator dit = phi.dataIterator();
   int nbox=dit.size();
@@ -748,8 +745,7 @@ void AMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCo
 
   LevelData<FArrayBox>  a_nlfunc(dblFine, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dblFine, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phiFine);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phiFine); 
 
   DataIterator dit = a_phiFine.dataIterator();
   int nbox=dit.size();
@@ -1326,8 +1322,7 @@ void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi); 
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
@@ -1450,8 +1445,7 @@ void AMRNonLinearPoissonOp::levelGS( LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  ExternalObj a_extObj;
-  a_extObj.NonLinear_level(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi); 
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
@@ -1775,12 +1769,14 @@ void AMRNonLinearPoissonOp::getFlux(FArrayBox&       a_flux,
 // ---------------------------------------------------------
 //  AMR Factory define function
 void AMRNonLinearPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain,
-                                 const Vector<DisjointBoxLayout>& a_grids,
-                                 const Vector<int>&               a_refRatios,
-                                 const Real&                      a_coarsedx,
-                                 BCHolder                         a_bc,
-                                 Real                             a_alpha,
-                                 Real                             a_beta)
+                                          const Vector<DisjointBoxLayout>& a_grids,
+                                          const Vector<int>&               a_refRatios,
+                                          const Real&                      a_coarsedx,
+                                          BCHolder                         a_bc,
+                                          ExternalObj*                     a_extObj,
+                                          NL_level                         a_nllevel,
+                                          Real                             a_alpha,
+                                          Real                             a_beta)
 {
   CH_TIME("AMRNonLinearPoissonOpFactory::define");
 
@@ -1820,6 +1816,9 @@ void AMRNonLinearPoissonOpFactory::define(const ProblemDomain&             a_coa
 
   m_alpha = a_alpha;
   m_beta = a_beta;
+
+  m_extObj   = a_extObj;
+  m_nllevel  = a_nllevel;
 }
 
 // ---------------------------------------------------------
@@ -1833,16 +1832,19 @@ void AMRNonLinearPoissonOpFactory::define(const ProblemDomain&     a_domain,
                                           Real                     a_beta)
 {
 
+  ExternalObj* extObj;
+  NL_level  nllevel; 
+
   Vector<DisjointBoxLayout> grids(1);
   grids[0] = a_grid;
   Vector<int> refRatio(1, 2);
-  define(a_domain, grids, refRatio, a_dx, a_bc, a_alpha, a_beta);
+  define(a_domain, grids, refRatio, a_dx, a_bc, extObj, nllevel, a_alpha, a_beta);
 }
 
 // ---------------------------------------------------------
 MGLevelOp<LevelData<FArrayBox> >* AMRNonLinearPoissonOpFactory::MGnewOp(const ProblemDomain& a_indexSpace,
-                                                                int                  a_depth,
-                                                                bool                 a_homoOnly)
+                                                                        int                  a_depth,
+                                                                        bool                 a_homoOnly)
 {
   CH_TIME("AMRNonLinearPoissonOpFactory::MGnewOp");
 
@@ -1902,6 +1904,9 @@ MGLevelOp<LevelData<FArrayBox> >* AMRNonLinearPoissonOpFactory::MGnewOp(const Pr
 
   newOp->m_aCoef = m_alpha;
   newOp->m_bCoef = m_beta;
+
+  newOp->m_extObj   = m_extObj; 
+  newOp->m_nllevel   = m_nllevel;
 
   newOp->m_dxCrse = dxCrse;
 
@@ -1978,6 +1983,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRNonLinearPoissonOpFactory::AMRnewOp(const 
 
   newOp->m_aCoef = m_alpha;
   newOp->m_bCoef = m_beta;
+
+  newOp->m_extObj    = m_extObj; 
+  newOp->m_nllevel   = m_nllevel;
 
   newOp->m_dxCrse = dxCrse;
 
