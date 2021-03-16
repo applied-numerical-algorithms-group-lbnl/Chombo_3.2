@@ -19,8 +19,11 @@ ExternalObj::~ExternalObj()
 {}
 
 void ExternalObj::NonLinear_level(LevelData<FArrayBox>&        a_NL,
-                              LevelData<FArrayBox>&        a_dNL,
-                              const LevelData<FArrayBox>&  a_u)
+                                  LevelData<FArrayBox>&        a_dNL,
+                                  const LevelData<FArrayBox>&  a_u;
+                                  LevelData<FArrayBox>&        a_B,
+                                  LevelData<FArrayBox>&        a_Pi,
+                                  LevelData<FArrayBox>&        a_zb)
 {
   CH_TIME("setNL_Level");
 
@@ -46,10 +49,11 @@ void ExternalObj::NonLinear_level(LevelData<FArrayBox>&        a_NL,
   } // end loop over grids on this level
 }
 
+
 void ExternalObj::NonLinear_piece(Vector<LevelData<FArrayBox>* > a_NL,
-                 Vector<LevelData<FArrayBox>* > a_dNL,
-                 Vector<LevelData<FArrayBox>* > a_u,
-                 int a_finestLevel)
+                                  Vector<LevelData<FArrayBox>* > a_dNL,
+                                  Vector<LevelData<FArrayBox>* > a_u,
+                                  int a_finestLevel)
 {
   CH_TIME("setNL_piece");
 

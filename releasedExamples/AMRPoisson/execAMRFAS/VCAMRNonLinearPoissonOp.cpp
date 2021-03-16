@@ -42,7 +42,8 @@ void VCAMRNonLinearPoissonOp::residualI(LevelData<FArrayBox>&   a_lhs,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi,
+                                        *m_B, *m_Pi, *m_zb);
 
   DataIterator dit = phi.dataIterator();
   {
@@ -187,7 +188,8 @@ void VCAMRNonLinearPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lh
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi,
+                                        *m_B, *m_Pi, *m_zb);
 
   DataIterator dit = phi.dataIterator();
   phi.exchange(phi.interval(), m_exchangeCopier);
@@ -265,7 +267,8 @@ void VCAMRNonLinearPoissonOp::restrictResidual(LevelData<FArrayBox>&     a_resCo
 
   LevelData<FArrayBox>  a_nlfunc(dblFine, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dblFine, 1, IntVect::Zero);
-  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phiFine);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phiFine,
+                                        *m_B, *m_Pi, *m_zb);
 
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
@@ -500,7 +503,8 @@ void VCAMRNonLinearPoissonOp::levelGSRB(LevelData<FArrayBox>&       a_phi,
 
   LevelData<FArrayBox>  a_nlfunc(dbl, 1, IntVect::Zero);
   LevelData<FArrayBox>  a_nlDfunc(dbl, 1, IntVect::Zero);
-  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi);
+  MEMBER_FUNC_PTR(*m_extObj, m_nllevel)(a_nlfunc, a_nlDfunc, a_phi,
+                                        *m_B, *m_Pi, *m_zb);
 
   DataIterator dit = a_phi.dataIterator();
 
@@ -695,7 +699,10 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                           a_beta,
                                    Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-                                   ExternalObj* a_extObj, NL_level a_nllevel)
+                                   ExternalObj* a_extObj, NL_level a_nllevel,
+                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
+                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
+                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::define");
 
@@ -741,6 +748,11 @@ void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coars
 
   m_extObj   = a_extObj;
   m_nllevel  = a_nllevel;
+
+  m_B  = a_B;  // Gap Height
+  m_Pi = a_Pi; // Overb Press  
+  m_zb = a_zb; // Bed Elevation
+
 }
 //-----------------------------------------------------------------------
 
@@ -759,6 +771,9 @@ VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
   // the other define() method.
   Vector<RefCountedPtr<LevelData<FArrayBox> > >  aCoef(a_grids.size());
   Vector<RefCountedPtr<LevelData<FluxBox> > >    bCoef(a_grids.size());
+  Vector<RefCountedPtr<LevelData<FArrayBox> > >  B(a_grids.size());  // Gap Height
+  Vector<RefCountedPtr<LevelData<FArrayBox> > >  Pri(a_grids.size());// Overb Press  
+  Vector<RefCountedPtr<LevelData<FArrayBox> > >  zb(a_grids.size()); // Bed Elevation
   ExternalObj* extObj;
   NL_level  nllevel; 
   for (int i = 0; i < a_grids.size(); ++i)
@@ -768,18 +783,30 @@ VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&   a_coarseDomain,
     bCoef[i] = RefCountedPtr<LevelData<FluxBox> >(
                  new LevelData<FluxBox>(a_grids[i], 1, a_ghostVect));
 
+    B[i]   = RefCountedPtr<LevelData<FArrayBox> >(
+                 new LevelData<FArrayBox>(a_grids[i], 1, a_ghostVect));
+    Pri[i] = RefCountedPtr<LevelData<FArrayBox> >(
+                 new LevelData<FArrayBox>(a_grids[i], 1, a_ghostVect));
+    zb[i]  = RefCountedPtr<LevelData<FArrayBox> >(
+                 new LevelData<FArrayBox>(a_grids[i], 1, a_ghostVect));
+
     // Initialize the a and b coefficients to 1 for starters.
     for (DataIterator dit = aCoef[i]->dataIterator(); dit.ok(); ++dit)
     {
       (*aCoef[i])[dit()].setVal(1.0);
       for (int idir = 0; idir < SpaceDim; ++idir)
         (*bCoef[i])[dit()][idir].setVal(1.0);
+
+      (*B[i])[dit()].setVal(1.0);
+      (*Pri[i])[dit()].setVal(1.0);
+      (*zb[i])[dit()].setVal(1.0);
     }
   }
   // these choices are weird and not in accordance with the default Lapl
   Real alpha = 1.0, beta = 1.0;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef, extObj, nllevel);
+         alpha, aCoef, beta, bCoef, extObj, nllevel,
+         B, Pri, zb);
 }
 //-----------------------------------------------------------------------
 
@@ -831,24 +858,36 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
   }
 
   VCAMRNonLinearPoissonOp* newOp = new VCAMRNonLinearPoissonOp;
-
   newOp->define(layout, dx, domain, m_bc, ex, cfregion);
 
-  newOp->m_alpha     = m_alpha;
-  newOp->m_beta      = m_beta;
-  newOp->m_extObj   = m_extObj; 
-  newOp->m_nllevel   = m_nllevel;
+  newOp->m_alpha       = m_alpha;
+  newOp->m_beta        = m_beta;
+
+  newOp->m_extObj      = m_extObj; 
+  newOp->m_nllevel     = m_nllevel;
 
   if (a_depth == 0) {
       // don't need to coarsen anything for this
       newOp->m_aCoef = m_aCoef[ref];
       newOp->m_bCoef = m_bCoef[ref];
+      // Problem SPECIFIC
+      newOp->m_B  = m_B[ref];  // Gap Height
+      newOp->m_Pi = m_Pi[ref]; // Overb Press  
+      newOp->m_zb = m_zb[ref]; // Bed Elevation
   } else {
       // need to coarsen coefficients
       RefCountedPtr<LevelData<FArrayBox> > aCoef( new LevelData<FArrayBox> );
       RefCountedPtr<LevelData<FluxBox> > bCoef( new LevelData<FluxBox> );
       aCoef->define(layout, m_aCoef[ref]->nComp(), m_aCoef[ref]->ghostVect());
       bCoef->define(layout, m_bCoef[ref]->nComp(), m_bCoef[ref]->ghostVect());
+
+      // Problem SPECIFIC
+      RefCountedPtr<LevelData<FArrayBox> > B( new LevelData<FArrayBox> );
+      RefCountedPtr<LevelData<FArrayBox> > Pri( new LevelData<FArrayBox> );
+      RefCountedPtr<LevelData<FArrayBox> > zb( new LevelData<FArrayBox> );
+      B->define(layout,   m_B[ref]->nComp(),  m_B[ref]->ghostVect());
+      Pri->define(layout, m_Pi[ref]->nComp(), m_Pi[ref]->ghostVect());
+      zb->define(layout,  m_zb[ref]->nComp(), m_zb[ref]->ghostVect());
 
       // average coefficients to coarser level
       // for now, do this with a CoarseAverage --
@@ -858,15 +897,30 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
       CoarseAverageFace faceAverager(m_bCoef[ref]->getBoxes(),
                                      bCoef->nComp(), coarsening);
 
+      CoarseAverage averagerB(m_B[ref]->getBoxes(),
+                             layout, B->nComp(), coarsening);
+      CoarseAverage averagerPi(m_Pi[ref]->getBoxes(),
+                             layout, Pri->nComp(), coarsening);
+      CoarseAverage averagerZb(m_zb[ref]->getBoxes(),
+                             layout, zb->nComp(), coarsening);
+
       if (m_coefficient_average_type == CoarseAverage::arithmetic)
         {
           averager.averageToCoarse(*aCoef, *(m_aCoef[ref]));
           faceAverager.averageToCoarse(*bCoef, *(m_bCoef[ref]));
+
+          averagerB.averageToCoarse(*B,   *(m_B[ref]));
+          averagerPi.averageToCoarse(*Pri, *(m_Pi[ref]));
+          averagerZb.averageToCoarse(*zb,  *(m_zb[ref]));
         }
       else if (m_coefficient_average_type == CoarseAverage::harmonic)
         {
           averager.averageToCoarseHarmonic(*aCoef, *(m_aCoef[ref]));
           faceAverager.averageToCoarseHarmonic(*bCoef, *(m_bCoef[ref]));
+
+          averagerB.averageToCoarseHarmonic(*B,   *(m_B[ref]));
+          averagerPi.averageToCoarseHarmonic(*Pri, *(m_Pi[ref]));
+          averagerZb.averageToCoarseHarmonic(*zb,  *(m_zb[ref]));
         }
       else
         {
@@ -875,6 +929,11 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::MGnewOp(const 
 
       newOp->m_aCoef = aCoef;
       newOp->m_bCoef = bCoef;
+
+      // Problem SPECIFIC
+      newOp->m_B  = B;   // Gap Height
+      newOp->m_Pi = Pri; // Overb Press  
+      newOp->m_zb = zb;  // Bed Elevation
     }
 
   newOp->computeLambda();
@@ -959,8 +1018,13 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
 
-  newOp->m_extObj    = m_extObj; 
-  newOp->m_nllevel   = m_nllevel;
+  newOp->m_extObj     = m_extObj; 
+  newOp->m_nllevel  = m_nllevel;
+
+  // Problem SPECIFIC
+  newOp->m_B  = m_B[ref];  // Gap Height
+  newOp->m_Pi = m_Pi[ref]; // Overb Press  
+  newOp->m_zb = m_zb[ref]; // Bed Elevation
 
   if (newOp->m_aCoef != NULL) {
       newOp->computeLambda();
@@ -1013,8 +1077,17 @@ VCAMRNonLinearPoissonOp::finerOperatorChanged(const MGLevelOp<LevelData<FArrayBo
   // Perform multigrid coarsening on the operator data.
   LevelData<FArrayBox>& acoefCoar = *m_aCoef;
   LevelData<FluxBox>&   bcoefCoar = *m_bCoef;
+  // Problem SPECIFIC
+  LevelData<FArrayBox>& BCoar     = *m_B;  // Gap Height
+  LevelData<FArrayBox>& PiCoar    = *m_Pi; // Overb Press
+  LevelData<FArrayBox>& zbCoar    = *m_zb; // Bed Elevation
+
   const LevelData<FArrayBox>& acoefFine = *(op.m_aCoef);
   const LevelData<FluxBox>&   bcoefFine = *(op.m_bCoef);
+  // Problem SPECIFIC
+  const LevelData<FArrayBox>& BFine  = *(op.m_B);
+  const LevelData<FArrayBox>& PiFine = *(op.m_Pi);
+  const LevelData<FArrayBox>& zbFine = *(op.m_zb);
 
   if (a_coarseningFactor != 1) {
       // aCoef
@@ -1024,6 +1097,27 @@ VCAMRNonLinearPoissonOp::finerOperatorChanged(const MGLevelOp<LevelData<FArrayBo
       for (DataIterator dit = acoefCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
         acoefCoar[dit()].setVal(0.);
       cellAverage.averageToCoarse(acoefCoar, acoefFine);
+      // B
+      CoarseAverage cellAverageB(BFine.disjointBoxLayout(),
+                                BCoar.disjointBoxLayout(),
+                                1, a_coarseningFactor);
+      for (DataIterator dit = BCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
+        BCoar[dit()].setVal(0.);
+      cellAverageB.averageToCoarse(BCoar, BFine);
+      // Pi
+      CoarseAverage cellAveragePi(PiFine.disjointBoxLayout(),
+                                PiCoar.disjointBoxLayout(),
+                                1, a_coarseningFactor);
+      for (DataIterator dit = PiCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
+        PiCoar[dit()].setVal(0.);
+      cellAveragePi.averageToCoarse(PiCoar, PiFine);
+      // zb
+      CoarseAverage cellAverageZb(zbFine.disjointBoxLayout(),
+                                zbCoar.disjointBoxLayout(),
+                                1, a_coarseningFactor);
+      for (DataIterator dit = zbCoar.disjointBoxLayout().dataIterator(); dit.ok(); ++dit)
+        zbCoar[dit()].setVal(0.);
+      cellAverageZb.averageToCoarse(zbCoar, zbFine);
       // bCoef
       CoarseAverageFace faceAverage(bcoefFine.disjointBoxLayout(),
                                     1, a_coarseningFactor);
@@ -1035,6 +1129,11 @@ VCAMRNonLinearPoissonOp::finerOperatorChanged(const MGLevelOp<LevelData<FArrayBo
   // Handle inter-box ghost cells.
   acoefCoar.exchange();
   bcoefCoar.exchange();
+
+  // Problem SPECIFIC
+  BCoar.exchange();
+  PiCoar.exchange();
+  zbCoar.exchange();
 
   // Mark the relaxation coefficient dirty.
   m_lambdaNeedsResetting = true;

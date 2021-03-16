@@ -24,14 +24,15 @@
 #include "CFRegion.H"
 #include "AMRIO.H"
 #include "CornerCopier.H"
-
 #include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
 
 #define MEMBER_FUNC_PTR(object,ptrToMember) ((object).*(ptrToMember))
 
-typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u);
+typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u,
+                                    LevelData<FArrayBox>& a_B, LevelData<FArrayBox>& a_Pi, LevelData<FArrayBox>& a_zb);
+
 ///
 /**
    Operator for solving (alpha I + beta*Laplacian)(phi) = rho
@@ -451,8 +452,18 @@ public:
 
   /*@}*/
 
+  //! This is called on multigrid operators when their AMR operators
+  //! are altered.
+  void finerOperatorChanged(const MGLevelOp<LevelData<FArrayBox> >& a_operator,
+                            int a_coarseningFactor);
+
   /// public constants
   Real m_alpha, m_beta, m_aCoef, m_bCoef;
+
+  // Problem SPECIFIC
+  RefCountedPtr<LevelData<FArrayBox> > m_B;  // Gap Height
+  RefCountedPtr<LevelData<FArrayBox> > m_Pi; // Overb Press
+  RefCountedPtr<LevelData<FArrayBox> > m_zb; // Bed Elevation
 
   NL_level m_nllevel = nullptr;
   ExternalObj* m_extObj = nullptr;
@@ -569,8 +580,11 @@ public:
               const Vector<int>&               a_refRatios,
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
-              ExternalObj*                     a_extObj,  
-              NL_level                         a_nllevel, 
+              ExternalObj*                     a_extObj,
+              NL_level                         a_nllevel,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb,
               Real                             a_alpha = 0.0,
               Real                             a_beta  = 1.0);
 
@@ -607,6 +621,10 @@ private:
   Real m_beta;
 
   // Problem SPECIFIC
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_B;  // Gap Height
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_Pi; // Overb Press
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_zb; // Bed Elevation
+
   NL_level m_nllevel    = nullptr;
   ExternalObj* m_extObj = nullptr;
 

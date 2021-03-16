@@ -809,12 +809,22 @@ int runSolver()
       ExternalObj a_extObj = ExternalObj();
       NL_level functTmp = &ExternalObj::NonLinear_level;
 
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > B (numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pi(numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
+      for (int lev = 0; lev <= m_finest_level; lev++) {
+          B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          Pi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+      }
+
       opFactory.define(amrDomains[0],
                        amrGrids,
                        refRatios,
                        amrDx[0],
                        &ParseBC, 
                        &a_extObj, functTmp, 
+                       B, Pi, zb,
                        alpha, beta);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
@@ -853,6 +863,15 @@ int runSolver()
 
       bool use_var_coefs = false;
       ppSolver.query("use_VC", use_var_coefs);
+
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > B (numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pi(numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
+      for (int lev = 0; lev <= m_finest_level; lev++) {
+          B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          Pi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+      }
 
       RealVect dxLev = RealVect::Unit;
       dxLev *= amrDx[0]; 
@@ -900,7 +919,8 @@ int runSolver()
                        amrDx[0],
                        &ParseBC, alpha, aCoef, 
                        beta, bCoef, 
-                       &a_extObj, functTmp);
+                       &a_extObj, functTmp,
+                       B, Pi, zb);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

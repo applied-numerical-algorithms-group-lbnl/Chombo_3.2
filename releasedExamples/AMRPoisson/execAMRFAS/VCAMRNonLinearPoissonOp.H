@@ -54,7 +54,6 @@ public:
                        const LevelData<FArrayBox>& a_residual);
 
   // FAS Multigrid needs access to a method which will apply an operator
-  // ANNE
   virtual void applyOpMg(LevelData<FArrayBox>& a_lhs,
                          LevelData<FArrayBox>& a_phi,
                          LevelData<FArrayBox>* a_phiCoarse,
@@ -290,7 +289,10 @@ public:
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
               const Real&                                    a_beta,
               Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-              ExternalObj* m_extObj, NL_level a_nllevel);
+              ExternalObj* m_extObj, NL_level a_nllevel,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
+              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb);
 
   //! Defines a factory for VCAMRNonLinearPoissonOp which allows the operators to
   //! allocate their own coefficient data. \f$\alpha\f$ and \f$\beta\f$
@@ -339,8 +341,12 @@ private:
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;
   
   // Problem SPECIFIC
-  NL_level m_nllevel    = nullptr;
-  ExternalObj* m_extObj = nullptr;
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_B;  // Gap Height
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_Pi; // Overb Press
+  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_zb; // Bed Elevation
+
+  NL_level m_nllevel      = nullptr;
+  ExternalObj* m_extObj   = nullptr;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_lambda;
 
