@@ -691,18 +691,18 @@ VCAMRNonLinearPoissonOpFactory::VCAMRNonLinearPoissonOpFactory()
 //-----------------------------------------------------------------------
 //  AMR Factory define function
 void VCAMRNonLinearPoissonOpFactory::define(const ProblemDomain&         a_coarseDomain,
-                                   const Vector<DisjointBoxLayout>&      a_grids,
-                                   const Vector<int>&                    a_refRatios,
-                                   const Real&                           a_coarsedx,
-                                   BCHolder                              a_bc,
-                                   const Real&                           a_alpha,
-                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
-                                   const Real&                           a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-                                   ExternalObj* a_extObj, NL_level a_nllevel,
-                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
-                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
-                                   Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb)
+                                            const Vector<DisjointBoxLayout>&      a_grids,
+                                            const Vector<int>&                    a_refRatios,
+                                            const Real&                           a_coarsedx,
+                                            BCHolder                              a_bc,
+                                            const Real&                           a_alpha,
+                                            Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
+                                            const Real&                           a_beta,
+                                            Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+                                            ExternalObj* a_extObj, NL_level a_nllevel,
+                                            Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
+                                            Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
+                                            Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb)
 {
   CH_TIME("VCAMRNonLinearPoissonOpFactory::define");
 
@@ -1018,7 +1018,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRNonLinearPoissonOpFactory::AMRnewOp(cons
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
 
-  newOp->m_extObj     = m_extObj; 
+  newOp->m_extObj   = m_extObj; 
   newOp->m_nllevel  = m_nllevel;
 
   // Problem SPECIFIC

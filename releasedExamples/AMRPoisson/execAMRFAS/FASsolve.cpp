@@ -809,12 +809,12 @@ int runSolver()
       ExternalObj a_extObj = ExternalObj();
       NL_level functTmp = &ExternalObj::NonLinear_level;
 
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > B (numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pi(numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > B(numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pressi(numLevels);
       Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
-      for (int lev = 0; lev <= m_finest_level; lev++) {
+      for (int lev = 0; lev <= finestLevel; lev++) {
           B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          Pi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          Pressi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
           zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
       }
 
@@ -824,7 +824,7 @@ int runSolver()
                        amrDx[0],
                        &ParseBC, 
                        &a_extObj, functTmp, 
-                       B, Pi, zb,
+                       B, Pressi, zb,
                        alpha, beta);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
@@ -865,11 +865,11 @@ int runSolver()
       ppSolver.query("use_VC", use_var_coefs);
 
       Vector<RefCountedPtr<LevelData<FArrayBox> > > B (numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pi(numLevels);
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pressi(numLevels);
       Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
-      for (int lev = 0; lev <= m_finest_level; lev++) {
+      for (int lev = 0; lev <= finestLevel; lev++) {
           B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          Pi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
+          Pressi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
           zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
       }
 
@@ -920,7 +920,7 @@ int runSolver()
                        &ParseBC, alpha, aCoef, 
                        beta, bCoef, 
                        &a_extObj, functTmp,
-                       B, Pi, zb);
+                       B, Pressi, zb);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 

@@ -20,7 +20,7 @@ ExternalObj::~ExternalObj()
 
 void ExternalObj::NonLinear_level(LevelData<FArrayBox>&        a_NL,
                                   LevelData<FArrayBox>&        a_dNL,
-                                  const LevelData<FArrayBox>&  a_u;
+                                  const LevelData<FArrayBox>&  a_u,
                                   LevelData<FArrayBox>&        a_B,
                                   LevelData<FArrayBox>&        a_Pi,
                                   LevelData<FArrayBox>&        a_zb)
