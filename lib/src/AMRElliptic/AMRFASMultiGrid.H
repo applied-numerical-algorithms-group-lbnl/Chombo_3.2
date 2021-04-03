@@ -269,6 +269,9 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
         {
           // Set m_residual[l_max] = a_rhs[l_max]
           this->m_op[l_max]->assignLocal( *(this->m_residual[l_max]), *(a_rhs[l_max]) );
+          if (this->m_verbosity > 4 )
+              pout() << " Enter a Vcycle loop \n"; 
+          }
           VCycle( a_phi, a_rhs, l_max, l_max, l_base);
         }
       else 
@@ -386,7 +389,9 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
                                  const Vector<T*>& a_rhs_dummy,
                                  int ilev, int l_max, int l_base )
 {
-  //pout() << "In VCycle: ilev, lmax, lbase ? " << ilev << " " << l_max << " " << l_base ; 
+  if (this->m_verbosity > 4 )
+      pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")\n" ; 
+  }
   if (ilev == l_base)
     {
       CH_TIME("AMRFASMultiGrid::VCycle:coarse_grid_solver");

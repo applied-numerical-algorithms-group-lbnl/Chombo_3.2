@@ -686,6 +686,9 @@ Real AMRMultiGrid<T>::computeAMRResidual(Vector<T*>&       a_resid,
                                          bool              a_computeNorm)
 {
   CH_TIME("AMRMultiGrid::computeAMRResidual");
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid::computeAMRResidual\n"; 
+  }
 
   Real rnorm = 0;
   Real localNorm = 0;
@@ -894,6 +897,9 @@ void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solve");
+  if (m_verbosity > 4) {
+      pout() << " AMRMultiGrid::solve\n";
+  }
   init(a_phi, a_rhs, l_max, l_base);
   solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
   //puts multigrid depth back where it started so the solver can be reused

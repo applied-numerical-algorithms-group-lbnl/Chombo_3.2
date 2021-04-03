@@ -389,6 +389,7 @@ public:
   */
   int  m_depth, m_defaultDepth, m_pre, m_post, m_bottom, m_cycle, m_numMG;
   bool m_homogeneous;
+  int  m_verbosity;
   LinearSolver<T>*  m_bottomSolver;
 
   ///
@@ -441,6 +442,7 @@ MultiGrid<T>::MultiGrid()
    m_post(3),
    m_bottom(0),
    m_cycle(1),
+   m_verbosity(3),
    m_numMG(1),
    m_homogeneous(true),
    m_defined(false)
@@ -466,6 +468,9 @@ void MultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
 {
 
   CH_TIME("MultiGrid::define");
+  if (m_verbosity > 4) {
+      pout() <<"MultiGrid::define\n";
+  }
   clear();
   m_depth = 0;
   m_bottomSolver = a_bottomSolver;
