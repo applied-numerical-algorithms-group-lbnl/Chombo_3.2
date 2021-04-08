@@ -128,7 +128,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   /**
      Necessary to implement FAS correctly
   */
-  virtual void relaxNF(T& a_phi, const T* a_phiCoarse, const T& a_rhs, int a_iterations, int a_depth)
+  virtual void relaxNF(T& a_phi, const T* a_phiCoarse, const T& a_rhs, int a_iterations, int a_depth, bool a_print = false)
   {
           this->relax(a_phi, a_rhs, a_iterations, a_depth);
   }

@@ -615,7 +615,8 @@ void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
                          const LevelData<FArrayBox>* a_eCoarse,
                          const LevelData<FArrayBox>& a_residual,
                          int                         a_iterations,
-                         int                         a_depth)
+                         int                         a_depth,
+                         bool                        a_print)
 {
   if (a_eCoarse != NULL)
   {
