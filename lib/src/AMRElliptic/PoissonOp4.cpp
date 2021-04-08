@@ -178,11 +178,11 @@ Real PoissonOp4::norm(const LevelData<FArrayBox>& a_x, int a_ord)
 
 void PoissonOp4::relax(LevelData<FArrayBox>& a_e,
                        const LevelData<FArrayBox>& a_residual,
-                       int a_iterations)
+                       int a_iterations, int a_depth)
 {
   for (int i=0; i<a_iterations; i++)
   {
-    levelGSRB(a_e, a_residual);
+    levelGSRB(a_e, a_residual, a_iterations, a_depth);
   }
 }
 
@@ -274,7 +274,8 @@ void PoissonOp4::prolongIncrement(LevelData<FArrayBox>& a_phiThisLevel,
 
 /***/
 void PoissonOp4::levelGSRB(LevelData<FArrayBox>& a_phi,
-                           const LevelData<FArrayBox>& a_rhs)
+                           const LevelData<FArrayBox>& a_rhs,
+                           int a_ite, int a_depth)
 {
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());

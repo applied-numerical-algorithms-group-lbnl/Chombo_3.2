@@ -211,7 +211,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
 {
   CH_TIMERS("AMRFASMultiGrid::solveNoInit");
   CH_TIMER("AMRFASMultiGrid::cycle", vtimer);
-
+//  CH_assert(!a_forceHomogeneous); // this is now allowed!
   bool outputIntermediates = false;
 
   this->setBottomSolver( l_max, l_base );
@@ -220,28 +220,28 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
   CH_assert(a_rhs.size() == a_phi.size());
 
   if (a_zeroPhi)
-  for (int ilev = l_base; ilev <=l_max; ++ilev)
+    for (int ilev = l_base; ilev <=l_max; ++ilev)
       {
-    this->m_op[ilev]->setToZero(*(a_phi[ilev]));
+        this->m_op[ilev]->setToZero(*(a_phi[ilev]));
       }
 
-  Real initial_rnorm = 0;
+  Real m_initial_rnorm = 0;
   if ( !m_avoid_norms )
     {
       CH_TIME("Initial AMR Residual");
-      initial_rnorm = this->computeAMRResidual( a_phi, a_rhs, l_max, l_base );
+      m_initial_rnorm = this->computeAMRResidual( a_phi, a_rhs, l_max, l_base );
     }
 
   if (this->m_convergenceMetric != 0.)
     {
-      initial_rnorm = this->m_convergenceMetric;
+      m_initial_rnorm = this->m_convergenceMetric;
     }
 
   // set bottom solver convergence norm and solver tolerance
-  this->m_bottomSolver->setConvergenceMetrics(initial_rnorm, this->m_bottomSolverEpsCushion*this->m_eps);
+  this->m_bottomSolver->setConvergenceMetrics(m_initial_rnorm, this->m_bottomSolverEpsCushion*this->m_eps);
 
-  Real rnorm = initial_rnorm;
-  Real norm_last = 2*initial_rnorm;
+  Real rnorm = m_initial_rnorm;
+  Real norm_last = 2*m_initial_rnorm;
 
   int iter=0;
   if (this->m_verbosity >= 2 && !m_avoid_norms )
@@ -251,7 +251,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
     }
 
   bool goNorm = rnorm > this->m_normThresh || m_avoid_norms;       //iterate if norm is not small enough
-  bool goRedu = rnorm > this->m_eps*initial_rnorm || m_avoid_norms;//iterate if initial norm is not reduced enough
+  bool goRedu = rnorm > this->m_eps*m_initial_rnorm || m_avoid_norms;//iterate if initial norm is not reduced enough
   bool goIter = iter < this->m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < this->m_imin || rnorm <(1-this->m_hang)*norm_last; //iterate if we didn't hang
   bool goMin = iter < this->m_iterMin ; // iterate if iter < min
@@ -269,7 +269,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
         {
           // Set m_residual[l_max] = a_rhs[l_max]
           this->m_op[l_max]->assignLocal( *(this->m_residual[l_max]), *(a_rhs[l_max]) );
-          if (this->m_verbosity > 4 )
+          if (this->m_verbosity > 4 ) {
               pout() << " Enter a Vcycle loop \n"; 
           }
           VCycle( a_phi, a_rhs, l_max, l_max, l_base);
@@ -318,7 +318,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
             }
 
           goNorm = rnorm > this->m_normThresh;                        //keep iterating if norm is not small enough
-          goRedu = rnorm > this->m_eps*initial_rnorm;                 //keep iterating if initial norm is not reduced enough
+          goRedu = rnorm > this->m_eps*m_initial_rnorm;                 //keep iterating if initial norm is not reduced enough
           goHang = iter < this->m_imin || rnorm <(1-this->m_hang)*norm_last;//keep iterating if we didn't hang
         }
       goIter = iter < this->m_iterMax;                            //keep iterating if iter < max iteration count
@@ -389,7 +389,7 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
                                  const Vector<T*>& a_rhs_dummy,
                                  int ilev, int l_max, int l_base )
 {
-  if (this->m_verbosity > 4 )
+  if (this->m_verbosity > 4 ) {
       pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")\n" ; 
   }
   if (ilev == l_base)
@@ -447,7 +447,7 @@ this->m_op[ilev]->write(a_phi[ilev],"zb_fine_phi_0.hdf5");
 #endif
       // Replacing relax with relaxNF
       //     this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_pre );
-      this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(this->m_residual[ilev],"za_fine_res_1.hdf5");
@@ -577,7 +577,7 @@ this->m_op[ilev]->write(this->m_correction[ilev],"zz_fine_res_1.hdf5");
 #endif
       // Replacing relax with relaxNF
       // this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_post );
-      this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(a_phi[ilev],"zl_fine_phi_2.hdf5");

@@ -495,6 +495,7 @@ int PetscSolver<T>::solve_private( T& a_phi,
 #ifdef CH_MPI
   MPI_Barrier(Chombo_MPI::comm);
 #endif
+//  VecView(m_bb,PETSC_VIEWER_STDOUT_WORLD);
   if ( m_snes )
     {
       ierr = SNESSolve( m_snes, m_bb, m_xx );CHKERRQ(ierr);
@@ -507,6 +508,7 @@ int PetscSolver<T>::solve_private( T& a_phi,
   CH_STOP(t3);
   // put solution into output
   CH_START(t4);
+//  VecView(m_xx,PETSC_VIEWER_STDOUT_WORLD);
   ierr = putPetscInChombo( a_phi, m_xx );CHKERRQ(ierr);
   a_phi.exchange();
   CH_STOP(t4);

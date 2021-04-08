@@ -90,7 +90,7 @@ public:
 
   virtual void relax(LevelData<FArrayBox>& a_e,
                      const LevelData<FArrayBox>& a_residual,
-                     int iterations);
+                     int iterations, int depth = 0);
 
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -124,7 +124,8 @@ protected:
   DisjointBoxLayout       m_coarsenedMGrids;
   
   void levelGSRB(LevelData<FArrayBox>& a_e,  
-                 const LevelData<FArrayBox>& a_residual);
+                 const LevelData<FArrayBox>& a_residual,
+                 int a_ite, int a_depth);
 
 };
 

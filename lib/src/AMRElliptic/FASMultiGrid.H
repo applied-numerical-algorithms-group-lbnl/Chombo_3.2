@@ -164,9 +164,9 @@ template <class T>
 void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
 {
   CH_TIME("FASMultigrid::oneCycle");
-  if (m_verbosity > 4) {
+  //if (this->m_verbosity > 4) {
       pout() << "FASMultigrid::oneCycle ( n_depth = "<< this->m_depth <<")\n";
-  }
+  //}
 
   // First need to create coarser versions of phiCoarse at all MG depths
   m_phiCoarse.resize(this->m_depth);
@@ -180,7 +180,7 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
     }
     else
     {
-      if (m_verbosity > 4) {
+      if (this->m_verbosity > 4) {
           pout() << " ... depth ? " << depth <<"\n";
       }
       const T& phiCoarseGridFiner = *m_phiCoarse[depth-1];
@@ -227,33 +227,33 @@ template <class T>
 void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
 {
   CH_TIME("FASMultigrid::cycle");
-  if (m_verbosity > 4) {
+  //if (this->m_verbosity > 4) {
       pout() << "xxx FASMultigrid::cycle, depth = "<< depth;
-  }
+  //}
 
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == this->m_depth-1)
   {
     CH_TIME("FASMultigrid::cycle:bottom-solve");
-    if (m_verbosity > 4) {
+    //if (this->m_verbosity > 4) {
         pout() << "  ... bottom solve !! \n";
-    }
+    //}
 
     // Store the original phi so we can compute the 'correction' later
     this->m_op[0]->setToZero(*this->m_correction[depth]);
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, -1.0);
 
     // On the coarsest level, just do loads of relaxing as the bottom solve
-    this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom);
+    this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom, depth);
 
     // Subtract off new phi to get actual correction from this level
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, 1.0);
   }
   else
   {
-    if (m_verbosity > 4) {
+    //if (this->m_verbosity > 4) {
         pout() << "  ... \n";
-    }
+    //}
     int cycles = this->m_cycle;
     if ( cycles < 0 )
     {
@@ -276,7 +276,7 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, -1.0);
 
       // Relax phi towards actual phi
-      this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre );
+      this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre, depth );
 
 
       // restrict this new phi to a coarser grid and store it in 'm_correction'
@@ -308,7 +308,7 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
       this->m_op[depth  ]->prolongIncrement(a_phi, *(this->m_correction[depth+1]));
 
       // Do some more smoothing of phi on this level
-      this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post);
+      this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post, depth);
 
       // Finally, compute the 'correction' (initial phi on this level - current phi on this level)
       // so we can interpolate it when we get back to  finer levels

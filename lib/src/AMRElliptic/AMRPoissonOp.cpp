@@ -172,7 +172,6 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
   m_use_FAS = false;
  
-  //pout() << "AMRPoissonOp::define use FAS ? " << m_use_FAS << "\n";
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -286,7 +285,8 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
         m_bc(phi[dit], dbl[dit], m_domain, m_dx, a_homogeneous);
       }
   }
-
+  {
+    CH_TIME("residual_no_comm");
   for (dit.begin(); dit.ok(); ++dit)
     {
       const Box& region = dbl[dit];
@@ -298,6 +298,7 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
                           CHF_CONST_REAL(m_alpha),
                           CHF_CONST_REAL(m_beta));
     }
+  }
 }
 
 // ---------------------------------------------------------
@@ -308,7 +309,6 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs)
 {
-
   CH_TIME("AMRPoissonOp::preCond");
 
   // diagonal term of this operator is (alpha - 4 * beta/h/h) in 2D,
@@ -323,7 +323,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
   DataIterator dit = a_phi.dataIterator();
   int nbox = dit.size();
 
-#pragma omp parallel for
+#pragma omp parallel for 
     for(int ibox=0; ibox<nbox; ibox++)
       {
       a_phi[dit[ibox]].copy(a_rhs[dit[ibox]]);
@@ -614,7 +614,8 @@ void AMRPoissonOp::setToZero(LevelData<FArrayBox>& a_lhs)
 void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
                          const LevelData<FArrayBox>* a_eCoarse,
                          const LevelData<FArrayBox>& a_residual,
-                         int                         a_iterations)
+                         int                         a_iterations,
+                         int                         a_depth)
 {
   if (a_eCoarse != NULL)
   {
@@ -627,14 +628,15 @@ void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
       }
   }
 
-  relax(a_e, a_residual, a_iterations);
+  relax(a_e, a_residual, a_iterations, a_depth);
 
 }
 
 // ---------------------------------------------------------
 void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
                          const LevelData<FArrayBox>& a_residual,
-                         int                         a_iterations)
+                         int                         a_iterations,
+                         int                         a_depth)
 {
   CH_TIME("AMRPoissonOp::relax");
 
@@ -646,7 +648,7 @@ void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
           looseGSRB(a_e, a_residual);
           break;
         case 1:
-          levelGSRB(a_e, a_residual);
+          levelGSRB(a_e, a_residual, a_iterations, a_depth);
           break;
         case 2:
           overlapGSRB(a_e, a_residual);
@@ -1316,7 +1318,8 @@ static bool nextColorLoc(IntVect&       a_color,
 /***/
 // ---------------------------------------------------------
 void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
-                              const LevelData<FArrayBox>& a_rhs )
+                              const LevelData<FArrayBox>& a_rhs,
+                              int a_ite, int a_depth )
 {
   CH_TIME("AMRPoissonOp::levelGSRB");
 
@@ -1351,10 +1354,11 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
         else
           MayDay::Abort("exchangeMode");
       }
-#pragma omp parallel
       {
-#pragma omp for
-  for (int ibox=0; ibox < nbox; ibox++)
+        CH_TIME("levelGSRB_color_No_Communication");
+        {
+#pragma omp parallel for
+          for (int ibox=0; ibox < nbox; ibox++)
           {
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
@@ -1380,7 +1384,9 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
                                    CHF_CONST_INT(whichPass));
               }
           } // end loop through grids
+        }
       }//end pragma
+
     } // end loop through red-black
 }
 
@@ -1434,7 +1440,6 @@ void AMRPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
     } // end loop through red-black
 }
 
-/***/
 // ---------------------------------------------------------
 void AMRPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
                              const LevelData<FArrayBox>& a_rhs)
@@ -2071,8 +2076,6 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
   newOp->m_dxCrse = dxCrse;
 
   newOp->m_use_FAS = m_use_FAS;
-
-  //pout() << "AMRPoissonOpFactory::MGnewOp use FAS ? " << m_use_FAS << "\n";
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }

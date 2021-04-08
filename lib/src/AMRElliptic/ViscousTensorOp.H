@@ -272,7 +272,7 @@ public:
 
   virtual void relax(LevelData<FArrayBox>& a_e,
                      const LevelData<FArrayBox>& a_residual,
-                     int iterations);
+                     int iterations, int depth = 0);
 
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,

@@ -122,15 +122,15 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
      A point relaxtion scheme, for example takes the form
      a_correction -= lambda*(L(a_correction) - a_residual).
    */
-  virtual void relax(T& a_correction, const T& a_residual, int a_iterations) = 0 ;
+  virtual void relax(T& a_correction, const T& a_residual, int a_iterations, int a_depth = 0) = 0 ;
 
   /// specialized no-fine relax function, useful for full-multigrid schemes, defaults to regular relax
   /**
      Necessary to implement FAS correctly
   */
-  virtual void relaxNF(T& a_phi, const T* a_phiCoarse, const T& a_rhs, int a_iterations)
+  virtual void relaxNF(T& a_phi, const T* a_phiCoarse, const T& a_rhs, int a_iterations, int a_depth)
   {
-          this->relax(a_phi, a_rhs, a_iterations);
+          this->relax(a_phi, a_rhs, a_iterations, a_depth);
   }
 
   ///
@@ -442,9 +442,9 @@ MultiGrid<T>::MultiGrid()
    m_post(3),
    m_bottom(0),
    m_cycle(1),
-   m_verbosity(3),
    m_numMG(1),
    m_homogeneous(true),
+   m_verbosity(3),
    m_defined(false)
 {
 }
@@ -642,11 +642,11 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
       CH_TIME("Multigrid::cycle:bottom-solve");
       if (m_bottomCells == 1)
         {
-          m_op[depth  ]->relax(correction, residual, 1);
+          m_op[depth  ]->relax(correction, residual, 1, depth);
         }
       else
         {
-          m_op[depth  ]->relax(correction, residual, m_bottom);
+          m_op[depth  ]->relax(correction, residual, m_bottom, depth);
           m_bottomSolver->solve(correction, residual);
         }
       //m_op[depth  ]->relax(correction, residual, 1);
@@ -666,7 +666,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          m_op[depth  ]->relax(correction, residual, m_pre);
+          m_op[depth  ]->relax(correction, residual, m_pre, depth);
 
           for (int img = 0; img < cycles; img++)
             {
@@ -680,11 +680,11 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
               m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
             }
 
-          m_op[depth  ]->relax(correction, residual, m_post);
+          m_op[depth  ]->relax(correction, residual, m_post, depth);
         }
       else
         {
-          m_op[depth  ]->relax( correction, residual, m_pre );
+          m_op[depth  ]->relax( correction, residual, m_pre , depth);
 
           m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
           m_op[depth  ]->setToZero(*(m_correction[depth+1]));
@@ -695,7 +695,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
             }
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          m_op[depth  ]->relax(correction, residual, m_post);
+          m_op[depth  ]->relax(correction, residual, m_post, depth);
         }
     }
 }

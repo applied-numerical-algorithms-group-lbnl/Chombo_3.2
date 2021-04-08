@@ -129,7 +129,7 @@ public:
 
   virtual void relax(LevelData<NodeFArrayBox>& a_e,
                      const LevelData<NodeFArrayBox>& a_residual,
-                     int iterations);
+                     int iterations, int depth = 0);
 
   virtual void createCoarser(LevelData<NodeFArrayBox>& a_coarse,
                              const LevelData<NodeFArrayBox>& a_fine,
@@ -266,7 +266,8 @@ protected:
   bool                    m_hasFiner;
 
   void levelGSRB(LevelData<NodeFArrayBox>& a_e,
-                 const LevelData<NodeFArrayBox>& a_residual);
+                 const LevelData<NodeFArrayBox>& a_residual,
+                 int a_ite, int a_depth);
 
   void homogeneousCFInterp(LevelData<NodeFArrayBox>& a_phif);
   void homogeneousCFInterp(LevelData<NodeFArrayBox>& a_phif,

@@ -228,13 +228,16 @@ public:
 
   virtual void relax(LevelData<FArrayBox>&       a_e,
                      const LevelData<FArrayBox>& a_residual,
-                     int                         a_iterations);
+                     int                         a_iterations,
+                     int                         a_depth = 0);
 
   /// Do CF interpolation then relax as normal
+  /** useful for full-multigrid/FAS schemes
+   */
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
                        const LevelData<FArrayBox>* a_phiCoarse,
                        const LevelData<FArrayBox>& a_rhs,
-                       int a_iterations);
+                       int a_iterations, int a_depth);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -475,7 +478,8 @@ protected:
   int                     m_refToFiner;
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
+                         const LevelData<FArrayBox>& a_rhs,
+                         int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);

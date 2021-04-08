@@ -989,7 +989,7 @@ void
 NWOViscousTensorOp::
 relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
-      int a_iterations)
+      int a_iterations, int a_depth)
 {
   CH_TIME("NWOViscousTensorOp::relax");
 

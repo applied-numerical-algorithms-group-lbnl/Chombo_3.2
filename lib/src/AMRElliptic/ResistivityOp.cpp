@@ -825,7 +825,8 @@ void
 ResistivityOp::
 relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
-      int a_iterations)
+      int a_iterations,
+      int a_depth)
 {
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
