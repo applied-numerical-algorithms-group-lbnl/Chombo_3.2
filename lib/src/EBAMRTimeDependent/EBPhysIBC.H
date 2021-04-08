@@ -49,6 +49,8 @@ public:
                       const Box&            a_faceBox,
                       const int&            a_dir) = 0;
 
+  virtual void setCurDataIndex(const DataIndex& a_dit) = 0;
+
   /// Put initial conserved state into a_conState
   virtual void initialize(LevelData<EBCellFAB>& a_conState,
                           const EBISLayout& a_ebisl) const = 0;

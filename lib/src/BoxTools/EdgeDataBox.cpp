@@ -344,21 +344,37 @@ EdgeDataBox::size(const Box& bx, const Interval& comps) const
 void
 EdgeDataBox::linearOut(void* buf, const Box& R, const Interval& comps) const
 {
+  linearOut2(buf, R, comps);
+}
+
+// ---------------------------------------------------------
+void*
+EdgeDataBox::linearOut2(void* buf, const Box& R, const Interval& comps) const
+{  
   Real* buffer = (Real*) buf;
   for (int dir=0; dir<SpaceDim; dir++)
   {
     CH_assert(m_data[dir] != NULL);
     Box dirBox(surroundingNodes(R));
     dirBox.enclosedCells(dir);
-    int dirSize = m_data[dir]->size(dirBox, comps);
-    m_data[dir]->linearOut(buffer, dirBox, comps);
-    buffer += dirSize/sizeof(Real);
+    //int dirSize = m_data[dir]->size(dirBox, comps);
+    void* newBuf = m_data[dir]->linearOut2(buffer, dirBox, comps);
+    buffer = (Real*) newBuf;
+    //buffer += dirSize/sizeof(Real);
   }
+  return (void*) buffer;  
 }
 
 // ---------------------------------------------------------
 void
 EdgeDataBox::linearIn(void* buf, const Box& R, const Interval& comps)
+{
+  linearIn2(buf, R, comps);
+}
+  
+// ---------------------------------------------------------
+void*
+EdgeDataBox::linearIn2(void* buf, const Box& R, const Interval& comps)
 {
   Real* buffer = (Real*) buf;
   for (int dir=0; dir<SpaceDim; dir++)
@@ -366,10 +382,12 @@ EdgeDataBox::linearIn(void* buf, const Box& R, const Interval& comps)
     CH_assert(m_data[dir] != NULL);
     Box dirBox(surroundingNodes(R));
     dirBox.enclosedCells(dir);
-    int dirSize = m_data[dir]->size(dirBox, comps);
-    m_data[dir]->linearIn(buffer,dirBox,comps);
-    buffer += dirSize/sizeof(Real);
+    //int dirSize = m_data[dir]->size(dirBox, comps);
+    void* newBuf = m_data[dir]->linearIn2(buffer,dirBox,comps);
+    buffer = (Real*) newBuf;
+    //buffer += dirSize/sizeof(Real);
   }
+  return (void*) buffer;
 }
 
 #include "NamespaceFooter.H"

@@ -23,6 +23,10 @@
 #include "Misc.H"
 #include <functional>
 
+#ifdef USE_PROTO
+#include "Proto.H"
+#endif
+
 namespace BLfacade
 {
   class IntVect;
@@ -669,6 +673,21 @@ public:
 
   inline uint64_t hash(const IntVect& origin, const IntVect& blockingFactor) const; 
 
+#ifdef USE_PROTO
+    IntVect(Proto::Point a_pt)
+    {
+        for (int ii = 0; ii < DIM; ii++)
+        {
+            vect[ii] = a_pt[ii];
+        }
+    }
+
+    operator Proto::Point() const
+    {
+        return Proto::Point(vect);
+    }
+#endif
+
 protected:
   //
   // Box is a friend of ours.
@@ -736,6 +755,8 @@ void linearOut(void* const a_outBuf, const Vector<Vector<CH_XDIR::IntVect> >& a_
 
 
 //
+
+// garbage thinking here.  I've removed this function  (bvs)
 // Static initialization.  Gotta make sure there are no static object
 // definitions above here (except possibly stuff in headers).  Otherwise,
 // the danger is that some static object's constructor calls IntVect::Zero or

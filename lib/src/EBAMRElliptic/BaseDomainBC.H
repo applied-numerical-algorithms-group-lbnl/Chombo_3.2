@@ -171,6 +171,17 @@ public:
                               const RealVect&          a_origin,
                               const int&               a_comp);
 
+  virtual void setData(LevelData<EBCellFAB>* a_data)
+  {
+    m_data = a_data;
+    m_dataBased = true;
+  }
+  
+  bool dataBased() const
+  {
+    return m_dataBased;
+  }
+
   ///
   /**
      This is used by the projections to get
@@ -188,6 +199,11 @@ public:
   {
     MayDay::Error("getFaceVel called but not implemented");
   }
+
+protected:
+
+  LevelData<EBCellFAB>*  m_data;
+  bool m_dataBased;
 
 };
 ///

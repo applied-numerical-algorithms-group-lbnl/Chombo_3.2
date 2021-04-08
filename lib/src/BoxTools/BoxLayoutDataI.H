@@ -20,13 +20,12 @@
 #include "memtrack.H"
 #include "Misc.H"
 #include "CH_Timer.H"
-#include "NamespaceHeader.H"
 #include "BaseFabMacros.H"
+#include "NamespaceHeader.H"
+
 
 using std::sort;
 
-template<class T>
-int BoxLayoutData<T>::s_verbosity = 0;
 
 template <class T>
 T* DefaultDataFactory<T>::create(const Box& box,
@@ -109,8 +108,7 @@ inline   BoxLayoutData<T>::BoxLayoutData():m_comps(0) ,m_buff(0)
 {
   m_isdefined = false;
 #ifdef CH_MPI
-  this->numSends = 0;
-  this->numReceives = 0;
+
 #endif
 }
 template<class T>
@@ -124,8 +122,6 @@ inline BoxLayoutData<T>::BoxLayoutData(const BoxLayout& boxes, int comps,
   allocateGhostVector(factory);
 #ifdef CH_MPI
 
-  this->numSends = 0;
-  this->numReceives = 0;
 #endif
 }
 
@@ -133,7 +129,7 @@ template<class T>
 BoxLayoutData<T>::~BoxLayoutData()
 {
   CH_TIME("~BoxLayoutData");
-  completePendingSends();
+  //completePendingSends();
 }
 
 template<class T>
@@ -240,9 +236,14 @@ void BoxLayoutData<T>::makeItSo(const Interval&   a_srcComps,
                                 const Copier&     a_copier,
                                 const LDOperator<T>& a_op) const
 {
+  if(s_verbosity > 0) 
+  {
+    pout() << "makeit so copier = " << endl;
+    a_copier.print();
+  }
   makeItSoBegin(a_srcComps, a_src, a_dest, a_destComps, a_copier, a_op);
   makeItSoLocalCopy(a_srcComps, a_src, a_dest, a_destComps, a_copier, a_op);
-  makeItSoEnd(a_dest, a_destComps, a_op);
+  a_dest.makeItSoEnd(a_destComps, a_op);
 }
 
 template<class T>
@@ -269,16 +270,16 @@ void BoxLayoutData<T>::makeItSoBegin(const Interval&   a_srcComps,
   // The #ifdef CH_MPI is for the m_buff->m_toMe and m_buff->m_fromMe
   {
     CH_TIME("post_messages");
-    this->numReceives = m_buff->m_toMe.size();
+    this->m_buff->numReceives = m_buff->m_toMe.size();
 
-    if (this->numReceives > 0)
+    if (this->m_buff->numReceives > 0)
       {
         postReceivesToMe(); // all non-blocking
       }
   
 
-  this->numSends = m_buff->m_fromMe.size();
-  if (this->numSends > 0)
+  this->m_buff->numSends = m_buff->m_fromMe.size();
+  if (this->m_buff->numSends > 0)
     {
       postSendsFromMe();  // all non-blocking
     }
@@ -305,23 +306,40 @@ void BoxLayoutData<T>::makeItSoLocalCopy(const Interval&   a_srcComps,
   for (int n=0; n<items; n++)
   {
     const MotionItem& item = it[n];
+//debugging bit to force serial code to run parallel bits
+#if 0
+    const T & srcFAB = a_src[item.fromIndex];
+    T       & dstFAB = a_dest[item.toIndex];
+    size_t bufsize_src = a_op.size(srcFAB, item.fromRegion, a_srcComps);
+    size_t bufsize_dst = a_op.size(srcFAB, item.fromRegion, a_srcComps);
+    if(bufsize_src != bufsize_dst)
+    {
+      MayDay::Error("buffer size mismatch");
+    }
+    char* charbuffer = new char[bufsize_src];
+    a_op.linearOut(srcFAB, charbuffer, item.fromRegion, a_srcComps);
+    a_op.linearIn (dstFAB, charbuffer, item.toRegion,  a_destComps);
+
+    delete[] charbuffer;
+#else
     a_op.op(a_dest[item.toIndex], item.fromRegion,
             a_destComps,
             item.toRegion,
             a_src[item.fromIndex],
             a_srcComps);
+#endif
 
   }
 }
 template<class T>
-void BoxLayoutData<T>::makeItSoEnd(BoxLayoutData<T>& a_dest,
+void BoxLayoutData<T>::makeItSoEnd(
                                    const Interval&   a_destComps,
-                                   const LDOperator<T>& a_op) const
+                                   const LDOperator<T>& a_op)
 {
   // Uncomment and Move this out of unpackReceivesToMe()  (ndk)
   completePendingSends(); // wait for sends from possible previous operation
 
-  unpackReceivesToMe(a_dest, a_destComps, a_op); // nullOp in uniprocessor mode
+  unpackReceivesToMe(a_destComps, a_op); // nullOp in uniprocessor mode
 
 }
 
@@ -361,9 +379,9 @@ void BoxLayoutData<T>::postReceivesToMe() const
 }
 
 template<class T>
-void BoxLayoutData<T>::unpackReceivesToMe(BoxLayoutData<T>& a_dest,
+void BoxLayoutData<T>::unpackReceivesToMe(
                                       const Interval&   a_destComps,
-                                      const LDOperator<T>& a_op) const
+                                      const LDOperator<T>& a_op)
 {
 }
 
@@ -384,17 +402,17 @@ template<class T>
 void BoxLayoutData<T>::completePendingSends() const
 {
   CH_TIME("completePendingSends");
-  if (this->numSends > 0)
+  if (this->m_buff->numSends > 0)
   {
     CH_TIME("MPI_Waitall");
-    m_sendStatus.resize(this->numSends);
-    int result = MPI_Waitall(this->numSends, &(m_sendRequests[0]), &(m_sendStatus[0]));
+    m_buff->m_sendStatus.resize(this->m_buff->numSends);
+    int result = MPI_Waitall(this->m_buff->numSends, &(m_buff->m_sendRequests[0]), &(m_buff->m_sendStatus[0]));
     if (result != MPI_SUCCESS)
       {
         //hell if I know what to do about failed messaging here
       }
   }
-  this->numSends = 0;
+  this->m_buff->numSends = 0;
 }
 
 template<class T>
@@ -407,8 +425,15 @@ void BoxLayoutData<T>::allocateBuffers(const BoxLayoutData<T>& a_src,
 {
   CH_TIME("MPI_allocateBuffers");
   m_buff = &(((Copier&)a_copier).m_buffers);
+  a_dest.m_buff = m_buff;
+  
+  CH_assert(a_srcComps.size() == a_destComps.size());
   if (m_buff->isDefined(a_srcComps.size()) && T::preAllocatable()<2) return;
 
+  if(s_verbosity > 0)
+  {
+    pout() << " allocate buffers srcComps = " << a_srcComps << ", dest comps = " << a_destComps << endl;
+  }
   m_buff->m_ncomps = a_srcComps.size();
 
   m_buff->m_fromMe.resize(0);
@@ -463,9 +488,9 @@ void BoxLayoutData<T>::allocateBuffers(const BoxLayoutData<T>& a_src,
       if (m_buff->m_toMe.size() > 0)
         {
           tdata.resize(m_buff->m_toMe.size(), ULONG_MAX);
-          m_receiveRequests.resize(numProc()-1);
-          m_receiveStatus.resize(numProc()-1);
-          MPI_Request* Rptr = &(m_receiveRequests[0]);
+          m_buff->m_receiveRequests.resize(numProc()-1);
+          m_buff->m_receiveStatus.resize(numProc()-1);
+          MPI_Request* Rptr = &(m_buff->m_receiveRequests[0]);
 
           unsigned int lastProc = m_buff->m_toMe[0].procID;
           int messageSize = 1;
@@ -499,9 +524,9 @@ void BoxLayoutData<T>::allocateBuffers(const BoxLayoutData<T>& a_src,
         {
           fdata.resize(m_buff->m_fromMe.size());
           fdata[0]=m_buff->m_fromMe[0].size;
-          m_sendRequests.resize(numProc()-1);
-          m_sendStatus.resize(numProc()-1);
-          MPI_Request* Rptr = &(m_sendRequests[0]);
+          m_buff->m_sendRequests.resize(numProc()-1);
+          m_buff->m_sendStatus.resize(numProc()-1);
+          MPI_Request* Rptr = &(m_buff->m_sendRequests[0]);
 
           unsigned int lastProc = m_buff->m_fromMe[0].procID;
           int messageSize = 1;
@@ -533,7 +558,7 @@ void BoxLayoutData<T>::allocateBuffers(const BoxLayoutData<T>& a_src,
       if (m_buff->m_toMe.size() > 0)
         {
 
-          int result = MPI_Waitall(count, &(m_receiveRequests[0]), &(m_receiveStatus[0]));
+          int result = MPI_Waitall(count, &(m_buff->m_receiveRequests[0]), &(m_buff->m_receiveStatus[0]));
           if (result != MPI_SUCCESS)
             {
               MayDay::Error("First pass of two-phase communication failed");
@@ -550,7 +575,7 @@ void BoxLayoutData<T>::allocateBuffers(const BoxLayoutData<T>& a_src,
       if (m_buff->m_fromMe.size() > 0)
         {
 
-          int result = MPI_Waitall(scount, &(m_sendRequests[0]), &(m_sendStatus[0]));
+          int result = MPI_Waitall(scount, &(m_buff->m_sendRequests[0]), &(m_buff->m_sendStatus[0]));
           if (result != MPI_SUCCESS)
             {
               MayDay::Error("First pass of two-phase communication failed");
@@ -646,26 +671,26 @@ void BoxLayoutData<T>::postSendsFromMe() const
   // now we get the magic of message coalescence
   // fromMe has already been sorted in the allocateBuffers() step.
 
-  this->numSends = m_buff->m_fromMe.size();
+  this->m_buff->numSends = m_buff->m_fromMe.size();
 
-  if (this->numSends > 1)
+  if (this->m_buff->numSends > 1)
   {
     for (unsigned int i=m_buff->m_fromMe.size()-1; i>0; --i)
       {
         if (m_buff->m_fromMe[i].procID == m_buff->m_fromMe[i-1].procID)
           {
-            this->numSends--;
+            this->m_buff->numSends--;
             m_buff->m_fromMe[i-1].size = m_buff->m_fromMe[i-1].size + m_buff->m_fromMe[i].size;
             m_buff->m_fromMe[i].size = 0;
           }
       }
   }
-  m_sendRequests.resize(this->numSends);
+  m_buff->m_sendRequests.resize(this->m_buff->numSends);
   std::list<MPI_Request> extraRequests;
 
   unsigned int next=0;
   long long maxSize = 0;
-  for (int i=0; i<this->numSends; ++i)
+  for (int i=0; i<this->m_buff->numSends; ++i)
     {
       const CopierBuffer::bufEntry& entry = m_buff->m_fromMe[next];
       char*  buffer = (char*)entry.bufPtr;
@@ -687,7 +712,7 @@ void BoxLayoutData<T>::postSendsFromMe() const
       {
         //CH_TIME("MPI_Isend");
         MPI_Isend(buffer, bsize, MPI_BYTE, entry.procID,
-                idtag, Chombo_MPI::comm, &(m_sendRequests[i]));
+                idtag, Chombo_MPI::comm, &(m_buff->m_sendRequests[i]));
       }
       maxSize = Max<long long>(bsize, maxSize);
       ++next;
@@ -695,9 +720,9 @@ void BoxLayoutData<T>::postSendsFromMe() const
     }
   for (std::list<MPI_Request>::iterator it = extraRequests.begin(); it != extraRequests.end(); ++it)
   {
-    m_sendRequests.push_back(*it);
+    m_buff->m_sendRequests.push_back(*it);
   }
-  this->numSends = m_sendRequests.size();
+  this->m_buff->numSends = m_buff->m_sendRequests.size();
 
   CH_MaxMPISendSize = Max<long long>(CH_MaxMPISendSize, maxSize);
 
@@ -707,26 +732,26 @@ template<class T>
 void BoxLayoutData<T>::postReceivesToMe() const
 {
   CH_TIME("post_Receives");
-  this->numReceives = m_buff->m_toMe.size();
+  this->m_buff->numReceives = m_buff->m_toMe.size();
 
-  if (this->numReceives > 1)
+  if (this->m_buff->numReceives > 1)
   {
     for (unsigned int i=m_buff->m_toMe.size()-1; i>0; --i)
       {
         if (m_buff->m_toMe[i].procID == m_buff->m_toMe[i-1].procID)
           {
-            this->numReceives--;
+            this->m_buff->numReceives--;
             m_buff->m_toMe[i-1].size += m_buff->m_toMe[i].size;
             m_buff->m_toMe[i].size = 0;
           }
 
       }
   }
-  m_receiveRequests.resize(this->numReceives);
+  m_buff->m_receiveRequests.resize(this->m_buff->numReceives);
   std::list<MPI_Request> extraRequests;
   unsigned int next=0;
   long long maxSize = 0;
-  for (int i=0; i<this->numReceives; ++i)
+  for (int i=0; i<this->m_buff->numReceives; ++i)
     {
       const CopierBuffer::bufEntry& entry = m_buff->m_toMe[next];
       char*  buffer = (char*)entry.bufPtr;
@@ -748,7 +773,7 @@ void BoxLayoutData<T>::postReceivesToMe() const
       {
         //CH_TIME("MPI_Irecv");
         MPI_Irecv(buffer, bsize, MPI_BYTE, entry.procID,
-                  idtag, Chombo_MPI::comm, &(m_receiveRequests[i]));
+                  idtag, Chombo_MPI::comm, &(m_buff->m_receiveRequests[i]));
       }
       ++next;
       maxSize = Max<long long>(bsize, maxSize);
@@ -756,31 +781,31 @@ void BoxLayoutData<T>::postReceivesToMe() const
     }
   for (std::list<MPI_Request>::iterator it = extraRequests.begin(); it != extraRequests.end(); ++it)
   {
-    m_receiveRequests.push_back(*it);
+    m_buff->m_receiveRequests.push_back(*it);
   }
-  this->numReceives = m_receiveRequests.size();
+  this->m_buff->numReceives = m_buff->m_receiveRequests.size();
 
   CH_MaxMPIRecvSize = Max<long long>(CH_MaxMPIRecvSize, maxSize);
-  //pout()<<"maxSize="<<maxSize<<" posted "<<this->numReceives<<" receives\n";
+  //pout()<<"maxSize="<<maxSize<<" posted "<<this->m_buff->numReceives<<" receives\n";
 
 }
 
 template<class T>
-void BoxLayoutData<T>::unpackReceivesToMe(BoxLayoutData<T>& a_dest,
-                                      const Interval&   a_destComps,
-                                      const LDOperator<T>& a_op) const
+void BoxLayoutData<T>::unpackReceivesToMe(
+                                          const Interval&   a_destComps,
+                                          const LDOperator<T>& a_op)
 {
 
   CH_TIME("unpack_messages");
   
-  if (this->numReceives > 0)
+  if (this->m_buff->numReceives > 0)
   {
-    m_receiveStatus.resize(this->numReceives);
+    m_buff->m_receiveStatus.resize(this->m_buff->numReceives);
     int result;
     {
       CH_TIME("MPI_Waitall");
-      result = MPI_Waitall(this->numReceives, &(m_receiveRequests[0]),
-                             &(m_receiveStatus[0]));
+      result = MPI_Waitall(this->m_buff->numReceives, &(m_buff->m_receiveRequests[0]),
+                             &(m_buff->m_receiveStatus[0]));
     }
     if (result != MPI_SUCCESS)
     {
@@ -796,10 +821,11 @@ void BoxLayoutData<T>::unpackReceivesToMe(BoxLayoutData<T>& a_dest,
     for (unsigned int i=0; i< isize; ++i)
     {
       const CopierBuffer::bufEntry& entry = m_buff->m_toMe[i];
-      a_op.linearIn(a_dest[entry.item->toIndex], entry.bufPtr, entry.item->toRegion, a_destComps);
+      a_op.linearIn(this->operator[](entry.item->toIndex), entry.bufPtr,
+                    entry.item->toRegion, a_destComps);
     }
   }
-  this->numReceives = 0;
+  this->m_buff->numReceives = 0;
 }
 
 template<class T>
@@ -811,14 +837,14 @@ void BoxLayoutData<T>::unpackReceivesToMe_append(LayoutData<Vector<RefCountedPtr
                                                  const LDOperator<T>& a_op) const
 {
 
-  if (this->numReceives > 0)
+  if (this->m_buff->numReceives > 0)
   {
-   m_receiveStatus.resize(this->numReceives);
+   m_buff->m_receiveStatus.resize(this->m_buff->numReceives);
    int result;
    {
      CH_TIME("MPI_Waitall");
-     result = MPI_Waitall(this->numReceives, &(m_receiveRequests[0]),
-                              &(m_receiveStatus[0]));
+     result = MPI_Waitall(this->m_buff->numReceives, &(m_buff->m_receiveRequests[0]),
+                              &(m_buff->m_receiveStatus[0]));
    }
    if (result != MPI_SUCCESS)
    {
@@ -838,7 +864,7 @@ void BoxLayoutData<T>::unpackReceivesToMe_append(LayoutData<Vector<RefCountedPtr
    }
   }
 
-  this->numReceives = 0;
+  this->m_buff->numReceives = 0;
 }
 #endif
 
@@ -868,14 +894,14 @@ void BoxLayoutData<T>::generalCopyTo(const BoxLayout& a_destGrids,
   // and allocate memory that will not be freed later.  (ndk)
   // The #ifdef CH_MPI is for the m_buff->m_toMe and m_buff->m_fromMe
 #ifdef CH_MPI
-  this->numReceives = m_buff->m_toMe.size();
-  if (this->numReceives > 0)
+  this->m_buff->numReceives = m_buff->m_toMe.size();
+  if (this->m_buff->numReceives > 0)
   {
     postReceivesToMe(); // all non-blocking
   }
 
-  this->numSends = m_buff->m_fromMe.size();
-  if (this->numSends > 0)
+  this->m_buff->numSends = m_buff->m_fromMe.size();
+  if (this->m_buff->numSends > 0)
   {
     postSendsFromMe();  // all non-blocking
   }
@@ -972,8 +998,40 @@ void BoxLayoutData<T>::addTo(const Interval& a_srcComps,
 {
   CH_TIME("addTo");
   LDaddOp<T> addOp;
-  makeItSo(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
+  addToBegin(a_srcComps, a_dest, a_destComps, a_copier);
+  a_dest.addToEnd(a_destComps);
+  //makeItSoBegin(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
+  //makeItSoLocalCopy(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
+  //a_dest.makeItSoEnd(a_destComps, addOp);
+  //makeItSo(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
 }
+
+
+template <class T>
+void BoxLayoutData<T>::addToBegin(const Interval& a_srcComps,
+                             BoxLayoutData<T>& a_dest,
+                             const Interval& a_destComps,
+                             const Copier& a_copier) const
+{
+  CH_TIME("addToBegin");
+  LDaddOp<T> addOp;
+  makeItSoBegin(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
+  makeItSoLocalCopy(a_srcComps, *this, a_dest, a_destComps, a_copier, addOp);
+
+}
+
+
+template <class T>
+void BoxLayoutData<T>::addToEnd(const Interval& a_destComps)
+{
+  CH_TIME("addToEnd");
+  LDaddOp<T> addOp;
+
+  makeItSoEnd(a_destComps, addOp);
+ 
+}
+
+
 
 #include "NamespaceFooter.H"
 #endif

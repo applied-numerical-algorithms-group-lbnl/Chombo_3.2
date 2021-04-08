@@ -18,7 +18,7 @@
 
 
 #ifdef CH_Darwin
-# define _Atomic
+//# define _Atomic
 #include <libproc.h>
 #endif
 
@@ -109,12 +109,12 @@ void AttachDebugger(int a_sig)
 
 #define useemacs 1
 #if useemacs
-        //  sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (gdb \" gdb -i=mi -q -f %s --pid %d\") )'",
-        //          title, display, binaryName, proc);
-        sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (lldb \" lldb -p %d\") )'",
-                title, display, proc);
+        sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (gdb \" gdb -i=mi -q -f %s --pid %d\") )'",
+                title, display, binaryName, proc);
+        //sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (lldb \" lldb -p %d\") )'",
+        //title, display, proc);
 #else
-        sprintf(buf,"xterm -e \"gdb -q -f %s --pid %d\" ", binaryName, proc);
+        sprintf(buf,"xterm -bg white -fg black -fa Monospace -fs 14 -e \"gdb -q -f %s --pid %d\" ", binaryName, proc);
 #endif
         printf("%s\n",buf);
         f = popen(buf,"w");

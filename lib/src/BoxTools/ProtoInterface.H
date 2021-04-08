@@ -48,7 +48,7 @@ namespace ProtoCh
    void  aliasBoxData(BoxData<T, ncomp> & a_boxdata, const BaseFab<T>& a_bfr, const int a_startcomp = 0)
     {
       CH_assert( a_bfr.nComp() == (ncomp + a_startcomp));
-      Proto::Box region = getProtoBox(a_bfr.box());
+      Proto::Box region = a_bfr.box();
       a_boxdata.define(a_bfr.dataPtr(a_startcomp), region, ncomp);
     }
 

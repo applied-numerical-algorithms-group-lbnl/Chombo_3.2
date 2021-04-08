@@ -293,6 +293,62 @@ consUndividedDivergence(BaseIVFAB<Real>&       a_divF,
         } //end loop over variables
     } //end loop over vofs
 }
+
+
+///for when eb irreg flux is always zero
+void
+EBAdvectPatchIntegrator::
+kappaDivergenceFlux(EBCellFAB&       a_kappaDivF,
+                    const EBFluxFAB& a_centroidFlux,
+                    const Box&       a_validBox)
+{
+  CH_TIME("EBADvectPatchIntegrator::kappaDivergence");
+  int ncons = a_kappaDivF.nComp();
+  a_kappaDivF.setVal(0.0);
+  BaseFab<Real>& regDivF = a_kappaDivF.getSingleValuedFAB();
+
+  for(int idir = 0; idir < SpaceDim; idir++)
+  {
+    const  BaseFab<Real>& regFlux = a_centroidFlux[idir].getSingleValuedFAB();
+
+    FORT_DIVERGEF(CHF_BOX(a_validBox),
+                  CHF_FRA(regDivF),
+                  CHF_CONST_FRA(regFlux),
+                  CHF_CONST_INT(idir),
+                  CHF_CONST_INT(ncons),
+                  CHF_CONST_REAL(m_dx[idir]));
+  }
+  IntVectSet ivs = m_ebisBox.getIrregIVS(a_validBox);
+  for (VoFIterator vofit(ivs, m_ebisBox.getEBGraph()); vofit.ok(); ++vofit)
+  {
+    const VolIndex& vof = vofit();
+    for (int ivar = 0; ivar < ncons ; ivar++)
+    {
+      Real update = 0.;
+      for ( int idir = 0; idir < SpaceDim; idir++)
+      {
+        const EBFaceFAB& fluxDir = a_centroidFlux[idir];
+        for (SideIterator sit; sit.ok(); ++sit)
+        {
+          int isign = sign(sit());
+          Vector<FaceIndex> faces =
+            m_ebisBox.getFaces(vof, idir, sit());
+          for (int iface = 0; iface < faces.size(); iface++)
+          {
+            const FaceIndex& face = faces[iface];
+            Real areaFrac = m_ebisBox.areaFrac(face);
+            Real faceFlux = fluxDir(face, ivar);
+            update += isign*areaFrac*faceFlux/m_dx[idir];
+          }
+          ch_flops()+=faces.size()*4; 
+        }
+      }
+
+      //note NOT divided by volfrac
+      a_kappaDivF(vof, ivar) = update;
+    } //end loop over variables
+  } //end loop over vofs
+}
 /******************/
 FaceStencil
 EBAdvectPatchIntegrator::
@@ -576,7 +632,6 @@ doNormalDerivativeExtr2D(EBCellFAB              a_primMinu[SpaceDim],
 
       slope(slopesPrim, a_primState, idir, slopeBoxG2);
 
-
       //3. Compute the effect of the normal derivative terms and the
       //source term on the extrapolation in space and time from cell
       //centers to faces. Equation 1.7 (top).
@@ -701,7 +756,6 @@ slope(EBCellFAB&       a_slopePrim,
       if (a_box.contains(vof.gridIndex()))
         {
           int ivar = 0;
-
           bool hasFacesLeft, hasFacesRigh;
           Real dql, dqr, dqc;
           bool verbose =false;
@@ -1230,6 +1284,8 @@ extrapolateBCG(EBFluxFAB&                       a_flux,
   CH_TIMER("taylor_extrapolation",t2);
   CH_TIMER("solve_riemann",t3);
 
+  m_bc->setCurDataIndex(a_dit);
+
   CH_START(t1);
   EBCellFAB primMinu[SpaceDim];
   EBCellFAB primPlus[SpaceDim];
@@ -1409,6 +1465,8 @@ extrapolateBCG(EBCellFAB           a_primMinu[SpaceDim],
       CH_START(t1);
       normSlopes.define(m_ebisBox, normSlopeBox, numSlop);
       slope(normSlopes, a_consState, idir, normSlopeBox);
+
+
       normalPred(a_primMinu[idir],
                  a_primPlus[idir],
                  a_consState,
@@ -1452,6 +1510,7 @@ extrapolateBCG(EBCellFAB           a_primMinu[SpaceDim],
                       statePlusSource,
                       tanDir,
                       tanSlopeBox[itan]);
+
 
           transversePred(a_primMinu[idir],
                          a_primPlus[idir],

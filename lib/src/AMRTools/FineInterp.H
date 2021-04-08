@@ -166,12 +166,20 @@ public:
                   bool a_averageFromDest = false);
 
   
-  /// 
+  /// enumeration of the different ways we can handle interpolation near domain boundaries
+  /**
+     limitSlopes -- turns on slope limiting in all directions near physical domain boundaries. This requires that ghost cell values be set to reasonable values
+     noSlopeLimiting -- turns off slope limiting near domain boundaries. This can produce new max/min values if you're unlucky.
+     PCInterp -- fall back to piecewise-constant interpolation near boundaries. This is safe, since you won't step out of bounds or create new max/min, but has lower accuracy
+     limitTangentialOnly -- limit slopes tangential to domain boundaries, fall back to Piecewise-constant interpolation (set slopes to 0) in the normal direction
+  */
+
   enum BoundaryLimitType
     {
       limitSlopes = 0,
       noSlopeLimiting,
       PCInterp,
+      limitTangentialOnly,
       NUM_LIMIT_TYPES
     };
 
@@ -193,6 +201,12 @@ public:
       PCInterp -- piecewise-constant interpolation. Safest bet, since it's 
                   max/min-preserving without requiring that ghost cells be set,
                   but also least accurate.
+
+      limitTangentialOnly -- limit slopes in the coordinate directions 
+                             tangential to the boundary, while not limiting 
+                             in the normal direction. This is useful when you 
+                             don't have reasonable ghost-cell values but
+                             still need limiting.
 
       The basic idea here is that the user can over-ride the default behavior 
       in favor of what an application demands by resetting the static variable.

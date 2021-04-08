@@ -64,8 +64,10 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
      &     CHF_CONST_FBA1[mask])
 
       integer CHF_DDECL[i;j;k]
+
       CHF_MULTIDO[box; i; j; k] 
-         m=max(m,abs(vel(CHF_IX[i;j;k])*mask(CHF_IX[i;j;k])))
+         if (mask(CHF_IX[i;j;k]).ne.0)
+     &     m = max(m,abs(vel(CHF_IX[i;j;k])))
       CHF_ENDDO
       ch_flops=ch_flops+CHF_POINTS[box]*2
       return

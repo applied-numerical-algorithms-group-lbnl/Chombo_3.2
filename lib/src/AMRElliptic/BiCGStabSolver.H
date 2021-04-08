@@ -168,7 +168,7 @@ BiCGStabSolver<T>::BiCGStabSolver()
    m_op(NULL),
    m_imax(80),
    m_verbosity(3),
-   m_eps(1.0E-8),
+   m_eps(1.0E-6),
    m_reps(1.0E-12),
    m_convergenceMetric(-1.0),
    m_hang(1E-8),

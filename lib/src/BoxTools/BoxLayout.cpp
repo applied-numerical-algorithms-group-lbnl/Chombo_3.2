@@ -931,4 +931,11 @@ void mortonOrdering(Vector<Box>& a_boxes)
 #endif
 
 }
+void serialMortonOrdering(Vector<Box>& a_boxes)
+{
+  int bits;
+  std::vector<Box>& b = a_boxes.stdVector();
+  bits = maxBits(b.begin(), b.end());
+  std::sort(b.begin(), b.end(), MortonOrdering(bits));
+}
 #include "NamespaceFooter.H"

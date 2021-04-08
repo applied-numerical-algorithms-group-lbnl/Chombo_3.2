@@ -76,6 +76,10 @@ void THIS_IS_AN_ERROR_MESSAGE(void)
 class EBAMRPoissonOp: public LevelTGAHelmOp<LevelData<EBCellFAB>, EBFluxFAB >
 {
 public:
+  void
+  getVoFStencil(VoFStencil&      a_stenc,
+                const VolIndex&  a_vof,
+                const DataIndex& a_dit) const;
 
 #ifdef CH_USE_HDF5
   ///
@@ -730,9 +734,8 @@ EBAMRPoissonOp(const EBLevelGrid &                  a_eblgFine,
 
   //for debugging other operators
   void slowGSRBColor(LevelData<EBCellFAB>&       a_phi,
-                     const LevelData<EBCellFAB>& a_lph,
-                     const LevelData<EBCellFAB>& a_rhs,
-                     const IntVect&              a_color);
+                     const LevelData<EBCellFAB>& a_res,
+                     int a_iredblack);
 
   //for debugging other operators
   void levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
@@ -782,7 +785,7 @@ EBAMRPoissonOp(const EBLevelGrid &                  a_eblgFine,
   void  getDivFStencil(VoFStencil&      a_vofStencil,
                        const VolIndex&  a_vof,
                        const DataIndex& a_dit,
-                       bool doFaceInterp);
+                       bool doFaceInterp) const;
 
   //CP recently added
   void getVoFStencil(LayoutData<BaseIVFAB<VoFStencil> > const*& a_vofStencil)

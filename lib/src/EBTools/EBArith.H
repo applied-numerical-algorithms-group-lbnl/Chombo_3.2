@@ -65,6 +65,13 @@ class EBArith
 public:
 
   ///
+  static void
+  getAllVoFsWithinRadiusExcludingStartVoF(Vector<VolIndex>& a_vofList,
+                                          Vector<IntVect>    & a_dist,
+                                          const VolIndex&   a_vof,
+                                          const EBISBox&    a_ebisBox,
+                                          const int&        a_redistRad);
+  ///
   static void convertToITM(IndexTM<Real, SpaceDim>& a_diffrv,  const RealVect& a_rv);
 
 
@@ -132,9 +139,9 @@ public:
                const  EBISLayout&              a_ebislCoar,
                const Box&                      a_coarseDom,
                int                             a_testverbosity,
-               fstream*                        a_fout,
-               Vector<string>                  a_names,
-               string  a_prefix)          ;
+               fstream*                        a_fout = NULL,
+               Vector<string>                  a_names = Vector<string>(),
+               string  a_prefix = string())          ;
   ///
   /**o
    */

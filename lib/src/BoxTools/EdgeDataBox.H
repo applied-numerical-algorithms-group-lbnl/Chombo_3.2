@@ -114,11 +114,20 @@ public:
     memory for the buffer has already been allocated by the caller */
   void linearOut(void*buf, const Box& R, const Interval& comps) const;
 
-  ///
+  /// like linearOut, but returns current position in the buffer
+  void* linearOut2(void*buf, const Box& R, const Interval& comps) const;
+  
+  /// 
   void linearIn(void* buf);
 
-  ///
+  /// read a linear representation of the data over the box \rm R
+  /** 
+      Reads in the output of LinearOut
+  */
   void linearIn(void*buf, const Box& R, const Interval& comps);
+
+  /// like linearIn, but returns current position in the buffer
+  void* linearIn2(void*buf, const Box& R, const Interval& comps);
 
   ///
   static bool preAllocatable()

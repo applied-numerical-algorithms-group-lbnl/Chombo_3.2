@@ -62,11 +62,31 @@ public:
             int        a_ncomp,
             Real*      a_alias);
 
+  #ifdef USE_PROTO
+  template<unsigned int C>
+  FArrayBox(const Proto::BoxData<Real, C>& a_bd)
+  : BaseFab<Real>(a_bd)
+  {
+  }
+ 
+  template<unsigned int C>
+  FArrayBox(const Proto::BoxData<Real, C>& a_bd, Proto::Point a_center)
+  : BaseFab<Real>(a_bd, a_center)
+  {
+  }
+  #endif
+
+  ///
+  /**
+     Constructs an initial FArrayBox with the data space allocated but not
+     initialized. a_ncomp is the number of components (variables) at each
+     data point in the Box.
+  */  
   FArrayBox(const Box& a_box,
             int        a_ncomp);
   ///
   /**
-     Construct an aliaed FArrayBox.  See BaseFab class for details.
+     Construct an aliased FArrayBox.  See BaseFab class for details.
   */
   FArrayBox(const Interval& a_comps,
             FArrayBox&      a_original)
@@ -77,7 +97,7 @@ public:
   ///
   /**
      Defines FArrayBox with the data space allocated but not
-     inititialized. a_ncomp is the number of components (variables) at each
+     initialized. a_ncomp is the number of components (variables) at each
      data point in the Box.
   */
   virtual void define(const Box& a_box,

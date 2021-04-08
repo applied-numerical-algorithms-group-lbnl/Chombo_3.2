@@ -258,6 +258,8 @@ void Copier::defineFixedBoxSize(const DisjointBoxLayout& a_src,
                                 bool  a_includeSelf,
                                 bool  a_reverse)
 {
+  CH_TIME("Copier::defineFixedBoxSize same layout");
+  CH_assert(a_src.isClosed());
   auto t0 = ch_ticks();
   auto th = ch_ticks();
   auto ti = ch_ticks();
@@ -266,17 +268,21 @@ void Copier::defineFixedBoxSize(const DisjointBoxLayout& a_src,
   clear();
   m_isDefined=true;
   buffersAllocated = false;
-  Box domainBox(a_domain.domainBox());
-  bool isPeriodic = false;
-  if (!domainBox.isEmpty())
-    isPeriodic = a_domain.isPeriodic();
 
   DataIterator dit = a_src.dataIterator();
-  if(dit.size() == 0)
+  if (dit.size() == 0)
     {
       // just go ahead and return, this processor owns no boxes, and thus will not participate in this Copier operation
       return;
     }
+
+  Box domainBox(a_domain.domainBox());
+  bool isPeriodic = false;
+  if (!domainBox.isEmpty())
+    {
+      isPeriodic = a_domain.isPeriodic();
+    }
+
   IntVect origin = domainBox.smallEnd();
   dit.begin();
   int myprocID = procID();
@@ -372,6 +378,197 @@ void Copier::defineFixedBoxSize(const DisjointBoxLayout& a_src,
         <<" pool acquire:"<<ti*rate<<"\n";
 }
 
+void Copier::defineFixedBoxSize(const DisjointBoxLayout& a_src,
+                                const LMap&  a_lmapSrc,
+                                const IntVect&  a_refRatioSrc,
+                                const DisjointBoxLayout& a_dst,
+                                const LMap&  a_lmapDst,
+                                const IntVect&  a_refRatioDst,
+                                const IntVect&  a_ghost,
+                                const ProblemDomain& a_domain,
+                                bool  a_reverse)
+{
+  CH_TIME("Copier::defineFixedBoxSize diff layouts");
+  CH_assert(a_src.isClosed());
+  CH_assert(a_dst.isClosed());
+  int myprocID = procID();
+  clear();
+  m_isDefined=true;
+  buffersAllocated = false;
+  Box domainBox(a_domain.domainBox());
+  bool isPeriodic = false;
+  if (!domainBox.isEmpty())
+    {
+      isPeriodic = a_domain.isPeriodic();
+    }
+
+  DataIterator ditSrc = a_src.dataIterator();
+  if (ditSrc.size() == 0)
+    {
+      // just go ahead and return, this processor owns no boxes, and thus will not participate in this Copier operation
+      return;
+    }
+
+  // fsizeSrc and fsizeDst are the sizes of the boxes in the layouts
+  // BEFORE any coarsening of either.
+
+  ditSrc.begin();
+  IntVect fsizeSrc = a_src[ditSrc].size();
+  // IntVect fsizeSrcFull = fsizeSrc * a_refRatioSrc;
+  IntVect fsizeSrcReal = fsizeSrc / a_refRatioSrc;
+  ProblemDomain domainSrc(a_domain);
+  domainSrc.refine(a_refRatioSrc);
+
+  DataIterator ditDst = a_dst.dataIterator();
+  ditDst.begin();
+  IntVect fsizeDst = a_dst[ditDst].size();
+  // IntVect fsizeDstFull = fsizeDst * a_refRatioDst;
+  IntVect fsizeDstReal = fsizeDst / a_refRatioDst;
+  ProblemDomain domainDst(a_domain);
+  domainDst.refine(a_refRatioDst);
+
+  // IntVect origin = domainBox.smallEnd();
+
+  IntVect originSrc = domainSrc.domainBox().smallEnd();
+  IntVect originDst = domainDst.domainBox().smallEnd();
+
+  auto eSrc = a_lmapSrc.end();
+  auto eDst = a_lmapDst.end();
+
+  for (; ditSrc.ok(); ++ditSrc)
+    {
+      const Box& b = a_src[ditSrc];
+      CH_assert(b.size() == fsizeSrc); // verify every source box is the same size for this function
+      IntVect loSrc = b.smallEnd();
+      { // Verify coarsen-refine is grid-aligned.
+        IntVect boxIndSrc = loSrc / fsizeSrc; // index of source box
+        CH_assert(boxIndSrc * fsizeSrc == loSrc);
+      }
+      { // verify the hash retrieves this box from the layout
+        uint64_t hashSrc = loSrc.hash(originSrc, fsizeSrc);
+        auto mSrc = a_lmapSrc.find(hashSrc);
+        CH_assert(mSrc != eSrc);
+        CH_assert(ditSrc() == mSrc->second);
+      }
+
+      Box bReal(b);
+      bReal.coarsen(a_refRatioSrc);
+
+      // the grown source box: cells of source box + ghosts,
+      // coarsened to give
+      // indices of dest boxes that overlap the grown source box
+      Box boxIndsDstCover(bReal);
+      boxIndsDstCover.grow(a_ghost);
+      boxIndsDstCover.coarsen(fsizeDstReal);
+      BoxIterator bit(boxIndsDstCover);
+      for (bit.begin(); bit.ok(); ++bit)
+        {
+          IntVect loDst = bit()*fsizeDst; // in uncoarsened index space
+          if (domainDst.image(loDst)) // code still won't do periodic correctly yet.....(bvs)
+            {
+              uint64_t hashDst = loDst.hash(originDst, fsizeDst);
+              auto indexNbr = a_lmapDst.find(hashDst);
+              if (indexNbr != eDst) // got a hit
+                {
+                  auto nbr = indexNbr->second;
+                  Box dReal = a_dst[nbr];
+                  dReal.coarsen(a_refRatioDst);
+                  Box dRealghost = grow(dReal, a_ghost);
+                  if (bReal.intersectsNotEmpty(dRealghost))
+                    {
+                      Box intersection = dRealghost & bReal;
+                      unsigned int nbrProc = a_dst.procID(nbr);
+                      MotionItem* item = new (s_motionItemPool.getPtr())
+                        MotionItem(ditSrc(), // source on this proc
+                                   DataIndex(nbr), // dest
+                                   intersection); // region
+                      if (myprocID == nbrProc) // local copy operation
+                        {
+                          m_localMotionPlan.push_back(item);
+                        }
+                      else
+                        { // TO nbrProc FROM myprocID
+                          item->procID = nbrProc;
+                          // Add to list of things that this proc will send
+                          m_fromMotionPlan.push_back(item);
+                          // Need to add to m_toMotionPlan from nbrProc,
+                          // which we'll get to in the ditDst loop.
+                        }
+                    }
+                }
+            }
+        }
+    }
+  for (; ditDst.ok(); ++ditDst)
+    {
+      const Box& d = a_dst[ditDst];
+      CH_assert(d.size() == fsizeDst); // verify every dest box is the same size for this function
+      IntVect loDst = d.smallEnd();
+      { // Verify coarsen-refine is grid-aligned.
+        IntVect boxIndDst = loDst / fsizeDst; // index of source box
+        CH_assert(boxIndDst * fsizeDst == loDst);
+      }
+      { // verify the hash retrieves this box from the layout
+        uint64_t hashDst = loDst.hash(originDst, fsizeDst);
+        auto mDst = a_lmapDst.find(hashDst);
+        CH_assert(mDst != eDst);
+        CH_assert(ditDst() == mDst->second);
+      }
+
+      Box dReal(d);
+      dReal.coarsen(a_refRatioDst);
+      Box dRealghost = grow(dReal, a_ghost);
+      IntVect loEndDst = dReal.smallEnd();
+      IntVect hiEndDst = dReal.bigEnd();
+
+      // the grown dest box: cells of dest box + ghosts,
+      // coarsened to give
+      // indices of source boxes that overlap the grown dest box
+      Box boxIndsSrcCover(loEndDst - a_ghost,
+                          hiEndDst + a_ghost,
+                          IndexType::TheCellType());
+      boxIndsSrcCover.coarsen(fsizeSrcReal);
+      BoxIterator bit(boxIndsSrcCover);
+      for (bit.begin(); bit.ok(); ++bit)
+        {
+          IntVect loSrc = bit()*fsizeSrc; // in uncoarsened index space
+          if (domainSrc.image(loSrc)) // code still won't do periodic correctly yet.....(bvs)
+            {
+              uint64_t hashSrc = loSrc.hash(originSrc, fsizeSrc);
+              auto indexNbr = a_lmapSrc.find(hashSrc);
+              if (indexNbr != eSrc) // got a hit
+                {
+                  auto nbr = indexNbr->second;
+                  Box bReal = a_src[nbr];
+                  bReal.coarsen(a_refRatioSrc);
+                  // Box bRealghost = grow(bReal, a_ghost);
+                  if (bReal.intersectsNotEmpty(dRealghost))
+                    {
+                      Box intersection = dRealghost & bReal;
+                      unsigned int nbrProc = a_src.procID(nbr);
+                      // Case (myprocID == nbrProc) already handled above.
+                      if (myprocID != nbrProc)
+                        {
+                          MotionItem* item = new (s_motionItemPool.getPtr())
+                            MotionItem(DataIndex(nbr), // source
+                                       ditDst(), // dest on this proc
+                                       intersection); // region
+                          // FROM nbrProc TO myprocID
+                          item->procID = nbrProc;
+                          // Add to list of things that this proc will receive
+                          m_toMotionPlan.push_back(item);
+                        }
+                    }
+                }
+            }
+        }
+    }
+  if (a_reverse)
+    {
+      reverse();
+    }
+  sort();
+}
 
 void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
                                          const LMap&  a_lmap,
@@ -379,7 +576,7 @@ void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
                                          const IntVect& a_ghostDst,
                                          const ProblemDomain& a_domain)
 {
-  CH_TIME("Copier::defineFixedBoxCollect");
+  CH_TIME("Copier::defineFixedSizeNodesCollect one layout");
   CH_assert(a_layout.isClosed());
 
   // This does not yet work with periodic domain.
@@ -410,6 +607,7 @@ void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
   // length of ghost vector PLUS 1 -- so that you get all NODEs --
   // in units of fixedBoxSize, rounding up
   IntVect hghost = (ghostMax + fixedBoxSize) / fixedBoxSize;
+  auto indexEnd = a_lmap.end();
   for (; dit.ok(); ++dit)
     {
       const Box& baseBox = a_layout[dit];
@@ -424,12 +622,13 @@ void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
       // From here on, baseBoxLo is in units of fixedBoxSize.
       // Verify coarsen-refine is grid-aligned.
       CH_assert(baseBoxLo*fixedBoxSize == baseBox.smallEnd());
- 
-      // Verify the hash retrieves this box from the layout.
-      auto indexBase = a_lmap.find(hashBase);
-      auto indexEnd = a_lmap.end();
-      CH_assert(indexBase != indexEnd);
-      CH_assert(dit() == indexBase->second);
+
+      {
+        // Verify the hash retrieves this box from the layout.
+        auto indexBase = a_lmap.find(hashBase);
+        CH_assert(indexBase != indexEnd);
+        CH_assert(dit() == indexBase->second);
+      }
 
       Box thisBaseNodes = surroundingNodes(baseBox);
       Box thisGhostSrcNodes = grow(thisBaseNodes, a_ghostSrc);
@@ -497,6 +696,195 @@ void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
                               m_fromMotionPlan.push_back(item);
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+  sort();
+}
+
+
+void Copier::defineFixedSizeNodesCollect(const DisjointBoxLayout& a_src,
+                                         const LMap&  a_lmapSrc,
+                                         const IntVect&  a_refRatioSrc,
+                                         const IntVect&  a_ghostSrc,
+                                         const DisjointBoxLayout& a_dst,
+                                         const LMap&  a_lmapDst,
+                                         const IntVect&  a_refRatioDst,
+                                         const IntVect&  a_ghostDst,
+                                         const ProblemDomain& a_domain)
+{
+  CH_TIME("Copier::defineFixedSizeNodesCollect diff layouts");
+  CH_assert(a_src.isClosed());
+  CH_assert(a_dst.isClosed());
+
+  // This does not yet work with periodic domain.
+  CH_assert(!a_domain.isPeriodic());
+
+  int myprocID = procID();
+  clear();
+  m_isDefined = true;
+  buffersAllocated = false;
+  
+  DataIterator ditSrc = a_src.dataIterator();
+  if (ditSrc.size() == 0)
+    {
+      // just go ahead and return, this processor owns no boxes, and thus will not participate in this Copier operation
+      return;
+    }
+
+  Box domainBox(a_domain.domainBox());
+
+  // fsizeSrc and fsizeDst are the sizes of the boxes in the layouts
+  // BEFORE any coarsening of either.
+
+  ditSrc.begin();
+  IntVect fsizeSrc = a_src[ditSrc].size();
+  // IntVect fsizeSrcFull = fsizeSrc * a_refRatioSrc;
+  IntVect fsizeSrcReal = fsizeSrc / a_refRatioSrc;
+  ProblemDomain domainSrc(a_domain);
+  domainSrc.refine(a_refRatioSrc);
+
+  DataIterator ditDst = a_dst.dataIterator();
+  ditDst.begin();
+  IntVect fsizeDst = a_dst[ditDst].size();
+  // IntVect fsizeDstFull = fsizeDst * a_refRatioDst;
+  IntVect fsizeDstReal = fsizeDst / a_refRatioDst;
+  ProblemDomain domainDst(a_domain);
+  domainDst.refine(a_refRatioDst);
+
+  // IntVect origin = domainBox.smallEnd();
+
+  IntVect originSrc = domainSrc.domainBox().smallEnd();
+  IntVect originDst = domainDst.domainBox().smallEnd();
+
+  auto eSrc = a_lmapSrc.end();
+  auto eDst = a_lmapDst.end();
+
+  IntVect ghostMax = max(a_ghostSrc, a_ghostDst);
+  // PLUS 1 so that you get all NODEs
+  IntVect ghost1 = ghostMax + IntVect::Unit;
+
+  for (; ditSrc.ok(); ++ditSrc)
+    {
+      const Box& b = a_src[ditSrc];
+      CH_assert(b.size() == fsizeSrc); // verify every source box is the same size for this function
+      IntVect loSrc = b.smallEnd();
+      { // Verify coarsen-refine is grid-aligned.
+        IntVect boxIndSrc = loSrc / fsizeSrc; // index of source box
+        CH_assert(boxIndSrc * fsizeSrc == loSrc);
+      }
+      { // verify the hash retrieves this box from the layout
+        uint64_t hashSrc = loSrc.hash(originSrc, fsizeSrc);
+        auto mSrc = a_lmapSrc.find(hashSrc);
+        CH_assert(mSrc != eSrc);
+        CH_assert(ditSrc() == mSrc->second);
+      }
+
+      Box bRealCells(b);
+      bRealCells.coarsen(a_refRatioSrc);
+      Box bRealNodes = surroundingNodes(bRealCells);
+      Box bRealNodesGhost = grow(bRealNodes, a_ghostSrc);
+      
+      // the grown source box: cells of source box + ghosts,
+      // coarsened to give
+      // indices of dest boxes that overlap the grown source box.
+      Box boxIndsDstCover(bRealCells);
+      boxIndsDstCover.grow(ghost1);
+      boxIndsDstCover.coarsen(fsizeDstReal);
+      BoxIterator bit(boxIndsDstCover);
+      for (bit.begin(); bit.ok(); ++bit)
+        {
+          IntVect loDst = bit()*fsizeDst; // in uncoarsened index space
+          uint64_t hashDst = loDst.hash(originDst, fsizeDst);
+          auto indexNbr = a_lmapDst.find(hashDst);
+          if (indexNbr != eDst) // got a hit
+            {
+              auto nbr = indexNbr->second;
+              Box dRealCells = a_dst[nbr];
+              dRealCells.coarsen(a_refRatioDst);
+              Box dRealNodes = surroundingNodes(dRealCells);
+              Box dRealNodesGhost = grow(dRealNodes, a_ghostDst);
+              if (bRealNodesGhost.intersectsNotEmpty(dRealNodesGhost))
+                {
+                  Box intersection = dRealNodesGhost & bRealNodesGhost;
+                  unsigned int nbrProc = a_dst.procID(nbr);
+                  MotionItem* item = new (s_motionItemPool.getPtr())
+                    MotionItem(ditSrc(), // source on this proc
+                               DataIndex(nbr), // dest
+                               intersection); // region
+                  if (myprocID == nbrProc) // local copy operation
+                    {
+                      m_localMotionPlan.push_back(item);
+                    }
+                  else
+                    { // TO nbrProc FROM myprocID
+                      item->procID = nbrProc;
+                      // Add to list of things that this proc will send
+                      m_fromMotionPlan.push_back(item);
+                      // Need to add to m_toMotionPlan from nbrProc,
+                      // which we'll get to in the ditDst loop.
+                    }
+                }
+            }
+        }
+    }
+  for (; ditDst.ok(); ++ditDst)
+    {
+      const Box& d = a_dst[ditDst];
+      CH_assert(d.size() == fsizeDst); // verify every dest box is the same size for this function
+      IntVect loDst = d.smallEnd();
+      { // Verify coarsen-refine is grid-aligned.
+        IntVect boxIndDst = loDst / fsizeDst; // index of source box
+        CH_assert(boxIndDst * fsizeDst == loDst);
+      }
+      { // verify the hash retrieves this box from the layout
+        uint64_t hashDst = loDst.hash(originDst, fsizeDst);
+        auto mDst = a_lmapDst.find(hashDst);
+        CH_assert(mDst != eDst);
+        CH_assert(ditDst() == mDst->second);
+      }
+
+      Box dRealCells(d);
+      dRealCells.coarsen(a_refRatioDst);
+      Box dRealNodes = surroundingNodes(dRealCells);
+      Box dRealNodesGhost = grow(dRealNodes, a_ghostDst);
+
+      // the grown dest box: cells of dest box + ghosts,
+      // coarsened to give
+      // indices of source boxes that overlap the grown dest box
+      Box boxIndsSrcCover(dRealCells);
+      boxIndsSrcCover.grow(ghost1);
+      boxIndsSrcCover.coarsen(fsizeSrcReal);
+      BoxIterator bit(boxIndsSrcCover);
+      for (bit.begin(); bit.ok(); ++bit)
+        {
+          IntVect loSrc = bit()*fsizeSrc; // in uncoarsened index space
+          uint64_t hashSrc = loSrc.hash(originSrc, fsizeSrc);
+          auto indexNbr = a_lmapSrc.find(hashSrc);
+          if (indexNbr != eSrc) // got a hit
+            {
+              auto nbr = indexNbr->second;
+              Box bRealCells = a_src[nbr];
+              bRealCells.coarsen(a_refRatioSrc);
+              Box bRealNodes = surroundingNodes(bRealCells);
+              Box bRealNodesGhost = grow(bRealNodes, a_ghostSrc);
+              if (bRealNodesGhost.intersectsNotEmpty(dRealNodesGhost))
+                {
+                  Box intersection = dRealNodesGhost & bRealNodesGhost;
+                  unsigned int nbrProc = a_src.procID(nbr);
+                  // Case (myprocID == nbrProc) already handled above.
+                  if (myprocID != nbrProc)
+                    {
+                      MotionItem* item = new (s_motionItemPool.getPtr())
+                        MotionItem(DataIndex(nbr), // source
+                                   ditDst(), // dest on this proc
+                                   intersection); // region
+                      // FROM nbrProc TO myprocID
+                      item->procID = nbrProc;
+                      // Add to list of things that this proc will receive
+                      m_toMotionPlan.push_back(item);
                     }
                 }
             }
@@ -1217,19 +1605,19 @@ ostream& operator<< (ostream& os, const Copier& copier)
   os << "local(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::LOCAL); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << '\n'
          << "          ";
     }
   os << "\nfrom(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::FROM); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << "[" << it().procID << "]" << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << "[" << it().procID << "]" << '\n'
          << "         ";
     }
   os << "\nto(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::TO); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << "[" <<it().procID << "]" << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << "[" <<it().procID << "]" << '\n'
          << "       ";
     }
   os << "\n";

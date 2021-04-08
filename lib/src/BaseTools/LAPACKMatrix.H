@@ -36,7 +36,7 @@ public:
       m_ncol = ncol;
       if(m_data != nullptr) 
       {
-        delete m_data;
+        delete[] m_data;
       }
       m_data =new Real[m_nrow*m_ncol];
     }

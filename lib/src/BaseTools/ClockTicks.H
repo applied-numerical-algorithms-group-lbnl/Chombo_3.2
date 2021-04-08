@@ -11,6 +11,8 @@
 #ifndef _CLOCKTICKS_H_
 #define _CLOCKTICKS_H_
 
+#include <chrono>
+
 // (dfm 4/29/08)note that NamespaceHeader.H gets included 3x, once for
 // each "if"...
 
@@ -59,9 +61,11 @@ inline unsigned long long int ch_ticks()
 }
 #define CH_TICKS
 #else
-// if we fall all the way through to here, we don't really do anything,
-// but we still need the NamespaceHeader to balance
-// the namespacefooter. (DFM 4/28/09)
+inline unsigned long long int ch_ticks()
+{
+  return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+}
+#define CH_TICKS
 #include "BaseNamespaceHeader.H"
 #endif
 

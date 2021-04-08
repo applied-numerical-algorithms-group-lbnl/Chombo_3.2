@@ -529,6 +529,12 @@ void viewFAB(const FArrayBox* a_dataPtr);
 void viewBFI(const BaseFab<int>* a_dataPtr);
 
 ///
+/** Make a copy of *a_dataPtr as FArrayBox, then write to a_filename.
+*/
+void writeBFCname(const BaseFab<char>* a_dataPtr,
+                  const char*          a_filename);
+
+///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
 */
 void viewBFIV(const BaseFab<IntVect>* a_dataPtr);
@@ -578,6 +584,10 @@ void browseFAB(const FArrayBox* a_dataPtr);
 */
 void
 writeBFR(const BaseFab<Real>* a_dataPtr);
+
+void
+writeBFRname(const BaseFab<Real>* a_dataPtr,
+             const char*          a_filename);
 
 ///
 /** View *a_dataPtr by writing it to an HDF5 plotfile (to a temporary file)

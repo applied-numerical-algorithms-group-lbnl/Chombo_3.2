@@ -37,6 +37,13 @@ public:
                                                       Real *const a_alias4,
                                                       Real *const a_alias5));
 
+
+  /// aliasing constructor
+  /** This behaves like the BaseFab(Interval, BaseFab) constructor, by creating 
+      aliased versions of each FArrayBox
+  */
+  FluxBox(const Interval& a_comps, FluxBox& a_original);
+
   /// Destructor
   ~FluxBox();
 

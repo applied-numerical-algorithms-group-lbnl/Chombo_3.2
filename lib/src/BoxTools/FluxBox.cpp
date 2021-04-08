@@ -119,6 +119,29 @@ FluxBox::FluxBox(const Box&          a_bx,
           m_fluxes[5] = new FArrayBox(edgeBox5, a_nComp, a_alias5);)
 }
 
+/// aliasing constructor
+/** This behaves like the BaseFab(Interval, BaseFab) constructor, by creating 
+    aliased versions of each FArrayBox
+*/
+FluxBox::FluxBox(const Interval& a_comps, FluxBox& a_original)
+{
+  CH_assert(a_comps.size() > 0);
+
+  m_bx = a_original.m_bx;
+  m_nvar = a_comps.size();
+
+  if (m_fluxes.size() == 0)
+  {
+    m_fluxes.resize(SpaceDim,NULL);
+  }
+
+  for (int dir = 0; dir < SpaceDim; dir++)
+  {
+    m_fluxes[dir] = new FArrayBox(a_comps, *(a_original.m_fluxes[dir]));
+  }
+  
+}
+
 // ---------------------------------------------------------
 FluxBox::~FluxBox()
 {

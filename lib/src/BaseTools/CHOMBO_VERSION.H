@@ -10,23 +10,14 @@
 
 #ifndef _CHOMBO_VERSION_H_
 #define _CHOMBO_VERSION_H_
-
-#include <string>
-using namespace std;
-
 #include "BaseNamespaceHeader.H"
 
 #define CHOMBO_VERSION 3.2
 
-
 /** signal that this is the svn trunk version of Chombo, rather than 
     the release version. This should be changed in the release version 
     of this file */
-#define CHOMBO_TRUNK FALSE
-
-/** which patch of the release is this?
- */
-#define CHOMBO_PATCH_NUMBER 7
+#define CHOMBO_TRUNK TRUE
 
 /**
    \mainpage Chombo: Block-Structured Adaptive Mesh Refinement Library
@@ -89,13 +80,6 @@ using namespace std;
    The minor version number of Chombo -- an integer.
 */
 #define CHOMBO_VERSION_MINOR 2
-
-#define CHOMBO_FLAGS DIM=CH_FLAG_DIM DEBUG=CH_FLAG_DEBUG OPT=CH_FLAG_OPT MPI=CH_FLAG_MPI USE_PETSC=CH_FLAG_PETSC PRECISION=CH_FLAG_PRECISION NAMESPACE=CH_FLAG_NAMESPACE MULTIDIM=CH_FLAG_MULTIDIM USE_64=CH_FLAG_64 USE_EB=CH_FLAG_EB USE_HDF=CH_FLAG_HDF USE_MT=CH_FLAG_MT
-
-void getChomboVersion(string& a_version,
-                      string& a_flags,
-                      string& a_date,
-                      string& a_time);
 
 #include "BaseNamespaceFooter.H"
 #endif

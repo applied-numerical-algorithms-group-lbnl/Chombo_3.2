@@ -121,13 +121,13 @@ applyEBFlux(EBCellFAB&                    a_lphi,
         {
 //          if ((*m_data)[a_dit].getIVS().contains(vof.gridIndex()))
 //             {
-//               value = (*m_data)[a_dit](vof, 0);
+//               value = (*m_data)[a_dit](vof, s_velComp);
 //             }
 //          else
 //            {
 //              value = 0.;
 //            }
-          value = (*m_data)[a_dit](vof, 0);
+          value = (*m_data)[a_dit](vof, s_velComp);
 
         }
       else if (m_bc.m_isFunction)

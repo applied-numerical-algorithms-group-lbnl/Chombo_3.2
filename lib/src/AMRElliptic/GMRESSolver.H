@@ -294,7 +294,9 @@ void GMRESSolver<T>::solve( T& a_xx, const T& a_bb )
   /* Compute the initial (preconditioned) residual (into 'vv_0')*/
   m_op->assign( vv_0, a_bb );
   m_op->setToZero( a_xx );
-
+  m_op->applyOp( m_work_arr[0], a_xx, m_homogeneous); /* t <- Ax */
+  m_op->incr( vv_0, m_work_arr[0], -1.0); /* b - A(B)x */
+  
   CH_STOP(timeInitialize);
 
   ///
@@ -460,7 +462,7 @@ void GMRESSolver<T>::ResidualGMRES( T &a_vv, const T &a_xx,
                                     const T &a_bb, T &a_temp_rhs )
 {
   CH_assert(m_op != 0);
-  m_op->applyOp( a_temp_rhs, a_xx, true); /* t <- Ax */
+  m_op->applyOp( a_temp_rhs, a_xx, m_homogeneous); /* t <- Ax */
   m_op->assign( a_vv, a_bb );
   m_op->incr( a_vv, a_temp_rhs, -1.0); /* b - A(B)x */
 }
@@ -711,7 +713,7 @@ template <class T>
 void GMRESSolver<T>::ApplyAB( T &a_dest, const T &a_xx, T &a_tmp_lhs ) const
 {
   m_op->preCond( a_tmp_lhs, a_xx );
-  m_op->applyOp( a_dest, a_tmp_lhs, true);
+  m_op->applyOp( a_dest, a_tmp_lhs, m_homogeneous);
 }
 
 template <class T>

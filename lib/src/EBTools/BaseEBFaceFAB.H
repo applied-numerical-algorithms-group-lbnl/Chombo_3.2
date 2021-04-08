@@ -44,6 +44,8 @@ class BaseEBFaceFAB
 {
 public:
 
+  bool m_verbose = false;
+
   /// for AggStencil
   int numDataTypes() const
   {
