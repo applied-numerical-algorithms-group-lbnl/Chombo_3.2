@@ -320,15 +320,55 @@ FineInterp::interpGridData(BaseFab<Real>& a_fine,
   // boundary -- may want to revisit this in the future
   // DFM (9/23/14) -- finally revisiting this; only compute modified box if 
   // slope limiting is turned off or if PC interpolation. 
-  // (otherwise, do limiiting adjacent to domain boundaries)
+  // (otherwise, do limiiting adjacent to domain boundaries
+  // if we're only limiting tangential to the boundary,  )
   Box b_mod(b);
-  if (m_boundary_limit_type != limitSlopes)
+  bool doLimiting = ((m_boundary_limit_type == limitSlopes) || (m_boundary_limit_type == limitTangentialOnly));
+  if (!doLimiting)
     {
       b_mod.grow(1);
       b_mod = m_coarse_problem_domain & b_mod;
       b_mod.grow(-1);
     }
 
+  // if limitTangentialOnly, set normal slopes in cells
+  // adjacent to boundary to zero
+  if (m_boundary_limit_type == limitTangentialOnly)
+    {
+      Box testBox(b_mod);
+      testBox.grow(1);
+      // strip off ghost cells that hang outside the domain
+      testBox = m_coarse_problem_domain & testBox;
+      for (int dir=0; dir<SpaceDim; dir++)
+        {
+          // do lo side, then hi
+          // first test to see if we're adjacent to a domain boundary
+          // grab cells adjacent to b
+          Box loBndryBox = adjCellLo(b, dir, 1);
+          // only time loBndryBox doesn't intersect testBox is if we're
+          // at a non-periodic domain boundary
+          if (!loBndryBox.intersects(testBox))
+            {
+              // move box to interior cells
+              loBndryBox.shift(dir, 1);
+              // set normal slopes to zero
+              slopes[dir].setVal(0, loBndryBox, 0);
+            } // end if this box abuts a low-side non-periodic domain boundary
+
+
+          Box hiBndryBox = adjCellHi(b, dir, 1);
+          // only time hiBndryBox doesn't intersect testBox is if we're
+          // at a non-periodic domain boundary
+          if (!hiBndryBox.intersects(testBox))
+            {
+              // move box to interior cells
+              hiBndryBox.shift(dir, -1);
+              // set normal slopes to zero
+              slopes[dir].setVal(0, hiBndryBox, 0);
+            } // end if this box abuts a hi-side non-periodic domain boundary
+        } // end loop over directions      
+    }
+  
   // create a box grown big enough to remove periodic BCs from domain
   Box domBox = grow(b, 2);
   domBox = m_coarse_problem_domain & domBox;
