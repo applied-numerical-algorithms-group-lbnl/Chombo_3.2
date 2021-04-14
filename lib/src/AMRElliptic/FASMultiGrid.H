@@ -164,9 +164,9 @@ template <class T>
 void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
 {
   CH_TIME("FASMultigrid::oneCycle");
-  //if (this->m_verbosity > 4) {
+  if (this->m_verbosity > 4) {
       pout() << "FASMultigrid::oneCycle ( n_depth = "<< this->m_depth <<")\n";
-  //}
+  }
 
   // First need to create coarser versions of phiCoarse at all MG depths
   m_phiCoarse.resize(this->m_depth);
@@ -227,17 +227,17 @@ template <class T>
 void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
 {
   CH_TIME("FASMultigrid::cycle");
-  //if (this->m_verbosity > 4) {
+  if (this->m_verbosity > 4) {
       pout() << "xxx FASMultigrid::cycle, depth = "<< depth;
-  //}
+  }
 
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == this->m_depth-1)
   {
     CH_TIME("FASMultigrid::cycle:bottom-solve");
-    //if (this->m_verbosity > 4) {
+    if (this->m_verbosity > 4) {
         pout() << "  ... bottom solve !! \n";
-    //}
+    }
 
     // Store the original phi so we can compute the 'correction' later
     this->m_op[0]->setToZero(*this->m_correction[depth]);
@@ -251,9 +251,9 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
   }
   else
   {
-    //if (this->m_verbosity > 4) {
+    if (this->m_verbosity > 4) {
         pout() << "  ... \n";
-    //}
+    }
     int cycles = this->m_cycle;
     if ( cycles < 0 )
     {
