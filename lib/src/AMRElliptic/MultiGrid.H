@@ -94,6 +94,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   MGLevelOp()
     :LinearOp<T>(),
      MGLevelOpObserver<T>(),
+     m_compute_Bcoeff(false),
      m_observers(),
      m_coarseningFactors()
   {
@@ -285,6 +286,8 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
     return m_observers.size();
   }
 
+  bool m_compute_Bcoeff;
+
   private:
 
   //! List of observers for the operator.
@@ -296,6 +299,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   // Forbidden operations.
   MGLevelOp(const MGLevelOp&);
   MGLevelOp& operator=(const MGLevelOp&);
+
 };
 
 ///
