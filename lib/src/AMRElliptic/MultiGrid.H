@@ -267,6 +267,18 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   {
   }
 
+  virtual void EvaluateBcoef(const T&   a_phi,
+                             int        a_depth,
+                             int        a_iter,
+                             bool a_homogeneous = false)
+  {
+  }
+
+  virtual void AverageBcoef(const MGLevelOp<T>& a_operator,
+                            int                 a_depth)
+  {
+  }
+
   //! Returns the number of objects observing this operator.
   int numObservers() const
   {
@@ -469,7 +481,7 @@ void MultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
 
   CH_TIME("MultiGrid::define");
   if (m_verbosity > 4) {
-      pout() <<"MultiGrid::define\n";
+      pout() <<" -- MultiGrid::define\n";
   }
   clear();
   m_depth = 0;

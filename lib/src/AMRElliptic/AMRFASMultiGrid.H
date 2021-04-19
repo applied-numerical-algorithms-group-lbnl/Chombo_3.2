@@ -66,7 +66,8 @@ private:
   
   virtual void VCycle(Vector<T*>& a_phi,
                       const Vector<T*>& a_rhs,
-                      int l, int l_max, int l_base);
+                      int l, int l_max, int l_base,
+                      int a_AMRFASMGiter);
 
   virtual void init(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                     int l_max, int l_base);
@@ -120,7 +121,6 @@ void AMRFASMultiGrid<T>::define( const ProblemDomain& a_coarseDomain,
                                  int a_maxAMRLevels )
 {
   CH_TIME("AMRFASMultiGrid::define");
-
   AMRMultiGrid<T>::define( a_coarseDomain,a_factory,a_bottomSolver,a_maxAMRLevels);
 
   m_HOCopier.resize( a_maxAMRLevels );
@@ -269,10 +269,12 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
         {
           // Set m_residual[l_max] = a_rhs[l_max]
           this->m_op[l_max]->assignLocal( *(this->m_residual[l_max]), *(a_rhs[l_max]) );
-          if (this->m_verbosity > 4 ) {
-              pout() << " Enter a Vcycle loop \n"; 
+          // Update the Bcoef on finer grid then average down
+          this->m_op[l_max]->EvaluateBcoef(*(a_phi[l_max]), l_max, iter); 
+          for (int kk = l_max; kk > l_base; kk--) {
+              this->m_op[kk-1]->AverageBcoef(*(this->m_op[l_max]), l_max-(kk-1));
           }
-          VCycle( a_phi, a_rhs, l_max, l_max, l_base);
+          VCycle( a_phi, a_rhs, l_max, l_max, l_base, iter);
         }
       else 
         {
@@ -309,7 +311,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
 
           if (this->m_verbosity >= 2)
             {
-              pout() << " AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
+              pout() << "\n AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
               if (rnorm > 0.0)
                 {
                   pout() << ", rate = " << norm_last/rnorm;
@@ -361,7 +363,7 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
 {
   // coarse grid
   this->m_op[l_base]->assignLocal( *(this->m_residual[l_base]), *(a_rhs[l_base]) );
-  this->m_mg[l_base]->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]) );
+  this->m_mg[l_base]->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]));
 
   for ( int ilev = l_base+1 ; ilev <= l_max ; ilev++ )
     {
@@ -373,7 +375,7 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
       this->m_op[ilev]->assignLocal( *(this->m_residual[ilev]), *(a_rhs[ilev]) );
       for (int i=0;i<m_numVcycles;i++)
         {
-          VCycle( a_phi, a_rhs, ilev, l_max, l_base );
+          VCycle( a_phi, a_rhs, ilev, l_max, l_base, 0 );
         }
     }
 }
@@ -387,11 +389,13 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
 template<class T>
 void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
                                  const Vector<T*>& a_rhs_dummy,
-                                 int ilev, int l_max, int l_base )
+                                 int ilev, int l_max, int l_base,
+                                 int iter )
 {
   if (this->m_verbosity > 4 ) {
       pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")\n" ; 
   }
+
   if (ilev == l_base)
     {
       CH_TIME("AMRFASMultiGrid::VCycle:coarse_grid_solver");
@@ -414,7 +418,7 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
 
       // This gives us back the full solution (NOT a correction)
       // m_residual[l_base] is the full FAS right hand side (with tau correction)
-      fasMg->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]), phiCoarsePtr);
+      fasMg->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]), phiCoarsePtr, iter);
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(a_phi[ilev],"zh_coarsest_phi_1.hdf5");
@@ -538,7 +542,7 @@ this->m_op[ilev-1]->write(this->m_residual[ilev-1],"zf_coarse_res_3.hdf5");
         //============finish Compute residual for the next coarser level======
         for (int img = 0; img < this->m_numMG; img++)
           {
-            VCycle( a_phi, a_rhs_dummy, ilev-1, l_max, l_base );
+            VCycle( a_phi, a_rhs_dummy, ilev-1, l_max, l_base, iter );
           }
 
 #ifdef FAS_PRINT

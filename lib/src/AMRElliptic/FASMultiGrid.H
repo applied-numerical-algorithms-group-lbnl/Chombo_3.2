@@ -58,7 +58,7 @@ public:
        See solve() or AMRFASMultiGrid::solve for a more automatic solve() function.
    */
   virtual void oneCycle(T& a_e, const T& a_res);
-  void oneCycle(T& a_e, const T& a_res, T* a_phiCoarse);
+  void oneCycle(T& a_e, const T& a_res, T* a_phiCoarse, int iter);
 
   //internal function
   virtual void cycle(int a_depth, T& a_correction, const T& a_residual);
@@ -161,7 +161,7 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs)
 }
 
 template <class T>
-void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
+void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse, int iter)
 {
   CH_TIME("FASMultigrid::oneCycle");
   if (this->m_verbosity > 4) {
@@ -172,14 +172,16 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
   m_phiCoarse.resize(this->m_depth);
   m_phiCoarse[0] = a_phiCoarse;
 
+  // Update the Bcoef on finer grid then average down
+  this->m_op[0]->EvaluateBcoef(a_phi, 0, iter); 
   for (int depth = 1; depth < this->m_depth; depth++)
   {
-    if (m_phiCoarse[depth-1] == NULL)
-    {
+    // Update Bcoeff on subsequent depth
+    this->m_op[depth]->AverageBcoef(*(this->m_op[0]), depth);
+
+    if (m_phiCoarse[depth-1] == NULL) {
       m_phiCoarse[depth] = NULL;
-    }
-    else
-    {
+    } else {
       if (this->m_verbosity > 4) {
           pout() << " ... depth ? " << depth <<"\n";
       }
