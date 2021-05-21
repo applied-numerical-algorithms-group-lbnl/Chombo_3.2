@@ -174,7 +174,7 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse, int ite
 
   // Update the Bcoef on finer grid then average down
   if (this->m_op[0]->m_compute_Bcoeff) {
-      this->m_op[0]->EvaluateBcoef(a_phi, 0, iter); 
+      this->m_op[0]->EvaluateBcoef(a_phi, m_phiCoarse[0], 0, iter, false); 
   }
   for (int depth = 1; depth < this->m_depth; depth++)
   {

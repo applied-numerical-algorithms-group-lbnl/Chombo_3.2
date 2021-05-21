@@ -269,11 +269,13 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   }
 
   virtual void EvaluateBcoef(const T&   a_phi,
+                             const T*   a_phiCoarse,
                              int        a_depth,
                              int        a_iter,
                              bool a_homogeneous = false)
   {
-  }
+      MayDay::Error("EvaluateBcoef not defined");
+  } 
 
   virtual void AverageBcoef(const MGLevelOp<T>& a_operator,
                             int                 a_depth)
