@@ -884,6 +884,10 @@ void AMRMultiGrid<T>::computeAMRResidualLevel(Vector<T*>&       a_resid,
       if (l_base == 0)
         {
           m_op[l_max]->residual(*a_resid[l_max], *a_phi[l_max], *a_rhs[l_max],a_homogeneousBC);
+          //T dummy_data; 
+          //m_op[l_max]->AMRResidualNF(*(a_resid[l_max]), *(a_phi[l_max]),
+          //                             dummy_data, *(a_rhs[l_max]),
+          //                            a_homogeneousBC);
         }
       else
         {
