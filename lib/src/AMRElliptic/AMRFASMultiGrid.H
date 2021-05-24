@@ -522,7 +522,7 @@ this->m_op[ilev-1]->write(this->m_residual[ilev-1],"zf_coarse_res_1.hdf5");
       // Do not pass in fine level here - we've already done refluxing
       // this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), *(a_phi[ilev]), *(a_phi[ilev-1]), true, this->m_op[ilev]);
       T undefined;
-      this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), undefined, *(a_phi[ilev-1]), true, this->m_op[ilev]);
+      this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), undefined, *(a_phi[ilev-1]), false, this->m_op[ilev]);
 
 #ifdef FAS_PRINT
 this->m_op[ilev-1]->write(this->m_correction[ilev-1],"zf_coarse_Lu.hdf5");
