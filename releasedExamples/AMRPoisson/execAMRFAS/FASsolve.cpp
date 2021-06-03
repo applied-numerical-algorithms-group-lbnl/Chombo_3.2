@@ -21,7 +21,6 @@
 #include "ProblemDomain.H"
 #include "BCFunc.H"
 #include "AMRNonLinearPoissonOp.H"
-#include "VCAMRNonLinearPoissonOp.H"
 #include "AMRPoissonOp.H"
 #include "AMRFASMultiGrid.H"
 #include "AMRMultiGrid.H"
@@ -31,14 +30,13 @@
 #include "memusage.H"
 #include "computeNorm.H"
 #include "FABView.H"
-#include "ExternalObj.H"
 
 #include "UsingNamespace.H"
 
 int s_verbosity = 1;
 
 enum probTypes {exact,
-  inexact, gaussians,
+  inexact,
   numProbTypes};
 
 
@@ -121,136 +119,35 @@ void ParseBC(FArrayBox& a_state,
   }
 }
 
-void
-setACoef_Trivial(LevelData<FArrayBox>& a_aCoef)
-{
-  DataIterator dit = a_aCoef.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-    {
-      FArrayBox& aCoef = a_aCoef[dit];
-      aCoef.setVal(1.0);
-    } // end loop over grids
-}
-
-void
-setBCoef_Trivial(LevelData<FluxBox>& a_bCoef)
-{
-  DataIterator dit = a_bCoef.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-    {
-      FluxBox& thisBCoef = a_bCoef[dit];
-      for (int dir=0; dir<SpaceDim; dir++)
-        {
-          FArrayBox& dirFlux = thisBCoef[dir];
-          dirFlux.setVal(1.0);
-        } // end loop over directions
-    } // end loop over grids
-}
-
-void
-setACoef(LevelData<FArrayBox>& a_aCoef,
-         const RealVect& a_dx)
-{
-  RealVect pos;
-  int num;
-  DataIterator dit = a_aCoef.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-    {
-      FArrayBox& aCoef = a_aCoef[dit];
-      ForAllXBNN(Real, aCoef, aCoef.box(), 0, aCoef.nComp());
-      {
-        num = nR;
-        D_TERM(pos[0]=a_dx[0]*(iR+0.5);,
-               pos[1]=a_dx[1]*(jR+0.5);,
-               pos[2]=a_dx[2]*(kR+0.5));
-        aCoefR = pos[0];
-      }EndFor;
-    } // end loop over grids
-}
-
-void
-setBCoef(LevelData<FluxBox>& a_bCoef,
-         const RealVect& a_dx)
-{
-    DataIterator dit = a_bCoef.dataIterator();
-    for (dit.begin(); dit.ok(); ++dit) {
-      FluxBox& thisBCoef = a_bCoef[dit];
-      for (int dir=0; dir<SpaceDim; dir++)
-        {
-          FArrayBox& dirFlux = thisBCoef[dir];
-          const Box& dirBox = dirFlux.box();
-          // this sets up a vector which is 0 in the dir
-          // direct and 0.5 in the other (cell-centered) directions
-          RealVect offsets = BASISREALV(dir);
-          RealVect pos;
-          offsets -= RealVect::Unit;
-          offsets *= -0.5;
-          int n;
-          ForAllXBNN(Real, dirFlux, dirBox, 0, dirFlux.nComp())
-            {
-              n = nR;
-              D_TERM(pos[0] = a_dx[0]*(iR+offsets[0]);,
-                     pos[1] = a_dx[1]*(jR+offsets[1]);,
-                     pos[2] = a_dx[2]*(kR+offsets[2]));
-              dirFluxR = D_TERM(pos[0], +pos[1], +pos[2]);
-            }EndFor
-        } // end loop over directions
-    }
-}
-
-
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
-            Vector<LevelData<FArrayBox>* > a_NL,
             Vector<ProblemDomain>& a_amrDomains,
-            Vector<DisjointBoxLayout>& a_amrGrids,
             Vector<int>& a_refRatios,
             Vector<Real>& a_amrDx,
             int a_finestLevel)
 {
   CH_TIME("setRHS");
 
+  Real gamma = 0;
   ParmParse pp("solver");
-
-  Real alpha = 0.0;
-  Real beta  = 1.0;
-  Real gamma = -1.0;
-
-  pp.query("alpha", alpha);
-  pp.query("beta", beta);
   pp.query("gamma", gamma);
 
-  bool use_var_coefs = false;
-  pp.query("use_VC", use_var_coefs);
-
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef; 
-  aCoef.resize(a_finestLevel +1);
-
-  RealVect dxLev = RealVect::Unit;
-  dxLev *= a_amrDx[0]; 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
-    aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(a_amrGrids[lev], 1, IntVect::Unit));
-
-    setACoef(*aCoef[lev], dxLev);
-
-    dxLev /= a_refRatios[lev];
-
     LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
-    LevelData<FArrayBox>& levelU   = *(a_NL[lev]);
-    LevelData<FArrayBox>& levelaCoef = *(aCoef[lev]);
+    const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
     // rhs is cell-centered...
     RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
 
-    DataIterator levelDit = levelRhs.dataIterator();
+    DataIterator levelDit = levelGrids.dataIterator();
     for (levelDit.begin(); levelDit.ok(); ++levelDit)
     {
       FArrayBox& thisRhs = levelRhs[levelDit];
-      FArrayBox& thisU   = levelU[levelDit];
-      FArrayBox& thisaCoef = levelaCoef[levelDit];
 
       if (s_probtype == exact)
       {
+
+
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
         {
@@ -262,25 +159,14 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
           D_TERM(Real x = loc[0];, Real y = loc[1];, Real z = loc[2];)
           Real mult_arg = D_TERM((x-x*x),*(y-y*y),*(z-z*z));
           Real plus_arg = D_TERM((x-x*x),+(y-y*y),+(z-z*z));
-          //ONLY 2D - with betaCoef being x+y
-          Real div_x = (y-y*y)*(1 -4*x -2*y);
-          Real div_y = (x-x*x)*(1 -4*y -2*x);
 
-          if (use_var_coefs) {
-              thisRhs(iv, 0) = ( thisaCoef(iv, 0)*alpha*mult_arg 
-                             - beta * (div_x + div_y)
-                             + thisU(iv, 0));
-          } else {
-              thisRhs(iv, 0) = ( alpha*mult_arg 
-                             + beta*2*plus_arg 
-                             + thisU(iv, 0));
-          }
-          //pout() << "...    pos RHS aCoef :"<< iv << " " << thisRhs(iv, 0) <<" "<< thisaCoef(iv, 0)  << "\n";
+          thisRhs(iv, 0) = ( 2*plus_arg + gamma*mult_arg*exp(mult_arg));
 
         }
       }
       else if (s_probtype == inexact)
       {
+
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
         {
@@ -297,64 +183,9 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
 
         }
       }
-      else if (s_probtype == gaussians)
-      {
-              int numGaussians = 3;
-              Vector<RealVect> center(numGaussians,RealVect::Zero);
-              Vector<Real> scale(numGaussians, 1.0);
-              Vector<Real> strength(numGaussians, 1.0);
-
-              for (int n=0; n<numGaussians; n++)
-              {
-                if (n==0)
-                {
-                   strength[0] = 1.0;
-                   scale[0] = 1.0e-2;
-                   center[0] = 0.25*RealVect::Unit;
-                 }
-                 else if (n == 1)
-                 {
-                   strength[1] = 3.0;
-                   scale[1] = 1.0e-2;
-                   center[1] = RealVect(D_DECL(0.5,0.75, 0.75));
-                 }
-                 else if (n == 2)
-                 {
-                   strength[2] = 2.0;
-                   scale[2] = 1.0e-2;
-                   center[2] = RealVect(D_DECL(0.75,0.5, 0.5));
-                 }
-                  else
-                  {
-                     MayDay::Error("too many Gaussian sources attempted");
-                  }
-              }
-
-              thisRhs.setVal(0.0);
-
-              BoxIterator bit(thisRhs.box());
-              for (bit.begin(); bit.ok(); ++bit)
-              {
-                IntVect iv = bit();
-                RealVect loc(iv);
-                loc *= a_amrDx[lev];
-                loc += ccOffset;
-
-                for (int n=0; n<numGaussians; n++)
-                {
-                  RealVect dist = loc - center[n];
-                  Real radSqr = D_TERM(dist[0]*dist[0],
-                                       +dist[1]*dist[1],
-                                       +dist[2]*dist[2]);
-
-                   Real val = strength[n]*exp(-radSqr/scale[n]);
-                   thisRhs(iv,0) += val;
-                 }
-              }
-      }
       else
       {
-          MayDay::Error("undefined problem type");
+        MayDay::Error("undefined problem type");
       }
     } // end loop over grids on this level
   } // end loop over levels
@@ -368,6 +199,10 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
               int a_finestLevel)
 {
   CH_TIME("setExact");
+
+  Real gamma = 0;
+  ParmParse pp("solver");
+  pp.query("gamma", gamma);
 
   for (int lev=0; lev<=a_finestLevel; lev++)
   {
@@ -427,12 +262,12 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
 }
 
 
+
 void
 setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
            Vector<ProblemDomain>& a_amrDomains,
            Vector<int>& a_refRatios,
            Vector<Real>& a_amrDx,
-           int& a_maxLevel,
            int& a_finestLevel)
 {
   CH_TIME("setupGrids");
@@ -445,13 +280,13 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   Real fillRatio;
 
   ppGrids.get("max_level", maxLevel);
-  a_maxLevel = maxLevel;
   ppGrids.get("max_box_size",maxBoxSize);
   ppGrids.get("block_factor", blockFactor);
   ppGrids.get("fillRatio", fillRatio);
 
   // note that there only need to be numLevels-1 refinement ratios
-  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel+1);
+  a_refRatios.resize(maxLevel);
+  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel);
 
   Vector<int>  is_periodic_int;
   bool is_periodic[SpaceDim];
@@ -603,25 +438,14 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
         // tag based on grad(rhs)
         // first need to allocate RHS
         Vector<LevelData<FArrayBox>* > tempRHS(a_finestLevel+1, NULL);
-        Vector<LevelData<FArrayBox>* > tempNL(a_finestLevel+1, NULL);
-        Vector<LevelData<FArrayBox>* > tempdNL(a_finestLevel+1, NULL);
-        Vector<LevelData<FArrayBox>* > tempExact(a_finestLevel+1, NULL);
         for (int lev=0; lev<= a_finestLevel; lev++)
         {
           // note that we add a ghost cell to simplify gradients
           tempRHS[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
                                                   1, IntVect::Unit);
-          tempNL[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
-                                                  1, IntVect::Unit);
-          tempdNL[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
-                                                  1, IntVect::Unit);
-          tempExact[lev] = new LevelData<FArrayBox>(a_amrGrids[lev],
-                                                  1, IntVect::Unit);
         }
-        setExact(tempExact, a_amrDomains, a_refRatios, a_amrDx, a_finestLevel);
-        ExternalObj a_extObj = ExternalObj();
-        a_extObj.NonLinear_piece(tempNL, tempdNL, tempExact, a_finestLevel);
-        setRHS(tempRHS, tempNL, a_amrDomains, a_amrGrids, a_refRatios, a_amrDx,
+
+        setRHS(tempRHS, a_amrDomains, a_refRatios, a_amrDx,
                a_finestLevel);
 
         Vector<IntVectSet> tags(a_finestLevel+1);
@@ -735,197 +559,66 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
 }
 
 
-int runSolver()
+void
+setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
+            LinearSolver<LevelData<FArrayBox> >& a_bottomSolver,
+            const Vector<DisjointBoxLayout>& a_amrGrids,
+            const Vector<ProblemDomain>& a_amrDomains,
+            const Vector<int>& a_refRatios,
+            const Vector<Real>& a_amrDx,
+            int a_finestLevel)
 {
-  CH_TIME("runSolver");
+  CH_TIME("setupSolver");
 
-  int status = 0;
-  ParmParse ppMain("main");
   ParmParse ppSolver("solver");
 
-  ppMain.query("verbosity", s_verbosity);
-  ppMain.query("problem", s_probtype);
+  bool nonlinearOp = true;
+  ppSolver.query("nonlinearOp", nonlinearOp);
 
-  // set up grids&
-  Vector<DisjointBoxLayout> amrGrids;
-  Vector<ProblemDomain> amrDomains;
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef; 
-  Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef;
-  Vector<int> refRatios;
-  Vector<Real> amrDx;
-  int finestLevel, maxLevel;
+  int numLevels = a_finestLevel+1;
 
-  setupGrids(amrGrids, amrDomains, refRatios, amrDx, maxLevel, finestLevel);
+  if (nonlinearOp)
+  {
+  AMRNonLinearPoissonOpFactory opFactory;
 
-  // initialize solver
-  bool FASmultigrid = true;
-  ppSolver.query("FASmultigrid", FASmultigrid);
+  // solving nonlinear poisson problem here
+  Real alpha = 0.0;
+  Real beta = 1.0;
+  Real gamma = -1.0;
 
-  AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-  if (FASmultigrid) {
-    pout() << "using  AMRFASMultiGrid\n";
-    amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
-  } else {
-    pout() << "using  AMRMultiGrid\n";
-    amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+  ppSolver.query("gamma", gamma);
+
+  opFactory.define(a_amrDomains[0],
+                   a_amrGrids,
+                   a_refRatios,
+                   a_amrDx[0],
+                   &ParseBC, alpha, beta,gamma);
+
+
+  AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+  a_amrSolver->define(a_amrDomains[0], castFact,
+                      &a_bottomSolver, numLevels);
+
   }
-  BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-  bottomSolver.m_verbosity = s_verbosity-2;
-  //Begin setupSolver
-  int whichOperator = 0;
-  // 0 --> nonlinearOp    AMRNonLinearPoissonOp
-  // 1 --> linearOp       AMRPoissonOp
-  // 2 --> VCnonlinearOp  VCAMRNonLinearPoissonOp
-  ppSolver.query("Operator", whichOperator);
-
-  int numLevels = finestLevel+1;
-
-  // NonLinear portion
-  Vector<LevelData<FArrayBox>* > exact(maxLevel+1, NULL);
-  Vector<LevelData<FArrayBox>* > NLfunc(maxLevel+1, NULL);
-  Vector<LevelData<FArrayBox>* > NLdfunc(maxLevel+1, NULL);
-  for (int lev=0; lev<= maxLevel; lev++) {
-      const DisjointBoxLayout& levelGrids = amrGrids[lev];
-      exact[lev]   = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-      NLfunc[lev]  = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-      NLdfunc[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-  }
-
-  setExact(exact, amrDomains, refRatios, amrDx, maxLevel);
-  ExternalObj a_extObj = ExternalObj();
-  a_extObj.NonLinear_piece(NLfunc, NLdfunc, exact, maxLevel);
-
-  if (whichOperator == 1) {
-      pout() << "...  with AMRNonLinearPoisson operator \n";
-      AMRNonLinearPoissonOpFactory opFactory;
-
-      // solving nonlinear poisson problem here
-      Real alpha = 0.0;
-      Real beta  = 1.0;
-
-      ppSolver.query("alpha", alpha);
-      ppSolver.query("beta", beta);
-
-      ExternalObj a_extObj = ExternalObj();
-      NL_level functTmp = &ExternalObj::NonLinear_level;
-
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > B(numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pressi(numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
-      for (int lev = 0; lev <= finestLevel; lev++) {
-          B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          Pressi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-      }
-
-      opFactory.define(amrDomains[0],
-                       amrGrids,
-                       refRatios,
-                       amrDx[0],
-                       &ParseBC, 
-                       &a_extObj, functTmp, 
-                       B, Pressi, zb,
-                       alpha, beta);
-
-      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-      amrSolver->define(amrDomains[0], castFact,
-                        &bottomSolver, numLevels);
-
-  } else if (whichOperator == 0) {
-      pout() << "...  with AMRPoisson operator \n";
-      AMRPoissonOpFactory opFactory;
+  else
+  {
+        AMRPoissonOpFactory opFactory;
 
       // solving poisson problem here
       Real alpha = 0.0;
       Real beta = -1.0;
 
-      ppSolver.query("alpha", alpha);
-      ppSolver.query("beta", beta);
-
-      beta = -beta;
-
-      bool FASmultigrid = false;
-      ppSolver.query("FASmultigrid", FASmultigrid);
-
-      opFactory.define(amrDomains[0],
-                       amrGrids,
-                       refRatios,
-                       amrDx[0],
-                       &ParseBC, alpha, beta, FASmultigrid);
+      opFactory.define(a_amrDomains[0],
+                       a_amrGrids,
+                       a_refRatios,
+                       a_amrDx[0],
+                       &ParseBC, alpha, beta);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
-      amrSolver->define(amrDomains[0], castFact,
-                        &bottomSolver, numLevels);
-  } else {
-      pout() << "...  with VCAMRNonLinearPoisson operator \n";
-
-      bool use_var_coefs = false;
-      ppSolver.query("use_VC", use_var_coefs);
-
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > B (numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > Pressi(numLevels);
-      Vector<RefCountedPtr<LevelData<FArrayBox> > > zb(numLevels);
-      for (int lev = 0; lev <= finestLevel; lev++) {
-          B [lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          Pressi[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-          zb[lev]   = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Unit));
-      }
-
-      RealVect dxLev = RealVect::Unit;
-      dxLev *= amrDx[0]; 
-      if (use_var_coefs) {
-          aCoef.resize(maxLevel +1);
-          bCoef.resize(maxLevel +1);
-          for (int lev=0; lev<= maxLevel; lev++) {
-              aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
-              bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
-             
-              setACoef(*aCoef[lev], dxLev);
-              setBCoef(*bCoef[lev], dxLev);
-
-              dxLev /= refRatios[lev];
-          }
-      } else {
-          aCoef.resize(maxLevel +1);
-          bCoef.resize(maxLevel +1);
-          for (int lev=0; lev<= maxLevel; lev++) {
-              aCoef[lev] =  RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(amrGrids[lev], 1, IntVect::Zero));
-              bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(amrGrids[lev], 1, IntVect::Zero));
-             
-              setACoef_Trivial(*aCoef[lev]);
-              setBCoef_Trivial(*bCoef[lev]);
-
-              dxLev /= refRatios[lev];
-          }
-      }
-
-      VCAMRNonLinearPoissonOpFactory opFactory;
-
-      // solving VC nonlinear poisson problem here
-      Real alpha = 0.0;
-      Real beta  = 1.0;
-
-      ppSolver.query("alpha", alpha);
-      ppSolver.query("beta", beta);
-
-      ExternalObj a_extObj = ExternalObj();
-      NL_level functTmp = &ExternalObj::NonLinear_level;
-
-      opFactory.define(amrDomains[0],
-                       amrGrids,
-                       refRatios,
-                       amrDx[0],
-                       &ParseBC, alpha, aCoef, 
-                       beta, bCoef, 
-                       &a_extObj, functTmp,
-                       B, Pressi, zb);
-
-      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-      amrSolver->define(amrDomains[0], castFact,
-                        &bottomSolver, numLevels);
+      a_amrSolver->define(a_amrDomains[0], castFact,
+                          &a_bottomSolver, numLevels);
   }
 
   // multigrid solver parameters
@@ -940,40 +633,95 @@ int runSolver()
   ppSolver.get("hang",      hang);
 
   Real normThresh = 1.0e-30;
-  amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
+  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
                                    numMG, maxIter, eps, hang, normThresh);
-  amrSolver->m_verbosity = s_verbosity-1;
-  // END setupSolver
+  a_amrSolver->m_verbosity = s_verbosity-1;
+
+  // optional parameters
+  ppSolver.query("num_pre", a_amrSolver->m_pre);
+  ppSolver.query("num_post", a_amrSolver->m_post);
+
+}
+
+int runSolver()
+{
+  CH_TIME("runSolver");
+
+  int status = 0;
+  ParmParse ppMain("main");
+  ParmParse ppSolver("solver");
+
+  ppMain.query("verbosity", s_verbosity);
+  ppMain.query("problem", s_probtype);
+
+  // set up grids&
+  Vector<DisjointBoxLayout> amrGrids;
+  Vector<ProblemDomain> amrDomains;
+  Vector<int> refRatios;
+  Vector<Real> amrDx;
+  int finestLevel;
+
+  setupGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
+
+  // initialize solver
+  bool FASmultigrid = true;
+  ppSolver.query("FASmultigrid", FASmultigrid);
+
+  AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
+
+  if (FASmultigrid)
+  {
+    amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
+  }
+  else
+  {
+    amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+  }
+
+
+  BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
+  bottomSolver.m_verbosity = s_verbosity-2;
+  setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
+              refRatios, amrDx, finestLevel);
+
 
   // allocate solution and RHS, initialize RHS
-  Vector<LevelData<FArrayBox>* > phi(maxLevel+1, NULL);
-  Vector<LevelData<FArrayBox>* > rhs(maxLevel+1, NULL);
+  int numLevels = amrGrids.size();
+  Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
+  Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
   // this is for convenience
-  Vector<LevelData<FArrayBox>* > resid(maxLevel+1, NULL);
-  Vector<LevelData<FArrayBox>* > error(maxLevel+1, NULL);
+  Vector<LevelData<FArrayBox>* > resid(numLevels, NULL);
+  Vector<LevelData<FArrayBox>* > exact(numLevels, NULL);
+  Vector<LevelData<FArrayBox>* > error(numLevels, NULL);
 
-  for (int lev=0; lev<=maxLevel; lev++)
+  for (int lev=0; lev<=finestLevel; lev++)
   {
     const DisjointBoxLayout& levelGrids = amrGrids[lev];
     phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
     resid[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
+    exact[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
     error[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
-  setRHS(rhs, NLfunc, amrDomains, amrGrids, refRatios, amrDx, maxLevel);
+  bool zeroInitialGuess = true;
+  setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
+  setExact(exact, amrDomains, refRatios, amrDx, finestLevel );
+
   // Start with exact solution
-  //setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
+  zeroInitialGuess = false;
+  setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
 
   // do solve
   int iterations = 1;
   ppMain.get("iterations", iterations);
-  bool zeroInitialGuess = false;
   ppSolver.query("zeroInitialGuess", zeroInitialGuess);
 
   for (int iiter = 0; iiter < iterations; iiter++)
   {
+    pout() << "about to go into solve" << endl;
     amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
+    pout() << "done solve" << endl;
   }
 
   // Compute error

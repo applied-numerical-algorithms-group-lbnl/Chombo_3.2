@@ -178,9 +178,24 @@ int poissonSolve(Vector<LevelData<FArrayBox>* >& a_phi,
 
   solver.solve(a_phi, a_rhs);
 
+  // check that we can still access solver state
+  int iterations = solver.m_iter;
+  Real initialResidual = solver.m_initial_residual;
+  Real finalResidual = solver.m_residual;
+  
   int exitStatus = solver.m_exitStatus;
   // note that for AMRMultiGrid, success = 1.
   exitStatus -= 1;
+
+  if (a_params.verbosity > 2)
+    {
+      pout() << "solver exited with status = " << exitStatus
+             << ",  " << iterations << " iterations, initial residual = "
+             << initialResidual << " and final residual = " << finalResidual
+             << endl;
+    }
+  
+  
   return exitStatus;
 
 }

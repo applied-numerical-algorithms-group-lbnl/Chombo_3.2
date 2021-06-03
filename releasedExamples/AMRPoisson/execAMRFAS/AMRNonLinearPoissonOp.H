@@ -24,14 +24,8 @@
 #include "CFRegion.H"
 #include "AMRIO.H"
 #include "CornerCopier.H"
-#include "ExternalObj.H"
 
 #include "NamespaceHeader.H"
-
-#define MEMBER_FUNC_PTR(object,ptrToMember) ((object).*(ptrToMember))
-
-typedef void (ExternalObj::*NL_level) (LevelData<FArrayBox>& a_NL, LevelData<FArrayBox>& a_dNL, const LevelData<FArrayBox>&  a_u,
-                                    LevelData<FArrayBox>& a_B, LevelData<FArrayBox>& a_Pi, LevelData<FArrayBox>& a_zb);
 
 ///
 /**
@@ -137,11 +131,11 @@ public:
                         const LevelData<FArrayBox>& a_rhs,
                         bool                        a_homogeneous = false);
 
-  virtual void residualNF(LevelData<FArrayBox>&       a_lhs,
-                          LevelData<FArrayBox>&       a_phi,
-                          const LevelData<FArrayBox>* a_phiCoarse,
-                          const LevelData<FArrayBox>& a_rhs,
-                          bool                        a_homogeneous = false);
+  virtual void residualNF(LevelData<FArrayBox>& a_lhs,
+                  LevelData<FArrayBox>& a_phi,
+                  const LevelData<FArrayBox>* a_phiCoarse,
+                  const LevelData<FArrayBox>& a_rhs,
+                  bool a_homogeneous = false);
 
  /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void residualI(LevelData<FArrayBox>&       a_lhs,
@@ -168,7 +162,7 @@ public:
                         const LevelData<FArrayBox>& a_phi,
                         bool                        a_homogeneous = false);
 
-  virtual void applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
+  virtual void applyOpNoBoundary(LevelData<FArrayBox>& a_lhs,
                                  const LevelData<FArrayBox>& a_rhs) ;
 
   virtual void create(LevelData<FArrayBox>&       a_lhs,
@@ -235,9 +229,9 @@ public:
 
   // For FAS stuff - do CF interpolation then relax as normal
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
-                       const LevelData<FArrayBox>* a_phiCoarse,
-                       const LevelData<FArrayBox>& a_rhs,
-                       int a_iterations);
+                  const LevelData<FArrayBox>* a_phiCoarse,
+                  const LevelData<FArrayBox>& a_rhs,
+                  int a_iterations);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -452,21 +446,8 @@ public:
 
   /*@}*/
 
-  //! This is called on multigrid operators when their AMR operators
-  //! are altered.
-  void finerOperatorChanged(const MGLevelOp<LevelData<FArrayBox> >& a_operator,
-                            int a_coarseningFactor);
-
   /// public constants
-  Real m_alpha, m_beta, m_aCoef, m_bCoef;
-
-  // Problem SPECIFIC
-  RefCountedPtr<LevelData<FArrayBox> > m_B;  // Gap Height
-  RefCountedPtr<LevelData<FArrayBox> > m_Pi; // Overb Press
-  RefCountedPtr<LevelData<FArrayBox> > m_zb; // Bed Elevation
-
-  NL_level m_nllevel = nullptr;
-  ExternalObj* m_extObj = nullptr;
+  Real m_alpha, m_beta, m_aCoef, m_bCoef, m_gamma;
 
   // needed for homogeneous interpolation
   // set by the factory
@@ -580,13 +561,9 @@ public:
               const Vector<int>&               a_refRatios,
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
-              ExternalObj*                     a_extObj,
-              NL_level                         a_nllevel,
-              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_B,
-              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_Pi,
-              Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_zb,
               Real                             a_alpha = 0.0,
-              Real                             a_beta  = 1.0);
+              Real                             a_beta  = 1.0,
+              Real                             a_gamma = 0.0);
 
   // regular multigrid definition function --deprecated
   void define(const ProblemDomain&     a_domain,
@@ -595,7 +572,8 @@ public:
               BCHolder                 a_bc,
               int                      a_maxDepth = -1,
               Real                     a_alpha = 0.0,
-              Real                     a_beta  = 1.0);
+              Real                     a_beta  = 1.0,
+              Real                     a_gamma = 0.0);
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
@@ -620,16 +598,12 @@ private:
   Real m_alpha;
   Real m_beta;
 
-  // Problem SPECIFIC
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_B;  // Gap Height
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_Pi; // Overb Press
-  Vector<RefCountedPtr<LevelData<FArrayBox> > > m_zb; // Bed Elevation
-
-  NL_level m_nllevel    = nullptr;
-  ExternalObj* m_extObj = nullptr;
+  Real m_gamma;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
+
+
 };
 
 #include "NamespaceFooter.H"
