@@ -582,7 +582,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.query("num_bottom", a_amrSolver->m_bottom);
 }
 
- int runSolver()
+int runSolver()
  {
    CH_TIME("runSolver");
 
