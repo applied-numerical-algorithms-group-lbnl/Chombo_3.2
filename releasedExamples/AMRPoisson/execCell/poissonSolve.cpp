@@ -626,6 +626,63 @@ int runSolver()
 
    setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
+   bool writePlots = true;
+   ppMain.query("writePlotFiles", writePlots);
+
+   // write init to file
+#ifdef CH_USE_HDF5
+   if (writePlots)
+     {
+       int numLevels = finestLevel +1;
+       Vector<LevelData<FArrayBox>* > plotData(numLevels, NULL);
+       
+       pout() << "Write initial plot." << endl;
+       
+       for (int lev=0; lev<numLevels; lev++)
+         {
+           plotData[lev] = new LevelData<FArrayBox>(amrGrids[lev],
+                                                    3, IntVect::Zero);
+
+           Interval phiInterval(0,0);
+           phi[lev]->copyTo(phiInterval, *plotData[lev], phiInterval);
+           Interval rhsInterval(1,1);
+           rhs[lev]->copyTo(phiInterval, *plotData[lev], rhsInterval);
+           Interval resInterval(2,2);
+           resid[lev]->copyTo(phiInterval, *plotData[lev], resInterval);
+         }
+
+       string fname = "poissonIn.";
+
+       char suffix[30];
+       sprintf(suffix, "%dd.hdf5",SpaceDim);
+       fname += suffix;
+
+       Vector<string> varNames(3);
+       varNames[0] = "phi";
+       varNames[1] = "rhs";
+       varNames[2] = "res";
+
+       Real bogusVal = 1.0;
+
+       WriteAMRHierarchyHDF5(fname,
+                             amrGrids,
+                             plotData,
+                             varNames,
+                             amrDomains[0].domainBox(),
+                             amrDx[0],
+                             bogusVal,
+                             bogusVal,
+                             refRatios,
+                             numLevels);
+
+       // clean up
+       for (int lev=0; lev<plotData.size(); lev++)
+         {
+           delete plotData[lev];
+         }
+     } // end if writing plots
+#endif // end if HDF5
+
    // do solve
    int iterations = 1;
    ppMain.get("iterations", iterations);
@@ -639,18 +696,13 @@ int runSolver()
      }
 
    // write results to file
-
-   bool writePlots = true;
-   ppMain.query("writePlotFiles", writePlots);
-
 #ifdef CH_USE_HDF5
-
    if (writePlots)
      {
        int numLevels = finestLevel +1;
        Vector<LevelData<FArrayBox>* > plotData(numLevels, NULL);
        
-       pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
+       pout() << "Write final plot. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
        
        for (int lev=0; lev<numLevels; lev++)
          {
