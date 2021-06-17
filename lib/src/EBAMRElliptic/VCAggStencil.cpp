@@ -150,7 +150,7 @@ relax(EBCellFAB              & a_phi,
       bool doThisVoF = true;
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (iv[idir] % 2 != a_color[idir])
+          if (abs(iv[idir]) % 2 != a_color[idir])
             {
               doThisVoF = false;
               break;

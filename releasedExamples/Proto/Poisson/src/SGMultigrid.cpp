@@ -255,7 +255,7 @@ relax(LevelData<FArrayBox >       & a_phi,
           BoxData<double,1> rhsbd, phibd;
           ProtoCh::aliasBoxData<double, 1>(rhsbd, a_rhs[dit[ibox]]);
           ProtoCh::aliasBoxData<double, 1>(phibd, a_phi[dit[ibox]]);
-          Bx coarDom = grid.coarsen(2);
+          Box coarDom = grid.coarsen(2);
           BoxData<double,1> phisrc(coarDom);
           //needs to be coarse domain because of the whole gsrb thing            
           phisrc |= m_relaxOpPhi[icolor](phibd,   coarDom);
@@ -280,7 +280,7 @@ relax(LevelData<FArrayBox >       & a_phi,
           BoxData<double,1> rhsbd, phibd;
           ProtoCh::aliasBoxData<double, 1>(rhsbd, a_rhs[dit[ibox]]);
           ProtoCh::aliasBoxData<double, 1>(phibd, a_phi[dit[ibox]]);
-          Bx coarDom = grid.coarsen(2);
+          Box coarDom = grid.coarsen(2);
           BoxData<double,1> phisrc(coarDom);
           // loop over 2^(DIM-1) coarsened domains in each color. 
           for(int icolor = evenOdd*MG_NUM_COLORS/2; icolor < evenOdd*MG_NUM_COLORS/2 + MG_NUM_COLORS/2; icolor++)

@@ -376,6 +376,7 @@ void
 FluxBox::copy(const Box& R, const Interval& Cdest, const FluxBox& src,
               const Interval& Csrc)
 {
+  CH_TIME("FluxBox::copy()");
 
   for (int dir=0; dir<SpaceDim; dir++)
     {
@@ -450,7 +451,7 @@ FluxBox::copy(const Box& srcbox,
                               destEdgeBox, srcFab, srccomps);
         }
     } // end loop over face directions
-
+  
 }
 
 // ---------------------------------------------------------
@@ -513,6 +514,68 @@ FluxBox::plus(const FluxBox& a_src,
 
   return *this;
 }
+
+// ---------------------------------------------------------
+// overloaded plus with calling sequence similar to matching copy (for use in additive exchange operations)
+void
+FluxBox::plus(const Box& srcbox,
+              const Interval& destcomps,
+              const Box& destbox,
+              const FluxBox& src,
+              const Interval& srccomps)
+{
+  CH_TIME("FluxBox::plus()");
+  
+  // boxes do need to be the same size
+  CH_assert(srcbox.sameSize(destbox));
+
+  for (int dir=0; dir<SpaceDim; dir++)
+    {
+      CH_assert (m_fluxes[dir] != NULL);
+      const FArrayBox& srcFab = src[dir];
+
+      Box srcEdgeBox;
+      //Box srcEdgeBox(srcbox);
+      //srcEdgeBox.surroundingNodes(dir);
+      Box destEdgeBox(destbox);
+      destEdgeBox.surroundingNodes(dir);
+      // this is somewhat different if src and dest
+      // boxes don't coincide...
+      if (srcbox == destbox)
+        {
+          // safety check -- due to edge-centered nature of things,
+          // destbox may not be contained in m_fluxes[dir]
+          // (DFM 11-4-09) however, both src and dest boxes need to
+          // be the same size assume, however, that we only need to
+          // intersect with the dest, and not the src
+          destEdgeBox &= (m_fluxes[dir]->box());
+          srcEdgeBox = destEdgeBox;
+        }
+      else
+        {
+          // (DFM 11-4-09) if src and dest boxes are not the same
+          // (probably due to a periodic wrapping), then this is a bit
+          // more complicated.
+
+          // first compute the shift
+          IntVect shiftVect(srcbox.smallEnd());
+          shiftVect -= destbox.smallEnd();
+          // intersect destBox with dest
+          destEdgeBox &= (m_fluxes[dir]->box());
+          srcEdgeBox = destEdgeBox;
+          srcEdgeBox.shift(shiftVect);
+        }
+      // don't even bother to do this for an empty box
+      if (!destEdgeBox.isEmpty())
+        {
+          m_fluxes[dir]->plus(srcFab, srcEdgeBox, destEdgeBox, srccomps.begin(), destcomps.begin(), srccomps.size());
+        }
+    } // end loop over face directions
+
+}
+
+
+
 
 // ---------------------------------------------------------
 FluxBox&

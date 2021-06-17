@@ -347,19 +347,26 @@ void FaceSumOp::linearIn(FluxBox       & a_arg  ,
   //pout()<<"finished fluxBox LinearIn"<<endl;
   for (int idir = 0; idir < SpaceDim; ++idir)
     {
-      //pout()<<"idir = "<<idir<<endl;
-      // comp loop
-      for (int iComp = a_comps.begin(); iComp <= a_comps.end(); ++iComp)
+
+      Box intersectBox = reducedBox;
+      intersectBox.surroundingNodes(idir);
+      intersectBox &= a_arg[idir].box();
+
+      if (!intersectBox.isEmpty())
         {
-          //boxIterator
-          for(BoxIterator bit(temp[idir].box()); bit.ok(); ++bit)
+          //pout()<<"idir = "<<idir<<endl;
+          // comp loop
+          for (int iComp = a_comps.begin(); iComp <= a_comps.end(); ++iComp)
             {
-              IntVect iv = bit();
-              a_arg[idir](iv, iComp) += temp[idir](iv,iComp);
+              //boxIterator
+              for(BoxIterator bit(intersectBox); bit.ok(); ++bit)
+                {
+                  IntVect iv = bit();
+                  a_arg[idir](iv, iComp) += temp[idir](iv,iComp);
+                }
             }
         }
     }
-
   pout()<<"Finishing LinearIn"<<endl;
 }
 

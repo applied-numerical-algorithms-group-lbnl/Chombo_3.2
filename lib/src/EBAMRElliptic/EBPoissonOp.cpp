@@ -306,7 +306,7 @@ defineStencils()
               bool doThisVoF = true;
               for (int idir = 0; idir < SpaceDim; idir++)
                 {
-                  if (iv[idir] % 2 != color[idir])
+                  if (abs(iv[idir]) % 2 != color[idir])
                     {
                       doThisVoF = false;
                       break;
@@ -1020,7 +1020,7 @@ GSColorAllRegular(LevelData<EBCellFAB>&        a_phi,
 
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != a_color[idir])
+          if (abs(loIV[idir]) % 2 != a_color[idir])
             {
               loIV[idir]++;
             }

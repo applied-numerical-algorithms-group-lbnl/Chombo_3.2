@@ -154,7 +154,7 @@ public:
              const Box&        destbox,
              const FluxBox&    src,
              const Interval&   srccomps);
-
+  
   /// Modifies this FluxBox to its additive inverse.
   /**
      Modifies this FluxBox by replacing each value with its additive
@@ -185,7 +185,7 @@ public:
   /// Modifies this FluxBox by adding src in the CELL-CENTERED sub-box
   /**
      Modifies this FluxBox by pointwise addition of values in the argument
-     FArrayBox.  Adds src's components (a_srccomp : a_srccomp+a_numcomp-1)
+     FluxBox.  Adds src's components (a_srccomp : a_srccomp+a_numcomp-1)
      to this FluxBox's components (a_destcomp : a_destcomp+numcomp-1)
      where the domain of this FluxBox intersects the a_subbox.  The actual
      directionally-dependent subbox is a_subbox.surroundingNodes(dir);
@@ -199,6 +199,15 @@ public:
                 int            a_destcomp,
                 int            a_numcomp = 1);
 
+  //  plus operator with calling sequence similar to matching copy (for use in additive exchange operations)
+  void plus (const Box&        srcbox,
+             const Interval&   destcomps,
+             const Box&        destbox,
+             const FluxBox&    src,
+             const Interval&   srccomps);
+
+
+  
   /// Modifies this FluxBox by subtracting src in the CELL-CENTERED sub-box
   /**
      Modifies this FluxBox by pointwise addition of values in the argument

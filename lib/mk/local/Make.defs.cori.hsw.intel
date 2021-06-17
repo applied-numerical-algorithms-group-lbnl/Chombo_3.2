@@ -27,18 +27,20 @@ endif
 
 #XTRALDFLAGS += -Wl,-zmuldefs
 XTRALDFLAGS += -Wl,-zmuldefs, -Wl, -Bstatic -Wl,--start-group \
-/opt/intel/compilers_and_libraries_2017.2.174/linux/mkl/lib/intel64/libmkl_blacs_intelmpi_ilp64.a
+$(INTEL_PATH)/linux/mkl/lib/intel64/libmkl_blacs_intelmpi_ilp64.a
 \
 #syslibflags = -mkl
 
 USE_HDF=TRUE
 #HDF5_DIR = $(CRAY_HDF5_DIR)/INTEL/140
 #HDF5_DIR = $(HDF5_ROOT)
-# use module-environment-defined HDF5_DIR, so no need to set it here
+# use module-environment-defined HDF5_DIR, so no need to set it here.
+# module load cray-hdf5 or cray-hdf5-parallel
 
 HDFLIBFLAGS=   -L$(HDF5_DIR)/lib     $(HDF_POST_LINK_OPTS)  -lhdf5 -lz
 HDFMPILIBFLAGS=-L$(HDF5_DIR)/lib     $(HDF_POST_LINK_OPTS)  -lhdf5 -lz
 HDFINCFLAGS=   -I$(HDF5_DIR)/include $(HDF_INCLUDE_OPTS) 
 HDFMPIINCFLAGS=-I$(HDF5_DIR)/include $(HDF_INCLUDE_OPTS)
 
-FFTWDIR = /opt/cray/fftw/3.3.4.5/haswell
+# get CRAY_FFTW_DIR from module load cray-fftw
+FFTWDIR = $(CRAY_FFTW_DIR)/haswell

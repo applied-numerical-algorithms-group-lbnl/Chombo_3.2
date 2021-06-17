@@ -329,7 +329,7 @@ testGMRES()
     solver.setHomogeneous(false);
 
     op.scale(phi, 0.0);
-    op.residual(residual, phi, rhs);
+    op.residual(residual, phi, rhs, false);
     rnorm = residual.norm();
     pout()<<"initial residual "<<rnorm<<"\n";
     for (int i=0; i<iter; ++i)
@@ -339,7 +339,7 @@ testGMRES()
               << " solver initial rnorm = "<< solver.m_initial_residual
               <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
         
-        op.residual(residual, phi, rhs);
+        op.residual(residual, phi, rhs, false);
         rnorm = residual.norm();
         op.axby(error, phi, phi_exact, 1, -1);
         Real norm = error.norm(0);

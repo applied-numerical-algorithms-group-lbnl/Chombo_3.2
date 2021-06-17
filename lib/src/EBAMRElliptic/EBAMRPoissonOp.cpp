@@ -992,7 +992,7 @@ defineStencils()
               bool doThisVoF = true;
               for (int idir = 0; idir < SpaceDim; idir++)
                 {
-                  if (iv[idir] % 2 != m_colors[icolor][idir])
+                  if (abs(iv[idir]) % 2 != m_colors[icolor][idir])
                     {
                       doThisVoF = false;
                       break;
@@ -3584,7 +3584,7 @@ GSColorAllRegular(BaseFab<Real>&               a_phi,
 
   for (int idir = 0; idir < SpaceDim; idir++)
     {
-      if (loIV[idir] % 2 != m_colors[a_icolor][idir])
+      if (abs(loIV[idir]) % 2 != m_colors[a_icolor][idir])
         {
           loIV[idir]++;
         }
@@ -3824,7 +3824,7 @@ GSColorAllRegularClone(LevelData<EBCellFAB>&       a_phi,
 
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != m_colors[a_icolor][idir])
+          if (abs(loIV[idir]) % 2 != m_colors[a_icolor][idir])
             {
               loIV[idir]++;
             }
@@ -3963,7 +3963,7 @@ levelGSRB(LevelData<EBCellFAB>&       a_phi,
           const VolIndex& VoF = vofit();
           const IntVect&  iv = VoF.gridIndex();
 
-          if (iv.sum()%2 == a_color)
+          if (abs(iv.sum())%2 == a_color)
             {
               Real weightIrreg = m_alpha*curAlphaWeight(VoF,0)
                 + m_beta*curBetaWeight(VoF, 0);
@@ -4019,7 +4019,7 @@ levelMultiColorGS(LevelData<EBCellFAB>&       a_phi,
       IntVect hiIV = box.bigEnd();
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != color[idir])
+          if (abs(loIV[idir]) % 2 != color[idir])
             {
               loIV[idir]++;
             }
@@ -4050,7 +4050,7 @@ levelMultiColorGS(LevelData<EBCellFAB>&       a_phi,
           bool ok = true;
           for (int idir = 0; idir < SpaceDim; idir++)
             {
-              if (iv[idir] % 2 != color[idir])
+              if (abs(iv[idir]) % 2 != color[idir])
                 {
                   ok = false;
                   break;
@@ -4135,7 +4135,7 @@ slowGSRBColor(LevelData<EBCellFAB>&       a_phi,
       const VolIndex& vof = vofit();
       const IntVect& iv = vof.gridIndex();
       int sumiv = iv.sum();
-      if(sumiv %2 == a_iredblack)
+      if(abs(sumiv) %2 == a_iredblack)
       {
 //        int ideb = 0;
 //        if((iv[0]== 55)&&(iv[1]== 14))

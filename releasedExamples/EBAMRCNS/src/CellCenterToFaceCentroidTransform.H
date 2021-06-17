@@ -21,7 +21,7 @@
 #include "EBISBox.H"
 #include "AggStencil.H"
 #include "AggStencil.H"
-#include "UsingNamespace.H"
+
 
 ///
 /**

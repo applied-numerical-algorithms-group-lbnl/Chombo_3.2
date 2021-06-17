@@ -989,6 +989,132 @@ public:
     }
 };
 
+/// LDaddOp for face-centered data 
+template <class T>
+class LDaddFaceOp : public LDOperator<T>
+{
+public:
+  virtual void op(T& dest,
+                  const Box& RegionFrom,
+                  const Interval& Cdest,
+                  const Box& RegionTo,
+                  const T& src,
+                  const Interval& Csrc) const
+  {
+      dest.plus(RegionFrom, Cdest,RegionTo, src, Csrc);
+  }
+  
+  virtual void linearIn(T& arg,  void* buf, const Box& R,
+                        const Interval& comps) const
+
+  {
+    Real* buffer = (Real*) buf;
+    for (int dir=0; dir<SpaceDim; dir++)
+      {
+        //CH_assert(arg[dir] != NULL);
+        Box Rdir(surroundingNodes(R,dir));
+        FArrayBox& argdir = arg[dir];
+        ForAllXBNNnoindx(Real, argdir, Rdir, comps.begin(), comps.size())
+          {
+            argdirR+=*buffer;
+            buffer++;
+          } EndFor
+      }
+ 
+  }
+  
+  virtual bool threadSafe() const
+    {
+      return false;
+    }
+};
+
+
+/// LDaddOp for edge-centered data 
+template <class T>
+class LDaddEdgeOp : public LDOperator<T>
+{
+public:
+  virtual void op(T& dest,
+                  const Box& RegionFrom,
+                  const Interval& Cdest,
+                  const Box& RegionTo,
+                  const T& src,
+                  const Interval& Csrc) const
+  {
+    dest.plus(RegionFrom, Cdest,RegionTo, src, Csrc);
+  }
+  
+  virtual void linearIn(T& arg,  void* buf, const Box& R,
+                        const Interval& comps) const
+
+  {
+   
+    Real* buffer = (Real*) buf;
+    for (int dir=0; dir<SpaceDim; dir++)
+      {
+        //CH_assert(arg[dir] != NULL);
+        Box Rdir(surroundingNodes(R));
+        Rdir.enclosedCells(dir);
+        FArrayBox& argdir = arg[dir];
+        ForAllXBNNnoindx(Real, argdir, Rdir, comps.begin(), comps.size())
+          {
+            argdirR+=*buffer;
+            buffer++;
+          } EndFor
+      }
+ 
+  }
+  
+  virtual bool threadSafe() const
+    {
+      return false;
+    }
+};
+
+// LDaddOp for node-centered data
+template <class T>
+class LDaddNodeOp : public LDOperator<T>
+{
+public:
+  virtual void op(T& dest,
+                  const Box& RegionFrom,
+                  const Interval& Cdest,
+                  const Box& RegionTo,
+                  const T& src,
+                  const Interval& Csrc) const
+  {    
+    //dest.plus(RegionFrom, Cdest,RegionTo, src, Csrc);
+    CH_assert(Csrc.size() == Cdest.size());
+    dest.plus(src, RegionFrom, RegionTo, Csrc.begin(), Cdest.begin(),
+              Csrc.size());
+  }
+  
+  virtual void linearIn(T& arg,  void* buf, const Box& R,
+                        const Interval& comps) const
+
+  {
+   
+    Real* buffer = (Real*) buf;
+    
+    Box Rnode(surroundingNodes(R));
+    //Box thisBox = arg.box();
+    //Rnode &= thisBox;
+    FArrayBox& arg_fab = arg.getFab();
+    ForAllXBNNnoindx(Real, arg_fab, Rnode, comps.begin(), comps.size())
+      {
+        arg_fabR+=*buffer;
+        buffer++;
+      } EndFor
+ 
+  }
+  
+  virtual bool threadSafe() const
+    {
+      return false;
+    }
+};
+
 template <class T>
 void BoxLayoutData<T>::addTo(const Interval& a_srcComps,
                              BoxLayoutData<T>& a_dest,
