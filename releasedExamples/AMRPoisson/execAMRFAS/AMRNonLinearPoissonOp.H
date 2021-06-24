@@ -131,11 +131,11 @@ public:
                         const LevelData<FArrayBox>& a_rhs,
                         bool                        a_homogeneous = false);
 
-  virtual void residualNF(LevelData<FArrayBox>& a_lhs,
-                  LevelData<FArrayBox>& a_phi,
-                  const LevelData<FArrayBox>* a_phiCoarse,
-                  const LevelData<FArrayBox>& a_rhs,
-                  bool a_homogeneous = false);
+  virtual void residualNF(LevelData<FArrayBox>&       a_lhs,
+                          LevelData<FArrayBox>&       a_phi,
+                          const LevelData<FArrayBox>* a_phiCoarse,
+                          const LevelData<FArrayBox>& a_rhs,
+                          bool                        a_homogeneous = false);
 
  /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void residualI(LevelData<FArrayBox>&       a_lhs,
@@ -162,7 +162,7 @@ public:
                         const LevelData<FArrayBox>& a_phi,
                         bool                        a_homogeneous = false);
 
-  virtual void applyOpNoBoundary(LevelData<FArrayBox>& a_lhs,
+  virtual void applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
                                  const LevelData<FArrayBox>& a_rhs) ;
 
   virtual void create(LevelData<FArrayBox>&       a_lhs,
@@ -225,7 +225,8 @@ public:
 
   virtual void relax(LevelData<FArrayBox>&       a_e,
                      const LevelData<FArrayBox>& a_residual,
-                     int                         a_iterations);
+                     int                         a_iterations,
+                     int                         a_depth = 0);
 
   // For FAS stuff - do CF interpolation then relax as normal
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,

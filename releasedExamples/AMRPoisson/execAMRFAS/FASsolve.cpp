@@ -147,7 +147,6 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
       if (s_probtype == exact)
       {
 
-
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
         {
