@@ -173,14 +173,14 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse, int ite
   m_phiCoarse[0] = a_phiCoarse;
 
   // Update the Bcoef on finer grid then average down
-  if (this->m_op[0]->m_compute_Bcoeff) {
-      this->m_op[0]->EvaluateBcoef(a_phi, m_phiCoarse[0], 0, iter, false); 
+  if (this->m_op[0]->m_update_operator) {
+      this->m_op[0]->UpdateOperator(a_phi, m_phiCoarse[0], 0, iter, false); 
   }
   for (int depth = 1; depth < this->m_depth; depth++)
   {
     // Update Bcoeff on subsequent depth
-    if (this->m_op[0]->m_compute_Bcoeff) {
-        this->m_op[depth]->AverageBcoef(*(this->m_op[0]), depth);
+    if (this->m_op[0]->m_update_operator) {
+        this->m_op[depth]->AverageOperator(*(this->m_op[0]), depth);
     }
 
     if (m_phiCoarse[depth-1] == NULL) {

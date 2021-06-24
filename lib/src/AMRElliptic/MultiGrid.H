@@ -94,7 +94,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   MGLevelOp()
     :LinearOp<T>(),
      MGLevelOpObserver<T>(),
-     m_compute_Bcoeff(false),
+     m_update_operator(false),
      m_observers(),
      m_coarseningFactors()
   {
@@ -268,18 +268,19 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   {
   }
 
-  virtual void EvaluateBcoef(const T&   a_phi,
-                             const T*   a_phiCoarse,
-                             int        a_depth,
-                             int        a_iter,
-                             bool a_homogeneous = false)
+  virtual void UpdateOperator(const T&  a_phi,
+                              const T*   a_phiCoarse,
+                              int        a_depth = 0,
+                              int        a_iter  = 0,
+                              bool       a_homogeneous = false)
   {
-      MayDay::Error("EvaluateBcoef not defined");
+      MayDay::Error("UpdateOperator not defined");
   } 
 
-  virtual void AverageBcoef(const MGLevelOp<T>& a_operator,
-                            int                 a_depth)
+  virtual void AverageOperator(const MGLevelOp<T>& a_operator,
+                               int                 a_depth = 0)
   {
+      MayDay::Error("AverageOperator not defined");
   }
 
   //! Returns the number of objects observing this operator.
@@ -288,7 +289,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
     return m_observers.size();
   }
 
-  bool m_compute_Bcoeff;
+  bool m_update_operator;
 
   private:
 

@@ -270,10 +270,10 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
           // Set m_residual[l_max] = a_rhs[l_max]
           this->m_op[l_max]->assignLocal( *(this->m_residual[l_max]), *(a_rhs[l_max]) );
           // Update the Bcoef on AMR grids
-          if (this->m_op[l_max]->m_compute_Bcoeff) {
-              this->m_op[l_base]->EvaluateBcoef(*(a_phi[l_base]),  nullptr, l_base, iter, false); 
+          if (this->m_op[l_max]->m_update_operator) {
+              this->m_op[l_base]->UpdateOperator(*(a_phi[l_base]),  nullptr, l_base, iter, false); 
               for (int kk = l_base+1; kk < l_max+1; kk++) {
-                  this->m_op[kk]->EvaluateBcoef(*(a_phi[kk]), a_phi[kk-1], kk, iter, false);
+                  this->m_op[kk]->UpdateOperator(*(a_phi[kk]), a_phi[kk-1], kk, iter, false);
               }
           }
           VCycle( a_phi, a_rhs, l_max, l_max, l_base, iter);
