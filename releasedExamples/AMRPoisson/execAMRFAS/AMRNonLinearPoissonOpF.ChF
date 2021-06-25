@@ -197,6 +197,7 @@ C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
       return
       end
 
+
       subroutine GSRBLAPLACIANNL(
      &     CHF_FRA[phi],
      &     CHF_CONST_FRA[rhs],
@@ -205,7 +206,7 @@ C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
      &     CHF_CONST_INT[redBlack],
      &     CHF_CONST_REAL[gamma])
 
-      REAL_T lambda, dxinv, sum_b, lphi, lap, denom
+      REAL_T dxinv, sum_b, lphi, denom
       integer CHF_DDECL[i;j;k]
       integer n,ncomp,idir,indtot,imin,imax,counter
 
@@ -216,9 +217,6 @@ C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
       enddo
       
       
-
-      lambda = -one/sum_b
-
       ncomp = CHF_NCOMP[phi]
       if (ncomp .ne. CHF_NCOMP[rhs]) then
 C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
@@ -239,7 +237,7 @@ C     petermc, 26 april 2001
             imin = imin + abs(mod(indtot + redBlack, 2))
             imax = CHF_UBOUND[region; 0]
             do i = imin, imax, 2
-#if 1
+
               CHF_DTERM[
               lphi =  ((phi(CHF_IX[i+1;j;k],n)
      &                   - phi(CHF_IX[i;j;k],n))
@@ -253,21 +251,8 @@ C     petermc, 26 april 2001
      &                   - phi(CHF_IX[i;j;k],n))
      &                   -(phi(CHF_IX[i;j;k],n)
      &                   - phi(CHF_IX[i;j;k-1],n)))*dxinv ]
-#else
-              lphi = ( CHF_DTERM[
-     &                  phi(CHF_IX[i+1;j;k],n)
-     &             +    phi(CHF_IX[i-1;j;k],n);
-     &             +    phi(CHF_IX[i;j+1;k],n)
-     &             +    phi(CHF_IX[i;j-1;k],n);
-     &             +    phi(CHF_IX[i;j;k+1],n)
-     &             +    phi(CHF_IX[i;j;k-1],n)]
-     &             ) * dxinv
-#endif
-C              lphi = lphi + gamma*phi(CHF_IX[i;j;k],n)*exp(phi(CHF_IX[i;j;k],n))             
-C              phi(CHF_IX[i;j;k],n) = lambda*(rhs(CHF_IX[i;j;k],n)-lphi)
               
               denom = sum_b + gamma*(1+phi(CHF_IX[i;j;k],n))*exp(phi(CHF_IX[i;j;k],n))
-C              phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n) + (-lphi +  gamma*phi(CHF_IX[i;j;k],n)*exp(phi(CHF_IX[i;j;k],n)) - rhs(CHF_IX[i;j;k],n))/denom
               
               
               phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n) + (rhs(CHF_IX[i;j;k],n) + lphi - gamma*phi(CHF_IX[i;j;k],n)*exp(phi(CHF_IX[i;j;k],n)))/denom
