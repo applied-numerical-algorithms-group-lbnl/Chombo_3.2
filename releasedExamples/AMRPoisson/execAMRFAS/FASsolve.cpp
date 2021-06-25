@@ -178,7 +178,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
           Real y=0;
           Real z=1;
           D_TERM(x = loc[0];, y = loc[1];,  z = loc[2];)
-            thisRhs(iv, 0) = ((9*M_PI*M_PI + gamma*exp((x*x-x*x*x)*sin(3*M_PI*(y*z))))*(x*x-x*x*x) +6*x -2)*sin(3*M_PI*y);
+            thisRhs(iv, 0) = ((9*M_PI*M_PI + gamma*exp((x*x-x*x*x)*sin(3*M_PI*(y))))*(x*x-x*x*x) +6*x -2)*sin(3*M_PI*y);
 
         }
       }
@@ -247,14 +247,13 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
           Real y=0;
           Real z=1;
           D_TERM(x = loc[0];, y = loc[1];, z = loc[2];)
-          thisRhs(iv, 0) = (x*x - x*x*x)*sin(3*M_PI*y*z);
+          thisRhs(iv, 0) = (x*x - x*x*x)*sin(3*M_PI*y);
 
         }
       }
       else
       {
-
-        //MayDay::Error("undefined problem type");
+        MayDay::Error("undefined problem type");
       }
     } // end loop over grids on this level
   } // end loop over levels
@@ -576,33 +575,31 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   int numLevels = a_finestLevel+1;
 
-  if (nonlinearOp)
-  {
-  AMRNonLinearPoissonOpFactory opFactory;
+  if (nonlinearOp) {
+      AMRNonLinearPoissonOpFactory opFactory;
 
-  // solving nonlinear poisson problem here
-  Real alpha = 0.0;
-  Real beta = 1.0;
-  Real gamma = -1.0;
+      // solving nonlinear poisson problem here
+      Real alpha = 0.0;
+      Real beta = 1.0;
+      Real gamma = -1.0;
 
-  ppSolver.query("gamma", gamma);
+      ppSolver.query("gamma", gamma);
 
-  opFactory.define(a_amrDomains[0],
-                   a_amrGrids,
-                   a_refRatios,
-                   a_amrDx[0],
-                   &ParseBC, alpha, beta,gamma);
+      opFactory.define(a_amrDomains[0],
+                       a_amrGrids,
+                       a_refRatios,
+                       a_amrDx[0],
+                       &ParseBC, 
+                       alpha, beta, gamma);
 
 
-  AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
-  a_amrSolver->define(a_amrDomains[0], castFact,
-                      &a_bottomSolver, numLevels);
+      a_amrSolver->define(a_amrDomains[0], castFact,
+                          &a_bottomSolver, numLevels);
 
-  }
-  else
-  {
-        AMRPoissonOpFactory opFactory;
+  } else {
+      AMRPoissonOpFactory opFactory;
 
       // solving poisson problem here
       Real alpha = 0.0;
@@ -677,7 +674,6 @@ int runSolver()
     amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
   }
 
-
   BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
   bottomSolver.m_verbosity = s_verbosity-2;
   setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
@@ -703,18 +699,17 @@ int runSolver()
     error[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
-  bool zeroInitialGuess = true;
-  setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
   setExact(exact, amrDomains, refRatios, amrDx, finestLevel );
+  setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
   // Start with exact solution
-  zeroInitialGuess = false;
+  bool zeroInitialGuess = false;
+  ppSolver.query("zeroInitialGuess", zeroInitialGuess);
   setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
 
   // do solve
   int iterations = 1;
   ppMain.get("iterations", iterations);
-  ppSolver.query("zeroInitialGuess", zeroInitialGuess);
 
   for (int iiter = 0; iiter < iterations; iiter++)
   {
