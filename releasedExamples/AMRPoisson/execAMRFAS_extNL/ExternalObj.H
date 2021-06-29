@@ -8,8 +8,8 @@
  */
 #endif
 
-#ifndef _EXTERNALNLFUNC_H_
-#define _EXTERNALNLFUNC_H_
+#ifndef _EXTERNALOBJ_H_
+#define _EXTERNALOBJ_H_
 
 #include "REAL.H"
 #include "Box.H"

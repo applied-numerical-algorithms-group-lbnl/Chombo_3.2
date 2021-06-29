@@ -8,7 +8,9 @@
  */
 #endif
 
+#include "FORT_PROTO.H"
 #include "ExternalObj.H"
+#include "ExternalObjF_F.H"
 
 #include "NamespaceHeader.H"
 
@@ -29,19 +31,18 @@ void ExternalObj::NonLinear_level(LevelData<FArrayBox>&        a_NL,
   Real gamma = 100.0;
   //pp.query("gamma", gamma);
 
-  DataIterator levelDit = a_NL.dataIterator();
+  DataIterator levelDit        = a_NL.dataIterator();
+  const DisjointBoxLayout& dbl = a_NL.disjointBoxLayout();
   for (levelDit.begin(); levelDit.ok(); ++levelDit) {
 
-      FArrayBox& thisNL          = a_NL[levelDit];
-      FArrayBox& thisdNL         = a_dNL[levelDit];
-      const FArrayBox& thisU     = a_u[levelDit];
+      const Box& region = dbl[levelDit];
 
-      BoxIterator bit(thisNL.box());
-      for (bit.begin(); bit.ok(); ++bit) {
-          IntVect iv = bit();
-          thisNL(iv, 0)  = ( gamma * thisU(iv, 0) * exp( thisU(iv, 0) ) );
-          thisdNL(iv, 0) = ( gamma * (1 + thisU(iv, 0)) * exp( thisU(iv, 0) ) );
-      }
+      FORT_COMPUTENONLINEARTERMS( CHF_FRA(a_u[levelDit]),
+            CHF_CONST_REAL(gamma),
+            CHF_BOX(region),
+            CHF_FRA(a_NL[levelDit]),
+            CHF_FRA(a_dNL[levelDit]) );
+  
   } // end loop over grids on this level
 }
 
