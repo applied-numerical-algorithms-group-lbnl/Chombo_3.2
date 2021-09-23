@@ -549,6 +549,9 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
         for (int lev=0; lev<tempRHS.size(); lev++)
         {
           delete tempRHS[lev];
+          delete tempNL[lev];
+          delete tempdNL[lev];
+          delete tempExact[lev];
         }
 
       } // end while (moreLevels)
@@ -672,25 +675,6 @@ int runSolver()
   bool FASmultigrid = true;
   ppSolver.query("FASmultigrid", FASmultigrid);
 
-  AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-
-  if (FASmultigrid)
-  {
-    pout() << "using  AMRFASMultiGrid\n";
-    amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
-  }
-  else
-  {
-    pout() << "using  AMRMultiGrid\n";
-    amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
-  }
-
-  BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-  bottomSolver.m_verbosity = s_verbosity-2;
-  setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-              refRatios, amrDx, finestLevel);
-
-
   // allocate solution and RHS, initialize RHS
   int numLevels = amrGrids.size();
   Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
@@ -726,14 +710,34 @@ int runSolver()
   setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
 
   // do solve
-  int iterations = 1;
+  int iterations = 3;
   ppMain.get("iterations", iterations);
 
   for (int iiter = 0; iiter < iterations; iiter++)
   {
-    pout() << "about to go into solve" << endl;
-    amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
-    pout() << "done solve" << endl;
+      AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
+
+      if (FASmultigrid)
+      {
+        pout() << "using  AMRFASMultiGrid\n";
+        amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
+      }
+      else
+      {
+        pout() << "using  AMRMultiGrid\n";
+        amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+      }
+
+      BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
+      bottomSolver.m_verbosity = s_verbosity-2;
+      setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
+                  refRatios, amrDx, finestLevel);
+
+      pout() << "about to go into solve" << endl;
+      amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
+      pout() << "done solve" << endl;
+
+      delete amrSolver;
   }
 
   // Compute error
@@ -769,7 +773,7 @@ int runSolver()
     int numLevels = finestLevel +1;
     Vector<LevelData<FArrayBox>* > plotData(numLevels, NULL);
 
-    pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
+    //pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
 
     for (int lev=0; lev<numLevels; lev++)
     {
@@ -830,9 +834,10 @@ int runSolver()
     delete resid[lev];
     delete exact[lev];
     delete error[lev];
+    delete NLfunc[lev];
+    delete NLdfunc[lev];
   }
 
-  delete amrSolver;
 
   return status;
 }

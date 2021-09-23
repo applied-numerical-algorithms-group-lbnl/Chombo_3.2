@@ -600,14 +600,6 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
    setupGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
 
-   // initialize solver
-   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
-   BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-   bottomSolver.m_verbosity = s_verbosity-2;
-   setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-               refRatios, amrDx, finestLevel);
-
 
    // allocate solution and RHS, initialize RHS
    int numLevels = amrGrids.size();
@@ -627,15 +619,25 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
    setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
    // do solve
-   int iterations = 1;
+   int iterations = 3;
    ppMain.get("iterations", iterations);
 
    for (int iiter = 0; iiter < iterations; iiter++)
      {
-       bool zeroInitialGuess = true;
-       pout() << "about to go into solve" << endl;
-       amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
-       pout() << "done solve" << endl;
+         // initialize solver
+         AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
+         amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+         BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
+         bottomSolver.m_verbosity = s_verbosity-2;
+         setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
+                     refRatios, amrDx, finestLevel);
+
+         bool zeroInitialGuess = true;
+         pout() << "about to go into solve" << endl;
+         amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
+         pout() << "done solve" << endl;
+
+         delete amrSolver;
      }
 
    // write results to file
@@ -650,7 +652,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
        int numLevels = finestLevel +1;
        Vector<LevelData<FArrayBox>* > plotData(numLevels, NULL);
        
-       pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
+       //pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
        
        for (int lev=0; lev<numLevels; lev++)
          {
@@ -700,12 +702,11 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
    // clean up
    for (int lev=0; lev<phi.size(); lev++)
      {
-       delete phi[lev];
-       delete rhs[lev];
-       delete resid[lev];
+       //delete phi[lev];
+       //delete rhs[lev];
+       //delete resid[lev];
      }
 
-   delete amrSolver;
 
    return status;
 }
