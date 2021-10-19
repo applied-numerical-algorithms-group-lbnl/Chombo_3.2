@@ -217,7 +217,8 @@ protected:
   bool m_lambdaNeedsResetting;
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
+                         const LevelData<FArrayBox>& a_rhs,
+                         int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);

@@ -545,7 +545,8 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
 #endif
 
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
+                               const LevelData<FArrayBox>& a_rhs,
+                               int a_ite, int a_depth )
 {
   CH_TIME("VCAMRPoissonOp2::levelGSRB");
 
