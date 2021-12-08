@@ -329,7 +329,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
       a_phi[dit[ibox]] *= mult;
       }
  //end pragma
-  relax(a_phi, a_rhs, 2);
+  relax(a_phi, a_rhs, 2, 0);
 }
 
 void AMRPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
@@ -610,23 +610,25 @@ void AMRPoissonOp::setToZero(LevelData<FArrayBox>& a_lhs)
   m_levelOps.setToZero(a_lhs);
 }
 
-void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
+void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&     a_e,
                          const LevelData<FArrayBox>* a_eCoarse,
                          const LevelData<FArrayBox>& a_residual,
-                         int                         a_iterations,
+                         int                         a_iterations, 
+                         int                         MGiter,
                          int                         a_depth,
                          bool                        a_print)
 {
   if (a_eCoarse != NULL) {
     m_interpWithCoarser.coarseFineInterp(a_e, *a_eCoarse);
   }
-  relax(a_e, a_residual, a_iterations, a_depth);
+  relax(a_e, a_residual, a_iterations, MGiter, a_depth);
 }
 
 // ---------------------------------------------------------
 void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
                          const LevelData<FArrayBox>& a_residual,
                          int                         a_iterations,
+                         int                         a_AMRFASMGiter,
                          int                         a_depth)
 {
   CH_TIME("AMRPoissonOp::relax");

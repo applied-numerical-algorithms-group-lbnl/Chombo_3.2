@@ -278,7 +278,7 @@ void AMRNodeOp::preCond(LevelData<NodeFArrayBox>&       a_phi,
       phiFab *= mult;
     }
   int nrelax = 4;
-  relax(a_phi, a_rhs, nrelax);
+  relax(a_phi, a_rhs, nrelax, 0);
 }
 
 void AMRNodeOp::applyOp(LevelData<NodeFArrayBox>&       a_LofPhi,
@@ -451,7 +451,7 @@ void AMRNodeOp::setToZero(LevelData<NodeFArrayBox>& a_lhs)
 
 void AMRNodeOp::relax(LevelData<NodeFArrayBox>& a_e,
                       const LevelData<NodeFArrayBox>& a_residual,
-                      int a_iterations, int a_depth)
+                      int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   for (int i=0; i<a_iterations; i++)
     {

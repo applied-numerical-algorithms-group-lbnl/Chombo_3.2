@@ -226,10 +226,7 @@ public:
      \name MGLevelOp functions */
   /*@{*/
 
-  virtual void relax(LevelData<FArrayBox>&       a_e,
-                     const LevelData<FArrayBox>& a_residual,
-                     int                         a_iterations,
-                     int                         a_depth = 0);
+  virtual void relax(LevelData<FArrayBox>& a_e, const LevelData<FArrayBox>& a_residual, int a_iterations, int a_AMRFASMGiter, int a_depth = 0);
 
   /// Do CF interpolation then relax as normal
   /** useful for full-multigrid/FAS schemes
@@ -237,7 +234,7 @@ public:
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
                        const LevelData<FArrayBox>* a_phiCoarse,
                        const LevelData<FArrayBox>& a_rhs,
-                       int a_iterations, int a_depth,
+                       int a_iterations, int MGiter, int a_depth,
                        bool a_print = false);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,

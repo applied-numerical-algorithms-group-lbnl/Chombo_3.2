@@ -661,7 +661,8 @@ void AMRMultiGrid<T>::relax(T& a_correction, T& a_residual, int depth, int a_num
     {
       // no intermediate multigrid levels between AMR levels, so
       // just call relax on this level and be done with it.
-      m_op[depth]->relax(a_correction, a_residual, a_numSmooth, depth);  //numSmoothDown
+      int dummyiter=0;
+      m_op[depth]->relax(a_correction, a_residual, a_numSmooth, dummyiter, depth);  //numSmoothDown
     }
 
 }
@@ -1171,7 +1172,7 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
   while (goIter && goRedu && goHang && goNorm)
     {
       norm_last = rnorm;
-      m_op[0]->relax(*a_phi[0], *a_rhs[0], 1, 0);
+      m_op[0]->relax(*a_phi[0], *a_rhs[0], 1, iter, 0);
 
       iter++;
       //recompute residual

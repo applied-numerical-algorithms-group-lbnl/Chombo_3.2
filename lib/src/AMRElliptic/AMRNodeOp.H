@@ -127,9 +127,7 @@ public:
 
   virtual void setToZero( LevelData<NodeFArrayBox>& a_x);
 
-  virtual void relax(LevelData<NodeFArrayBox>& a_e,
-                     const LevelData<NodeFArrayBox>& a_residual,
-                     int iterations, int depth = 0);
+  virtual void relax(LevelData<NodeFArrayBox>& a_e, const LevelData<NodeFArrayBox>& a_residual, int iterations, int a_AMRFASMGiter, int depth = 0);
 
   virtual void createCoarser(LevelData<NodeFArrayBox>& a_coarse,
                              const LevelData<NodeFArrayBox>& a_fine,

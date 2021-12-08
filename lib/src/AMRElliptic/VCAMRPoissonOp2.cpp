@@ -123,7 +123,8 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
       a_phi[dit].mult(m_lambda[dit], gridBox, 0, 0, ncomp);
     }
 
-  relax(a_phi, a_rhs, 2);
+  int dummyIt = 0;
+  relax(a_phi, a_rhs, 2, dummyIt);
 }
 
 void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,

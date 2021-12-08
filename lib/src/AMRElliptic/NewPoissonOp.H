@@ -79,10 +79,7 @@ public:
      \name MGLevelOp functions */
   /*@{*/
 
-  virtual void relax(FArrayBox& a_e,
-                     const FArrayBox& a_residual,
-                     int iterations,
-                     int a_depth = 0);
+  virtual void relax(FArrayBox& a_e, const FArrayBox& a_residual, int iterations, int a_AMRFASMGiter, int a_depth = 0);
 
   virtual void createCoarser(FArrayBox& a_coarse,
                              const FArrayBox& a_fine,

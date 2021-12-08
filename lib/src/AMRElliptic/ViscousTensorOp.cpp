@@ -572,7 +572,7 @@ void ViscousTensorOp::preCond(LevelData<FArrayBox>&       a_phi,
   //slc : down here, we don't want to change from the default behaviour
   m_relaxTolerance = 0.0;
   m_relaxMinIter = 40;
-  relax(a_phi, a_rhs, 1);
+  relax(a_phi, a_rhs, 1, 0);
 }
 
 /***/
@@ -1116,7 +1116,7 @@ void
 ViscousTensorOp::
 relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
-      int a_iterations, int a_depth)
+      int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   CH_TIME("ViscousTensorOp::relax");
 

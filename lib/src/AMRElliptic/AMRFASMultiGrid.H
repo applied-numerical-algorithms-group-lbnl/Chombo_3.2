@@ -275,6 +275,11 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
               for (int kk = l_base+1; kk < l_max+1; kk++) {
                   this->m_op[kk]->UpdateOperator(*(a_phi[kk]), a_phi[kk-1], kk, iter, false);
               }
+              // correction
+              //for (int kk = l_max-1; kk > l_base-1; kk--) {
+              //    pout() << "in AMRFASMultigrid AverageAMROperator " << kk << endl;
+              //    this->m_op[kk]->AverageAMROperator(*(this->m_op[l_max]), 1);
+              //}
           }
           VCycle( a_phi, a_rhs, l_max, l_max, l_base, iter);
         }
@@ -453,7 +458,7 @@ this->m_op[ilev]->write(a_phi[ilev],"zb_fine_phi_0.hdf5");
 #endif
       // Replacing relax with relaxNF
       //     this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_pre );
-      this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre, -ilev );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre, iter, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(this->m_residual[ilev],"za_fine_res_1.hdf5");
@@ -490,6 +495,7 @@ this->m_op[ilev-1]->write(this->m_resC[ilev],"zb_coarse_phi_1.hdf5");
 #endif
       // Overwrite R(u_f) on the valid region of the next coarser level a_phi[ilev-1]
       // this->m_op[ilev-1]->assignCopier( *(a_phi[ilev-1]), *(m_phiC[ilev]), m_phiCopier[ilev] );
+      // TRY
       this->m_resC[ilev]->copyTo(this->m_resC[ilev]->interval(), *(a_phi[ilev-1]), a_phi[ilev-1]->interval(), this->m_resCopier[ilev]);
 
 
@@ -583,7 +589,7 @@ this->m_op[ilev]->write(this->m_correction[ilev],"zz_fine_res_1.hdf5");
 #endif
       // Replacing relax with relaxNF
       // this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_post );
-      this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post, -ilev );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post, iter, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(a_phi[ilev],"zl_fine_phi_2.hdf5");
