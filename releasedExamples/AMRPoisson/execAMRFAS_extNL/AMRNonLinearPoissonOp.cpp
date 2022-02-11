@@ -363,7 +363,8 @@ void AMRNonLinearPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
       }
  //end pragma
   int dummyDepth = 0;
-  relax(a_phi, a_rhs, 2, dummyDepth);
+  m_print = false;
+  relax(a_phi, a_rhs, 2, dummyDepth, dummyDepth);
 }
 
 void AMRNonLinearPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
@@ -483,8 +484,8 @@ void AMRNonLinearPoissonOp::create(LevelData<FArrayBox>&       a_lhs,
 
 // ---------------------------------------------------------
 void AMRNonLinearPoissonOp::createCoarsened(LevelData<FArrayBox>&       a_lhs,
-                                   const LevelData<FArrayBox>& a_rhs,
-                                   const int &                 a_refRat)
+                                            const LevelData<FArrayBox>& a_rhs,
+                                            const int &                 a_refRat)
 {
   CH_TIME("AMRNonLinearPoissonOp::createCoarsened");
 
@@ -648,6 +649,7 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
                                     const LevelData<FArrayBox>* a_eCoarse,
                                     const LevelData<FArrayBox>& a_residual,
                                     int                         a_iterations,
+                                    int                         a_AMRFASMGiter,
                                     int                         a_depth,
                                     bool                        a_print)
 {
@@ -656,7 +658,7 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
   }
 
   m_print = a_print;
-  relax(a_e, a_residual, a_iterations, a_depth);
+  relax(a_e, a_residual, a_iterations, a_AMRFASMGiter, a_depth);
 
 }
 
@@ -664,6 +666,7 @@ void AMRNonLinearPoissonOp::relaxNF(LevelData<FArrayBox>&       a_e,
 void AMRNonLinearPoissonOp::relax(LevelData<FArrayBox>&       a_e,
                                   const LevelData<FArrayBox>& a_residual,
                                   int                         a_iterations,
+                                  int                         a_AMRFASMGiter,
                                   int                         a_depth)
 {
   CH_TIME("AMRNonLinearPoissonOp::relax");
@@ -682,7 +685,7 @@ void AMRNonLinearPoissonOp::relax(LevelData<FArrayBox>&       a_e,
           looseGSRB(a_e, a_residual);
           break;
         case 1:
-          levelGSRB(a_e, a_residual, i, a_depth);
+          levelGSRB(a_e, a_residual, i, a_AMRFASMGiter, a_depth);
           break;
         case 2:
           overlapGSRB(a_e, a_residual);
@@ -1223,8 +1226,8 @@ Real AMRNonLinearPoissonOp::AMRNorm(const LevelData<FArrayBox>& a_coarResid,
 void AMRNonLinearPoissonOp::setAlphaAndBeta(const Real& a_alpha,
                                    const Real& a_beta)
 {
-  m_alpha = a_alpha * m_aCoef;
-  m_beta  = a_beta  * m_bCoef;
+  m_alpha = a_alpha; 
+  m_beta  = a_beta;  
 }
 
 // ---------------------------------------------------------
@@ -1335,6 +1338,7 @@ void AMRNonLinearPoissonOp::write(const LevelData<FArrayBox>* a_data,
 void AMRNonLinearPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
                                        const LevelData<FArrayBox>& a_rhs,
                                        int                         a_ite,
+                                       int                         a_AMRFASMGiter,
                                        int                         a_depth )
 {
   CH_TIME("AMRNonLinearPoissonOp::levelGSRB");
@@ -1853,10 +1857,11 @@ void AMRNonLinearPoissonOpFactory::define(const ProblemDomain&             a_coa
   m_nllevel  = a_nllevel;
 
   m_verbosity = 3;
+  m_print     = false;
 }
 
 // ---------------------------------------------------------
-// MultiGrid define Nfunction -- totally not going to work with NL func
+// MultiGrid define function -- totally not going to work with NL func
 void AMRNonLinearPoissonOpFactory::define(const ProblemDomain&     a_domain,
                                           const DisjointBoxLayout& a_grid,
                                           const Real&              a_dx,
@@ -1934,10 +1939,8 @@ MGLevelOp<LevelData<FArrayBox> >* AMRNonLinearPoissonOpFactory::MGnewOp(const Pr
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
 
-  newOp->m_aCoef = m_alpha;
-  newOp->m_bCoef = m_beta;
-
   newOp->m_verbosity = m_verbosity;
+  newOp->m_print     = m_print;
 
   newOp->m_amrHydro  = m_amrHydro; 
   newOp->m_nllevel   = m_nllevel;
@@ -2003,8 +2006,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRNonLinearPoissonOpFactory::AMRnewOp(const 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
 
-  newOp->m_aCoef = m_alpha;
-  newOp->m_bCoef = m_beta;
+  newOp->m_verbosity = m_verbosity;
+  newOp->m_print     = m_print;
 
   newOp->m_amrHydro  = m_amrHydro; 
   newOp->m_nllevel   = m_nllevel;
