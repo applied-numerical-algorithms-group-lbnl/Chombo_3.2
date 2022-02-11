@@ -603,7 +603,7 @@ AMRMultiGrid<T>::AMRMultiGrid()
   m_normThresh(1E-30),
   m_imin(5),
   m_iterMax(20),
-  m_iterMin(-1),
+  m_iterMin(5),
   m_verbosity(3),
   m_pre(2),
   m_post(2),
