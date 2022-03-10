@@ -226,13 +226,17 @@ public:
   virtual void relax(LevelData<FArrayBox>&       a_e,
                      const LevelData<FArrayBox>& a_residual,
                      int                         a_iterations,
-                     int                         a_depth = 0);
+                     int                         a_AMRFASMGiter,
+                     int                         a_depth);
 
   // For FAS stuff - do CF interpolation then relax as normal
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
-                  const LevelData<FArrayBox>* a_phiCoarse,
-                  const LevelData<FArrayBox>& a_rhs,
-                  int a_iterations);
+                       const LevelData<FArrayBox>* a_phiCoarse,
+                       const LevelData<FArrayBox>& a_rhs,
+                       int a_iterations,
+                       int a_AMRFASMGiter,
+                       int a_depth,
+                       bool a_print = false);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -603,8 +607,6 @@ private:
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
-
-
 };
 
 #include "NamespaceFooter.H"
