@@ -27,7 +27,7 @@
 
 #include "NamespaceHeader.H"
 
-void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
+void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&      a_lhs,
                                const LevelData<FArrayBox>& a_phi,
                                const LevelData<FArrayBox>& a_rhs,
                                bool                        a_homogeneous)
@@ -993,7 +993,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
   }
 
   ProblemDomain domain(m_domains[ref]);
-  Real dx = m_dx[ref][0];
+  RealVect dx = m_dx[ref];
   int coarsening = 1;
 
   for (int i = 0; i < a_depth; i++)
@@ -1073,9 +1073,11 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
   newOp->computeLambda();
 
   newOp->m_dxCrse = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
+
 
 AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const ProblemDomain& a_indexSpace)
 {
@@ -1116,7 +1118,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
       if (m_domains.size() == 1)
         {
           // no finer level
-          newOp->define(m_boxes[0], m_dx[0][0],
+          newOp->define(m_boxes[0], m_dx[0],
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0]);
         }
@@ -1125,7 +1127,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
           // finer level exists but no coarser
           int dummyRat = 1;  // argument so compiler can find right function
           int refToFiner = m_refRatios[0]; // actual refinement ratio
-          newOp->define(m_boxes[0],  m_boxes[1], m_dx[0][0],
+          newOp->define(m_boxes[0],  m_boxes[1], m_dx[0],
                         dummyRat, refToFiner,
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0],
@@ -1139,7 +1141,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
            dxCrse[2] = m_dx[ref-1][2];)
 
     // finest AMR level
-    newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref][0],
+    newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
                   m_refRatios[ref-1],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
@@ -1157,7 +1159,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
              dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define
-    newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref][0],
+    newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
                   m_refRatios[ref-1], m_refRatios[ref],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
@@ -1175,7 +1177,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     newOp->computeLambda();
   }
 
-  newOp->m_dxCrse = dxCrse[0];
+  newOp->m_dxCrse      = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }

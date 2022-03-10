@@ -59,7 +59,7 @@ amrpgetMultiColors(Vector<IntVect>& a_colors)
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
                           const DisjointBoxLayout& a_gridsFiner,
                           const DisjointBoxLayout& a_gridsCoarser,
-                          const Real&              a_dxLevel,
+                          const RealVect&          a_dxLevel,
                           int                      a_refRatio,
                           int                      a_refRatioFiner,
                           const ProblemDomain&     a_domain,
@@ -92,7 +92,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 /** full define function for AMRLevelOp<LevelData<FArrayBox> > with finer levels, but no coarser */
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
                           const DisjointBoxLayout& a_gridsFiner,
-                          const Real&              a_dxLevel,
+                          const RealVect&          a_dxLevel,
                           int                      a_refRatio, // dummy arg
                           int                      a_refRatioFiner,
                           const ProblemDomain&     a_domain,
@@ -122,7 +122,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 // ---------------------------------------------------------
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
                           const DisjointBoxLayout& a_coarse,
-                          const Real&              a_dxLevel,
+                          const RealVect&          a_dxLevel,
                           int                      a_refRatio,
                           const ProblemDomain&     a_domain,
                           BCHolder                 a_bc,
@@ -137,16 +137,19 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
   this->define(a_grids, a_dxLevel, a_domain, a_bc, a_exchange, a_cfregion);
   m_refToCoarser = a_refRatio;
 
-  m_dxCrse = a_refRatio*a_dxLevel;
+  m_dxCrse = a_refRatio*a_dxLevel[0];
+  D_TERM(m_dxCrse_vect[0] = a_refRatio*a_dxLevel[0];, 
+         m_dxCrse_vect[1] = a_refRatio*a_dxLevel[1];, 
+         m_dxCrse_vect[2] = a_refRatio*a_dxLevel[2];)
   m_refToFiner = 1;
 
-  m_interpWithCoarser.define(a_grids, &a_coarse, a_dxLevel,
+  m_interpWithCoarser.define(a_grids, &a_coarse, a_dxLevel[0],
                              m_refToCoarser, a_numComp, m_domain);
 }
 
 // ---------------------------------------------------------
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
-                          const Real&              a_dx,
+                          const RealVect&          a_dx,
                           const ProblemDomain&     a_domain,
                           BCHolder                 a_bc,
                           const Copier&            a_exchange,
@@ -158,8 +161,10 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
   m_bc     = a_bc;
   m_domain = a_domain;
-  m_dx     = a_dx;
-  m_dxCrse = 2*a_dx;
+  m_dx       = a_dx[0];
+  m_dx_vect  = a_dx;
+  m_dxCrse   = 2*a_dx[0];
+  m_dxCrse_vect = 2*a_dx;
 
   // redefined in AMRLevelOp<LevelData<FArrayBox> >::define virtual function.
   m_refToCoarser = 2;
@@ -181,7 +186,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
 // ---------------------------------------------------------
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
-                          const Real&              a_dx,
+                          const RealVect&          a_dx,
                           const ProblemDomain&     a_domain,
                           BCHolder                 a_bc)
 {
@@ -200,7 +205,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
 void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
                           const DisjointBoxLayout* a_baseBAPtr,
-                          Real                     a_dx,
+                          RealVect                 a_dx,
                           int                      a_refRatio,
                           const ProblemDomain&     a_domain,
                           BCHolder                 a_bc)
@@ -1924,7 +1929,7 @@ void AMRPoissonOp::getFlux(FArrayBox&       a_flux,
 void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain,
                                  const Vector<DisjointBoxLayout>& a_grids,
                                  const Vector<int>&               a_refRatios,
-                                 const Real&                      a_coarsedx,
+                                 const RealVect&                  a_coarsedx,
                                  BCHolder                         a_bc,
                                  Real                             a_alpha,
                                  Real                             a_beta,
@@ -1939,7 +1944,7 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
   m_bc = a_bc;
 
   m_dx.resize(a_grids.size());
-  m_dx[0] = a_coarsedx;
+  D_TERM(m_dx[0][0] = a_coarsedx[0];, m_dx[0][1] = a_coarsedx[1];, m_dx[0][2] = a_coarsedx[2];)
 
   m_domains.resize(a_grids.size());
   m_domains[0] = a_coarseDomain;
@@ -1953,7 +1958,9 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
 
   for (int i = 1; i < a_grids.size(); i++)
     {
-      m_dx[i] = m_dx[i-1] / m_refRatios[i-1];
+      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];, 
+             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];, 
+             m_dx[i][2] = m_dx[i-1][2] / m_refRatios[i-1];)
 
       m_domains[i] = m_domains[i-1];
       m_domains[i].refine(m_refRatios[i-1]);
@@ -1975,7 +1982,7 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
 // MultiGrid define function
 void AMRPoissonOpFactory::define(const ProblemDomain&     a_domain,
                                  const DisjointBoxLayout& a_grid,
-                                 const Real&              a_dx,
+                                 const RealVect&          a_dx,
                                  BCHolder                 a_bc,
                                  int                      a_maxDepth,
                                  Real                     a_alpha,
@@ -1996,7 +2003,7 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
 {
   CH_TIME("AMRPoissonOpFactory::MGnewOp");
 
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   int ref;
 
@@ -2012,11 +2019,13 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
 
   if (ref > 0)
     {
-      dxCrse = m_dx[ref-1];
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+             dxCrse[1] = m_dx[ref-1][1];, 
+             dxCrse[2] = m_dx[ref-1][2];)
     }
 
   ProblemDomain domain(m_domains[ref]);
-  Real dx = m_dx[ref];
+  RealVect dx = m_dx[ref];
   int coarsening = 1;
 
   for (int i = 0; i < a_depth; i++)
@@ -2053,7 +2062,8 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
   newOp->m_aCoef = m_alpha;
   newOp->m_bCoef = m_beta;
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse      = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
 
   newOp->m_use_FAS = m_use_FAS;
 
@@ -2066,7 +2076,7 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   CH_TIME("AMRPoissonOpFactory::AMRnewOp");
 
   AMRPoissonOp* newOp = new AMRPoissonOp;
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   int ref;
 
@@ -2106,7 +2116,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
     }
   else if (ref ==  m_domains.size()-1)
     {
-      dxCrse = m_dx[ref-1];
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+             dxCrse[1] = m_dx[ref-1][1];, 
+             dxCrse[2] = m_dx[ref-1][2];)
 
       // finest AMR level
       newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
@@ -2121,7 +2133,9 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
     }
   else
     {
-      dxCrse = m_dx[ref-1];
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+             dxCrse[1] = m_dx[ref-1][1];, 
+             dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define
       newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
@@ -2136,7 +2150,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   newOp->m_aCoef = m_alpha;
   newOp->m_bCoef = m_beta;
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse      = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
 
   newOp->m_use_FAS = m_use_FAS;
 
