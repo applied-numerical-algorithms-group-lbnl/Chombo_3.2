@@ -875,7 +875,7 @@ VCAMRPoissonOp2Factory::VCAMRPoissonOp2Factory()
 void VCAMRPoissonOp2Factory::define(const ProblemDomain&                           a_coarseDomain,
                                    const Vector<DisjointBoxLayout>&               a_grids,
                                    const Vector<int>&                             a_refRatios,
-                                   const Real&                                    a_coarsedx,
+                                   const RealVect&                                a_coarsedx,
                                    BCHolder                                       a_bc,
                                    const Real&                                    a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
@@ -893,7 +893,7 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
   m_bc = a_bc;
 
   m_dx.resize(a_grids.size());
-  m_dx[0] = a_coarsedx;
+  D_TERM(m_dx[0][0] = a_coarsedx[0];, m_dx[0][1] = a_coarsedx[1];, m_dx[0][2] = a_coarsedx[2];)
 
   m_domains.resize(a_grids.size());
   m_domains[0] = a_coarseDomain;
@@ -907,7 +907,9 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   for (int i = 1; i < a_grids.size(); i++)
     {
-      m_dx[i] = m_dx[i-1] / m_refRatios[i-1];
+      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];, 
+             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];, 
+             m_dx[i][2] = m_dx[i-1][2] / m_refRatios[i-1];)
 
       m_domains[i] = m_domains[i-1];
       m_domains[i].refine(m_refRatios[i-1]);
@@ -934,7 +936,7 @@ VCAMRPoissonOp2Factory::
 define(const ProblemDomain& a_coarseDomain,
        const Vector<DisjointBoxLayout>& a_grids,
        const Vector<int>& a_refRatios,
-       const Real& a_coarsedx,
+       const RealVect& a_coarsedx,
        BCHolder a_bc,
        const IntVect& a_ghostVect)
 {
@@ -969,7 +971,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 {
   CH_TIME("VCAMRPoissonOp2Factory::MGnewOp");
 
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   int ref;
 
@@ -985,11 +987,13 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   if (ref > 0)
   {
-    dxCrse = m_dx[ref-1];
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+           dxCrse[1] = m_dx[ref-1][1];, 
+           dxCrse[2] = m_dx[ref-1][2];)
   }
 
   ProblemDomain domain(m_domains[ref]);
-  Real dx = m_dx[ref];
+  Real dx = m_dx[ref][0];
   int coarsening = 1;
 
   for (int i = 0; i < a_depth; i++)
@@ -1068,7 +1072,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   newOp->computeLambda();
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse = dxCrse[0];
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
@@ -1078,7 +1082,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   CH_TIME("VCAMRPoissonOp2Factory::AMRnewOp");
 
   VCAMRPoissonOp2* newOp = new VCAMRPoissonOp2;
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   // Need to know how many components we're solving for
   int nComp = 1;
@@ -1112,7 +1116,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
       if (m_domains.size() == 1)
         {
           // no finer level
-          newOp->define(m_boxes[0], m_dx[0],
+          newOp->define(m_boxes[0], m_dx[0][0],
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0]);
         }
@@ -1121,7 +1125,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
           // finer level exists but no coarser
           int dummyRat = 1;  // argument so compiler can find right function
           int refToFiner = m_refRatios[0]; // actual refinement ratio
-          newOp->define(m_boxes[0],  m_boxes[1], m_dx[0],
+          newOp->define(m_boxes[0],  m_boxes[1], m_dx[0][0],
                         dummyRat, refToFiner,
                         a_indexSpace, m_bc,
                         m_exchangeCopiers[0], m_cfregion[0],
@@ -1130,10 +1134,12 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   }
   else if (ref ==  m_domains.size()-1)
   {
-    dxCrse = m_dx[ref-1];
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+           dxCrse[1] = m_dx[ref-1][1];, 
+           dxCrse[2] = m_dx[ref-1][2];)
 
     // finest AMR level
-    newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
+    newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref][0],
                   m_refRatios[ref-1],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
@@ -1146,10 +1152,12 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     }
   else
     {
-      dxCrse = m_dx[ref-1];
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
+             dxCrse[1] = m_dx[ref-1][1];, 
+             dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define
-    newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
+    newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref][0],
                   m_refRatios[ref-1], m_refRatios[ref],
                   a_indexSpace, m_bc,
                   m_exchangeCopiers[ref], m_cfregion[ref],
@@ -1167,7 +1175,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     newOp->computeLambda();
   }
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse = dxCrse[0];
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }

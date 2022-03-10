@@ -279,7 +279,7 @@ public:
   void define(const ProblemDomain&                           a_coarseDomain,
               const Vector<DisjointBoxLayout>&               a_grids,
               const Vector<int>&                             a_refRatios,
-              const Real&                                    a_coarsedx,
+              const RealVect&                                a_coarsedx,
               BCHolder                                       a_bc,
               const Real&                                    a_alpha,
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
@@ -298,7 +298,7 @@ public:
   void define(const ProblemDomain&                           a_coarseDomain,
               const Vector<DisjointBoxLayout>&               a_grids,
               const Vector<int>&                             a_refRatios,
-              const Real&                                    a_coarsedx,
+              const RealVect&                                a_coarsedx,
               BCHolder                                       a_bc,
               const IntVect&                                 a_ghostVect);
 
@@ -321,7 +321,7 @@ private:
   Vector<ProblemDomain>     m_domains;
   Vector<DisjointBoxLayout> m_boxes;
 
-  Vector<Real> m_dx;
+  Vector<RealVect> m_dx;
   Vector<int>  m_refRatios; // refinement to next coarser level
 
   BCHolder m_bc;
