@@ -294,13 +294,13 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
   for (dit.begin(); dit.ok(); ++dit)
     {
       const Box& region = dbl[dit];
-      FORT_OPERATORLAPRES(CHF_FRA(a_lhs[dit]),
-                          CHF_CONST_FRA(phi[dit]),
-                          CHF_CONST_FRA(a_rhs[dit]),
-                          CHF_BOX(region),
-                          CHF_CONST_REAL(m_dx),
-                          CHF_CONST_REAL(m_alpha),
-                          CHF_CONST_REAL(m_beta));
+      FORT_OPERATORLAPRESANI(CHF_FRA(a_lhs[dit]),
+                             CHF_CONST_FRA(phi[dit]),
+                             CHF_CONST_FRA(a_rhs[dit]),
+                             CHF_BOX(region),
+                             CHF_CONST_REALVECT(m_dx_vect),
+                             CHF_CONST_REAL(m_alpha),
+                             CHF_CONST_REAL(m_beta));
     }
   }
 }
@@ -321,26 +321,29 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
 
   CH_assert(a_phi.nComp() == a_rhs.nComp());
 
-  Real mult = 1.0 / (m_alpha - 2.0*SpaceDim * m_beta / (m_dx*m_dx));
+  Real sum_b = ( D_TERM(  2.0 * m_beta / (m_dx_vect[0]*m_dx_vect[0]), 
+                        + 2.0 * m_beta / (m_dx_vect[1]*m_dx_vect[1]), 
+                        + 2.0 * m_beta / (m_dx_vect[2]*m_dx_vect[2]) ) 
+               );
+  Real mult = 1.0 / (m_alpha - sum_b);
 
   // don't need to use a Copier -- plain copy will do
   DataIterator dit = a_phi.dataIterator();
   int nbox = dit.size();
 
 #pragma omp parallel for 
-    for(int ibox=0; ibox<nbox; ibox++)
-      {
-      a_phi[dit[ibox]].copy(a_rhs[dit[ibox]]);
-      a_phi[dit[ibox]] *= mult;
-      }
+    for(int ibox=0; ibox<nbox; ibox++) {
+        a_phi[dit[ibox]].copy(a_rhs[dit[ibox]]);
+        a_phi[dit[ibox]] *= mult;
+    }
  //end pragma
   relax(a_phi, a_rhs, 2, 0);
 }
 
 void AMRPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
-                        LevelData<FArrayBox>& a_phi,
-                        LevelData<FArrayBox>* a_phiCoarse,
-                        bool a_homogeneous)
+                             LevelData<FArrayBox>& a_phi,
+                             LevelData<FArrayBox>* a_phiCoarse,
+                             bool a_homogeneous)
 {
   CH_TIME("AMRPoissonOp::applyOpMg");
 
@@ -406,12 +409,12 @@ void AMRPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
       {
       const Box& region = dbl[dit[ibox]];
 
-      FORT_OPERATORLAP(CHF_FRA(a_lhs[dit[ibox]]),
-                       CHF_CONST_FRA(phi[dit[ibox]]),
-                       CHF_BOX(region),
-                       CHF_CONST_REAL(m_dx),
-                       CHF_CONST_REAL(m_alpha),
-                       CHF_CONST_REAL(m_beta));
+      FORT_OPERATORLAPANI(CHF_FRA(a_lhs[dit[ibox]]),
+                          CHF_CONST_FRA(phi[dit[ibox]]),
+                          CHF_BOX(region),
+                          CHF_CONST_REALVECT(m_dx_vect),
+                          CHF_CONST_REAL(m_alpha),
+                          CHF_CONST_REAL(m_beta));
     }
   }//end pragma
 }
@@ -433,12 +436,12 @@ void AMRPoissonOp::applyOpNoBoundary(LevelData<FArrayBox>&       a_lhs,
     for (int ibox = 0; ibox < nbox; ibox++)
     {
       const Box& region = dbl[dit[ibox]];
-      FORT_OPERATORLAP(CHF_FRA(a_lhs[dit[ibox]]),
-                       CHF_CONST_FRA(phi[dit[ibox]]),
-                       CHF_BOX(region),
-                       CHF_CONST_REAL(m_dx),
-                       CHF_CONST_REAL(m_alpha),
-                       CHF_CONST_REAL(m_beta));
+      FORT_OPERATORLAPANI(CHF_FRA(a_lhs[dit[ibox]]),
+                          CHF_CONST_FRA(phi[dit[ibox]]),
+                          CHF_BOX(region),
+                          CHF_CONST_REALVECT(m_dx_vect),
+                          CHF_CONST_REAL(m_alpha),
+                          CHF_CONST_REAL(m_beta));
     }
   }//end pragma
 }
@@ -701,6 +704,7 @@ void AMRPoissonOp::restrictR(LevelData<FArrayBox>& a_phiCoarse,
 
     phiCoarse.setVal(0.0);
 
+    // amf m_dx not used here
     FORT_RESTRICT(CHF_FRA_SHIFT(phiCoarse, civ),
                   CHF_CONST_FRA_SHIFT(phiFine, iv),
                   CHF_BOX_SHIFT(region, iv),
@@ -753,13 +757,13 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
         
         res.setVal(0.0);
         
-        FORT_RESTRICTRES(CHF_FRA_SHIFT(res, civ),
-                         CHF_CONST_FRA_SHIFT(phi, iv),
-                         CHF_CONST_FRA_SHIFT(rhs, iv),
-                         CHF_CONST_REAL(m_alpha),
-                         CHF_CONST_REAL(m_beta),
-                         CHF_BOX_SHIFT(region, iv),
-                         CHF_CONST_REAL(m_dx));
+        FORT_RESTRICTRESANI(CHF_FRA_SHIFT(res, civ),
+                            CHF_CONST_FRA_SHIFT(phi, iv),
+                            CHF_CONST_FRA_SHIFT(rhs, iv),
+                            CHF_CONST_REAL(m_alpha),
+                            CHF_CONST_REAL(m_beta),
+                            CHF_BOX_SHIFT(region, iv),
+                            CHF_CONST_REALVECT(m_dx_vect));
       }
   }//end pragma
 }
@@ -1352,21 +1356,21 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
             
             if (m_alpha == 0.0 && m_beta == 1.0 )
               {
-                FORT_GSRBLAPLACIAN(CHF_FRA(phiFab),
-                                   CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                                   CHF_BOX(region),
-                                   CHF_CONST_REAL(m_dx),
-                                   CHF_CONST_INT(whichPass));
+                FORT_GSRBLAPLACIANANI(CHF_FRA(phiFab),
+                                      CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                      CHF_BOX(region),
+                                      CHF_CONST_REALVECT(m_dx_vect),
+                                      CHF_CONST_INT(whichPass));
               }
             else
               {
-                FORT_GSRBHELMHOLTZ(CHF_FRA(phiFab),
-                                   CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                                   CHF_BOX(region),
-                                   CHF_CONST_REAL(m_dx),
-                                   CHF_CONST_REAL(m_alpha),
-                                   CHF_CONST_REAL(m_beta),
-                                   CHF_CONST_INT(whichPass));
+                FORT_GSRBHELMHOLTZANI(CHF_FRA(phiFab),
+                                      CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                      CHF_BOX(region),
+                                      CHF_CONST_REALVECT(m_dx_vect),
+                                      CHF_CONST_REAL(m_alpha),
+                                      CHF_CONST_REAL(m_beta),
+                                      CHF_CONST_INT(whichPass));
               }
           } // end loop through grids
         }
@@ -1473,38 +1477,38 @@ void AMRPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
         if (m_alpha == 0.0 && m_beta == 1.0)
           {
             int whichPass = 0;
-            FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit[ibox]]),
-                               CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                               CHF_BOX(region),
-                               CHF_CONST_REAL(m_dx),
-                               CHF_CONST_INT(whichPass));
+            FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit[ibox]]),
+                                  CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                  CHF_BOX(region),
+                                  CHF_CONST_REALVECT(m_dx_vect),
+                                  CHF_CONST_INT(whichPass));
             
             whichPass = 1;
-            FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit[ibox]]),
-                               CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                               CHF_BOX(region),
-                               CHF_CONST_REAL(m_dx),
-                               CHF_CONST_INT(whichPass));
+            FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit[ibox]]),
+                                  CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                  CHF_BOX(region),
+                                  CHF_CONST_REALVECT(m_dx_vect),
+                                  CHF_CONST_INT(whichPass));
           }
         else
           {
             int whichPass = 0;
-            FORT_GSRBHELMHOLTZ(CHF_FRA(a_phi[dit[ibox]]),
-                               CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                               CHF_BOX(region),
-                               CHF_CONST_REAL(m_dx),
-                               CHF_CONST_REAL(m_alpha),
-                               CHF_CONST_REAL(m_beta),
-                               CHF_CONST_INT(whichPass));
+            FORT_GSRBHELMHOLTZANI(CHF_FRA(a_phi[dit[ibox]]),
+                                  CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                  CHF_BOX(region),
+                                  CHF_CONST_REALVECT(m_dx_vect),
+                                  CHF_CONST_REAL(m_alpha),
+                                  CHF_CONST_REAL(m_beta),
+                                  CHF_CONST_INT(whichPass));
             
             whichPass = 1;
-            FORT_GSRBHELMHOLTZ(CHF_FRA(a_phi[dit[ibox]]),
-                               CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                               CHF_BOX(region),
-                               CHF_CONST_REAL(m_dx),
-                               CHF_CONST_REAL(m_alpha),
-                               CHF_CONST_REAL(m_beta),
-                               CHF_CONST_INT(whichPass));
+            FORT_GSRBHELMHOLTZANI(CHF_FRA(a_phi[dit[ibox]]),
+                                  CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                                  CHF_BOX(region),
+                                  CHF_CONST_REALVECT(m_dx_vect),
+                                  CHF_CONST_REAL(m_alpha),
+                                  CHF_CONST_REAL(m_beta),
+                                  CHF_CONST_INT(whichPass));
           }
       } // end loop through grids
   }//end pragma
@@ -1543,18 +1547,18 @@ void AMRPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
         Box region = dbl[dit[ibox]];
         region.grow(-1); // just do the interior on the first run through
         int whichPass = 0;
-        FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit[ibox]]),
-                           CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                           CHF_BOX(region),
-                           CHF_CONST_REAL(m_dx),
-                           CHF_CONST_INT(whichPass));
+        FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit[ibox]]),
+                              CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                              CHF_BOX(region),
+                              CHF_CONST_REALVECT(m_dx_vect),
+                              CHF_CONST_INT(whichPass));
         
         whichPass = 1;
-        FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit[ibox]]),
-                           CHF_CONST_FRA(a_rhs[dit[ibox]]),
-                           CHF_BOX(region),
-                           CHF_CONST_REAL(m_dx),
-                           CHF_CONST_INT(whichPass));
+        FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit[ibox]]),
+                              CHF_CONST_FRA(a_rhs[dit[ibox]]),
+                              CHF_BOX(region),
+                              CHF_CONST_REALVECT(m_dx_vect),
+                              CHF_CONST_INT(whichPass));
       }
   }//end pragma
 
@@ -1574,18 +1578,18 @@ void AMRPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
           Box region = adjCellBox(b, dir, side(), 1);
           region.shift(dir, -sign(side()));
           for (int i=0; i<dir; i++) region.grow(i, -1);
-          FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit]),
-                             CHF_CONST_FRA(a_rhs[dit]),
-                             CHF_BOX(region),
-                             CHF_CONST_REAL(m_dx),
-                             CHF_CONST_INT(whichPass));
+          FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit]),
+                                CHF_CONST_FRA(a_rhs[dit]),
+                                CHF_BOX(region),
+                                CHF_CONST_REALVECT(m_dx_vect),
+                                CHF_CONST_INT(whichPass));
 
           whichPass = 1;
-          FORT_GSRBLAPLACIAN(CHF_FRA(a_phi[dit]),
-                             CHF_CONST_FRA(a_rhs[dit]),
-                             CHF_BOX(region),
-                             CHF_CONST_REAL(m_dx),
-                             CHF_CONST_INT(whichPass));
+          FORT_GSRBLAPLACIANANI(CHF_FRA(a_phi[dit]),
+                                CHF_CONST_FRA(a_rhs[dit]),
+                                CHF_BOX(region),
+                                CHF_CONST_REALVECT(m_dx_vect),
+                                CHF_CONST_INT(whichPass));
         }
       }
     }
@@ -1660,7 +1664,11 @@ void AMRPoissonOp::levelJacobi(LevelData<FArrayBox>&       a_phi,
   residual(resid,a_phi,a_rhs,true);
 
   // Create the weight
-  Real weight = m_alpha - 2.0*SpaceDim * m_beta / (m_dx*m_dx);
+  Real sum_b = ( D_TERM(  2.0 * m_beta / (m_dx_vect[0]*m_dx_vect[0]), 
+                        + 2.0 * m_beta / (m_dx_vect[1]*m_dx_vect[1]), 
+                        + 2.0 * m_beta / (m_dx_vect[2]*m_dx_vect[2]) ) 
+               );
+  Real weight = m_alpha - sum_b;
 
   // Do the Jacobi relaxation
   incr(a_phi, resid, 0.666/weight);
@@ -1714,18 +1722,18 @@ void AMRPoissonOp::homogeneousCFInterp(LevelData<FArrayBox>& a_phif,
       if (phiFab.box().size(a_idir) == 3)
         {
           FORTNT_INTERPHOMOLINEAR(CHF_FRA(phiFab),
-                                  CHF_BOX(cfivs_ptr->packedBox()),
-                                  CHF_CONST_REAL(m_dx),
-                                  CHF_CONST_REAL(m_dxCrse),
-                                  CHF_CONST_INT(a_idir),
-                                  CHF_CONST_INT(ihiorlo));
+                                    CHF_BOX(cfivs_ptr->packedBox()),
+                                    CHF_CONST_REAL(m_dx_vect[a_idir]),
+                                    CHF_CONST_REAL(m_dxCrse_vect[a_idir]),
+                                    CHF_CONST_INT(a_idir),
+                                    CHF_CONST_INT(ihiorlo));
         }
       else
         {
           FORTNT_INTERPHOMO(CHF_FRA(phiFab),
                             CHF_BOX(cfivs_ptr->packedBox()),
-                            CHF_CONST_REAL(m_dx),
-                            CHF_CONST_REAL(m_dxCrse),
+                            CHF_CONST_REAL(m_dx_vect[a_idir]),
+                            CHF_CONST_REAL(m_dxCrse_vect[a_idir]),
                             CHF_CONST_INT(a_idir),
                             CHF_CONST_INT(ihiorlo));
         }
@@ -1758,11 +1766,11 @@ void AMRPoissonOp::singleBoxCFInterp(FArrayBox& a_phi)
           Box edge = adjCellBox(region, idir, sit(), 1);
           int ihiorlo = sign(sit());
           FORT_INTERPHOMO(CHF_FRA(a_phi),
-                      CHF_BOX(edge),
-                      CHF_CONST_REAL(m_dx),
-                      CHF_CONST_REAL(m_dxCrse),
-                      CHF_CONST_INT(idir),
-                      CHF_CONST_INT(ihiorlo));
+                          CHF_BOX(edge),
+                          CHF_CONST_REAL(m_dx_vect[idir]),
+                          CHF_CONST_REAL(m_dxCrse_vect[idir]),
+                          CHF_CONST_INT(idir),
+                          CHF_CONST_INT(ihiorlo));
         }
     }
 }
@@ -1787,7 +1795,7 @@ void AMRPoissonOp::interpOnIVSHomo(LevelData<FArrayBox>& a_phif,
     {
       IntVect iv;
       Real pa;
-      Real factor = 1-2*m_dx/(m_dx+m_dxCrse);
+      Real factor = 1-2*m_dx_vect[a_idir]/(m_dx_vect[a_idir]+m_dxCrse_vect[a_idir]);
       for (fine_ivsit.begin(); fine_ivsit.ok(); ++fine_ivsit)
         {
           iv = fine_ivsit();
@@ -1843,8 +1851,8 @@ void AMRPoissonOp::interpOnIVSHomo(LevelData<FArrayBox>& a_phif,
   else // symbolic reduced version of CF quadratic stencil
     {
       Real pa, pb;
-      Real c1 = 2*(m_dxCrse-m_dx)/(m_dxCrse+  m_dx); //first inside point
-      Real c2 =  -(m_dxCrse-m_dx)/(m_dxCrse+3*m_dx); // next point inward
+      Real c1 = 2*(m_dxCrse_vect[a_idir]-m_dx_vect[a_idir])/(m_dxCrse_vect[a_idir]+  m_dx_vect[a_idir]); //first inside point
+      Real c2 =  -(m_dxCrse_vect[a_idir]-m_dx_vect[a_idir])/(m_dxCrse_vect[a_idir]+3*m_dx_vect[a_idir]); // next point inward
       IntVect ivf;
       for (fine_ivsit.begin(); fine_ivsit.ok(); ++fine_ivsit)
         {
@@ -1883,7 +1891,7 @@ void AMRPoissonOp::getFlux(FArrayBox&       a_flux,
   // if this fails, the data box was too small (one cell wide, in fact)
   CH_assert(!a_edgebox.isEmpty());
 
-  Real scale = m_beta * a_ref / m_dx;
+  Real scale = m_beta * a_ref /  m_dx_vect[a_dir];
 
   FORT_NEWGETFLUX(CHF_FRA(a_flux),
                   CHF_CONST_FRA(a_data),
@@ -1913,7 +1921,7 @@ void AMRPoissonOp::getFlux(FArrayBox&       a_flux,
   a_flux.define(edgebox, a_data.nComp());
 
   //FArrayBox fflux(edgebox, a_data.nComp());
-  Real scale = m_beta * a_ref / m_dx;
+  Real scale = m_beta * a_ref / m_dx_vect[a_dir];
 
   FORT_NEWGETFLUX(CHF_FRA(a_flux),
                   CHF_CONST_FRA(a_data),

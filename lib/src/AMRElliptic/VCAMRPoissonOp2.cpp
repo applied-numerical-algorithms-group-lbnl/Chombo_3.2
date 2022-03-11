@@ -82,7 +82,7 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&      a_lhs,
                           This_will_not_compile!
 #endif
                           CHF_BOX(region),
-                          CHF_CONST_REAL(m_dx));
+                          CHF_CONST_REALVECT(m_dx_vect));
     } // end loop over boxes
 }
 
@@ -189,7 +189,7 @@ void VCAMRPoissonOp2::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs,
                          This_will_not_compile!
 #endif
                          CHF_BOX(region),
-                         CHF_CONST_REAL(m_dx));
+                         CHF_CONST_REALVECT(m_dx_vect));
     } // end loop over boxes
 }
 
@@ -252,7 +252,7 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                            This_will_not_compile!
 #endif
                            CHF_BOX_SHIFT(region, iv),
-                           CHF_CONST_REAL(m_dx));
+                           CHF_CONST_REALVECT(m_dx_vect));
     }
 }
 
@@ -285,7 +285,6 @@ void VCAMRPoissonOp2::resetLambda()
 {
   if (m_lambdaNeedsResetting)
   {
-    Real scale = 1.0 / (m_dx*m_dx);
 
     // Compute it box by box, point by point
     for (DataIterator dit = m_lambda.dataIterator(); dit.ok(); ++dit)
@@ -301,12 +300,13 @@ void VCAMRPoissonOp2::resetLambda()
 
       for (int dir = 0; dir < SpaceDim; dir++)
       {
+        Real scale = 1.0 / (m_dx_vect[dir]*m_dx_vect[dir]);
         FORT_SUMFACES(CHF_FRA(lambdaFab),
-            CHF_CONST_REAL(m_beta),
-            CHF_CONST_FRA(bCoefFab[dir]),
-            CHF_BOX(curBox),
-            CHF_CONST_INT(dir),
-            CHF_CONST_REAL(scale));
+                      CHF_CONST_REAL(m_beta),
+                      CHF_CONST_FRA(bCoefFab[dir]),
+                      CHF_BOX(curBox),
+                      CHF_CONST_INT(dir),
+                      CHF_CONST_REAL(scale));
       }
 
       // Take its reciprocal
@@ -605,7 +605,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                 (CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),
                                  CHF_BOX(region),
-                                 CHF_CONST_REAL(m_dx),
+                                 CHF_CONST_REALVECT(m_dx_vect),
                                  CHF_CONST_REAL(m_alpha),
                                  CHF_CONST_FRA((*m_aCoef)[dit]),
                                  CHF_CONST_REAL(m_beta),
@@ -814,7 +814,7 @@ void VCAMRPoissonOp2::getFlux(FArrayBox&       a_flux,
   a_flux.resize(a_facebox, a_data.nComp());
   BoxIterator bit(a_facebox);
 
-  Real scale = m_beta * a_ref / m_dx;
+  Real scale = m_beta * a_ref / m_dx_vect[a_dir];
 
   for ( bit.begin(); bit.ok(); bit.next())
     {
