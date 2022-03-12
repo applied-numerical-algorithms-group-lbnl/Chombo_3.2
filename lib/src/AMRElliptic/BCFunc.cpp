@@ -157,6 +157,108 @@ void ConstBCFunction::operator()(FArrayBox&           a_state,
   } // end loop over directions
 }
 
+void ConstBCFunction::operator()(FArrayBox&           a_state,
+                                 const Box&           a_valid,
+                                 const ProblemDomain& a_domain,
+                                 RealVect             a_dx,
+                                 bool                 a_homogeneous)
+{
+  const Box& domainBox = a_domain.domainBox();
+
+  for (int idir = 0; idir < SpaceDim; idir++)
+  {
+    if (!a_domain.isPeriodic(idir))
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+      {
+        Side::LoHiSide side = sit();
+
+        if (a_valid.sideEnd(side)[idir] == domainBox.sideEnd(side)[idir])
+        {
+          int  bcType;
+          Real bcValue;
+
+          if (side == Side::Lo)
+          {
+            bcType  = m_loSideType [idir];
+            bcValue = m_loSideValue[idir];
+          }
+          else
+          {
+            bcType  = m_hiSideType [idir];
+            bcValue = m_hiSideValue[idir];
+          }
+
+          if (bcType == 0)
+          {
+            // Neumann BC
+            int isign = sign(side);
+
+            Box toRegion = adjCellBox(a_valid, idir, side, 1);
+            toRegion &= a_state.box();
+
+            Box fromRegion = toRegion;
+            fromRegion.shift(idir, -isign);
+
+            a_state.copy(a_state, fromRegion, 0, toRegion, 0, a_state.nComp());
+
+            if (!a_homogeneous)
+            {
+              for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+              {
+                const IntVect& ivTo = bit();
+                // IntVect ivClose = ivTo - isign*BASISV(idir);
+
+                for (int icomp = 0; icomp < a_state.nComp(); icomp++)
+                {
+                  a_state(ivTo, icomp) += Real(isign)*a_dx[idir]*bcValue;
+                }
+              }
+            }
+          }
+          else if (bcType == 1)
+          {
+            // Dirichlet BC
+            int isign = sign(side);
+
+            Box toRegion = adjCellBox(a_valid, idir, side, 1);
+            toRegion &= a_state.box();
+
+            for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+            {
+              const IntVect& ivTo = bit();
+
+              IntVect ivClose = ivTo -   isign*BASISV(idir);
+              // IntVect ivFar   = ivTo - 2*isign*BASISV(idir);
+
+              Real inhomogVal = 0.0;
+
+              if (!a_homogeneous)
+              {
+                inhomogVal = bcValue;
+              }
+
+              for (int icomp = 0; icomp < a_state.nComp(); icomp++)
+              {
+                Real nearVal = a_state(ivClose, icomp);
+                // Real farVal  = a_state(ivFar,   icomp);
+
+                Real ghostVal = linearInterp(inhomogVal, nearVal);
+
+                a_state(ivTo, icomp) = ghostVal;
+              }
+            }
+          }
+          else
+          {
+            MayDay::Abort("ConstBCFunction::operator() - unknown BC type");
+          }
+        } // if ends match
+      } // end loop over sides
+    } // if not periodic in this direction
+  } // end loop over directions
+}
+
 RefCountedPtr<BCFunction> ConstDiriNeumBC(const IntVect&  a_loSideType,
                                           const RealVect& a_loSideValue,
                                           const IntVect&  a_hiSideType,
@@ -199,6 +301,22 @@ static void getDomainFacePosition(RealVect&             a_retval,
 
   int isign = sign(a_side);
   dataPtr[a_dir] += 0.5*Real(isign)*a_dx;
+}
+
+static void getDomainFacePosition(RealVect&             a_retval,
+                                  const IntVect&        a_validIV,
+                                  const RealVect&       a_dx,
+                                  const int&            a_dir,
+                                  const Side::LoHiSide& a_side)
+{
+  Real* dataPtr = a_retval.dataPtr();
+
+  D_TERM( dataPtr[0] = a_dx[0]*(a_validIV[0] + 0.5);,\
+          dataPtr[1] = a_dx[1]*(a_validIV[1] + 0.5);,\
+          dataPtr[2] = a_dx[2]*(a_validIV[2] + 0.5);)
+
+  int isign = sign(a_side);
+  dataPtr[a_dir] += 0.5*Real(isign)*a_dx[a_dir];
 }
 
 void NeumBC(FArrayBox&      a_state,
