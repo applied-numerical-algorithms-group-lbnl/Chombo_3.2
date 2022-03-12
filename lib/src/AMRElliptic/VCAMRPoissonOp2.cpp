@@ -35,7 +35,7 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&      a_lhs,
   CH_TIME("VCAMRPoissonOp2::residualI");
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  Real dx = m_dx;
+  RealVect dx = m_dx_vect;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   {
@@ -133,7 +133,7 @@ void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
 {
   CH_TIME("VCAMRPoissonOp2::applyOpI");
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  Real dx = m_dx;
+  RealVect dx = m_dx_vect;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
 
@@ -204,7 +204,7 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
       FArrayBox& phi = a_phiFine[dit];
-      m_bc(phi, dblFine[dit()], m_domain, m_dx, true);
+      m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, true);
     }
 
   a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
@@ -584,7 +584,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
         for (dit.begin(); dit.ok(); ++dit)
           {
             // invoke physical BC's where necessary
-            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx, true);
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, true);
           }
       }
 

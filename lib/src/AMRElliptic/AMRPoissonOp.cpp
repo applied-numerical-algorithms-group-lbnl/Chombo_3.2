@@ -286,7 +286,7 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 
     for (dit.begin(); dit.ok(); ++dit)
       {
-        m_bc(phi[dit], dbl[dit], m_domain, m_dx, a_homogeneous);
+        m_bc(phi[dit], dbl[dit], m_domain, m_dx_vect, a_homogeneous);
       }
   }
   {
@@ -398,7 +398,7 @@ void AMRPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
 #pragma omp for 
     for (int ibox=0;ibox<nbox; ibox++)
       {
-        m_bc(phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx, a_homogeneous);
+        m_bc(phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx_vect, a_homogeneous);
       }
   }// end pragma
 
@@ -738,7 +738,7 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
     for(int ibox = 0; ibox < nbox; ibox++)
       {
         FArrayBox& phi = a_phiFine[dit[ibox]];
-        m_bc(phi, dblFine[dit[ibox]], m_domain, m_dx, true);
+        m_bc(phi, dblFine[dit[ibox]], m_domain, m_dx_vect, true);
       }
   }//end pragma
 
@@ -1081,7 +1081,7 @@ void AMRPoissonOp::AMRProlongS_2(LevelData<FArrayBox>&       a_correction,
         FArrayBox& phi =  a_correction[dit[ibox]];
         FArrayBox& coarse = a_temp[dit[ibox]];
         
-        coarserAMRPOp->m_bc( coarse, cdbl[dit[ibox]], coarserAMRPOp->m_domain, coarserAMRPOp->m_dx, true );
+        coarserAMRPOp->m_bc( coarse, cdbl[dit[ibox]], coarserAMRPOp->m_domain, coarserAMRPOp->m_dx_vect, true );
 
         Box region = dbl[dit[ibox]];
         const IntVect& iv = region.smallEnd();
@@ -1352,7 +1352,7 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
             
-            m_bc( phiFab, region, m_domain, m_dx, a_homo );
+            m_bc( phiFab, region, m_domain, m_dx_vect, a_homo );
             
             if (m_alpha == 0.0 && m_beta == 1.0 )
               {
@@ -1413,7 +1413,7 @@ void AMRPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
                 }
             }
 
-          m_bc(a_phi[dit], dbl[dit], m_domain, m_dx, true);
+          m_bc(a_phi[dit], dbl[dit], m_domain, m_dx_vect, true);
 
           if (loIV <= hiIV)
             {
@@ -1469,7 +1469,7 @@ void AMRPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
         // invoke physical BC's where necessary
         {
 
-          m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx, true);
+          m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx_vect, true);
         }
         
         const Box& region = dbl[dit[ibox]];
@@ -1543,7 +1543,7 @@ void AMRPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
     for(int ibox = 0; ibox < nbox; ibox++)
       {
         // invoke physical BC's where necessary
-        m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx, true);
+        m_bc(a_phi[dit[ibox]], dbl[dit[ibox]], m_domain, m_dx_vect, true);
         Box region = dbl[dit[ibox]];
         region.grow(-1); // just do the interior on the first run through
         int whichPass = 0;
