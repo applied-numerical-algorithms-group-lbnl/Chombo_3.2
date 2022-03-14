@@ -54,13 +54,13 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
      &     CHF_FRA[coarslope],
      &     CHF_FRA[coarcurva],
      &     CHF_FRA[coarmixed],
-     &     CHF_CONST_REAL[dxf],
+     &     CHF_CONST_REALVECT[dxf],
      &     CHF_CONST_INT[ivar],
      &     CHF_CONST_INT[dir],
      &     CHF_CONST_INT[sign],
      &     CHF_CONST_INT[nRef])
 
-      REAL_T xf1, xc1, xf2, xc2, x1, x2, dxc
+      REAL_T xf1, xc1, xf2, xc2, x1, x2
       REAL_T aa, update1, update2, update3
       integer CHF_AUTODECL[i]
       integer CHF_AUTODECL[ii]
@@ -74,7 +74,6 @@ c  note that this has not been extended to work for DIM > 3
 #if CH_SPACEDIM > 3
       call MAYDAY_ERROR()
 #else
-      dxc = nRef * dxf
       you1 = YOU(1,dir)
       you2 = YOU(2,dir)
 
@@ -105,10 +104,10 @@ c  note that this has not been extended to work for DIM > 3
          i4=ir4+ii4;
          i5=ir5+ii5]
 
-         xf1 = (ivf(you1)+half)*dxf
-         xc1 = (  ic(you1)+half)*dxc
-         xf2 = (ivf(you2)+half)*dxf
-         xc2 = (  ic(you2)+half)*dxc
+         xf1 = (ivf(you1)+half)*dxf(you1)
+         xc1 = (  ic(you1)+half)*nRef * dxf(you1)
+         xf2 = (ivf(you2)+half)*dxf(you2)
+         xc2 = (  ic(you2)+half)*nRef * dxf(you2)
          x1 = xf1-xc1
          x2 = xf2-xc2
          aa= phic(CHF_IX[ic(0);ic(1);ic(2)],ivar)

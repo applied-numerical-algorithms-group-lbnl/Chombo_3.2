@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "REAL.H"
 #include "IntVect.H"
+#include "RealVect.H"
 #include "Box.H"
 #include "DisjointBoxLayout.H"
 #include "FArrayBox.H"
@@ -85,6 +86,12 @@ public:
                               int a_ivar,
                               const IntVect& a_ivin,
                               Real a_dx) const;
+
+  Real computeMixedDerivative(
+                              const BaseFab<Real> & a_phic,
+                              int a_ivar,
+                              const IntVect& a_ivin,
+                              RealVect a_dx) const;
 
   ///
   QuadCFStencil();
