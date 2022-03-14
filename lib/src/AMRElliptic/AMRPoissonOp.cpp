@@ -243,10 +243,10 @@ void AMRPoissonOp::residual(LevelData<FArrayBox>&       a_lhs,
 }
 
 void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
-                  LevelData<FArrayBox>& a_phi,
-                  const LevelData<FArrayBox>* a_phiCoarse,
-                  const LevelData<FArrayBox>& a_rhs,
-                  bool a_homogeneous)
+                              LevelData<FArrayBox>& a_phi,
+                              const LevelData<FArrayBox>* a_phiCoarse,
+                              const LevelData<FArrayBox>& a_rhs,
+                              bool a_homogeneous)
 {
   CH_TIME("AMRPoissonOp::residualNF");
   
@@ -843,9 +843,8 @@ void AMRPoissonOp::AMRResidualNF(LevelData<FArrayBox>&       a_residual,
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
 
-  if (a_phiCoarse.isDefined())
-  {
-    m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
+  if (a_phiCoarse.isDefined()) {
+      m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
   }
 
   //apply boundary conditions
@@ -866,9 +865,8 @@ void AMRPoissonOp::AMROperator(LevelData<FArrayBox>&              a_LofPhi,
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
 
-  if (a_phiCoarse.isDefined())
-  {
-    m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
+  if (a_phiCoarse.isDefined()) {
+      m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
   }
 
   // apply physical boundary conditions in applyOpI
@@ -914,9 +912,8 @@ void AMRPoissonOp::AMROperatorNF(LevelData<FArrayBox>&       a_LofPhi,
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
 
-  if (a_phiCoarse.isDefined())
-  {
-    m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
+  if (a_phiCoarse.isDefined()) {
+      m_interpWithCoarser.coarseFineInterp(phi, a_phiCoarse);
   }
 
   // apply physical boundary conditions in applyOpI
