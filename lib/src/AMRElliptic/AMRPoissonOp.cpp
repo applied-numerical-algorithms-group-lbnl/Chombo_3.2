@@ -143,7 +143,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
          m_dxCrse_vect[2] = a_refRatio*a_dxLevel[2];)
   m_refToFiner = 1;
 
-  m_interpWithCoarser.define(a_grids, &a_coarse, a_dxLevel[0],
+  m_interpWithCoarser.define(a_grids, &a_coarse, a_dxLevel,
                              m_refToCoarser, a_numComp, m_domain);
 }
 
