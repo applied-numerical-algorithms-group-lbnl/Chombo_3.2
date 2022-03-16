@@ -462,6 +462,15 @@ void NeumBC(FArrayBox&      a_state,
             Side::LoHiSide  a_side,
             Interval&       a_interval);
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&       a_interval);
+
 ///
 /**
    Neumann bc for a particular side, all components
@@ -470,6 +479,14 @@ void NeumBC(FArrayBox&      a_state,
 void NeumBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side);
+
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             const BCValueHolder&   a_value,
             int             a_dir,
@@ -486,6 +503,12 @@ void NeumBC(FArrayBox&      a_state,
             bool            a_homogeneous,
             BCValueHolder   a_value);
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value);
+
 ///
 /**
    Dirichlet boundary conditions for a side, specified component interval
@@ -494,6 +517,16 @@ void NeumBC(FArrayBox&      a_state,
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&       a_interval,
+            int             a_order = 1);
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_dir,
@@ -515,6 +548,15 @@ void DiriBC(FArrayBox&      a_state,
             Side::LoHiSide  a_side,
             int             a_order = 1);
 
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            int             a_order = 1);
+
 ///
 /**
    Dirichlet boundary conditions for one side.
@@ -523,6 +565,13 @@ void DiriBC(FArrayBox&      a_state,
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_order = 1);
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_order = 1);

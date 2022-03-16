@@ -287,6 +287,21 @@ void NeumBC(FArrayBox&      a_state,
     }
 }
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value)
+{
+  for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+        {
+          NeumBC(a_state, a_valid, a_dx, a_homogeneous, a_value, idir,sit());
+        }
+    }
+}
+
 static void getDomainFacePosition(RealVect&             a_retval,
                                   const IntVect&        a_validIV,
                                   const Real&           a_dx,
@@ -322,6 +337,19 @@ static void getDomainFacePosition(RealVect&             a_retval,
 void NeumBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_valueA,
+            int             a_dir,
+            Side::LoHiSide  a_side)
+{
+  Interval stateInterval = a_state.interval();
+  NeumBC(a_state, a_valid, a_dx, a_homogeneous,
+         a_valueA, a_dir,a_side, stateInterval);
+}
+
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             const BCValueHolder&   a_valueA,
             int             a_dir,
@@ -375,6 +403,49 @@ void NeumBC(FArrayBox&      a_state,
     }
 }
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_valueA,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&        a_interval)
+{
+  BCValueHolder& a_value = (BCValueHolder&)a_valueA;
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  Box fromRegion = toRegion;
+  fromRegion.shift(a_dir, -isign);
+
+  a_state.copy(a_state, fromRegion, 0, toRegion, 0, a_state.nComp());
+
+  if (!a_homogeneous)
+    {
+      Real* value = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+
+          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              a_state(ivTo, icomp) += Real(isign)*a_dx[a_dir]*value[icomp];
+            }
+        }
+
+      delete[] value;
+    }
+}
+
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
@@ -394,7 +465,38 @@ void DiriBC(FArrayBox&      a_state,
 
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_order)
+{
+  for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+        {
+
+          DiriBC(a_state, a_valid, a_dx, a_homogeneous, a_value, idir, sit(), a_order);
+        }
+    }
+}
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            int             a_order)
+{
+  Interval stateInterval = a_state.interval();
+  DiriBC(a_state,a_valid, a_dx, a_homogeneous,
+         a_value,a_dir, a_side, stateInterval, a_order);
+}
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_dir,
@@ -471,6 +573,71 @@ void DiriBC(FArrayBox&      a_state,
   delete[] value;
 }
 
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&        a_interval,
+            int             a_order)
+{
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  Real* value = new Real[a_state.nComp()];
+
+  for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+    {
+      const IntVect& ivTo = bit();
+
+      IntVect ivClose = ivTo -   isign*BASISV(a_dir);
+      IntVect ivFar   = ivTo - 2*isign*BASISV(a_dir);
+
+      if (!a_homogeneous)
+        {
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+        }
+
+      for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+        {
+          Real nearVal = a_state(ivClose, icomp);
+          Real farVal  = a_state(ivFar,   icomp);
+
+          Real inhomogVal = 0.0;
+
+          if (!a_homogeneous)
+            {
+              inhomogVal = value[icomp];
+            }
+
+          Real ghostVal=0;
+
+          if (a_order == 1)
+            {
+              ghostVal = linearInterp(inhomogVal, nearVal);
+            }
+          else if (a_order == 2)
+            {
+              ghostVal = quadraticInterp(inhomogVal, nearVal, farVal);
+            }
+          else
+            {
+              MayDay::Error("bogus order argument");
+            }
+
+          a_state(ivTo, icomp) = ghostVal;
+        }
+    }
+
+  delete[] value;
+}
 void NoSlipVectorBC(FArrayBox&     a_state,
                     const Box&     a_valid,
                     Real           a_dx,
