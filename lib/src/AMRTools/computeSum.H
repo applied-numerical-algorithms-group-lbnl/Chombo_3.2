@@ -68,20 +68,18 @@ Real computeSum(Real&                       a_volume,
                 const Interval&             a_comps = Interval(0,0),
                 const bool                  a_global= true);
 
-/// Returns the volume-weighted sum (integral) of phi over all valid regions
-/*
- */
-Real computeSum(const Vector<LevelData<FArrayBox>* >& a_phi,
-                const Vector<int>&                    a_nRefFine,
-                const RealVect&                       a_dxCrse,
-                const Interval&                       a_comps = Interval(0,0),
-                const int&                            a_lBase = 0);
-
 // ANISOTROPIC
 
 /// Returns the volume-weighted sum (integral) of phi over all valid regions and the volume
 /*
  */
+Real computeSum(const Vector<LevelData<FArrayBox>* >& a_phi,
+                const Vector<IntVect>&                a_nRefFine,
+                const RealVect&                       a_dxCrse,
+                const Interval&                       a_comps = Interval(0,0),
+                const int&                            a_lBase = 0);
+
+
 Real computeSum(Real&                                 a_volume,
                 const Vector<LevelData<FArrayBox>* >& a_phi,
                 const Vector<IntVect>&                a_nRefFine,
