@@ -164,6 +164,20 @@ bool BoxLayout::coarsenable(int refRatio) const
   return true;
 }
 
+
+bool BoxLayout::coarsenable(IntVect refRatio) const
+{
+ // if (size() == 0) return false;
+  for (int i=0; i<size(); i++)
+    {
+      Box b =  m_boxes->operator[](i).box;
+      b.coarsen(refRatio);
+      b.refine(refRatio);
+      if (b !=  m_boxes->operator[](i).box)
+        return false;
+    }
+  return true;
+}
 // Constructors and such
 // =====================
 
@@ -565,10 +579,30 @@ coarsen(int a_ref)
       (*m_boxes)[ivec].box.coarsen(a_ref);
     }
 }
+
+void
+BoxLayout::
+coarsen(IntVect a_ref)
+{
+  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
+    {
+      (*m_boxes)[ivec].box.coarsen(a_ref);
+    }
+}
 ///////////
 void
 BoxLayout::
 refine(int a_ref)
+{
+  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
+    {
+      (*m_boxes)[ivec].box.refine(a_ref);
+    }
+}
+
+void
+BoxLayout::
+refine(IntVect a_ref)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
     {
