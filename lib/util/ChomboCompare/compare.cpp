@@ -52,6 +52,7 @@ void init(string&         a_exactRoot,
           bool&           a_doPlots,
           bool&           a_isTimeDep,
           bool&           a_isSameSize,
+          bool&           a_isAniExact,
           bool&           a_isAniMesh,
           Real&           a_bogusValue,
           bool&           a_computeRelativeError,
@@ -85,7 +86,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
                      const Vector<IntVect>&                a_computedRefRatio,
                      const Vector<LevelData<FArrayBox>* >& a_exactSoln,
                      const Vector<string>&                 a_exactVars,
-                     const Real                            a_exactDx,
+                     const RealVect                        a_exactDx,
                      Real                                  a_bogus_value,
                      bool                                  a_HOaverage,
                      bool                                  a_computeRelativeError);
@@ -147,12 +148,13 @@ int main(int argc, char* argv[])
   pout().precision(4);
 
   // set defaults
+  bool isAniExact = false;
   bool isAniMesh = false;
   bool isSameSize = false;
   bool doGhostCells = false;
   bool doPlots = true;
   bool isTimeDep = false;
-  bool verbose = true;
+  bool verbose = false;
   bool computeRelativeError = false;
   bool removeMean = false;
   bool divideByDt = false;
@@ -170,7 +172,7 @@ int main(int argc, char* argv[])
 
   init(exactRoot, computedRoot, errorRoot, intFieldSize,
        numCrseStart, errorVars, numCrseFinish, crseStep,
-       crseMult, doPlots, isTimeDep, isSameSize, isAniMesh, bogusValue,
+       crseMult, doPlots, isTimeDep, isSameSize, isAniExact, isAniMesh, bogusValue,
        computeRelativeError, removeMean, divideByDt, doGhostCells, 
        useUnitDomain, HOaverage,verbose);
        
@@ -228,7 +230,9 @@ int main(int argc, char* argv[])
     Vector<DisjointBoxLayout> exactGrids;
     Box exactDomain;
     Real exactDx, exactDt, exactTime;
+    RealVect exactDxVect;
     Vector<int> exactRefRatio;
+    Vector<IntVect> exactRefRatioVect;
     int exactNumLevels;
     IntVect ghostVect = IntVect::Unit;
     string exactFileName(exactFile.str());
@@ -239,21 +243,44 @@ int main(int argc, char* argv[])
       pout() << "read exact solution..." << endl;
     }
 
-    ReadAMRHierarchyHDF5(exactFileName,
-                         exactGrids,
-                         exactSoln,
-                         exactVars,
-                         exactDomain,
-                         exactDx,
-                         exactDt,
-                         exactTime,
-                         exactRefRatio,
-                         exactNumLevels);
-
-    if (verbose)
-    {
-      pout () << "done reading exact soln "<< exactDx << endl;
+    if (isAniExact) {
+        ReadAnisotropicAMRHierarchyHDF5(exactFileName,
+                                        exactGrids,
+                                        exactSoln,
+                                        exactVars,
+                                        exactDomain,
+                                        exactDxVect,
+                                        exactDt,
+                                        exactTime,
+                                        exactRefRatioVect,
+                                        exactNumLevels);
+        if (verbose)
+        {
+          pout () << "done reading exact soln "<< exactDxVect[0] << " " << exactDxVect[1] << endl;
+        }
+    } else {
+        ReadAMRHierarchyHDF5(exactFileName,
+                             exactGrids,
+                             exactSoln,
+                             exactVars,
+                             exactDomain,
+                             exactDx,
+                             exactDt,
+                             exactTime,
+                             exactRefRatio,
+                             exactNumLevels);
+        // In case !isAniExact  but isAniMesh
+        exactDxVect[0] = exactDx; 
+        exactDxVect[1] = exactDx; 
+        if (CH_SPACEDIM > 2) {
+            exactDxVect[2] = exactDx; 
+        }
+        if (verbose)
+        {
+          pout () << "done reading exact soln "<< exactDx << endl;
+        }
     }
+
 
     // we assume that exact soln is single-grid if we're doing averaging
     if (!isSameSize)
@@ -278,8 +305,8 @@ int main(int argc, char* argv[])
     {
       pout() << "read computed solution..." << endl;
     }
-
-    if (isAniMesh) {
+    // if isAniExact then you should be isAniMesh
+    if (isAniMesh || isAniExact) {
         ReadAnisotropicAMRHierarchyHDF5(computedFileName,
                                         computedGrids,
                                         computedSoln,
@@ -428,7 +455,7 @@ int main(int argc, char* argv[])
         pout () << "compute AMR error..." << endl;
       }
 
-      if (isAniMesh) {
+      if (isAniMesh || isAniExact) {
           computeAMRError(error,
                           errorVars,
                           computedSoln,
@@ -438,7 +465,7 @@ int main(int argc, char* argv[])
                           computedRefRatioVect,
                           exactSoln,
                           exactVars,
-                          exactDx,
+                          exactDxVect,
                           bogusValue,
                           HOaverage,
                           computeRelativeError);
@@ -1211,7 +1238,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
                      const Vector<IntVect>&                a_computedRefRatio,
                      const Vector<LevelData<FArrayBox>* >& a_exactSoln,
                      const Vector<string>&                 a_exactVars,
-                     const Real                            a_exactDx,
+                     const RealVect                        a_exactDx,
                      Real                                  a_bogus_value,
                      bool                                  a_HOaverage,
                      bool                                  a_computeRelativeError)
@@ -1272,7 +1299,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
    {
      FArrayBox& thisFineSoln = exactSolnRef[ditFine()];
      const Box& fineBox = exactSolnRef.getBoxes()[ditFine()];
-     exactBC.applyInhomogeneousBCs(thisFineSoln, fineBox, a_exactDx);
+     exactBC.applyInhomogeneousBCs(thisFineSoln, fineBox, a_exactDx[0]);  // let's not worry about this for now, looks like its only for HO
    }
    exactSolnRef.exchange(exactComps);
 
@@ -1286,7 +1313,8 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
 
      // compute refinement ratio between solution at this level
      // and exact solution
-     RealVect nRefTemp = (dxLevel / a_exactDx);  // this is a_computedDx / a_exactDx
+     RealVect nRefTemp = dxLevel;
+     nRefTemp /= a_exactDx;   //  this is a_computedDx / a_exactDx
      IntVect nRefExact;
      nRefExact[0] = (int) nRefTemp[0];
      nRefExact[1] = (int) nRefTemp[1];
@@ -1294,7 +1322,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
          nRefExact[2] = (int) nRefTemp[2];
      }
 
-     pout() << "computeAMRError:: a_exactDx" << a_exactDx << endl;
+     pout() << "computeAMRError:: a_exactDx" << a_exactDx[0] << " " << a_exactDx[1] << endl;
      pout() << "computeAMRError:: dxLevel" << dxLevel[0] << " " << dxLevel[1]  << endl;
      for (int i=0; i<CH_SPACEDIM; i++) {
          // this is to do rounding properly if necessary
@@ -1346,10 +1374,9 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
          FArrayBox fineTemp(fineBox, 1);
          Box coarsenedFineBox(fineBox);
          coarsenedFineBox.coarsen(nCoarsenExact);
-         if ((a_computedDx[0] == a_exactDx) && (a_computedDx[1] == a_exactDx)) {
+         if ((a_computedDx[0] == a_exactDx[0]) && (a_computedDx[1] == a_exactDx[1])) {
              // if cell sizes are the same, then copy
              averagedExact[ditFine].copy(exactSolnRef[ditFine]);
-         //if ((a_exactDx <= a_computedDx[0]) && (a_exactDx <= a_computedDx[1])) // for now assume computed, ani mesh is bigger or equal to exact in all dir
          } else {
              // loop over components
              for (int comp = 0; comp < numExact; comp++) {
@@ -1401,6 +1428,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
          nRefineComputed[2] = nRefExact[2] / nCoarsenExact[2];
      }
      pout() << "nRefExact and nCoarsenExact ? " << nRefExact[0] << " " << nCoarsenExact[0] << endl;
+     pout() << "nRefExact and nCoarsenExact ? " << nRefExact[1] << " " << nCoarsenExact[1] << endl;
      LevelData<FArrayBox>* thisLevelComputedRefinedPtr = &thisLevelComputed;
      LevelData<FArrayBox>* thisLevelErrorRefinedPtr = &thisLevelError;
      if ((nRefineComputed[0] > 1) || (nRefineComputed[1] > 1)
@@ -1852,6 +1880,7 @@ void init(string&         a_exactRoot,
           bool&           a_doPlots,
           bool&           a_isTimeDep,
           bool&           a_isSameSize,
+          bool&           a_isAniExact,
           bool&           a_isAniMesh,
           Real&           a_bogusValue,
           bool&           a_computeRelativeError,
@@ -1891,9 +1920,17 @@ void init(string&         a_exactRoot,
   a_divideByDt = (temp == 1);
 
   // ONLY COMPUTED SOL IS ALLOWED TO BE ANI RN
-  temp = a_isAniMesh;
-  ppCompare.query("AniMesh", temp);
-  a_isAniMesh = (temp == 1);
+  temp = a_isAniExact;
+  ppCompare.query("AniExact", temp);
+  a_isAniExact = (temp == 1);
+
+  if (a_isAniExact) {
+      a_isAniMesh = true;
+  } else {
+      temp = a_isAniMesh;
+      ppCompare.query("AniMesh", temp);
+      a_isAniMesh = (temp == 1);
+  }
 
   if (a_isAniMesh) { 
       a_isSameSize = false;
