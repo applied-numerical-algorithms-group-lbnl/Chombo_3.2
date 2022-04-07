@@ -1205,6 +1205,12 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
               getFlux(coarflux, coarfab, idir);
 
               Real scale = 1.0;
+              for (int i=0; i<SpaceDim; ++i) {
+                  if (idir != i) {
+                    scale *= m_dx_vect[i];
+                  }
+              }
+
               m_levfluxreg.incrementCoarse(coarflux, scale, dit(),
                                            interv, interv, idir);
             }
@@ -1250,6 +1256,11 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
                   getFlux(fineflux, phifFab, fluxBox, idir, m_refToFiner);
 
                   Real scale = 1.0;
+                  for (int i=0; i<SpaceDim; ++i) {
+                      if (idir != i) {
+                        scale *= m_dx_vect[i];
+                      }
+                  }
                   m_levfluxreg.incrementFine(fineflux, scale, ditf(),
                                              interv, interv, idir, hiorlo);
                 }
@@ -1259,7 +1270,11 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
 
   CH_STOP(t3);
 
-  Real scale = 1.0/m_dx;
+  Real scale = 1.0;
+  for (int i=0; i<SpaceDim; ++i) {
+      scale *= m_dx_vect[i];
+  }
+  scale = 1.0/scale;
   m_levfluxreg.reflux(a_residual, scale);
 }
 
