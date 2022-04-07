@@ -1303,8 +1303,6 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
    }
    exactSolnRef.exchange(exactComps);
 
-   pout() << "computeAMRError:: before lev loop " << endl;
-
    // outer loop is over levels
    for (int level = 0; level < numLevels; level++)
    {
@@ -1429,6 +1427,9 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
      }
      pout() << "nRefExact and nCoarsenExact ? " << nRefExact[0] << " " << nCoarsenExact[0] << endl;
      pout() << "nRefExact and nCoarsenExact ? " << nRefExact[1] << " " << nCoarsenExact[1] << endl;
+#if CH_SPACEDIM > 2
+     pout() << "nRefExact and nCoarsenExact ? " << nRefExact[2] << " " << nCoarsenExact[2] << endl;
+#endif
      LevelData<FArrayBox>* thisLevelComputedRefinedPtr = &thisLevelComputed;
      LevelData<FArrayBox>* thisLevelErrorRefinedPtr = &thisLevelError;
      if ((nRefineComputed[0] > 1) || (nRefineComputed[1] > 1)
