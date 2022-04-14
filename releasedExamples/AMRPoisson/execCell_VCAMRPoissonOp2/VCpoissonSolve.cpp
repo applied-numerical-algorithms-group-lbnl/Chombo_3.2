@@ -133,7 +133,7 @@ void ParseValue(Real* pos,
 void ParseBC(FArrayBox& a_state,
              const Box& a_valid,
              const ProblemDomain& a_domain,
-             Real a_dx,
+             RealVect a_dx,
              bool a_homogeneous)
 {
 
@@ -178,7 +178,7 @@ void ParseBC(FArrayBox& a_state,
 void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
             Vector<ProblemDomain>& a_amrDomains,
             Vector<int>& a_refRatios,
-            Vector<Real>& a_amrDx,
+            Vector<RealVect>& a_amrDx,
             int a_finestLevel)
 {
   CH_TIME("setRHS");
@@ -189,7 +189,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
       const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
 
       // rhs is cell-centered...
-      RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
+      RealVect ccOffset = 0.5*a_amrDx[lev];
 
       DataIterator levelDit = levelGrids.dataIterator();
       for (levelDit.begin(); levelDit.ok(); ++levelDit)
@@ -293,7 +293,7 @@ void
 setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
            Vector<ProblemDomain>& a_amrDomains,
            Vector<int>& a_refRatios,
-           Vector<Real>& a_amrDx,
+           Vector<RealVect>& a_amrDx,
            int& a_maxLevel,
            int& a_finestLevel)
 {
@@ -346,11 +346,15 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   int maxNumLevels = maxLevel +1;
   a_amrGrids.resize(maxNumLevels);
   a_amrDomains.resize(maxNumLevels);
-  a_amrDx.resize(maxNumLevels,-1);
+  a_amrDx.resize(maxNumLevels);
   a_finestLevel = 0;
 
-  // assumes dx=dy=dz
-  a_amrDx[0] = domainSize[0]/numCells[0];
+  // assumes anisotropic mesh possible
+  a_amrDx[0][0] = domainSize[0]/numCells[0];
+  a_amrDx[0][1] = domainSize[1]/numCells[1];
+  if (CH_SPACEDIM == 3) {
+      a_amrDx[0][2] = domainSize[2]/numCells[2];
+  }
 
   IntVect domLo = IntVect::Zero;
   IntVect domHi  = numCells - IntVect::Unit;
@@ -363,7 +367,11 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
     {
       a_amrDomains[lev] = a_amrDomains[lev-1];
       a_amrDomains[lev].refine(a_refRatios[lev-1]);
-      a_amrDx[lev] = a_amrDx[lev-1]/a_refRatios[lev-1];
+      a_amrDx[lev][0] = a_amrDx[lev-1][0]/a_refRatios[lev-1];
+      a_amrDx[lev][1] = a_amrDx[lev-1][1]/a_refRatios[lev-1];
+      if (CH_SPACEDIM == 3) {
+          a_amrDx[lev][2] = a_amrDx[lev-1][2]/a_refRatios[lev-1];
+      }
     }
 
   Vector<Vector<Box> > vectBoxes(maxLevel+1);
@@ -604,13 +612,13 @@ int runSolver()
    Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef;
    Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef;
    Vector<int> refRatios;
-   Vector<Real> amrDx;
+   Vector<IntVect> refRatios_anys;
+   Vector<RealVect> amrDx;
    int finestLevel, maxLevel;
 
    setupGrids(amrGrids, amrDomains, refRatios, amrDx, maxLevel, finestLevel);
 
-   RealVect dxLev = RealVect::Unit;
-   dxLev *= amrDx[0];
+   RealVect dxLev = amrDx[0];
    aCoef.resize(maxLevel +1);
    bCoef.resize(maxLevel +1);
    for (int lev=0; lev<= maxLevel; lev++) {
@@ -641,7 +649,6 @@ int runSolver()
                     beta, bCoef);
 
    AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-   pout() << "After opFactory.define \n";
 
    // AMRMultiGrid
    AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
@@ -667,6 +674,10 @@ int runSolver()
                                numMG, maxIter, eps, hang, normThresh);
    amrSolver->m_verbosity = s_verbosity-1;
 
+   refRatios_anys.resize(refRatios.size());
+   for (int lev=0; lev<refRatios.size(); lev++) {
+       refRatios_anys[lev] = refRatios[lev] * IntVect::Unit;
+   }
 
    // allocate solution and RHS, initialize RHS
    Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
@@ -685,15 +696,13 @@ int runSolver()
    setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
    // do solve
-   int iterations = 1;
+   int iterations = 3;
    ppMain.get("iterations", iterations);
 
    for (int iiter = 0; iiter < iterations; iiter++)
      {
        bool zeroInitialGuess = true;
-       pout() << "about to go into solve" << endl;
        amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
-       pout() << "done solve" << endl;
      }
 
    // write results to file
@@ -736,14 +745,17 @@ int runSolver()
 
        Real bogusVal = 1.0;
 
+       //WriteAnisotropicAMRHierarchyHDF5(fname,
        WriteAMRHierarchyHDF5(fname,
                              amrGrids,
                              plotData,
                              varNames,
                              amrDomains[0].domainBox(),
-                             amrDx[0],
+                             //amrDx[0],
+                             amrDx[0][0],
                              bogusVal,
                              bogusVal,
+                             //refRatios_anys,
                              refRatios,
                              numLevels);
 
