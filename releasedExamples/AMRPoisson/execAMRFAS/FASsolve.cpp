@@ -699,8 +699,11 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.get("hang",      hang);
 
   Real normThresh = 1.0e-30;
+ 
+  bool FASmultigrid = true;
+  ppSolver.query("FASmultigrid", FASmultigrid);
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                               numMG, maxIter, eps, hang, normThresh, false);// last param is homogeneous BC
+                               numMG, maxIter, eps, hang, normThresh, !FASmultigrid);// last param is homogeneous BC
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters
@@ -774,7 +777,7 @@ int runSolver()
          if (FASmultigrid) {
              amrSolver = new AMRFASMultiGrid<LevelData<FArrayBox> >();
          } else {
-              amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
+             amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
          }
          BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
          bottomSolver.m_verbosity = s_verbosity-2;
