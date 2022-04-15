@@ -152,7 +152,7 @@ void ParseBC(FArrayBox& a_state,
                       DiriBC(a_state,
                              valid,
                              a_dx,
-                             true,
+                             a_homogeneous,
                              ParseValue,
                              i,
                              Side::Lo,
@@ -164,7 +164,7 @@ void ParseBC(FArrayBox& a_state,
                       DiriBC(a_state,
                              valid,
                              a_dx,
-                             true,
+                             a_homogeneous,
                              ParseValue,
                              i,
                              Side::Hi,
@@ -640,7 +640,7 @@ int runSolver()
    // Poisson Operator
    VCAMRPoissonOp2Factory opFactory;
    Real alpha = 0.0;
-   Real beta  = 1.0;
+   Real beta  = -1.0;
    opFactory.define(amrDomains[0],
                     amrGrids,
                     refRatios,
