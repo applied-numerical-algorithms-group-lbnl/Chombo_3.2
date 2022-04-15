@@ -95,7 +95,7 @@ void ParseBC(FArrayBox& a_state,
                       DiriBC(a_state,
                              valid,
                              a_dx,
-                             true,
+                             a_homogeneous,
                              ParseValue,
                              i,
                              Side::Lo,
@@ -107,7 +107,7 @@ void ParseBC(FArrayBox& a_state,
                       DiriBC(a_state,
                              valid,
                              a_dx,
-                             true,
+                             a_homogeneous,
                              ParseValue,
                              i,
                              Side::Hi,
@@ -440,7 +440,7 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                   for (dit.begin(); dit.ok(); ++dit)
                     {
                       const FArrayBox& rhsFab = levelRHS[dit];
-                      // local storage foer gradient
+                      // local storage for gradient
                       FArrayBox gradFab(levelGrids[dit],1);
                       gradFab.setVal(0.0);
                       Real thisGrad;
@@ -557,7 +557,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   // solving poisson problem here
   Real alpha =0.0;
-  Real beta = 1.0;
+  Real beta = -1.0;
 
   opFactory.define(a_amrDomains[0],
                    a_amrGrids,
@@ -581,7 +581,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   Real normThresh = 1.0e-30;
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                               numMG, maxIter, eps, hang, normThresh);
+                               numMG, maxIter, eps, hang, normThresh, true);// last param is homogeneous BC
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters
@@ -590,7 +590,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.query("num_bottom", a_amrSolver->m_bottom);
 }
 
- int runSolver()
+int runSolver()
  {
    CH_TIME("runSolver");
 
