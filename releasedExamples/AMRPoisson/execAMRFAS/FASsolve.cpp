@@ -673,12 +673,15 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
       // solving poisson problem here
       Real alpha = 0.0;
       Real beta = -1.0;
+   
+      bool FASmultigrid = true;
+      ppSolver.query("FASmultigrid", FASmultigrid);
 
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
                        a_refRatios,
                        a_amrDx[0],
-                       &ParseBC, alpha, beta);
+                       &ParseBC, alpha, beta, FASmultigrid);
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
@@ -697,7 +700,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   Real normThresh = 1.0e-30;
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                               numMG, maxIter, eps, hang, normThresh, true);// last param is homogeneous BC
+                               numMG, maxIter, eps, hang, normThresh, false);// last param is homogeneous BC
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters

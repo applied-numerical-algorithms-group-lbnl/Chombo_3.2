@@ -43,7 +43,11 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&      a_lhs,
 
     for (dit.begin(); dit.ok(); ++dit)
     {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      if (!m_use_FAS) {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      } else {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, false);
+      }
     }
   }
 
@@ -139,7 +143,11 @@ void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
 
   for (dit.begin(); dit.ok(); ++dit)
     {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      if (!m_use_FAS) {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      } else {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, false);
+      }
     }
 
   applyOpNoBoundary(a_lhs, a_phi);
@@ -204,7 +212,11 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
       FArrayBox& phi = a_phiFine[dit];
-      m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, true);
+      if (!m_use_FAS) {
+          m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, true);
+      } else {
+          m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, false);
+      }
     }
 
   a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
@@ -590,6 +602,8 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
 
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
 
+  bool a_homo = false;
+
   DataIterator dit = a_phi.dataIterator();
 
   // do first red, then black passes
@@ -599,7 +613,10 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
-        homogeneousCFInterp(a_phi);
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+            a_homo = true;
+        }
       }
 
       {
@@ -613,7 +630,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
         for (dit.begin(); dit.ok(); ++dit)
           {
             // invoke physical BC's where necessary
-            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, true);
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, a_homo);
           }
       }
 
@@ -909,7 +926,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
                                    const Real&                                    a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                                    a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef)
+                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+                                   bool                             a_use_FAS)
 {
   CH_TIME("VCAMRPoissonOp2Factory::define");
 
@@ -954,6 +972,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
+
+  m_use_FAS = a_use_FAS;
 }
 //-----------------------------------------------------------------------
 
@@ -989,8 +1009,9 @@ define(const ProblemDomain& a_coarseDomain,
     }
   }
   Real alpha = 1.0, beta = 1.0;
+  bool a_use_FAS = false;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef);
+         alpha, aCoef, beta, bCoef, a_use_FAS);
 }
 //-----------------------------------------------------------------------
 
@@ -1104,6 +1125,8 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
   newOp->m_dxCrse = dxCrse[0];
   newOp->m_dxCrse_vect = dxCrse;
 
+  newOp->m_use_FAS = m_use_FAS;
+
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
 
@@ -1208,6 +1231,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
 
   newOp->m_dxCrse      = dxCrse[0];
   newOp->m_dxCrse_vect = dxCrse;
+
+  newOp->m_use_FAS = m_use_FAS;
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }

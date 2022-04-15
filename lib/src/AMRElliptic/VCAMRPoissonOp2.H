@@ -284,7 +284,8 @@ public:
               const Real&                                    a_alpha,
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
               const Real&                                    a_beta,
-              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef);
+              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+              bool                                           a_use_FAS=false);
 
   //! Defines a factory for VCAMRPoissonOp2 which allows the operators to
   //! allocate their own coefficient data. \f$\alpha\f$ and \f$\beta\f$
@@ -328,6 +329,8 @@ private:
 
   Real m_alpha;
   Real m_beta;
+
+  bool m_use_FAS;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;

@@ -455,7 +455,8 @@ public:
                            const int&   a_iterMax,
                            const Real&  a_eps,
                            const Real&  a_hang,
-                           const Real&  a_normThresh);
+                           const Real&  a_normThresh,
+                           bool         a_homogeneousBC=true);
 
   /// set up bottom solver for internal MG solver
   /**
@@ -532,7 +533,8 @@ AMRMultiGrid<T>::setSolverParameters(const int&   a_pre,
                                      const int&   a_iterMax,
                                      const Real&  a_eps,
                                      const Real&  a_hang,
-                                     const Real&  a_normThresh)
+                                     const Real&  a_normThresh,
+                                     bool a_homogeneous)
 {
   m_solverParamsSet = true;
   m_pre        =    a_pre;
@@ -544,13 +546,15 @@ AMRMultiGrid<T>::setSolverParameters(const int&   a_pre,
   m_iterMax    =    a_iterMax;
   for (int img = 0; img < m_mg.size(); img++)
     {
-      m_mg[img]->m_pre    = a_pre;
-      m_mg[img]->m_post   = a_post;
-      m_mg[img]->m_bottom   = a_bottom;
+      m_mg[img]->m_pre           = a_pre;
+      m_mg[img]->m_post          = a_post;
+      m_mg[img]->m_bottom        = a_bottom;
+      m_mg[img]->m_homogeneous   = a_homogeneous;
     }
   setMGCycle(a_numMG);
   m_bottomSolverEpsCushion = 1.0;
 }
+
 template <class T>
 Vector< MGLevelOp<T> * >
 AMRMultiGrid<T>::getAllOperators()
