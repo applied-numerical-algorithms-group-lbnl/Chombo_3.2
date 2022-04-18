@@ -138,8 +138,8 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
   m_refToCoarser = a_refRatio;
 
   m_dxCrse = a_refRatio*a_dxLevel[0];
-  D_TERM(m_dxCrse_vect[0] = a_refRatio*a_dxLevel[0];, 
-         m_dxCrse_vect[1] = a_refRatio*a_dxLevel[1];, 
+  D_TERM(m_dxCrse_vect[0] = a_refRatio*a_dxLevel[0];,
+         m_dxCrse_vect[1] = a_refRatio*a_dxLevel[1];,
          m_dxCrse_vect[2] = a_refRatio*a_dxLevel[2];)
   m_refToFiner = 1;
 
@@ -256,8 +256,9 @@ void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
   } else {
       if (a_phiCoarse != NULL) {
           m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
-  }
-  
+      }
+ }
+
   residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
 }
 
@@ -334,7 +335,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
   DataIterator dit = a_phi.dataIterator();
   int nbox = dit.size();
 
-#pragma omp parallel for 
+#pragma omp parallel for
     for(int ibox=0; ibox<nbox; ibox++) {
         a_phi[dit[ibox]].copy(a_rhs[dit[ibox]]);
         a_phi[dit[ibox]] *= mult;
