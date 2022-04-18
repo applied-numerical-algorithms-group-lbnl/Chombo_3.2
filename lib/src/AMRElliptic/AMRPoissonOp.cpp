@@ -235,11 +235,12 @@ void AMRPoissonOp::residual(LevelData<FArrayBox>&       a_lhs,
 {
   CH_TIME("AMRPoissonOp::residual");
 
-  if (a_homogeneous)
-    {
+  if (a_homogeneous && (!m_use_FAS)) {
       homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
-    }
-  residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
+      residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
+  } else {
+      residualI(a_lhs,a_phi,a_rhs,false);
+  }
 }
 
 void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
@@ -250,14 +251,12 @@ void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
 {
   CH_TIME("AMRPoissonOp::residualNF");
   
-  if (a_homogeneous)
-    {
+  if (a_homogeneous && (!m_use_FAS)) {
       homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
-    }
-  else if (a_phiCoarse != NULL)
-    {
-      m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
-    }
+  } else {
+      if (a_phiCoarse != NULL) {
+          m_interpWithCoarser.coarseFineInterp(a_phi, *a_phiCoarse);
+  }
   
   residualI(a_lhs,a_phi,a_rhs,a_homogeneous);
 }
@@ -374,8 +373,12 @@ void AMRPoissonOp::applyOp(LevelData<FArrayBox>&       a_lhs,
 {
   CH_TIME("AMRPoissonOp::applyOp");
 
-  homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
-  applyOpI(a_lhs,a_phi,a_homogeneous);
+  if (a_homogeneous && (!m_use_FAS)) {
+      homogeneousCFInterp((LevelData<FArrayBox>&)a_phi);
+      applyOpI(a_lhs,a_phi,a_homogeneous);
+  } else {
+      applyOpI(a_lhs,a_phi,false);
+  }
 }
 
 // ---------------------------------------------------------
@@ -728,7 +731,10 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
 {
   CH_TIME("AMRPoissonOp::restrictResidual");
 
-  homogeneousCFInterp(a_phiFine);
+  // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+  if (!m_use_FAS) {
+      homogeneousCFInterp(a_phiFine);
+  }
 
   if (s_exchangeMode == 0)
     a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
@@ -746,6 +752,7 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
     for(int ibox = 0; ibox < nbox; ibox++)
       {
         FArrayBox& phi = a_phiFine[dit[ibox]];
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
         if (!m_use_FAS) {
             m_bc(phi, dblFine[dit[ibox]], m_domain, m_dx_vect, true);
         } else {
@@ -1356,6 +1363,7 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("AMRPoissonOp::levelGSRB::homogeneousCFInterp");
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
         if (!m_use_FAS) {
             homogeneousCFInterp(a_phi);
             a_homo = true;
@@ -1380,6 +1388,7 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
             const Box& region = dbl[dit[ibox]];
             FArrayBox& phiFab = a_phi[dit[ibox]];
             
+            // if you're not homogeneous and not FAS you should have done something to end up homogeneous
             m_bc( phiFab, region, m_domain, m_dx_vect, a_homo );
             
             if (m_alpha == 0.0 && m_beta == 1.0 )
@@ -1420,7 +1429,10 @@ void AMRPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
   for (int icolor = 0; icolor < m_colors.size(); icolor++)
     {
       const IntVect& color= m_colors[icolor];
-      homogeneousCFInterp(a_phi);
+      // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+      if (!m_use_FAS) {
+          homogeneousCFInterp(a_phi);
+      }
 
       a_phi.exchange(a_phi.interval(), m_exchangeCopier);
       //after this lphi = L(phi)
@@ -1479,7 +1491,10 @@ void AMRPoissonOp::looseGSRB(LevelData<FArrayBox>&       a_phi,
   //fill in intersection of ghostcells and a_phi's boxes
   {
     CH_TIME("AMRPoissonOp::looseGSRB::homogeneousCFInterp");
-    homogeneousCFInterp(a_phi);
+    // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+    if (!m_use_FAS) {
+        homogeneousCFInterp(a_phi);
+    }
   }
 
   {
@@ -1568,7 +1583,10 @@ void AMRPoissonOp::overlapGSRB(LevelData<FArrayBox>&       a_phi,
 
   a_phi.exchangeBegin(m_exchangeCopier);
 
-  homogeneousCFInterp(a_phi);
+  // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+  if (!m_use_FAS) {
+      homogeneousCFInterp(a_phi);
+  }
 
   // now step through grids...
   DataIterator dit = a_phi.dataIterator();

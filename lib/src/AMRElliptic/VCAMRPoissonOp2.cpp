@@ -207,7 +207,11 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
 {
   CH_TIME("VCAMRPoissonOp2::restrictResidual");
 
-  homogeneousCFInterp(a_phiFine);
+  // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+  if (!m_use_FAS) {
+      homogeneousCFInterp(a_phiFine);
+  }
+
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
@@ -613,6 +617,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
         if (!m_use_FAS) {
             homogeneousCFInterp(a_phi);
             a_homo = true;
