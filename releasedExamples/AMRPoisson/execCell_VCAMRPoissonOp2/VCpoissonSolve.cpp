@@ -661,8 +661,6 @@ int runSolver()
    ParmParse ppSolver("solver");
    int numSmooth, numMG, maxIter;
    Real eps, hang;
-   int numBottom;
-   ppSolver.query("num_bottom", numBottom);
    ppSolver.get("num_smooth", numSmooth);
    ppSolver.get("num_mg",     numMG);
    ppSolver.get("max_iterations", maxIter);
@@ -670,9 +668,14 @@ int runSolver()
    ppSolver.get("hang",      hang);
 
    Real normThresh = 1.0e-30;
-   amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
+   amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
                                numMG, maxIter, eps, hang, normThresh);
    amrSolver->m_verbosity = s_verbosity-1;
+
+   // optional parameters
+   ppSolver.query("num_pre", amrSolver->m_pre);
+   ppSolver.query("num_post", amrSolver->m_post);
+   ppSolver.query("num_bottom", amrSolver->m_bottom);
 
    refRatios_anys.resize(refRatios.size());
    for (int lev=0; lev<refRatios.size(); lev++) {
