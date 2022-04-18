@@ -22,6 +22,7 @@
 #include "BCFunc.H"
 #include "AMRNonLinearPoissonOp.H"
 #include "AMRPoissonOp.H"
+#include "VCAMRPoissonOp2.H"
 #include "AMRFASMultiGrid.H"
 #include "AMRMultiGrid.H"
 #include "BiCGStabSolver.H"
@@ -67,6 +68,41 @@ RealVect          GlobalBCRS::s_trigvec = RealVect::Zero;
 bool              GlobalBCRS::s_areBCsParsed= false;
 bool              GlobalBCRS::s_valueParsed= false;
 bool              GlobalBCRS::s_trigParsed= false;
+
+void
+setACoef(LevelData<FArrayBox>& a_aCoef)
+{
+  DataIterator dit = a_aCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FArrayBox& aCoef = a_aCoef[dit];
+      ForAllXBNN(Real, aCoef, aCoef.box(), 0, aCoef.nComp());
+      {
+        // constant-coefficient
+        aCoefR = 1.0;
+      }EndFor;
+    } // end loop over grids
+}
+
+void
+setBCoef(LevelData<FluxBox>& a_bCoef)
+{
+  DataIterator dit = a_bCoef.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FluxBox& thisBCoef = a_bCoef[dit];
+      for (int dir=0; dir<SpaceDim; dir++)
+        {
+          FArrayBox& dirFlux = thisBCoef[dir];
+          const Box& dirBox = dirFlux.box();
+          ForAllXBNN(Real, dirFlux, dirBox, 0, dirFlux.nComp())
+            {
+              // constant-coefficient
+              dirFluxR = -1.0;
+            }EndFor
+        } // end loop over directions
+    }
+}
 
 void ParseValue(Real* pos,
                 int* dir,
@@ -639,15 +675,15 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   ParmParse ppSolver("solver");
 
-  bool nonlinearOp = true;
-  ppSolver.query("nonlinearOp", nonlinearOp);
+  int poissonOp = 1;
+  ppSolver.query("poissonOp", poissonOp);
 
   bool FASmultigrid = true;
   ppSolver.query("FASmultigrid", FASmultigrid);
 
   int numLevels = a_finestLevel+1;
 
-  if (nonlinearOp) {
+  if (poissonOp == 1) {
       AMRNonLinearPoissonOpFactory opFactory;
 
       // solving nonlinear poisson problem here
@@ -670,7 +706,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
       a_amrSolver->define(a_amrDomains[0], castFact,
                           &a_bottomSolver, numLevels);
 
-  } else {
+  } else if (poissonOp == 2) {
       AMRPoissonOpFactory opFactory;
 
       // solving poisson problem here
@@ -687,6 +723,40 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
       a_amrSolver->define(a_amrDomains[0], castFact,
                           &a_bottomSolver, numLevels);
+  } else if (poissonOp == 3) {
+      VCAMRPoissonOp2Factory opFactory;
+
+      // solving nonlinear poisson problem here
+      Real alpha = 0.0;
+      Real beta  = -1.0;
+
+      int maxNumLevels = a_amrGrids.size();
+
+      Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef;
+      Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef;
+      aCoef.resize(maxNumLevels);
+      bCoef.resize(maxNumLevels);
+      for (int lev=0; lev<maxNumLevels; lev++) {
+         aCoef[lev] = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(a_amrGrids[lev], 1, IntVect::Zero));
+         bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(a_amrGrids[lev], 1, IntVect::Zero));
+
+         setACoef(*aCoef[lev]);
+         setBCoef(*bCoef[lev]);
+      }
+
+      opFactory.define(a_amrDomains[0],
+                       a_amrGrids,
+                       a_refRatios,
+                       a_amrDx[0],
+                       &ParseBC, alpha, aCoef,
+                       beta, bCoef, FASmultigrid);
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
+
+      a_amrSolver->define(a_amrDomains[0], castFact,
+                          &a_bottomSolver, numLevels);
+  } else {
+      MayDay::Error("wrong choice for poisson Operator");
   }
 
   // multigrid solver parameters
