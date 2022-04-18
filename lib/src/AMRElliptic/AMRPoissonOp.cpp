@@ -2213,8 +2213,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
 
-  newOp->m_aCoef = m_alpha;
-  newOp->m_bCoef = m_beta;
+  newOp->m_aCoef = 1.0;
+  newOp->m_bCoef = 1.0;
 
   newOp->m_dxCrse      = dxCrse[0];
   newOp->m_dxCrse_vect = dxCrse;
