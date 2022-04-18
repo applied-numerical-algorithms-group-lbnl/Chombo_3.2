@@ -35,13 +35,13 @@
 
 int s_verbosity = 1;
 
-enum probTypes {exact,
+enum probTypes {exactPrb,
                 inexact,
                 gaussians,
                 numProbTypes};
 
 
-//int s_probtype = exact;
+//int s_probtype = exactPrb;
 int s_probtype = gaussians;
 
 //  -----------------------------------------
@@ -146,7 +146,7 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
         {
           FArrayBox& thisRhs = levelRhs[levelDit];
 
-          if (s_probtype == exact)
+          if (s_probtype == exactPrb)
             {
               BoxIterator bit(thisRhs.box());
               for (bit.begin(); bit.ok(); ++bit)
@@ -270,7 +270,7 @@ void setExact(Vector<LevelData<FArrayBox>* > a_rhs,
     {
       FArrayBox& thisRhs = levelRhs[levelDit];
 
-      if (s_probtype == exact)
+      if (s_probtype == exactPrb)
       {
         BoxIterator bit(thisRhs.box());
         for (bit.begin(); bit.ok(); ++bit)
@@ -642,6 +642,9 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   bool nonlinearOp = true;
   ppSolver.query("nonlinearOp", nonlinearOp);
 
+  bool FASmultigrid = true;
+  ppSolver.query("FASmultigrid", FASmultigrid);
+
   int numLevels = a_finestLevel+1;
 
   if (nonlinearOp) {
@@ -649,7 +652,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
       // solving nonlinear poisson problem here
       Real alpha = 0.0;
-      Real beta = -1.0;
+      Real beta =  1.0;
       Real gamma = 0.0;
 
       ppSolver.query("gamma", gamma);
@@ -657,9 +660,9 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
                        a_refRatios,
-                       a_amrDx[0][0],
+                       a_amrDx[0],
                        &ParseBC, 
-                       alpha, beta, gamma);
+                       alpha, beta, gamma, FASmultigrid);
 
 
       AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
@@ -674,9 +677,6 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
       Real alpha = 0.0;
       Real beta = -1.0;
    
-      bool FASmultigrid = true;
-      ppSolver.query("FASmultigrid", FASmultigrid);
-
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
                        a_refRatios,
@@ -700,8 +700,6 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   Real normThresh = 1.0e-30;
  
-  bool FASmultigrid = true;
-  ppSolver.query("FASmultigrid", FASmultigrid);
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
                                numMG, maxIter, eps, hang, normThresh, !FASmultigrid);// last param is homogeneous BC
   a_amrSolver->m_verbosity = s_verbosity-1;
@@ -711,6 +709,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.query("num_post", a_amrSolver->m_post);
   ppSolver.query("num_bottom", a_amrSolver->m_bottom);
 }
+
 
 int runSolver()
  {
@@ -798,24 +797,26 @@ int runSolver()
       }
 
    // Compute error -- if prob type is exact
-   //for (int lev=0; lev<=finestLevel; lev++)
-   //{
-   //  phi[lev]->copyTo(*error[lev]);
-   //  for (DataIterator dit = error[lev]->dataIterator(); dit.ok(); ++dit)
-   //  {
-   //    (*error[lev])[dit].minus((*exact[lev])[dit]);
-   //  }
-   //}
+   if ( (s_probtype == exactPrb) || (s_probtype == inexact) ) {
+       for (int lev=0; lev<=finestLevel; lev++)
+       {
+         phi[lev]->copyTo(*error[lev]);
+         for (DataIterator dit = error[lev]->dataIterator(); dit.ok(); ++dit)
+         {
+           (*error[lev])[dit].minus((*exact[lev])[dit]);
+         }
+       }
 
-   // Compute error metrics
-   //Real max, L1, L2;
-   //max = computeNorm(error,    refRatios, amrDx[0], Interval(0,0), 0);
-   //L1 = computeNorm(error,    refRatios, amrDx[0], Interval(0,0), 1);
-   //L2 = computeNorm(error,    refRatios, amrDx[0], Interval(0,0), 2);
+       // Compute error metrics
+       Real max, L1, L2;
+       max = computeNorm(error,   refRatios_anys, amrDx[0], Interval(0,0), 0);
+       L1 = computeNorm(error,    refRatios_anys, amrDx[0], Interval(0,0), 1);
+       L2 = computeNorm(error,    refRatios_anys, amrDx[0], Interval(0,0), 2);
 
-   //char errStr[1024];
-   //sprintf(errStr, "Error = %1.2e (max), %1.2e (L1), %1.2e (L2)", max, L1, L2 );
-   //pout() << errStr << endl;
+       char errStr[1024];
+       sprintf(errStr, "Error = %1.2e (max), %1.2e (L1), %1.2e (L2)", max, L1, L2 );
+       pout() << errStr << endl;
+   }
 
    // write results to file
 
