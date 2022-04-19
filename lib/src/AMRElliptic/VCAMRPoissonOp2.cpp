@@ -966,10 +966,12 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
       m_domains[i] = m_domains[i-1];
       m_domains[i].refine(m_refRatios[i-1]);
 
-      m_exchangeCopiers[i].exchangeDefine(a_grids[i], IntVect::Unit);
-      m_exchangeCopiers[i].trimEdges(a_grids[i], IntVect::Unit);
-
-      m_cfregion[i].define(a_grids[i], m_domains[i]);
+      if (a_grids[i].isClosed())
+        {
+          m_exchangeCopiers[i].exchangeDefine(a_grids[i], IntVect::Unit);
+          m_exchangeCopiers[i].trimEdges(a_grids[i], IntVect::Unit);
+          m_cfregion[i].define(a_grids[i], m_domains[i]);
+        }
     }
 
   m_alpha = a_alpha;
@@ -1172,7 +1174,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   if (ref == 0)
     {
       // coarsest AMR level
-      if (m_domains.size() == 1)
+      if (m_domains.size() == 1 || !m_boxes[1].isClosed())
         {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],
@@ -1238,6 +1240,10 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   newOp->m_dxCrse_vect = dxCrse;
 
   newOp->m_use_FAS = m_use_FAS;
+
+  if (m_use_FAS) {
+      pout() << "VCAMRPoissonOp2Factory::AMRnewOp use FAS \n";
+  }
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }
