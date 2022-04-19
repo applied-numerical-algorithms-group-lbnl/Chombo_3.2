@@ -736,14 +736,17 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
       Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef;
       aCoef.resize(maxNumLevels);
       bCoef.resize(maxNumLevels);
-      for (int lev=0; lev<maxNumLevels; lev++) {
+      for (int lev=0; lev<numLevels; lev++) {
          aCoef[lev] = RefCountedPtr<LevelData<FArrayBox> >(new LevelData<FArrayBox>(a_amrGrids[lev], 1, IntVect::Zero));
          bCoef[lev] = RefCountedPtr<LevelData<FluxBox> >(new LevelData<FluxBox>(a_amrGrids[lev], 1, IntVect::Zero));
 
          setACoef(*aCoef[lev]);
          setBCoef(*bCoef[lev]);
       }
-
+      for (int lev=numLevels; lev<maxNumLevels; lev++) {
+         aCoef[lev] = RefCountedPtr<LevelData<FArrayBox> > (new LevelData<FArrayBox>);
+         bCoef[lev] = RefCountedPtr<LevelData<FluxBox> > (new LevelData<FluxBox>);
+      }
       opFactory.define(a_amrDomains[0],
                        a_amrGrids,
                        a_refRatios,
