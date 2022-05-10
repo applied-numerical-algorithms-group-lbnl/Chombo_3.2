@@ -592,9 +592,72 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
 
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs,
-                               int a_ite, int a_depth )
+                               int MGiter, int a_ite, int a_depth )
 {
   CH_TIME("VCAMRPoissonOp2::levelGSRB");
+  
+  if (m_print) {
+      char iter_str[100];
+      sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
+      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl; 
+      //this->write(&a_rhs, iter_str); 
+      const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
+      const ProblemDomain&     levelDomain = levelGrids.physDomain();
+      Vector<DisjointBoxLayout> grids;
+      grids.resize(1);
+      grids[0] = levelGrids;
+      
+      Box domain = levelDomain.domainBox();
+
+      int numPlotComps = 2;
+
+      string headName("PHI");  
+      string rhsName("RHS");  
+      Vector<string> vectName(numPlotComps);
+      vectName[0] = headName;
+      vectName[1] = rhsName;
+
+
+      IntVect ghostVect(IntVect::Unit);
+      Vector<LevelData<FArrayBox>*> plotData(1, NULL);
+      plotData[0] = new LevelData<FArrayBox>(levelGrids, numPlotComps, ghostVect);
+
+      LevelData<FArrayBox>& plotDataLev      = *plotData[0];
+      DataIterator dit = levelGrids.dataIterator();
+      for (dit.begin(); dit.ok(); ++dit) {
+          FArrayBox& thisPlotData   = plotDataLev[dit];
+          const FArrayBox& thisHead       = a_phi[dit];
+          const FArrayBox& thisRHS        = a_rhs[dit];
+
+          int comp = 0;
+          thisPlotData.copy(thisHead, 0, comp, 1);
+          comp++;
+          thisPlotData.copy(thisRHS, 0, comp, 1);
+      }
+      // char iter_str[100];
+      // sprintf(iter_str, "%s%06d.", m_plot_prefix.c_str(), m_cur_step);
+      // sprintf(iter_str, "%s%06d_PI%03d_WFX-MG%01d_SMOOTH%01d_DEPTH%01d", "GSRB_", m_cur_step, m_cur_PicardIte, nbAMRFASMGiter, nbSmooth, nbDepth);
+
+      string filename(iter_str);
+
+      if (SpaceDim == 1) {
+          filename.append(".1d.hdf5");
+      }
+      else if (SpaceDim == 2) {
+          filename.append(".2d.hdf5");
+      }
+      else if (SpaceDim == 3) {
+          filename.append(".3d.hdf5");
+      }
+
+      Real dt = 1.;
+      WriteAMRHierarchyHDF5(
+          filename, grids, plotData, vectName, domain, m_dx_vect[0], dt, 0.0, 2, 1);
+
+      // // need to delete plotData
+      // delete plotData;
+      delete plotData[0];
+  }
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -980,6 +1043,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
 
+  m_print = true;
+
   m_use_FAS = a_use_FAS;
 }
 //-----------------------------------------------------------------------
@@ -1084,6 +1149,8 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
+
+  newOp->m_print = m_print;
 
   if (a_depth == 0)
     {
@@ -1227,6 +1294,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
+
+  newOp->m_print = m_print;
 
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];

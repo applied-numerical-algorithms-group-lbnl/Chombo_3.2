@@ -218,7 +218,7 @@ protected:
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
                          const LevelData<FArrayBox>& a_rhs,
-                         int a_ite, int a_depth);
+                         int MGiter, int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);
@@ -331,6 +331,8 @@ private:
   Real m_beta;
 
   bool m_use_FAS;
+
+  bool m_print;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;

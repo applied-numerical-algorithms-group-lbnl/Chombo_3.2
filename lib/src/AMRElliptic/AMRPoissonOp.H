@@ -439,6 +439,8 @@ public:
   /// public constants
   Real m_alpha, m_beta, m_aCoef, m_bCoef;
 
+  bool m_print;
+
   // needed for homogeneous interpolation
   // set by the factory
   Real      m_dxCrse;
@@ -479,7 +481,7 @@ protected:
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
                          const LevelData<FArrayBox>& a_rhs,
-                         int a_ite, int a_depth);
+                         int MGiter, int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);
@@ -589,6 +591,8 @@ private:
   Real m_beta;
 
   bool m_use_FAS;
+
+  bool m_print;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;

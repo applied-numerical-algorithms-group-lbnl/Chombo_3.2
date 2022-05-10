@@ -176,6 +176,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
   m_use_FAS = false;
  
+  m_print = true;
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -638,6 +639,7 @@ void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&     a_e,
                          int                         a_depth,
                          bool                        a_print)
 {
+  m_print = true;
   if (a_eCoarse != NULL) {
     m_interpWithCoarser.coarseFineInterp(a_e, *a_eCoarse);
   }
@@ -661,7 +663,7 @@ void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
           looseGSRB(a_e, a_residual);
           break;
         case 1:
-          levelGSRB(a_e, a_residual, a_iterations, a_depth);
+          levelGSRB(a_e, a_residual, a_AMRFASMGiter, i, a_depth);
           break;
         case 2:
           overlapGSRB(a_e, a_residual);
@@ -1341,9 +1343,73 @@ static bool nextColorLoc(IntVect&       a_color,
 // ---------------------------------------------------------
 void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs,
-                              int a_ite, int a_depth )
+                              int MGiter, int a_ite, int a_depth )
 {
   CH_TIME("AMRPoissonOp::levelGSRB");
+
+  if (m_print) {
+      char iter_str[100];
+      sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
+      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite << " " << m_dx_vect[0] << endl; 
+      //this->write(&a_rhs, iter_str); 
+      const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
+      const ProblemDomain&     levelDomain = levelGrids.physDomain();
+      Vector<DisjointBoxLayout> grids;
+      grids.resize(1);
+      grids[0] = levelGrids;
+      
+      Box domain = levelDomain.domainBox();
+
+      int numPlotComps = 2;
+
+      string headName("PHI");  
+      string rhsName("RHS");  
+      Vector<string> vectName(numPlotComps);
+      vectName[0] = headName;
+      vectName[1] = rhsName;
+
+
+      IntVect ghostVect(IntVect::Unit);
+      Vector<LevelData<FArrayBox>*> plotData(1, NULL);
+      plotData[0] = new LevelData<FArrayBox>(levelGrids, numPlotComps, ghostVect);
+
+      LevelData<FArrayBox>& plotDataLev      = *plotData[0];
+      DataIterator dit = levelGrids.dataIterator();
+      for (dit.begin(); dit.ok(); ++dit) {
+          FArrayBox& thisPlotData   = plotDataLev[dit];
+          const FArrayBox& thisHead       = a_phi[dit];
+          const FArrayBox& thisRHS        = a_rhs[dit];
+
+          int comp = 0;
+          thisPlotData.copy(thisHead, 0, comp, 1);
+          comp++;
+          thisPlotData.copy(thisRHS, 0, comp, 1);
+      }
+      // char iter_str[100];
+      // sprintf(iter_str, "%s%06d.", m_plot_prefix.c_str(), m_cur_step);
+      // sprintf(iter_str, "%s%06d_PI%03d_WFX-MG%01d_SMOOTH%01d_DEPTH%01d", "GSRB_", m_cur_step, m_cur_PicardIte, nbAMRFASMGiter, nbSmooth, nbDepth);
+
+      string filename(iter_str);
+
+      if (SpaceDim == 1) {
+          filename.append(".1d.hdf5");
+      }
+      else if (SpaceDim == 2) {
+          filename.append(".2d.hdf5");
+      }
+      else if (SpaceDim == 3) {
+          filename.append(".3d.hdf5");
+      }
+
+      Real dt = 1.;
+      WriteAMRHierarchyHDF5(
+          filename, grids, plotData, vectName, domain, m_dx_vect[0], dt, 0.0, 2, 1);
+
+      // // need to delete plotData
+      // delete plotData;
+      delete plotData[0];
+  }
+
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -2043,6 +2109,8 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
   m_alpha = a_alpha;
   m_beta = a_beta;
   m_use_FAS = a_use_FAS;
+
+  m_print = true;
 }
 
 // ---------------------------------------------------------
@@ -2129,6 +2197,8 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
   newOp->m_aCoef = m_alpha;
   newOp->m_bCoef = m_beta;
 
+  newOp->m_print = m_print;
+
   newOp->m_dxCrse      = dxCrse[0];
   newOp->m_dxCrse_vect = dxCrse;
 
@@ -2213,6 +2283,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
 
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
+
+  newOp->m_print = m_print;
 
   newOp->m_aCoef = 1.0;
   newOp->m_bCoef = 1.0;
