@@ -926,6 +926,8 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
                                   bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
+
+  pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
   Vector<T*> uberResidual(a_rhs.size());
   int lowlim = l_base;
   if (l_base > 0)  // we need an ubercorrection one level lower than l_base
@@ -955,6 +957,8 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
+
+  pout() << "AMRMultiGrid::solveNoInitResid " << endl;
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -1021,6 +1025,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   bool goMin = iter < m_iterMin ; // iterate if iter < min
+  pout() << "norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << endl;
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
 
@@ -1281,6 +1286,8 @@ void AMRMultiGrid<T>::revert(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
 template <class T>
 void AMRMultiGrid<T>::setBottomSolver(int l_max, int l_base)
 {
+  
+  pout() << "AMRMultiGrid::setBottomSolver" << endl;
   //  for (int ilev = 0; ilev <= m_mg.size(); ilev++)
   for (int ilev = l_base; ilev <= l_max; ilev++)
     {
@@ -1359,6 +1366,8 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 Vector<T*>& a_uberResidual,
                                 int ilev, int l_max, int l_base)
 {
+  pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
+
   if (ilev == l_max)
     {
       for (int level = l_base; level <= l_max; level++)
@@ -1370,11 +1379,13 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
 
   if (l_max == l_base)
     {
+      pout() << "        do oneCycle " << endl;
       CH_assert(ilev == l_base);
       m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]));
     }
   else if (ilev == l_base)
     {
+      pout() << "        do oneCycle and then incr " << endl;
       m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]));
       m_op[ilev]->incr(*(a_uberCorrection[ilev]), *(m_correction[ilev]), 1.0);
     }

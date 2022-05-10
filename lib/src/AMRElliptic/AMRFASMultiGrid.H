@@ -259,6 +259,9 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
       norm_last = rnorm;
+      //if (iter > 1) {
+      //    MayDay::Error("STOP debug");
+      //}
 
       //this generates a correction from the current residual
       CH_START(vtimer);
@@ -405,6 +408,8 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
   if (this->m_verbosity > 4 ) {
       pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")\n" ; 
   }
+
+  pout() << "Start VCycle, iter "<< iter << endl;
 
   if (ilev == l_base)
     {
