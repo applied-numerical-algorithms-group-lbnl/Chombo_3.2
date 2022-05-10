@@ -633,6 +633,8 @@ void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual)
 {
   CH_TIME("Multigrid::oneCycle");
 
+  pout() << "          Multigrid::oneCycle, are we homogeneous "<< m_homogeneous << endl; 
+
   //this->init(a_e, a_residual); oneCycle is only used by AMRMultigrid
   if (m_homogeneous)
     {
@@ -662,17 +664,21 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 {
   CH_TIME("Multigrid::cycle");
 
+  pout() << "          Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == m_depth-1)
     {
       CH_TIME("Multigrid::cycle:bottom-solve");
+      pout() << "          ... bottom-solve " << endl;
       if (m_bottomCells == 1)
         {
+          pout() << "          ... should not end up here " << endl;
           m_op[depth  ]->relax(correction, residual, 1, iter, depth);
         }
       else
         {
           m_op[depth  ]->relax(correction, residual, m_bottom, iter, depth);
+          pout() << "          ... do some additional relax ? " << endl;
           m_bottomSolver->solve(correction, residual);
         }
       //m_op[depth  ]->relax(correction, residual, 1);
@@ -692,6 +698,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
+          pout() << "          ... pre relax (F) " << endl;
           m_op[depth  ]->relax(correction, residual, m_pre, iter, depth);
 
           for (int img = 0; img < cycles; img++)
@@ -706,10 +713,12 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
               m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
             }
 
+          pout() << "          ... post relax (F) " << endl;
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
         }
       else
         {
+          pout() << "          ... pre relax " << endl;
           m_op[depth  ]->relax( correction, residual, m_pre, iter, depth);
 
           m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
@@ -721,6 +730,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
             }
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
+          pout() << "          ... post relax " << endl;
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
         }
     }
