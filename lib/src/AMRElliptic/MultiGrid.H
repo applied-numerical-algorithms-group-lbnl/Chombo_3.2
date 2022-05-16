@@ -713,7 +713,9 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          pout() << "          ... pre relax (F) " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... pre relax (F) " << endl;
+          }
           m_op[depth  ]->relax(correction, residual, m_pre, iter, depth);
 
           for (int img = 0; img < cycles; img++)
@@ -728,12 +730,16 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
               m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
             }
 
-          pout() << "          ... post relax (F) " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... post relax (F) " << endl;
+          }
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
         }
       else
         {
-          pout() << "          ... pre relax " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... pre relax " << endl;
+          }
           m_op[depth  ]->relax( correction, residual, m_pre, iter, depth);
 
           m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
@@ -745,7 +751,9 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
             }
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          pout() << "          ... post relax " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... post relax " << endl;
+          }
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
         }
     }
