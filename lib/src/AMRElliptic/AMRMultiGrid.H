@@ -1367,7 +1367,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 int ilev, int l_max, int l_base,
                                 int a_AMRMGiter)
 {
-  if (m_verbosity >= 4)
+  if (m_verbosity >= 4) {
       pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
   }
 
