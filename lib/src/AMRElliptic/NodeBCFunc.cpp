@@ -55,7 +55,9 @@ void NodeNeumBC(NodeFArrayBox& a_state,
   Box toRegionNode = surroundingNodes(toRegionCell);
   toRegionNode.growDir(a_dir, a_side, -1);
 
-  Real* value  = new Real[a_state.nComp()];
+  Real* valA  = new Real[a_state.nComp()];
+  Real* valB  = new Real[a_state.nComp()];
+  Real* valC  = new Real[a_state.nComp()];
   for (BoxIterator bit(toRegionNode); bit.ok(); ++bit)
     {
       const IntVect& ivTo = bit();
@@ -64,14 +66,14 @@ void NodeNeumBC(NodeFArrayBox& a_state,
         {
           RealVect facePos;
           getDomainFacePositionNode(facePos, ivTo, a_dx, a_dir, a_side);
-          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
         }
       for (int icomp = 0; icomp < a_state.nComp(); icomp++)
         {
           Real inhomogValue = 0;
           if (!a_homogeneous)
             {
-              inhomogValue = value[icomp];
+              inhomogValue = valA[icomp];
             }
           // on high side
           //dphi/dx = (valTo - valClose)/dx = value
@@ -84,7 +86,9 @@ void NodeNeumBC(NodeFArrayBox& a_state,
           a_state(ivTo, icomp) = valTo;
         }
     }
-  delete[] value;
+  delete[] valA;
+  delete[] valB;
+  delete[] valC;
 }
 
 void NodeDiriBC(NodeFArrayBox&  a_state,
@@ -116,7 +120,9 @@ void NodeDiriBC(NodeFArrayBox& a_state,
   Box toRegionNode = surroundingNodes(toRegionCell);
   toRegionNode.growDir(a_dir, a_side, -1);
 
-  Real* value  = new Real[a_state.nComp()];
+  Real* valA  = new Real[a_state.nComp()];
+  Real* valB  = new Real[a_state.nComp()];
+  Real* valC  = new Real[a_state.nComp()];
   for (BoxIterator bit(toRegionNode); bit.ok(); ++bit)
     {
       const IntVect& ivTo = bit();
@@ -124,7 +130,7 @@ void NodeDiriBC(NodeFArrayBox& a_state,
         {
           RealVect facePos;
           getDomainFacePositionNode(facePos, ivTo, a_dx, a_dir, a_side);
-          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
         }
       for (int icomp = 0; icomp < a_state.nComp(); icomp++)
         {
@@ -132,14 +138,16 @@ void NodeDiriBC(NodeFArrayBox& a_state,
           Real inhomogValue = 0;
           if (!a_homogeneous)
             {
-              inhomogValue = value[icomp];
+              inhomogValue = valA[icomp];
             }
           // The one upside of node-based solvers.
           // Boundary conditions are what they are.
           a_state(ivTo, icomp) = inhomogValue;
         }
     }
-  delete[] value;
+  delete[] valA;
+  delete[] valB;
+  delete[] valC;
 }
 
 #include "NamespaceFooter.H"

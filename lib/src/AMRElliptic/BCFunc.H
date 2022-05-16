@@ -33,7 +33,7 @@ typedef void(*BCFunc)(FArrayBox&           a_state,
                       Real                 a_dx,
                       bool                 a_homogeneous);
 
-typedef void(*BCFuncVect)(FArrayBox&           a_state,
+typedef void(*BCFuncVect)(FArrayBox&       a_state,
                       const Box&           a_valid,
                       const ProblemDomain& a_domain,
                       RealVect             a_dx,
@@ -276,7 +276,9 @@ protected:
 typedef void(*BCValueFunc)(Real*           a_pos,
                            int*            a_dir,
                            Side::LoHiSide* a_side,
-                           Real*           a_value);
+                           Real*           a_Aval,
+                           Real*           a_Bval,
+                           Real*           a_Cval);
 
 class BCValueFunction
 {
@@ -285,10 +287,13 @@ public:
   {
   }
 
+  // For Robin BC where the BC is specified as A phi_ec + B grad phi_ec = C
   virtual void operator()(Real*           a_pos,
                           int*            a_dir,
                           Side::LoHiSide* a_side,
-                          Real*           a_value) = 0;
+                          Real*           a_Aval,
+                          Real*           a_Bval,
+                          Real*           a_Cval) = 0;
 };
 
 class BCValueHolder
@@ -313,15 +318,17 @@ public:
   virtual void operator()(Real*           a_pos,
                           int*            a_dir,
                           Side::LoHiSide* a_side,
-                          Real*           a_value)
+                          Real*           a_Aval,
+                          Real*           a_Bval,
+                          Real*           a_Cval)
   {
     if (m_funcptr != NULL)
     {
-      m_funcptr(a_pos, a_dir, a_side, a_value);
+      m_funcptr(a_pos, a_dir, a_side, a_Aval, a_Bval, a_Cval);
     }
     else
     {
-      m_bc->operator()(a_pos, a_dir, a_side, a_value);
+      m_bc->operator()(a_pos, a_dir, a_side, a_Aval, a_Bval, a_Cval);
     }
   }
 
@@ -508,6 +515,50 @@ void NeumBC(FArrayBox&      a_state,
             RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value);
+
+///
+/**
+   Robin bc for a particular side, specified component interval
+   For use in AMRPoissonOp.
+ */
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval);
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval);
+
+///
+/**
+   Robin boundary conditions for a side, all components.
+   For use in AMRPoissonOp.
+ */
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side);
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side);
 
 ///
 /**
