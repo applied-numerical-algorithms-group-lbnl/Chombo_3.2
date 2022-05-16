@@ -282,6 +282,12 @@ void VCAMRPoissonOp2::setAlphaAndBeta(const Real& a_alpha,
   m_lambdaNeedsResetting = true;
 }
 
+void VCAMRPoissonOp2::setPrint(bool a_print)
+{
+  m_print = a_print;
+}
+
+
 void VCAMRPoissonOp2::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                                const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
                                const Real&                                 a_alpha,
@@ -995,7 +1001,7 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                                    a_beta,
                                    Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
-                                   bool                             a_use_FAS)
+                                   bool                                           a_use_FAS)
 {
   CH_TIME("VCAMRPoissonOp2Factory::define");
 
@@ -1043,7 +1049,7 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
 
-  m_print = true;
+  m_print = false;
 
   m_use_FAS = a_use_FAS;
 }

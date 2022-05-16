@@ -176,7 +176,7 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
 
   m_use_FAS = false;
  
-  m_print = true;
+  m_print = false;
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -342,7 +342,54 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
         a_phi[dit[ibox]] *= mult;
     }
  //end pragma
-  relax(a_phi, a_rhs, 2, 0);
+  relax(a_phi, a_rhs, 2, 0, 100);
+}
+
+void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
+                           const LevelData<FArrayBox>& a_res,
+                           const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRPoissonOp::preCond");
+
+  // diagonal term of this operator is (alpha - 4 * beta/h/h) in 2D,
+  // (alpha - 6 * beta/h/h) in 3D,
+  // so inverse of this is our initial multiplier
+
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  Real sum_b = ( D_TERM(  2.0 * m_beta / (m_dx_vect[0]*m_dx_vect[0]), 
+                        + 2.0 * m_beta / (m_dx_vect[1]*m_dx_vect[1]), 
+                        + 2.0 * m_beta / (m_dx_vect[2]*m_dx_vect[2]) ) 
+               );
+  Real mult = 1.0 / (m_alpha - sum_b);
+
+  incr(a_phi, a_res, mult);
+
+  relax(a_phi, a_rhs, 2, 0, 100);
+}
+
+void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
+                           const LevelData<FArrayBox>& a_res,
+                           const LevelData<FArrayBox>& a_rhs,
+                           int iter)
+{
+  CH_TIME("AMRPoissonOp::preCond");
+
+  // diagonal term of this operator is (alpha - 4 * beta/h/h) in 2D,
+  // (alpha - 6 * beta/h/h) in 3D,
+  // so inverse of this is our initial multiplier
+
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  Real sum_b = ( D_TERM(  2.0 * m_beta / (m_dx_vect[0]*m_dx_vect[0]), 
+                        + 2.0 * m_beta / (m_dx_vect[1]*m_dx_vect[1]), 
+                        + 2.0 * m_beta / (m_dx_vect[2]*m_dx_vect[2]) ) 
+               );
+  Real mult = 1.0 / (m_alpha - sum_b);
+
+  incr(a_phi, a_res, mult);
+
+  relax(a_phi, a_rhs, 2, iter, 100);
 }
 
 void AMRPoissonOp::applyOpMg(LevelData<FArrayBox>& a_lhs,
@@ -639,7 +686,7 @@ void AMRPoissonOp::relaxNF(LevelData<FArrayBox>&     a_e,
                          int                         a_depth,
                          bool                        a_print)
 {
-  m_print = true;
+  m_print = a_print;
   if (a_eCoarse != NULL) {
     m_interpWithCoarser.coarseFineInterp(a_e, *a_eCoarse);
   }
@@ -1196,6 +1243,12 @@ void AMRPoissonOp::setAlphaAndBeta(const Real& a_alpha,
   m_beta  = a_beta  * m_bCoef;
 }
 
+
+void AMRPoissonOp::setPrint(bool a_print)
+{
+  m_print = a_print;
+}
+
 // ---------------------------------------------------------
 void AMRPoissonOp::setBC(const BCHolder& a_bc)
 {
@@ -1224,7 +1277,6 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
 
       if (m_levfluxreg.hasCF(dit()))
         {
-          //pout() << " AMRPoissonOp::reflux: " << coarfab.box() << endl;
           for (int idir = 0; idir < SpaceDim; idir++)
             {
               FArrayBox coarflux;
@@ -1352,6 +1404,16 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
       sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
       pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite << " " << m_dx_vect[0] << endl; 
       //this->write(&a_rhs, iter_str); 
+
+      LevelData<FArrayBox> resid;
+      create(resid, a_rhs);
+      // Get the residual
+      if (m_use_FAS) {
+          residual(resid,a_phi,a_rhs,false);
+      } else {
+          residual(resid,a_phi,a_rhs,true);
+      }
+
       const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
       const ProblemDomain&     levelDomain = levelGrids.physDomain();
       Vector<DisjointBoxLayout> grids;
@@ -1360,14 +1422,15 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
       
       Box domain = levelDomain.domainBox();
 
-      int numPlotComps = 2;
+      int numPlotComps = 3;
 
       string headName("PHI");  
       string rhsName("RHS");  
+      string resName("RES");  
       Vector<string> vectName(numPlotComps);
       vectName[0] = headName;
       vectName[1] = rhsName;
-
+      vectName[2] = resName;
 
       IntVect ghostVect(IntVect::Unit);
       Vector<LevelData<FArrayBox>*> plotData(1, NULL);
@@ -1379,15 +1442,15 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
           FArrayBox& thisPlotData   = plotDataLev[dit];
           const FArrayBox& thisHead       = a_phi[dit];
           const FArrayBox& thisRHS        = a_rhs[dit];
+          const FArrayBox& thisRES        = resid[dit];
 
           int comp = 0;
           thisPlotData.copy(thisHead, 0, comp, 1);
           comp++;
           thisPlotData.copy(thisRHS, 0, comp, 1);
+          comp++;
+          thisPlotData.copy(thisRES, 0, comp, 1);
       }
-      // char iter_str[100];
-      // sprintf(iter_str, "%s%06d.", m_plot_prefix.c_str(), m_cur_step);
-      // sprintf(iter_str, "%s%06d_PI%03d_WFX-MG%01d_SMOOTH%01d_DEPTH%01d", "GSRB_", m_cur_step, m_cur_PicardIte, nbAMRFASMGiter, nbSmooth, nbDepth);
 
       string filename(iter_str);
 
@@ -1406,7 +1469,6 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
           filename, grids, plotData, vectName, domain, m_dx_vect[0], dt, 0.0, 2, 1);
 
       // // need to delete plotData
-      // delete plotData;
       delete plotData[0];
   }
 
@@ -2110,7 +2172,7 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
   m_beta = a_beta;
   m_use_FAS = a_use_FAS;
 
-  m_print = true;
+  m_print = false;
 }
 
 // ---------------------------------------------------------

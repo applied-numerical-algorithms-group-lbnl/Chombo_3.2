@@ -365,7 +365,8 @@ public:
 
   virtual void AMRVCycle(Vector<T*>& a_correction,
                          Vector<T*>& a_residual,
-                         int l, int l_max, int l_base);
+                         int l, int l_max, int l_base,
+                         int a_AMRMGiter);
 
   void setMGCycle(int a_numMG);
 
@@ -464,7 +465,7 @@ public:
      However, it must be called if solve will not be called (in particular,
      if only the V-cycle is being used)
   */
-  void setBottomSolver(int l_max, int l_base);
+  virtual void setBottomSolver(int l_max, int l_base);
 
   void setBottomSolverEpsCushion(Real a_bottomSolverEpsCushion);
 
@@ -1045,7 +1046,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 
       //this generates a correction from the current residual
       CH_START(vtimer);
-      AMRVCycle(uberCorrection, uberResidual, l_max, l_max, l_base);
+      AMRVCycle(uberCorrection, uberResidual, l_max, l_max, l_base, iter);
       CH_STOP(vtimer);
 
       char charname[100];
@@ -1364,7 +1365,8 @@ void AMRMultiGrid<T>::getInfo() const
 template<class T>
 void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 Vector<T*>& a_uberResidual,
-                                int ilev, int l_max, int l_base)
+                                int ilev, int l_max, int l_base,
+                                int a_AMRMGiter)
 {
   pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
 
@@ -1381,12 +1383,12 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
     {
       pout() << "        do oneCycle " << endl;
       CH_assert(ilev == l_base);
-      m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]));
+      m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]), a_AMRMGiter);
     }
   else if (ilev == l_base)
     {
       pout() << "        do oneCycle and then incr " << endl;
-      m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]));
+      m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]), a_AMRMGiter);
       m_op[ilev]->incr(*(a_uberCorrection[ilev]), *(m_correction[ilev]), 1.0);
     }
   else
@@ -1422,7 +1424,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
 
       for (int img = 0; img < m_numMG; img++)
         {
-          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base);
+          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base, img);
         }
 
       //================= Upsweep ======================

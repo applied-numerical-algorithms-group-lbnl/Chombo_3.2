@@ -99,6 +99,10 @@ public:
   virtual void preCond(   LevelData<NodeFArrayBox>& a_correction,
                           const LevelData<NodeFArrayBox>& a_residual);
 
+  virtual void preCond(LevelData<NodeFArrayBox>&       a_correction,
+                       const LevelData<NodeFArrayBox>& a_res,
+                       const LevelData<NodeFArrayBox>& a_rhs);
+
   virtual void applyOpOnly(   LevelData<NodeFArrayBox>& a_lhs,
                               const LevelData<NodeFArrayBox>& a_phi);
 

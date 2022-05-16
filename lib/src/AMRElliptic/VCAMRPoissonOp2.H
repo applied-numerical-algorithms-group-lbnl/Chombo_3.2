@@ -82,6 +82,8 @@ public:
      \name VCAMRPoissonOp2 functions */
   /*@{*/
 
+  virtual void setPrint(bool a_print);
+
   /// For tga stuff
   virtual void setAlphaAndBeta(const Real& a_alpha,
                                const Real& a_beta);

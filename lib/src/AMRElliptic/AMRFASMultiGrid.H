@@ -43,6 +43,8 @@ public:
                            int l_max, int l_base, bool a_zeroPhi=true,
                            bool forceHomogeneous = false);
 
+  virtual void setBottomSolver(int l_max, int l_base);
+
   void setCycleType( OLD_FASMG_type a_type )
   {
     m_type = a_type;
@@ -187,6 +189,26 @@ void AMRFASMultiGrid<T>::init( const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
     }
 }
 
+template <class T>
+void AMRFASMultiGrid<T>::setBottomSolver(int l_max, int l_base)
+{
+  
+  pout() << "AMRFASMultiGrid::setBottomSolver" << endl;
+  for (int ilev = l_base; ilev <= l_max; ilev++)
+    {
+      // only do this if we haven't already set these
+      if (!this->m_solverParamsSet)
+        {
+          this->m_mg[ilev]->m_pre = this->m_pre;
+          this->m_mg[ilev]->m_post = this->m_post;
+          this->m_mg[ilev]->m_bottom = this->m_bottom;
+        }
+      this->m_mg[ilev]->m_bottomSolver = &this->m_nosolve;
+    }
+
+  this->m_mg[l_base]->setBottomSolverFAS(this->m_bottomSolver);
+}
+
 ////////////////////////////////////////////////////////////////////////
 // AMRFASMultiGrid<T>::clear_private
 ////////////////////////////////////////////////////////////////////////
@@ -259,9 +281,6 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
       norm_last = rnorm;
-      //if (iter > 1) {
-      //    MayDay::Error("STOP debug");
-      //}
 
       //this generates a correction from the current residual
       CH_START(vtimer);

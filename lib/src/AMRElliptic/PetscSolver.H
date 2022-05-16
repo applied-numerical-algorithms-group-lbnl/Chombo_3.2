@@ -47,6 +47,12 @@ public:
   {
     m_homogeneous = a_homogeneous;
   }
+
+  virtual void setUseFas(bool a_use_FAS) 
+  {
+    m_use_FAS = a_use_FAS;
+  }
+
   /**
      Set Function F(u) = 0 and Jacobian dF(u)/du for nonlinear solves
   */
@@ -164,6 +170,8 @@ public:
      public member data: whether or not to use inhomogeneous boundary conditions.
    */
   bool m_homogeneous;
+
+  bool m_use_FAS;
   ///
   /**
      member data: grid spacing

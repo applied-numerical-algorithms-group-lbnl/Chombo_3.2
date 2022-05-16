@@ -300,6 +300,13 @@ void ResistivityOp::preCond(LevelData<FArrayBox>&       a_phi,
   relax(a_phi, a_rhs, 10, 0);
 }
 
+void ResistivityOp::preCond(LevelData<FArrayBox>&       a_phi,
+                            const LevelData<FArrayBox>& a_res,
+                            const LevelData<FArrayBox>& a_rhs)
+{
+  relax(a_phi, a_rhs, 10, 0);
+}
+
 /***/
 void
 ResistivityOp::

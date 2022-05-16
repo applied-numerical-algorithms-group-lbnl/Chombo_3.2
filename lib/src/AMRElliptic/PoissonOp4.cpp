@@ -59,6 +59,12 @@ void PoissonOp4::preCond(LevelData<FArrayBox>& a_phi,
   relax(a_phi, a_rhs, 2, 0);
 }
 
+void PoissonOp4::preCond(LevelData<FArrayBox>& a_phi, 
+                         const LevelData<FArrayBox>& a_res,
+                         const LevelData<FArrayBox>& a_rhs)
+{
+}
+
 void PoissonOp4::applyOp(LevelData<FArrayBox>& a_lhs, 
                          const LevelData<FArrayBox>& a_phi,
                          bool a_homogeneous )

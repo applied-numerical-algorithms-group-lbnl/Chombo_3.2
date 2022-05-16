@@ -146,8 +146,17 @@ public:
                          const LevelData<FArrayBox>& a_rhs,
                          bool                        a_homogeneous = false);
 
+  virtual void preCond(   LevelData<FArrayBox>& a_correction,
+                          const LevelData<FArrayBox>& a_residual);
+
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
-                       const LevelData<FArrayBox>& a_residual);
+                       const LevelData<FArrayBox>& a_res,
+                       const LevelData<FArrayBox>& a_rhs);
+
+  virtual void preCond(LevelData<FArrayBox>&       a_correction,
+                       const LevelData<FArrayBox>& a_res,
+                       const LevelData<FArrayBox>& a_rhs,
+                       int iter);
 
   virtual void applyOp(LevelData<FArrayBox>&       a_lhs,
                        const LevelData<FArrayBox>& a_phi,
@@ -385,6 +394,8 @@ public:
                        const LevelData<FArrayBox>& a_fineResid,
                        const int&                  a_refRat,
                        const int&                  a_ord);
+
+  virtual void setPrint(bool a_print);
 
   /// For tga to reset stuff
   /**

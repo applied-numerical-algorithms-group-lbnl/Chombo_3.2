@@ -391,7 +391,7 @@ public:
       so all boundary conditions are assumed to be homogeneous.
       L(a_e) = a_res
   */
-  virtual void oneCycle(T& a_e, const T& a_res);
+  virtual void oneCycle(T& a_e, const T& a_res, int MGiter = 0);
 
   // used by AMRMultiGrid--not a part of the public API
   void init(const T& a_correction, const T& a_residual);
@@ -404,6 +404,7 @@ public:
 
   // used by AMRMultiGrid--not a part of the public API
   void setBottomSolver(LinearSolver<T>* a_bottomSolver);
+  void setBottomSolverFAS(LinearSolver<T>* a_bottomSolver);
 
   ///
   /**
@@ -558,6 +559,14 @@ void MultiGrid<T>::setBottomSolver(LinearSolver<T>* a_bottomSolver)
   m_bottomSolver = a_bottomSolver;
   m_bottomSolver->define(m_op[m_depth-1], true);
 }
+
+template <class T>
+void MultiGrid<T>::setBottomSolverFAS(LinearSolver<T>* a_bottomSolver)
+{
+  m_bottomSolver = a_bottomSolver;
+  m_bottomSolver->define(m_op[m_depth-1], false);
+  m_bottomSolver->setUseFas(true);
+}
 //-----------------------------------------------------------------------
 
 //-----------------------------------------------------------------------
@@ -629,7 +638,7 @@ void MultiGrid<T>::solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_maxIt
 
 //-----------------------------------------------------------------------
 template <class T>
-void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual)
+void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual, int MGiter)
 {
   CH_TIME("Multigrid::oneCycle");
 
@@ -638,7 +647,7 @@ void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual)
   //this->init(a_e, a_residual); oneCycle is only used by AMRMultigrid
   if (m_homogeneous)
     {
-      cycle(0, a_e, a_residual);
+      cycle(0, a_e, a_residual, MGiter); // MGITER not set   
     }
   else
     {
@@ -649,7 +658,7 @@ void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual)
       m_op[0]->residual(residual, a_e, a_residual);
 
       m_op[0]->setToZero(correction);
-      this->cycle(0, correction, residual);
+      this->cycle(0, correction, residual, MGiter); // MGITER not set
 
       m_op[0]->incr(a_e, correction, 1.0);
       m_op[0]->clear(correction);
@@ -694,7 +703,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
           m_op[depth  ]->setToZero(*(m_correction[depth+1]));
 
           // recursive call
-          cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
+          cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]), iter);
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
@@ -707,7 +716,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
               m_op[depth  ]->setToZero(*(m_correction[depth+1]));
 
               m_cycle = 1;          // hack to get a V-cycle
-              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
+              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]), iter);
               m_cycle = -cycles;
               //
               m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
@@ -726,7 +735,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 
           for (int img = 0; img < cycles; img++)
             {
-              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
+              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]), iter);
             }
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 

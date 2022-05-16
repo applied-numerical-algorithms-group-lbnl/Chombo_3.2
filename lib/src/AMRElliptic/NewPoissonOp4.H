@@ -52,6 +52,10 @@ public:
                           bool a_homogeneous = false);
   virtual void preCond(   FArrayBox& a_correction,
                           const FArrayBox& a_residual);
+
+  virtual void preCond(   FArrayBox& a_phi, 
+                          const FArrayBox& a_res, 
+                          const FArrayBox& a_rhs);
   virtual void applyOp(   FArrayBox& a_lhs,
                           const FArrayBox& a_phi,
                           bool a_homogeneous = false);
