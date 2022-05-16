@@ -522,7 +522,7 @@ void MultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
   }
   while (nextOp != NULL)
   {
-    pout() << "   ...  nextOp !!" << endl;
+    //pout() << "   ...  nextOp !!" << endl;
     m_residual.push_back(new T());
     m_correction.push_back(new T());
     m_op.push_back(nextOp);
