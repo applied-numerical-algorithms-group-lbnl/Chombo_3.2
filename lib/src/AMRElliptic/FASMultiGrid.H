@@ -245,20 +245,25 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
         pout() << "  ... bottom solve !! \n";
     }
 
-    // Store the original phi so we can compute the 'correction' later
+    /* Store initial guess at phi on this level */
+    // Note this is negative, as the eventual 'correction' = u_new - u_old (and this is u_old)
     this->m_op[0]->setToZero(*this->m_correction[depth]);
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, -1.0);
 
-    // On the coarsest level, just do loads of relaxing as the bottom solve
+    /* Relax phi towards actual phi -- on the coarsest level, do loads of relaxing */
     this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom, iter, depth, false);
+
+    /* BOTTOM SOLVE */
+    this->m_bottomSolver->solve(a_phi, a_rhs);
 
     // Subtract off new phi to get actual correction from this level
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, 1.0);
+
   }
   else
   {
     if (this->m_verbosity > 4) {
-        pout() << "  ... \n";
+        pout() << "  ... " << endl;
     }
     int cycles = this->m_cycle;
     if ( cycles < 0 )
@@ -276,48 +281,48 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
       this->m_op[depth+1]->create(op_coarse,  *(this->m_correction[depth+1]));
       this->m_op[depth+1]->setToZero(op_coarse);
 
-      // Store initial guess at phi on this level
-      // Note this is negative, as the eventual correction = u_new - u_old (and this is u_old)
+      /* Store initial guess at phi on this level */
+      // Note this is negative, as the eventual 'correction' = u_new - u_old (and this is u_old)
       this->m_op[depth]->setToZero( *(this->m_correction[depth]));
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, -1.0);
 
-      // Relax phi towards actual phi
+      /* Relax phi towards actual phi */
       this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre, iter, depth, false );
 
-
-      // restrict this new phi to a coarser grid and store it in 'm_correction'
-      T scratch;
+      /* Restrict this new phi to a coarser grid */
+      T scratch;  // not sure what this is for
       this->m_op[depth]->create(scratch,  a_phi);
       this->m_op[depth]->setToZero(scratch);
-
-      this->m_op[depth]->createCoarser(phi_coarse, a_phi, true); // create coarser grids for phi
-
+      //create coarser grids for phi
+      this->m_op[depth]->createCoarser(phi_coarse, a_phi, true);
+      // restrict phi to coarser grids
       this->m_op[depth  ]->restrictR(phi_coarse, a_phi);
+      /* End restrict this new phi to a coarser grid */
 
-      // Construct modified RHS
-
-      // Calculate Op(Restrict(phi_fine))
+      /* Construct modified RHS */
+      // Calculate Op(Restrict(phi_fine)) put in op_coarse
       this->m_op[depth+1]->applyOpMg(op_coarse, phi_coarse, m_phiCoarse[depth+1], false); // false - not homogeneous
-
-      // This sets rhs = Restrict(residual fine)
+      // This sets rhs = Restrict(residual fine) put in m_residual
       this->m_op[depth  ]->restrictResidual(*(this->m_residual[depth+1]), a_phi, m_phiCoarse[depth], a_rhs, false); // false - not homogeneous
-
       // This sets rhs = Restrict(residual fine) + Op(Restrict(phi fine))
       this->m_op[depth+1]->incr(*(this->m_residual[depth+1]), op_coarse, 1.0);
+      /* End construct modified RHS */
 
       for (int img = 0; img < cycles; img++)
       {
+        /* so m_residual contains FAS RHS */
         cycle(depth+1, phi_coarse, *(this->m_residual[depth+1]), iter);
       }
 
-      // Interpolate the correction from the coarser level and add to phi on this level
+      /* Interpolate the correction from the coarser level and add to phi on this level */
+      // phi now contains phi_old + I (e_coarse) 
       this->m_op[depth  ]->prolongIncrement(a_phi, *(this->m_correction[depth+1]));
 
-      // Do some more smoothing of phi on this level
+      /* Relax phi some more on this level */
       this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post, iter, depth);
 
-      // Finally, compute the 'correction' (initial phi on this level - current phi on this level)
-      // so we can interpolate it when we get back to  finer levels
+      /* Finally, compute the 'correction' which here is the error */
+      // (current phi on this level - phi old on this level)
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, 1.0);
 
       // Clear temporary data objects
