@@ -1288,7 +1288,6 @@ template <class T>
 void AMRMultiGrid<T>::setBottomSolver(int l_max, int l_base)
 {
   
-  pout() << "AMRMultiGrid::setBottomSolver" << endl;
   //  for (int ilev = 0; ilev <= m_mg.size(); ilev++)
   for (int ilev = l_base; ilev <= l_max; ilev++)
     {
@@ -1368,7 +1367,9 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 int ilev, int l_max, int l_base,
                                 int a_AMRMGiter)
 {
-  pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
+  if (m_verbosity >= 4)
+      pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
+  }
 
   if (ilev == l_max)
     {
@@ -1381,13 +1382,11 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
 
   if (l_max == l_base)
     {
-      pout() << "        do oneCycle " << endl;
       CH_assert(ilev == l_base);
       m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]), a_AMRMGiter);
     }
   else if (ilev == l_base)
     {
-      pout() << "        do oneCycle and then incr " << endl;
       m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]), a_AMRMGiter);
       m_op[ilev]->incr(*(a_uberCorrection[ilev]), *(m_correction[ilev]), 1.0);
     }

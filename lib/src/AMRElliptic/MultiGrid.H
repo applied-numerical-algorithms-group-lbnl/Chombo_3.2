@@ -642,8 +642,6 @@ void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual, int MGiter)
 {
   CH_TIME("Multigrid::oneCycle");
 
-  pout() << "          Multigrid::oneCycle, are we homogeneous "<< m_homogeneous << endl; 
-
   //this->init(a_e, a_residual); oneCycle is only used by AMRMultigrid
   if (m_homogeneous)
     {
@@ -673,21 +671,29 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 {
   CH_TIME("Multigrid::cycle");
 
-  pout() << "          Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
+  if (m_verbosity > 4) {
+      pout() << "          Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
+  }
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == m_depth-1)
     {
       CH_TIME("Multigrid::cycle:bottom-solve");
-      pout() << "          ... bottom-solve " << endl;
+      if (m_verbosity > 4) {
+          pout() << "          ... bottom-solve " << endl;
+      }
       if (m_bottomCells == 1)
         {
-          pout() << "          ... should not end up here " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... should not end up here " << endl;
+          }
           m_op[depth  ]->relax(correction, residual, 1, iter, depth);
         }
       else
         {
           m_op[depth  ]->relax(correction, residual, m_bottom, iter, depth);
-          pout() << "          ... do some additional relax ? " << endl;
+          if (m_verbosity > 4) {
+              pout() << "          ... do some additional relax ? " << endl;
+          }
           m_bottomSolver->solve(correction, residual);
         }
       //m_op[depth  ]->relax(correction, residual, 1);
