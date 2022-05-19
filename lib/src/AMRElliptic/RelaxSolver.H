@@ -102,6 +102,7 @@ public:
   private:
   Real m_minNorm;
   Real m_oldNorm;
+  Real m_iter_min;
 };
 
 // *******************************************************
@@ -113,11 +114,12 @@ RelaxSolver<T>::RelaxSolver()
   :m_homogeneous(false),
    m_use_FAS(false),
    m_op(NULL),
-   m_imax(40),
+   m_imax(10),
    m_normType(2),
-   m_verbosity(0),
+   m_verbosity(4),
    m_eps(1.0E-6),
-   m_hang(0.0)
+   m_hang(0.0),
+   m_iter_min(5)
 {
 }
 
@@ -177,7 +179,7 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
           norm = m_op->norm(r, m_normType);
           iter++;
 
-          if (m_verbosity > 3)
+          if (m_verbosity >= 3)
             {
               pout() << "      RelaxSolver:: iteration = " << iter
                      << " residual norm = " << norm
@@ -191,9 +193,9 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
               m_minNorm = norm;
             }
 
-          if ((1- m_hang)*norm >= m_oldNorm)
+          if (((1- m_hang)*norm >= m_oldNorm) && (iter > m_iter_min))
             {
-              if (m_verbosity > 3)
+              if (m_verbosity >= 3)
                 {
                   pout() << "      RelaxSolver:: exit due to solver hang " << endl;
                 }
