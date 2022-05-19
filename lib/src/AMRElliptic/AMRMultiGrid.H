@@ -608,7 +608,7 @@ AMRMultiGrid<T>::AMRMultiGrid()
   m_normThresh(1E-30),
   m_imin(5),
   m_iterMax(20),
-  m_iterMin(5),
+  m_iterMin(2),
   m_verbosity(3),
   m_pre(2),
   m_post(2),
@@ -928,7 +928,9 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
 
-  pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
+  }
   Vector<T*> uberResidual(a_rhs.size());
   int lowlim = l_base;
   if (l_base > 0)  // we need an ubercorrection one level lower than l_base
@@ -959,7 +961,6 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
 
-  pout() << "AMRMultiGrid::solveNoInitResid " << endl;
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -1026,7 +1027,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   bool goMin = iter < m_iterMin ; // iterate if iter < min
-  pout() << "norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << endl;
+  //pout() << "norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << endl;
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
 
@@ -1367,7 +1368,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 int ilev, int l_max, int l_base,
                                 int a_AMRMGiter)
 {
-  if (m_verbosity >= 4) {
+  if (m_verbosity > 4) {
       pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
   }
 
