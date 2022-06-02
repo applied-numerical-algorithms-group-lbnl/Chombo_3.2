@@ -254,7 +254,7 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
     this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom, iter, depth, false);
 
     /* BOTTOM SOLVE */
-    this->m_bottomSolver->solve(a_phi, a_rhs);
+    //this->m_bottomSolver->solve(a_phi, a_rhs);
 
     // Subtract off new phi to get actual correction from this level
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, 1.0);
