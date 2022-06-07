@@ -154,8 +154,21 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
   resetLambda();
 
   //incr(a_phi, a_res, mult);
-  mult(a_res, m_lambda);
-  incr(a_phi, a_res, 1);
+  // don't need to use a Copier -- plain copy will do
+  DataIterator dit = a_phi.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FArrayBox&       phi = a_phi[dit];
+      FArrayBox&       res = a_res[dit];
+
+      FArrayBox&       lambda = m_lambda[dit];
+
+      BoxIterator bit(res.box());
+      for (bit.begin(); bit.ok(); ++bit) {
+          IntVect iv = bit();
+          phi(iv, 0) += lambda(iv, 0) * res(iv, 0); 
+      }
+    }
 
   int dummyIt = 0;
   relax(a_phi, a_rhs, 2, dummyIt);
