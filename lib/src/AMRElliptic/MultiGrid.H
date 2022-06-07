@@ -522,7 +522,7 @@ void MultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
   }
   while (nextOp != NULL)
   {
-    //pout() << "   ...  nextOp !!" << endl;
+    pout() << "   ...  nextOp !!" << endl;
     m_residual.push_back(new T());
     m_correction.push_back(new T());
     m_op.push_back(nextOp);
@@ -672,14 +672,14 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
   CH_TIME("Multigrid::cycle");
 
   if (m_verbosity > 4) {
-      pout() << "          Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
+      pout() << "xxx Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
   }
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == m_depth-1)
     {
       CH_TIME("Multigrid::cycle:bottom-solve");
       if (m_verbosity > 4) {
-          pout() << "          ... bottom-solve " << endl;
+          pout() << "  ... bottom-solve " << endl;
       }
       if (m_bottomCells == 1)
         {
@@ -690,7 +690,22 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
         }
       else
         {
+          /* DEBUG */
+          //T r_tmp, e_tmp;
+          //m_op[depth  ]->create(e_tmp, correction); // phi
+          //m_op[depth  ]->assign(e_tmp, correction);
+          //m_op[depth  ]->create(r_tmp, residual);   // rhs
+          /* DEBUG */
+
           m_op[depth  ]->relax(correction, residual, m_bottom, iter, depth);
+
+          /* DEBUG */
+          //m_op[depth  ]->incr(e_tmp, correction, 1.0); 
+          //m_op[depth  ]->residual(r_tmp, e_tmp, residual, m_homogeneous);
+          //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+          //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          /* END DEBUG */
+
           if (m_verbosity > 4) {
               pout() << "          ... do some additional relax ? " << endl;
           }
@@ -738,9 +753,18 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
       else
         {
           if (m_verbosity > 4) {
-              pout() << "          ... pre relax " << endl;
+              pout() << "  ..." << endl;
           }
           m_op[depth  ]->relax( correction, residual, m_pre, iter, depth);
+
+          /* DEBUG */
+          //T r_tmp;
+          //m_op[depth  ]->create(r_tmp, residual);   // rhs
+          //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
+          //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+          //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          /* END DEBUG */
+
 
           m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
           m_op[depth  ]->setToZero(*(m_correction[depth+1]));
@@ -749,12 +773,31 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
             {
               cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]), iter);
             }
+
+          /* DEBUG */
+          //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
+          //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+          //pout() << "Going UP - Initial Residual norm = " << norm_tmp << endl;
+          /* END DEBUG */
+
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
+
+          /* DEBUG */
+          //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
+          //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+          //pout() << "Going UP (before relax, after incr) - Residual norm = " << norm_tmp << endl;
+          /* END DEBUG */
 
           if (m_verbosity > 4) {
               pout() << "          ... post relax " << endl;
           }
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
+
+          /* DEBUG */
+          //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
+          //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+          //pout() << "Going UP (after relax) - Residual norm = " << norm_tmp << endl;
+          /* END DEBUG */
         }
     }
 }

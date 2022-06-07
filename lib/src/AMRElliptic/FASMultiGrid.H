@@ -253,6 +253,14 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
     /* Relax phi towards actual phi -- on the coarsest level, do loads of relaxing */
     this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom, iter, depth, false);
 
+      /* DEBUG */
+      //T r_tmp;
+      //this->m_op[depth  ]->create(r_tmp, a_rhs);
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+      /* END DEBUG */
+
     /* BOTTOM SOLVE */
     this->m_bottomSolver->solve(a_phi, a_rhs);
 
@@ -289,6 +297,14 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
       /* Relax phi towards actual phi */
       this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre, iter, depth, false );
 
+      /* DEBUG */
+      //T r_tmp;
+      //this->m_op[depth  ]->create(r_tmp, a_rhs);
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+      /* END DEBUG */
+
       /* Restrict this new phi to a coarser grid */
       T scratch;  // not sure what this is for
       this->m_op[depth]->create(scratch,  a_phi);
@@ -314,9 +330,21 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
         cycle(depth+1, phi_coarse, *(this->m_residual[depth+1]), iter);
       }
 
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //pout() << "Going UP - Initial Residual norm = " << norm_tmp << endl;
+      /* END DEBUG */
+
       /* Interpolate the correction from the coarser level and add to phi on this level */
       // phi now contains phi_old + I (e_coarse) 
       this->m_op[depth  ]->prolongIncrement(a_phi, *(this->m_correction[depth+1]));
+
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //pout() << "Going UP (before relax, after incr) - Residual norm = " << norm_tmp << endl;
+      /* END DEBUG */
 
       /* Relax phi some more on this level */
       this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post, iter, depth);
@@ -324,6 +352,13 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int iter)
       /* Finally, compute the 'correction' which here is the error */
       // (current phi on this level - phi old on this level)
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, 1.0);
+
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //pout() << "Going UP (after relax) - Residual norm = " << norm_tmp << endl;
+      /* END DEBUG */
+
 
       // Clear temporary data objects
       this->m_op[depth+1]->clear(phi_coarse);
