@@ -347,6 +347,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
                   pout() << ", rate = " << norm_last/rnorm;
                 }
               pout() << std::endl;
+              pout() << std::endl;
             }
 
           goNorm = rnorm > this->m_normThresh;                        //keep iterating if norm is not small enough
