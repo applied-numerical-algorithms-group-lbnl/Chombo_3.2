@@ -150,11 +150,11 @@ public:
                           const LevelData<FArrayBox>& a_residual);
 
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
-                       const LevelData<FArrayBox>& a_res,
+                       LevelData<FArrayBox>& a_res,
                        const LevelData<FArrayBox>& a_rhs);
 
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
-                       const LevelData<FArrayBox>& a_res,
+                       LevelData<FArrayBox>& a_res,
                        const LevelData<FArrayBox>& a_rhs,
                        int iter);
 
@@ -213,6 +213,9 @@ public:
   virtual void incr(LevelData<FArrayBox>&       a_lhs,
                     const LevelData<FArrayBox>& a_x,
                     Real                        a_scale);
+
+  virtual void mult( LevelData<FArrayBox>& a_lhs, 
+                     const LevelData<FArrayBox>& a_x);
 
   virtual void axby(LevelData<FArrayBox>&       a_lhs,
                     const LevelData<FArrayBox>& a_x,

@@ -346,7 +346,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
 }
 
 void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
-                           const LevelData<FArrayBox>& a_res,
+                           LevelData<FArrayBox>& a_res,
                            const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("AMRPoissonOp::preCond");
@@ -369,7 +369,7 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
 }
 
 void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
-                           const LevelData<FArrayBox>& a_res,
+                           LevelData<FArrayBox>& a_res,
                            const LevelData<FArrayBox>& a_rhs,
                            int iter)
 {
@@ -625,6 +625,15 @@ void AMRPoissonOp::incr( LevelData<FArrayBox>&       a_lhs,
 
   m_levelOps.incr(a_lhs, a_x, a_scale);
 }
+
+void AMRPoissonOp::mult( LevelData<FArrayBox>&       a_lhs,
+                         const LevelData<FArrayBox>& a_x)
+{
+  CH_TIME("AMRPoissonOp::mult");
+
+  m_levelOps.mult(a_lhs, a_x);
+}
+
 
 // ---------------------------------------------------------
 void AMRPoissonOp::axby( LevelData<FArrayBox>&       a_lhs,

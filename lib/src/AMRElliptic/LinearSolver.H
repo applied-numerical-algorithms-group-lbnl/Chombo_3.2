@@ -46,9 +46,14 @@ public:
    */
   virtual void preCond(   T& a_cor, const T& a_residual)       = 0;
 
-  virtual void preCond(   T& a_cor, const T& a_residual, const T& a_rhs)       = 0;
+  virtual void preCond(   T& a_cor, T& a_residual, const T& a_rhs) {
+      // default to first one
+      preCond(a_cor, a_residual);
+  }
 
-  virtual void preCond(   T& a_cor, const T& a_residual, const T& a_rhs, int iter) {
+  virtual void preCond(   T& a_cor, T& a_residual, const T& a_rhs, int iter) {
+      // default to first one
+      preCond(a_cor, a_residual);
   }
 
   ///

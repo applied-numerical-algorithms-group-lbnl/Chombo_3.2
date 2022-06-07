@@ -131,6 +131,37 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
   relax(a_phi, a_rhs, 2, dummyIt);
 }
 
+void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
+                              LevelData<FArrayBox>& a_res, 
+                              const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("VCAMRPoissonOp2::preCond");
+
+  // diagonal term of this operator in:
+  //
+  //       alpha * a(i)
+  //     + beta  * sum_over_dir (b(i-1/2*e_dir) + b(i+1/2*e_dir)) / (dx*dx)
+  //
+  // The inverse of this is our initial multiplier.
+
+  int ncomp = a_phi.nComp();
+
+  CH_assert(m_lambda.isDefined());
+  CH_assert(a_rhs.nComp()    == ncomp);
+  CH_assert(m_bCoef->nComp() == ncomp);
+
+  // Recompute the relaxation coefficient if needed.
+  resetLambda();
+
+  //incr(a_phi, a_res, mult);
+  mult(a_res, m_lambda);
+  incr(a_phi, a_res, 1);
+
+  int dummyIt = 0;
+  relax(a_phi, a_rhs, 2, dummyIt);
+}
+
+
 void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
                              const LevelData<FArrayBox>& a_phi,
                              bool                        a_homogeneous )
@@ -1198,6 +1229,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
       newOp->m_aCoef = aCoef;
       newOp->m_bCoef = bCoef;
+
     }
 
   newOp->computeLambda();
