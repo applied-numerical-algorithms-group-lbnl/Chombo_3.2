@@ -281,12 +281,6 @@ void AMRNodeOp::preCond(LevelData<NodeFArrayBox>&       a_phi,
   relax(a_phi, a_rhs, nrelax, 0);
 }
 
-void AMRNodeOp::preCond(LevelData<NodeFArrayBox>&       a_phi,
-                        const LevelData<NodeFArrayBox>& a_res,
-                        const LevelData<NodeFArrayBox>& a_rhs)
-{
-}
-
 void AMRNodeOp::applyOp(LevelData<NodeFArrayBox>&       a_LofPhi,
                         const LevelData<NodeFArrayBox>& a_phi,
                         bool a_homogeneous )

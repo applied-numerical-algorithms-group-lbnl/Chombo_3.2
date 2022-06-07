@@ -53,10 +53,6 @@ void NewPoissonOp4::preCond(   FArrayBox& a_phi, const FArrayBox& a_rhs)
   relax(a_phi, a_rhs, 2, dummyIt);
 }
 
-void NewPoissonOp4::preCond(   FArrayBox& a_phi, const FArrayBox& a_res, const FArrayBox& a_rhs)
-{
-}
-
 void NewPoissonOp4::applyOp(   FArrayBox& a_lhs, const FArrayBox& a_phi,
                               bool a_homogeneous )
 {

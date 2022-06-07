@@ -53,10 +53,6 @@ public:
   virtual void preCond(LevelData<FArrayBox>& a_correction,
                        const LevelData<FArrayBox>& a_residual);
 
-  virtual void preCond(LevelData<FArrayBox>& a_correction,
-                       const LevelData<FArrayBox>& a_res,
-                       const LevelData<FArrayBox>& a_rhs);
-
   virtual void applyOp(LevelData<FArrayBox>& a_lhs,
                        const LevelData<FArrayBox>& a_phi,
                        bool a_homogeneous = false);

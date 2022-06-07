@@ -689,12 +689,6 @@ createCoarsened(LevelData<FArrayBox>&       a_lhs,
 }
 
 /***/
-void NWOViscousTensorOp::preCond(LevelData<FArrayBox>& a_phi,
-                           const LevelData<FArrayBox>& a_res,
-                           const LevelData<FArrayBox>& a_rhs)
-{
-}
-
 void NWOViscousTensorOp::preCond(LevelData<FArrayBox>&       a_phi,
                                  const LevelData<FArrayBox>& a_rhs)
 {
