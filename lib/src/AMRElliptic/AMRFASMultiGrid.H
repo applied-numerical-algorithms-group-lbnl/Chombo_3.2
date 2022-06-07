@@ -277,7 +277,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
   bool goIter = iter < this->m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < this->m_imin || rnorm <(1-this->m_hang)*norm_last; //iterate if we didn't hang
   bool goMin = iter < this->m_iterMin ; // iterate if iter < min
-  pout() << "norms are " << this->m_normThresh << " " << this->m_eps*m_initial_rnorm << endl;
+  //pout() << "norms are " << this->m_normThresh << " " << this->m_eps*m_initial_rnorm << endl;
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
       norm_last = rnorm;
@@ -346,7 +346,6 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
                 {
                   pout() << ", rate = " << norm_last/rnorm;
                 }
-              pout() << std::endl;
               pout() << std::endl;
             }
 
