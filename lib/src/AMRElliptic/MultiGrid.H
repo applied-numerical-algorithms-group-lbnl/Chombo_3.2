@@ -641,6 +641,10 @@ template <class T>
 void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual, int MGiter)
 {
   CH_TIME("Multigrid::oneCycle");
+  
+  if (m_verbosity > 4) {
+      pout() << "MultiGrid::oneCycle " << endl;
+  }
 
   //this->init(a_e, a_residual); oneCycle is only used by AMRMultigrid
   if (m_homogeneous)
@@ -672,14 +676,14 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
   CH_TIME("Multigrid::cycle");
 
   if (m_verbosity > 4) {
-      pout() << "xxx Multigrid::cycle, iter, depth "<< iter << " " << depth << endl; 
+      pout() << "xxx ("<< m_pre << ", " << m_post << ") Multigrid::cycle, iter, depth "<< iter << " " << depth; 
   }
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == m_depth-1)
     {
       CH_TIME("Multigrid::cycle:bottom-solve");
       if (m_verbosity > 4) {
-          pout() << "  ... bottom-solve " << endl;
+          pout() << "  ... bottom-solve !! " << endl;
       }
       if (m_bottomCells == 1)
         {
@@ -690,31 +694,27 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
         }
       else
         {
-          /* DEBUG */
-          //T r_tmp, e_tmp;
-          //m_op[depth  ]->create(e_tmp, correction); // phi
-          //m_op[depth  ]->assign(e_tmp, correction);
-          //m_op[depth  ]->create(r_tmp, residual);   // rhs
-          /* DEBUG */
-
           m_op[depth  ]->relax(correction, residual, m_bottom, iter, depth);
 
           /* DEBUG */
-          //m_op[depth  ]->incr(e_tmp, correction, 1.0); 
-          //m_op[depth  ]->residual(r_tmp, e_tmp, residual, m_homogeneous);
+          //T r_tmp;
+          //m_op[depth  ]->create(r_tmp, residual);   // rhs
+          //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
           //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
-          //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          //if (m_verbosity > 6) {
+          //    pout() << depth << " Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          //}
           /* END DEBUG */
 
-          if (m_verbosity > 4) {
-              pout() << "          ... do some additional relax ? " << endl;
-          }
           m_bottomSolver->solve(correction, residual);
         }
       //m_op[depth  ]->relax(correction, residual, 1);
     }
   else
     {
+      if (m_verbosity > 4) {
+          pout() << "  ... " << endl;
+      }
       int cycles = m_cycle;
       if ( cycles < 0 )
         {
@@ -728,9 +728,6 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          if (m_verbosity > 4) {
-              pout() << "          ... pre relax (F) " << endl;
-          }
           m_op[depth  ]->relax(correction, residual, m_pre, iter, depth);
 
           for (int img = 0; img < cycles; img++)
@@ -745,16 +742,10 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
               m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
             }
 
-          if (m_verbosity > 4) {
-              pout() << "          ... post relax (F) " << endl;
-          }
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
         }
       else
         {
-          if (m_verbosity > 4) {
-              pout() << "  ..." << endl;
-          }
           m_op[depth  ]->relax( correction, residual, m_pre, iter, depth);
 
           /* DEBUG */
@@ -762,7 +753,9 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
           //m_op[depth  ]->create(r_tmp, residual);   // rhs
           //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
           //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
-          //pout() << "Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          //if (m_verbosity > 6) {
+          //    pout() << depth << " Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+          //}
           /* END DEBUG */
 
 
@@ -777,7 +770,9 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
           /* DEBUG */
           //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
           //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
-          //pout() << "Going UP - Initial Residual norm = " << norm_tmp << endl;
+          //if (m_verbosity > 6) {
+          //    pout() << depth << " Going UP - Initial Residual norm = " << norm_tmp << endl;
+          //}
           /* END DEBUG */
 
           m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
@@ -785,18 +780,25 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual, int iter)
           /* DEBUG */
           //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
           //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
-          //pout() << "Going UP (before relax, after incr) - Residual norm = " << norm_tmp << endl;
+          //if (m_verbosity > 6) {
+          //    pout() << depth << " Going UP (before relax, after incr) - Residual norm = " << norm_tmp << endl;
+          //}
+          //char iter_str[100];
+          //sprintf(iter_str, "%s%02d.hdf5", "UP_res_after_incr_", depth); 
+          //this->m_op[depth  ]->write(&r_tmp, iter_str);
           /* END DEBUG */
 
-          if (m_verbosity > 4) {
-              pout() << "          ... post relax " << endl;
-          }
           m_op[depth  ]->relax(correction, residual, m_post, iter, depth);
 
           /* DEBUG */
           //m_op[depth  ]->residual(r_tmp, correction, residual, m_homogeneous);
           //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
-          //pout() << "Going UP (after relax) - Residual norm = " << norm_tmp << endl;
+          //if (m_verbosity > 6) {
+          //    pout() << depth << " Going UP (after relax) - Residual norm = " << norm_tmp << endl;
+          //}
+          //sprintf(iter_str, "%s%02d.hdf5", "UP_res_after_relax_", depth); 
+          //this->m_op[depth  ]->write(&r_tmp, iter_str);
+          //MayDay::Error("Multigrid::cycle - non-V cycle options not implemented");
           /* END DEBUG */
         }
     }
