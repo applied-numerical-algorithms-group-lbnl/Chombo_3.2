@@ -193,7 +193,6 @@ template <class T>
 void AMRFASMultiGrid<T>::setBottomSolver(int l_max, int l_base)
 {
   
-  pout() << "AMRFASMultiGrid::setBottomSolver" << endl;
   for (int ilev = l_base; ilev <= l_max; ilev++)
     {
       // only do this if we haven't already set these
@@ -425,7 +424,7 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
                                  int iter )
 {
   if (this->m_verbosity > 4 ) {
-      pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")\n" ; 
+      pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")" << endl; 
   }
 
   if (ilev == l_base)
