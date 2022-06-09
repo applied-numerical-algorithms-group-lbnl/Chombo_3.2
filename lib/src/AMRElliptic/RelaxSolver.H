@@ -157,7 +157,7 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
     {
       pout() << "      (" << m_use_FAS << ", "<<  m_homogeneous << ") RelaxSolver:: initial Residual norm = "
              << norm << "\n";
-      pout() << "      RelaxSolver:: m_eps = " << m_eps << " m_hang = " << m_hang << endl;
+      //pout() << "      RelaxSolver:: m_eps = " << m_eps << " m_hang = " << m_hang << endl;
     }
 
   if (norm > 0.) // Do not iterate if norm == 0.
@@ -177,7 +177,7 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
           norm = m_op->norm(r, m_normType);
           iter++;
 
-          if (m_verbosity > 3)
+          if (m_verbosity > 5)
             {
               pout() << "      RelaxSolver:: iteration = " << iter
                      << " residual norm = " << norm
@@ -202,6 +202,12 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
 
             m_oldNorm = norm;
         }
+    }
+
+  if (m_verbosity >= 3)
+    {
+      pout() << "      RelaxSolver:: final Residual norm = "
+             << norm << "\n";
     }
 
   m_op->clear(r);
