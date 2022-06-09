@@ -663,7 +663,7 @@ void AMRMultiGrid<T>::relax(T& a_correction, T& a_residual, int depth, int a_num
       // not an AMR level.  We use regular MultiGrid smoothing algorithm for this.
       // note that MultiGrid::cycle handles relaxation on this level
       // as well, so there's no need to call the LinearOp's relax function.
-      m_mg[depth]->cycle(0, a_correction, a_residual);
+      m_mg[depth]->cycle(0, a_correction, a_residual, 0);
       m_mg[depth]->m_depth = tmp;
     }
   else
