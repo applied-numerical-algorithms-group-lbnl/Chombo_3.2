@@ -376,6 +376,8 @@ public:
   void revert(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
             int l_max, int l_base);
 
+  void setVerbose(int a_verbose);
+
   Real m_eps, m_hang, m_normThresh;
   bool   m_solverParamsSet;
   int m_imin, m_iterMax, m_iterMin, m_verbosity, m_exitStatus;
@@ -551,6 +553,7 @@ AMRMultiGrid<T>::setSolverParameters(const int&   a_pre,
       m_mg[img]->m_post          = a_post;
       m_mg[img]->m_bottom        = a_bottom;
       m_mg[img]->m_homogeneous   = a_homogeneous;
+      m_mg[img]->m_verbosity     = m_verbosity;
     }
   setMGCycle(a_numMG);
   m_bottomSolverEpsCushion = 1.0;
@@ -636,6 +639,7 @@ void AMRMultiGrid<T>::setMGCycle(int a_numMG)
     }
   m_numMG = a_numMG;
 }
+
 template <class T>
 void AMRMultiGrid<T>::relax(T& a_correction, T& a_residual, int depth, int a_numSmooth)
 {
@@ -912,7 +916,7 @@ void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
 {
   CH_TIME("AMRMultiGrid::solve");
   if (m_verbosity > 4) {
-      pout() << " AMRMultiGrid::solve\n";
+      pout() << "AMRMultiGrid::solve\n";
   }
   init(a_phi, a_rhs, l_max, l_base);
   solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
@@ -928,7 +932,9 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
 
-  pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
+  }
   Vector<T*> uberResidual(a_rhs.size());
   int lowlim = l_base;
   if (l_base > 0)  // we need an ubercorrection one level lower than l_base
@@ -959,7 +965,9 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
 
-  pout() << "AMRMultiGrid::solveNoInitResid " << endl;
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid::solveNoInitResid " << endl;
+  }
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -1026,7 +1034,10 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   bool goMin = iter < m_iterMin ; // iterate if iter < min
-  pout() << "norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << endl;
+  //if (m_verbosity >= 2) ////
+  //  {
+  //     pout() << "      .. (norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << ")" << endl;
+  //  }
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
 
@@ -1285,10 +1296,20 @@ void AMRMultiGrid<T>::revert(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
 }
 
 template <class T>
+void AMRMultiGrid<T>::setVerbose(int a_verbose)
+{
+  CH_TIME("AMRMultiGrid::setVerbose");
+  m_verbosity = a_verbose;
+  for (int img = 0; img < m_mg.size(); img++)
+    {
+      m_mg[img]->m_verbosity     = a_verbose;
+    }
+}
+
+template <class T>
 void AMRMultiGrid<T>::setBottomSolver(int l_max, int l_base)
 {
   
-  //  for (int ilev = 0; ilev <= m_mg.size(); ilev++)
   for (int ilev = l_base; ilev <= l_max; ilev++)
     {
       // only do this if we haven't already set these
@@ -1367,8 +1388,8 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 int ilev, int l_max, int l_base,
                                 int a_AMRMGiter)
 {
-  if (m_verbosity >= 4) {
-      pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid<T>::AMRVCycle (ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << ")" << endl;
   }
 
   if (ilev == l_max)
@@ -1423,7 +1444,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
 
       for (int img = 0; img < m_numMG; img++)
         {
-          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base, img);
+          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base, a_AMRMGiter);
         }
 
       //================= Upsweep ======================
