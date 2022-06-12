@@ -58,8 +58,7 @@ public:
   void lineRelaxRB(const int a_d, FArrayBox& a_phi, const FArrayBox& a_rhs,
       const RealVect& a_dx_vect, const Real& a_alpha, 
       const FArrayBox& a_aCoef, const Real& a_beta, 
-      const FArrayBox& bx, const FArrayBox& by, const FArrayBox& bz, 
-      const int whichPass)
+      const FluxBox& bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
     assert(a_rhs.box().contains(m_b));
@@ -70,7 +69,10 @@ public:
     if (m_verbosity >= 2)
       pout() << "  line direction = " << a_d << ", size = " << N << endl;
 
-    IntVect lsz(bsize[a_d % 3], bsize[(a_d+1) % 3], bsize[(a_d+2) % 3]);
+    // Holds which direction is 0,1,2
+    IntVect id(a_d % 3, (a_d+1) % 3, (a_d+2) % 3);
+    RealVect dx(a_dx_vect[id[0]], a_dx_vect[id[1]], a_dx_vect[id[2]]);
+    IntVect lsz(bsize[id[0]], bsize[id[1]], bsize[id[2]]);
     if (m_verbosity >= 2)
     {
       pout() << "  Looping over " << bloop << endl;
@@ -81,8 +83,9 @@ public:
       IntVect iv = bit();
       if ((iv.sum() % 2) != whichPass) // Do all R then B
         continue; 
-      IntVect liv(iv[a_d % 3], iv[(a_d+1) % 3], iv[(a_d+2) % 3]);
+      IntVect liv(iv[id[0]], iv[id[1]], iv[id[2]]);
       size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]); 
+      Real dx2inv = 1./(dx[0]*dx[0]);
       for (int i=0; i < N; ++i)
       {
         IntVect ix = iv + i*BASISV(a_d);
@@ -93,11 +96,17 @@ public:
         //         \sum_d(  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
         //                - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
         // 2. Copy system into diagonals
+        Real sup = -a_beta*bCoef[id[0]](ix+BASISV(a_d),0)*dx2inv; // i+1 coef
+        Real sub = -a_beta*bCoef[id[0]](ix,0)*dx2inv; // i-1 coef
+        Real diag = a_alpha * a_aCoef(ix,0) - sup - sub; // i coef
+        m_sub[offset + i] = sub;
+        m_diag[offset + i] = diag;
+        m_sup[offset + i] = sup;
       }
       // Solve
-      // Copy phi back
 
       /*
+      // Copy phi back
       for (int i=0; i < N; ++i)
       {
         IntVect ix = iv + i*BASISV(a_d);
