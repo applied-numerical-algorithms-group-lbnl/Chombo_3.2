@@ -512,6 +512,9 @@ protected:
   virtual void levelJacobi(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs);
 
+  virtual void levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                              const LevelData<FArrayBox>& a_rhs);
+
   virtual void homogeneousCFInterp(LevelData<FArrayBox>& a_phif);
 
   virtual void homogeneousCFInterp(LevelData<FArrayBox>& a_phif,

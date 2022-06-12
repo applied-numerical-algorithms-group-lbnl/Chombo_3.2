@@ -640,6 +640,94 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
 
 #endif
 
+void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                                     const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("VCAMRPoissonOp2::levelZlineGSRB");
+  
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  // Recompute the relaxation coefficient if needed.
+  // resetLambda();
+
+  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
+
+  bool a_homo = false;
+
+  DataIterator dit = a_phi.dataIterator();
+
+  // do first red, then black passes
+  for (int whichPass = 0; whichPass <= 1; whichPass++)
+    {
+
+      // fill in intersection of ghostcells and a_phi's boxes
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+            a_homo = true;
+        }
+      }
+
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::exchange");
+        a_phi.exchange(a_phi.interval(), m_exchangeCopier);
+      }
+
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::BCs");
+        // now step through grids...
+        for (dit.begin(); dit.ok(); ++dit)
+          {
+            // invoke physical BC's where necessary
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, a_homo);
+          }
+      }
+
+      for (dit.begin(); dit.ok(); ++dit)
+        {
+          const Box& region = dbl.get(dit());
+          const FluxBox& thisBCoef  = (*m_bCoef)[dit];
+
+#if CH_SPACEDIM == 1
+          FORT_GSRBHELMHOLTZVC1D
+#elif CH_SPACEDIM == 2
+          FORT_GSRBHELMHOLTZVC2D
+#elif CH_SPACEDIM == 3
+          FORT_GSRBHELMHOLTZVC3D
+#else
+          This_will_not_compile!
+#endif
+                                (CHF_FRA(a_phi[dit]),
+                                 CHF_CONST_FRA(a_rhs[dit]),
+                                 CHF_BOX(region),
+                                 CHF_CONST_REALVECT(m_dx_vect),
+                                 CHF_CONST_REAL(m_alpha),
+                                 CHF_CONST_FRA((*m_aCoef)[dit]),
+                                 CHF_CONST_REAL(m_beta),
+#if CH_SPACEDIM >= 1
+                                 CHF_CONST_FRA(thisBCoef[0]),
+#endif
+#if CH_SPACEDIM >= 2
+                                 CHF_CONST_FRA(thisBCoef[1]),
+#endif
+#if CH_SPACEDIM >= 3
+                                 CHF_CONST_FRA(thisBCoef[2]),
+#endif
+#if CH_SPACEDIM >= 4
+                                 This_will_not_compile!
+#endif
+                                 CHF_CONST_FRA(m_lambda[dit]),
+                                 CHF_CONST_INT(whichPass));
+        } // end loop through grids
+    } // end loop through red-black
+}
+
+
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs,
                                int MGiter, int a_ite, int a_depth )

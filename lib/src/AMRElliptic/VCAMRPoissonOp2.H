@@ -240,6 +240,9 @@ protected:
   virtual void levelJacobi(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs);
 
+  virtual void levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                              const LevelData<FArrayBox>& a_rhs);
+
   /// computes flux over face-centered a_facebox.
   virtual void getFlux(FArrayBox&       a_flux,
                        const FArrayBox& a_data,
