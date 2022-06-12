@@ -705,9 +705,6 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                             m_dx_vect, m_alpha, (*m_aCoef)[dit],
                             m_beta, thisBCoef[0], thisBCoef[1], thisBCoef[2],
                             whichPass);
-          // Copy system into diagonals
-          // Solve
-          // Copy phi back
 
           FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),

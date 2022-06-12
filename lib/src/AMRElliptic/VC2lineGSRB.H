@@ -19,10 +19,10 @@
 class BatchSolver
 {
 public:
-  virtual void copyFABRhsDir(const int l, const FArrayBox& rhs) = 0;
-  virtual void setFABBatchDiagsDir(const int l) = 0;
-  virtual void solveFABBatchDir(const int l) = 0;
-  virtual void copyFABSolnDir(const int l, FArrayBox& soln) = 0;
+  virtual void copyFABRhsDir(const int l, const FArrayBox& rhs) {};
+  virtual void setFABBatchDiagsDir(const int l) {};
+  virtual void solveFABBatchDir(const int l) {};
+  virtual void copyFABSolnDir(const int l, FArrayBox& soln) {};
 
 // private:
 public:
@@ -51,29 +51,26 @@ public:
     m_rhs = m_tmp.dataPtr(0); 
   }
 
-  void lineRelaxRB(int a_d, FArrayBox& a_phi, const FArrayBox& a_rhs,
+  // Does a line relaxation for this op in direction d:
+  // L phi = alpha * acoef_i * phi_i - beta * 
+  //         \sum_d(  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
+  //                - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+  void lineRelaxRB(const int a_d, FArrayBox& a_phi, const FArrayBox& a_rhs,
       const RealVect& a_dx_vect, const Real& a_alpha, 
       const FArrayBox& a_aCoef, const Real& a_beta, 
       const FArrayBox& bx, const FArrayBox& by, const FArrayBox& bz, 
-      int whichPass)
+      const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
-  }
+    assert(a_rhs.box().contains(m_b));
 
-  virtual void copyFABRhsDir(const int l, const FArrayBox& rhs)
-  {
-    if (m_verbosity >= 2)
-      pout() << "  Copying FAB into RHS for direction l = " << l << endl;
-    assert(rhs.box().contains(m_b));
-
-    // Model problem to solve: diags, rhs
-    int N = m_b.size(l); // size in l dir
-    Box bloop(m_b.smallEnd(), m_b.bigEnd()-(N-1)*BASISV(l)); // 2D box
+    int N = m_b.size(a_d); // size in dir of solve
+    Box bloop(m_b.smallEnd(), m_b.bigEnd()-(N-1)*BASISV(a_d)); // 2D box
     IntVect bsize = m_b.size(); // 3D box size for offsets
     if (m_verbosity >= 2)
-      pout() << "  line direction l = " << l << ", size = " << N << endl;
+      pout() << "  line direction = " << a_d << ", size = " << N << endl;
 
-    IntVect lsz(bsize[l % 3], bsize[(l+1) % 3], bsize[(l+2) % 3]);
+    IntVect lsz(bsize[a_d % 3], bsize[(a_d+1) % 3], bsize[(a_d+2) % 3]);
     if (m_verbosity >= 2)
     {
       pout() << "  Looping over " << bloop << endl;
@@ -82,14 +79,42 @@ public:
     for (BoxIterator bit(bloop); bit.ok(); bit.next())
     {
       IntVect iv = bit();
-      IntVect liv(iv[l % 3], iv[(l+1) % 3], iv[(l+2) % 3]);
+      if ((iv.sum() % 2) != whichPass) // Do all R then B
+        continue; 
+      IntVect liv(iv[a_d % 3], iv[(a_d+1) % 3], iv[(a_d+2) % 3]);
       size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]); 
       for (int i=0; i < N; ++i)
       {
-        IntVect ix = iv + i*BASISV(l);
-        m_rhs[offset + i] = rhs(ix,0); // TODO - more than 1 comp?
+        IntVect ix = iv + i*BASISV(a_d);
+        // 1. Copy rhs into direction rhs
+        m_rhs[offset + i] = a_rhs(ix,0); // TODO - more than 1 comp?
+
+        // L phi = alpha * acoef_i * phi_i - beta * 
+        //         \sum_d(  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
+        //                - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+        // 2. Copy system into diagonals
       }
+      // Solve
+      // Copy phi back
+
+      /*
+      for (int i=0; i < N; ++i)
+      {
+        IntVect ix = iv + i*BASISV(a_d);
+        // 1. Copy rhs into direction rhs
+        m_rhs[offset + i] = a_rhs(ix,0); // TODO - more than 1 comp?
+      }
+      */
     }
+  }
+
+#if 0
+  virtual void copyFABRhsDir(const int l, const FArrayBox& rhs)
+  {
+    if (m_verbosity >= 2)
+      pout() << "  Copying FAB into RHS for direction l = " << l << endl;
+    assert(rhs.box().contains(m_b));
+
   }
 
   virtual void setFABBatchRhsDir(const int l)
@@ -275,6 +300,7 @@ public:
     if (m_verbosity >= 1)
       pout() << "Batch solve complete!" << endl;
   }
+#endif
 
 private: 
 
