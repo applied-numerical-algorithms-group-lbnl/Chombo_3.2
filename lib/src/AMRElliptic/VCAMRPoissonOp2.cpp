@@ -24,6 +24,7 @@
 #include "VCAMRPoissonOp2.H"
 #include "VCAMRPoissonOpF_F.H"
 #include "DebugOut.H"
+#include "VC2lineGSRB.H"
 
 #include "NamespaceHeader.H"
 
@@ -457,7 +458,7 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
   // I'm pretty sure this is not necessary. bvs -- flux calculations use
   // outer ghost cells, but not inner ones
   // phiFineRef.exchange(a_phiFine.interval());
-  IntVect phiGhost = phiFineRef.ghostVect();
+  // IntVect phiGhost = phiFineRef.ghostVect();
   int ncomps = a_phiFine.nComp();
 
   CH_START(t3);
@@ -640,6 +641,9 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
 
 #endif
 
+#if CH_SPACEDIM == 3
+
+// Only for 3D with Z direction needing anisotropic line relaxation
 void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                                      const LevelData<FArrayBox>& a_rhs)
 {
@@ -673,6 +677,7 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
         }
       }
 
+      // TODO - only 1 exchange neccesary for 1 R, 1 B sweep of GSRB?
       {
         CH_TIME("VCAMRPoissonOp2::levelGSRB::exchange");
         a_phi.exchange(a_phi.interval(), m_exchangeCopier);
@@ -693,39 +698,33 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           const Box& region = dbl.get(dit());
           const FluxBox& thisBCoef  = (*m_bCoef)[dit];
 
-#if CH_SPACEDIM == 1
-          FORT_GSRBHELMHOLTZVC1D
-#elif CH_SPACEDIM == 2
-          FORT_GSRBHELMHOLTZVC2D
-#elif CH_SPACEDIM == 3
-          FORT_GSRBHELMHOLTZVC3D
-#else
-          This_will_not_compile!
-#endif
-                                (CHF_FRA(a_phi[dit]),
+          const int zdir = 2; // only doing this in z direction
+          VC2lineGSRB zebra(region);
+          // Do a line relaxation step
+          zebra.lineRelaxRB(zdir, a_phi[dit], a_rhs[dit],
+                            m_dx_vect, m_alpha, (*m_aCoef)[dit],
+                            m_beta, thisBCoef[0], thisBCoef[1], thisBCoef[2],
+                            whichPass);
+          // Copy system into diagonals
+          // Solve
+          // Copy phi back
+
+          FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),
                                  CHF_BOX(region),
                                  CHF_CONST_REALVECT(m_dx_vect),
                                  CHF_CONST_REAL(m_alpha),
                                  CHF_CONST_FRA((*m_aCoef)[dit]),
                                  CHF_CONST_REAL(m_beta),
-#if CH_SPACEDIM >= 1
                                  CHF_CONST_FRA(thisBCoef[0]),
-#endif
-#if CH_SPACEDIM >= 2
                                  CHF_CONST_FRA(thisBCoef[1]),
-#endif
-#if CH_SPACEDIM >= 3
                                  CHF_CONST_FRA(thisBCoef[2]),
-#endif
-#if CH_SPACEDIM >= 4
-                                 This_will_not_compile!
-#endif
                                  CHF_CONST_FRA(m_lambda[dit]),
                                  CHF_CONST_INT(whichPass));
         } // end loop through grids
     } // end loop through red-black
 }
+#endif 
 
 
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
