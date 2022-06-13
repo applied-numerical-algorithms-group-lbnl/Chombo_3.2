@@ -53,55 +53,96 @@ public:
 
   // Does a line relaxation for this op in direction d:
   // L phi = alpha * acoef_i * phi_i - beta * 
-  //         \sum_d(  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
-  //                - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
-  void lineRelaxRB(const int a_d, FArrayBox& a_phi, const FArrayBox& a_rhs,
+  //         \sum_d (  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
+  //                 - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+  // Line relaxation in direction l to solve Lphi=b is:
+  // f = \phi - \lambda (\sum_d' offdiag(L_d') \phi - b)
+  // M = L_l + \sum_d' diag(L_d')
+  // phi := (I + \lambda M) \ f 
+  void lineRelaxRB(const int l, FArrayBox& a_phi, const FArrayBox& a_rhs,
       const RealVect& a_dx_vect, const Real& a_alpha, 
       const FArrayBox& a_aCoef, const Real& a_beta, 
-      const FluxBox& bCoef, const int whichPass)
+      const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
     assert(a_rhs.box().contains(m_b));
 
-    int N = m_b.size(a_d); // size in dir of solve
-    Box bloop(m_b.smallEnd(), m_b.bigEnd()-(N-1)*BASISV(a_d)); // 2D box
-    IntVect bsize = m_b.size(); // 3D box size for offsets
+    const int N = m_b.size(l); // size in dir of solve
+    const Box bloop(m_b.smallEnd(), m_b.bigEnd()-(N-1)*BASISV(l)); // 2D box
+    const IntVect bsize = m_b.size(); // 3D box size for offsets
     if (m_verbosity >= 2)
-      pout() << "  line direction = " << a_d << ", size = " << N << endl;
+      pout() << "  line direction = " << l << ", size = " << N << endl;
 
     // Holds which direction is 0,1,2
-    IntVect id(a_d % 3, (a_d+1) % 3, (a_d+2) % 3);
-    RealVect dx(a_dx_vect[id[0]], a_dx_vect[id[1]], a_dx_vect[id[2]]);
-    IntVect lsz(bsize[id[0]], bsize[id[1]], bsize[id[2]]);
+    const IntVect id(l % 3, (l+1) % 3, (l+2) % 3);
+    const RealVect dx(a_dx_vect[id[0]], a_dx_vect[id[1]], a_dx_vect[id[2]]);
+    const IntVect lsz(bsize[id[0]], bsize[id[1]], bsize[id[2]]);
     if (m_verbosity >= 2)
     {
       pout() << "  Looping over " << bloop << endl;
       pout() << "  Shifted sizes " << lsz << endl;
     }
+    // Basis index vectors in line directions
+    const IntVect e0 = BASISV(id[0]);
+    const IntVect e1 = BASISV(id[1]);
+    const IntVect e2 = BASISV(id[2]);
     for (BoxIterator bit(bloop); bit.ok(); bit.next())
     {
-      IntVect iv = bit();
+      const IntVect iv = bit();
       if ((iv.sum() % 2) != whichPass) // Do all R then B
         continue; 
-      IntVect liv(iv[id[0]], iv[id[1]], iv[id[2]]);
-      size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]); 
-      Real dx2inv = 1./(dx[0]*dx[0]);
+      const IntVect liv(iv[id[0]], iv[id[1]], iv[id[2]]);
+      const size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]); 
       for (int i=0; i < N; ++i)
       {
-        IntVect ix = iv + i*BASISV(a_d);
-        // 1. Copy rhs into direction rhs
-        m_rhs[offset + i] = a_rhs(ix,0); // TODO - more than 1 comp?
+        const IntVect ix = iv + i*e0;
+        // TODO - more than 1 comp?        
+        // 1. Calculate line relax rhs, copy into direction rhs
+        // f = \phi - \lambda (\sum_d' offdiag(L_d') \phi - b)
+        Real lres = -a_rhs(ix,0);
+        lres += -a_beta*a_bCoef[id[1]](ix+e1,0)*a_phi(ix+e1,0)/(dx[1]*dx[1]);
+        lres += -a_beta*a_bCoef[id[1]](ix,0)*a_phi(ix-e1,0)/(dx[1]*dx[1]);
+        lres += -a_beta*a_bCoef[id[2]](ix+e2,0)*a_phi(ix+e2,0)/(dx[2]*dx[2]);
+        lres += -a_beta*a_bCoef[id[2]](ix,0)*a_phi(ix-e2,0)/(dx[2]*dx[2]);
+        // 1.1 What is the line relaxation coef - just the terms in line res?
+        Real lambda = 0;
+        lambda += a_beta*a_bCoef[id[1]](ix+e1,0)/(dx[1]*dx[1]);
+        lambda += a_beta*a_bCoef[id[1]](ix,0)/(dx[1]*dx[1]);
+        lambda += a_beta*a_bCoef[id[1]](ix+e2,0)/(dx[2]*dx[2]);
+        lambda += a_beta*a_bCoef[id[1]](ix,0)/(dx[2]*dx[2]);
+        lambda = 1.0/lambda;
+        // Form the line rhs
+        m_rhs[offset + i] = a_phi(ix,0) - lambda*lres;
 
-        // L phi = alpha * acoef_i * phi_i - beta * 
-        //         \sum_d(  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
-        //                - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+        // M = L_d + \sum_d' diag(L_d')
+        // solve A \ f = (I + \lambda M) \ f 
+        //
+        // diag = I + \lambda
+        //        \sum_d ( alpha * acoef_i + beta * 
+        //                 (b_d_i+1/2 + b_d_i-1/2) /dx_d^2 )
+        //
+        // sub =  -beta * 
+        //                 (b_d_i+1/2 + b_d_i-1/2) /dx_d^2 )
+        //         (alpha * acoef_i * phi_i - beta * 
+        //           (  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
+        //            - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+        //            + 
+        //         (alpha * acoef_i * phi_i - beta * 
+        //           (  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
+        //            - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
+        //            + 
+        //
         // 2. Copy system into diagonals
+/*
         Real sup = -a_beta*bCoef[id[0]](ix+BASISV(a_d),0)*dx2inv; // i+1 coef
         Real sub = -a_beta*bCoef[id[0]](ix,0)*dx2inv; // i-1 coef
         Real diag = a_alpha * a_aCoef(ix,0) - sup - sub; // i coef
+        //  
+        diag += 
         m_sub[offset + i] = sub;
         m_diag[offset + i] = diag;
         m_sup[offset + i] = sup;
+*/
       }
       // Solve
 
