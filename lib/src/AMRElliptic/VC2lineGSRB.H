@@ -6,7 +6,7 @@ class VC2lineGSRB
 {
 public:
   // Note, if a_dx is not provided unit dx is used
-  VC2lineGSRB(Box a_b, RealVect a_dx=RealVect::Unit) : m_b(a_b), m_dx(a_dx)
+  VC2lineGSRB(Box a_b, RealVect a_dx) : m_b(a_b), m_dx(a_dx)
   {
     assert(SpaceDim == 3); // Only works for 3D
 
@@ -32,9 +32,8 @@ public:
   // M = L_d + \sum_d' diag(L_d')
   // phi := (I + \lambda M) \ f 
   void lineRelaxRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
-      const RealVect& a_dx_vect, const Real& a_alpha, 
-      const FArrayBox& a_aCoef, const Real& a_beta, 
-      const FluxBox& a_bCoef, const int whichPass)
+      const Real& a_alpha, const FArrayBox& a_aCoef, 
+      const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
     assert(a_rhs.box().contains(m_b));
@@ -47,7 +46,7 @@ public:
 
     // Holds which direction is 0,1,2
     const IntVect id(d % 3, (d+1) % 3, (d+2) % 3);
-    const RealVect dx(a_dx_vect[id[0]], a_dx_vect[id[1]], a_dx_vect[id[2]]);
+    const RealVect dx(m_dx[id[0]], m_dx[id[1]], m_dx[id[2]]);
     const IntVect lsz(bsize[id[0]], bsize[id[1]], bsize[id[2]]);
     if (m_verbosity >= 2)
     {
@@ -116,7 +115,7 @@ public:
       for (int i=0; i < N; ++i)
       {
         IntVect ix = iv + i*e0;
-        // a_phi(ix,0) = rhs[i]; // TODO - more than 1 comp?
+        a_phi(ix,0) = rhs[i]; // TODO - more than 1 comp?
       }
     }
   }

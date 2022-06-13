@@ -699,10 +699,10 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           const FluxBox& thisBCoef  = (*m_bCoef)[dit];
 
           const int zdir = 2; // only doing this in z direction
-          VC2lineGSRB zebra(region);
+          VC2lineGSRB zebra(region, m_dx_vect);
           // Do a line relaxation step
           zebra.lineRelaxRB(zdir, a_phi[dit], a_rhs[dit],
-                            m_dx_vect, m_alpha, (*m_aCoef)[dit],
+                            m_alpha, (*m_aCoef)[dit],
                             m_beta, thisBCoef, whichPass);
 
           FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
