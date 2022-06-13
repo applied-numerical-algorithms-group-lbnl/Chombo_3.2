@@ -68,6 +68,11 @@ public:
       double* diag = m_diag+offset; 
       double* sup = m_sup+offset; 
       double* rhs = m_rhs+offset; 
+      const double tol = 1e-14;
+      if (m_verbosity >= 2)
+        pout() << "  line solve on " << iv << "->" << (iv+(N-1)*e0) << endl;
+      if (m_verbosity >= 3)
+        pout() << "Solving this system [sub, diag, sup] = rhs:" << endl;
       for (int i=0; i < N; ++i)
       {
         const IntVect ix = iv + i*e0;
@@ -85,7 +90,7 @@ public:
         Ldiagnotd += a_beta*a_bCoef[id[1]](ix,0)/(dx[1]*dx[1]);
         Ldiagnotd += a_beta*a_bCoef[id[2]](ix+e2,0)/(dx[2]*dx[2]);
         Ldiagnotd += a_beta*a_bCoef[id[2]](ix,0)/(dx[2]*dx[2]);
-        Real lambda = (1./4.)/Ldiagnotd; // line RB weight
+        Real lambda = (abs(Ldiagnotd) > tol) ? (1./4.)/Ldiagnotd : 0; // line RB weight
         // Form the line rhs
         rhs[i] = a_phi(ix,0) - lambda*lres;
 
@@ -104,6 +109,9 @@ public:
         sub[i] = lambda*Msub;
         diag[i] = 1 + lambda*Mdiag;
         sup[i] = lambda*Msup;
+        if (m_verbosity == 3)
+          pout() << "[" << sub[i] << ", " << diag[i] << ", " << sup[i] << "] = "
+            <<  rhs[i] << endl;
       }
 
       // Solve
