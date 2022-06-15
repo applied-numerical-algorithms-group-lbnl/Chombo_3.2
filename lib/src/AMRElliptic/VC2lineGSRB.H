@@ -28,7 +28,8 @@ public:
   //         \sum_d (  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
   //                 - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
   // Line relaxation in direction d to solve Lphi=b is:
-  // f = \phi - \lambda (\sum_d' offdiag(L_d') \phi - b)
+  // f = b + beta 
+  //     \sum_d' (b_d'_i+1/2 \phi^k_i+1 + b_d'_i-1/2 \phi^k_i-1)/dx_d'^2
   // M = L_d + \sum_d' diag(L_d')
   // phi := (I + \lambda M) \ f 
   void lineRelaxRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
@@ -68,7 +69,6 @@ public:
       double* diag = m_diag+offset; 
       double* sup = m_sup+offset; 
       double* rhs = m_rhs+offset; 
-      const double tol = 1e-14;
       if (m_verbosity >= 2)
         pout() << "  line solve on " << iv << "->" << (iv+(N-1)*e0) << endl;
       if (m_verbosity >= 3)
@@ -78,37 +78,35 @@ public:
         const IntVect ix = iv + i*e0;
         // TODO - more than 1 comp?        
         // 1. Calculate line relax rhs, copy into direction rhs
-        // f = \phi - \lambda (\sum_d' offdiag(L_d') \phi - b)
-        Real lres = -a_rhs(ix,0);
-        lres += -a_beta*a_bCoef[id[1]](ix+e1,0)*a_phi(ix+e1,0)/(dx[1]*dx[1]);
-        lres += -a_beta*a_bCoef[id[1]](ix,0)*a_phi(ix-e1,0)/(dx[1]*dx[1]);
-        lres += -a_beta*a_bCoef[id[2]](ix+e2,0)*a_phi(ix+e2,0)/(dx[2]*dx[2]);
-        lres += -a_beta*a_bCoef[id[2]](ix,0)*a_phi(ix-e2,0)/(dx[2]*dx[2]);
-        // 1.1 What is the line relaxation coef - just the d' diag terms?
+        // f = b + beta 
+        //     \sum_d' (b_d'_i+1/2 \phi^k_i+1 + b_d'_i-1/2 \phi^k_i-1)/dx_d'^2
+        Real lres = a_rhs(ix,0);
+        lres += a_beta*a_bCoef[id[1]](ix+e1,0)*a_phi(ix+e1,0)/(dx[1]*dx[1]);
+        lres += a_beta*a_bCoef[id[1]](ix,0)*a_phi(ix-e1,0)/(dx[1]*dx[1]);
+        lres += a_beta*a_bCoef[id[2]](ix+e2,0)*a_phi(ix+e2,0)/(dx[2]*dx[2]);
+        lres += a_beta*a_bCoef[id[2]](ix,0)*a_phi(ix-e2,0)/(dx[2]*dx[2]);
+        rhs[i] = lres;
+
+        // 2. Copy system into diagonals
+        // M = L_d + \sum_d' diag(L_d')
+        // For M
+        // diag = alpha * acoef_i 
+        //        + \sum_d&d' ( beta * (b_d_i+1/2 + b_d_i-1/2)/dx_d^2 )
+        // sub =  -beta * b_d_i-1/2 / dx_d^2
+        // sup =  -beta * b_d_i+1/2 / dx_d^2
+        //
         Real Ldiagnotd = 0;
         Ldiagnotd += a_beta*a_bCoef[id[1]](ix+e1,0)/(dx[1]*dx[1]);
         Ldiagnotd += a_beta*a_bCoef[id[1]](ix,0)/(dx[1]*dx[1]);
         Ldiagnotd += a_beta*a_bCoef[id[2]](ix+e2,0)/(dx[2]*dx[2]);
         Ldiagnotd += a_beta*a_bCoef[id[2]](ix,0)/(dx[2]*dx[2]);
-        Real lambda = (abs(Ldiagnotd) > tol) ? (1./4.)/Ldiagnotd : 0; // line RB weight
-        // Form the line rhs
-        rhs[i] = a_phi(ix,0) - lambda*lres;
-
-        // 2. Copy system into diagonals
-        // M = L_d + \sum_d' diag(L_d')
-        // For M
-        // diag = \sum_d ( alpha * acoef_i + beta * 
-        //                 (b_d_i+1/2 + b_d_i-1/2)/dx_d^2 )
-        // sub =  -beta * b_d_i-1/2 / dx_d^2
-        // sup =  -beta * b_d_i+1/2 / dx_d^2
-        //
         Real Msup = -a_beta*a_bCoef[id[0]](ix+e0,0)/(dx[0]*dx[0]); // i+1 coef
         Real Msub = -a_beta*a_bCoef[id[0]](ix,0)/(dx[0]*dx[0]); // i-1 coef
         Real Mdiag = a_alpha * a_aCoef(ix,0) - Msup - Msub + Ldiagnotd; // diag
-        // solve A \ f = (I + \lambda M) \ f 
-        sub[i] = lambda*Msub;
-        diag[i] = 1 + lambda*Mdiag;
-        sup[i] = lambda*Msup;
+        if (i>0)
+          sub[i-1] = Msub;
+        diag[i] = Mdiag;
+        sup[i] = Msup;
         if (m_verbosity == 3)
           pout() << "[" << sub[i] << ", " << diag[i] << ", " << sup[i] << "] = "
             <<  rhs[i] << endl;
@@ -124,6 +122,8 @@ public:
       {
         IntVect ix = iv + i*e0;
         a_phi(ix,0) = rhs[i]; // TODO - more than 1 comp?
+        if (m_verbosity == 3)
+          pout() << "soln[" << i << "] = " << rhs[i] << endl;
       }
     }
   }
