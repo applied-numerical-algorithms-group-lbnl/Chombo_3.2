@@ -103,7 +103,7 @@ public:
         Real Msup = -a_beta*a_bCoef[id[0]](ix+e0,0)/(dx[0]*dx[0]); // i+1 coef
         Real Msub = -a_beta*a_bCoef[id[0]](ix,0)/(dx[0]*dx[0]); // i-1 coef
         Real Mdiag = a_alpha * a_aCoef(ix,0) - Msup - Msub + Ldiagnotd; // diag
-        if (i>0)
+        if (i>0) // sub index is shifted to start at 0
           sub[i-1] = Msub;
         diag[i] = Mdiag;
         sup[i] = Msup;

@@ -698,12 +698,15 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           const Box& region = dbl.get(dit());
           const FluxBox& thisBCoef  = (*m_bCoef)[dit];
 
-          const int zdir = 2; // only doing this in z direction
           VC2lineGSRB zebra(region, m_dx_vect);
           // Do a line relaxation step
-          zebra.lineRelaxRB(zdir, a_phi[dit], a_rhs[dit],
-                            m_alpha, (*m_aCoef)[dit],
-                            m_beta, thisBCoef, whichPass);
+          /*
+          const int dir = 2; // only doing this in z direction
+          for (int d=0; d < SpaceDim; ++d)
+            zebra.lineRelaxRB(dir, a_phi[dit], a_rhs[dit],
+                              m_alpha, (*m_aCoef)[dit],
+                              m_beta, thisBCoef, whichPass);
+          */
 
           FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),
@@ -717,6 +720,8 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                                  CHF_CONST_FRA(thisBCoef[2]),
                                  CHF_CONST_FRA(m_lambda[dit]),
                                  CHF_CONST_INT(whichPass));
+          /*
+          */
         } // end loop through grids
     } // end loop through red-black
 }
