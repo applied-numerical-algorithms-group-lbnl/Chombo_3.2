@@ -18,22 +18,22 @@ public:
     // NOTE: these are just chunks of memory, with l-major indexing
     // --> Don't index by [iv]
     m_sub = m_diags.dataPtr(0);
-    m_diag = m_diags.dataPtr(1); 
-    m_sup = m_diags.dataPtr(2); 
-    m_rhs = m_tmp.dataPtr(0); 
+    m_diag = m_diags.dataPtr(1);
+    m_sup = m_diags.dataPtr(2);
+    m_rhs = m_tmp.dataPtr(0);
   }
 
   // Does a line relaxation for this op in direction d:
-  // L phi = alpha * acoef_i * phi_i - beta * 
+  // L phi = alpha * acoef_i * phi_i - beta *
   //         \sum_d (  b_d_i+1/2 * (phi_i+1 - phi_i)/dx_d^2
   //                 - b_d_i-1/2 * (phi_i - phi_i-1)/dx_d^2 )
   // Line relaxation in direction d to solve Lphi=b is:
-  // f = b + beta 
+  // f = b + beta
   //     \sum_d' (b_d'_i+1/2 \phi^k_i+1 + b_d'_i-1/2 \phi^k_i-1)/dx_d'^2
   // M = L_d + \sum_d' diag(L_d')
-  // phi := (I + \lambda M) \ f 
+  // phi := (I + \lambda M) \ f
   void lineRelaxRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
-      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef, 
+      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef,
       const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
@@ -62,13 +62,13 @@ public:
     {
       const IntVect iv = bit();
       if ((iv.sum() % 2) != whichPass) // Do all R then B
-        continue; 
+        continue;
       const IntVect liv(iv[id[0]], iv[id[1]], iv[id[2]]);
-      const size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]); 
+      const size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]);
       double* sub = m_sub+offset;
-      double* diag = m_diag+offset; 
-      double* sup = m_sup+offset; 
-      double* rhs = m_rhs+offset; 
+      double* diag = m_diag+offset;
+      double* sup = m_sup+offset;
+      double* rhs = m_rhs+offset;
       if (m_verbosity >= 2)
         pout() << "  line solve on " << iv << "->" << (iv+(N-1)*e0) << endl;
       if (m_verbosity >= 3)
@@ -76,9 +76,9 @@ public:
       for (int i=0; i < N; ++i)
       {
         const IntVect ix = iv + i*e0;
-        // TODO - more than 1 comp?        
+        // TODO - more than 1 comp?
         // 1. Calculate line relax rhs, copy into direction rhs
-        // f = b + beta 
+        // f = b + beta
         //     \sum_d' (b_d'_i+1/2 \phi^k_i+1 + b_d'_i-1/2 \phi^k_i-1)/dx_d'^2
         Real lres = a_rhs(ix,0);
         lres += a_beta*a_bCoef[id[1]](ix+e1,0)*a_phi(ix+e1,0)/(dx[1]*dx[1]);
@@ -86,16 +86,16 @@ public:
         lres += a_beta*a_bCoef[id[2]](ix+e2,0)*a_phi(ix+e2,0)/(dx[2]*dx[2]);
         lres += a_beta*a_bCoef[id[2]](ix,0)*a_phi(ix-e2,0)/(dx[2]*dx[2]);
         // 1.1 Correct for ghost cells in this direction
-        if (i==0) 
+        if (i==0)
           lres += a_beta*a_bCoef[id[0]](ix,0)*a_phi(ix-e0,0)/(dx[0]*dx[0]);
-        if (i==N-1) 
+        if (i==N-1)
           lres += a_beta*a_bCoef[id[0]](ix+e0,0)*a_phi(ix+e0,0)/(dx[0]*dx[0]);
         rhs[i] = lres;
 
         // 2. Copy system into diagonals
         // M = L_d + \sum_d' diag(L_d')
         // For M
-        // diag = alpha * acoef_i 
+        // diag = alpha * acoef_i
         //        + \sum_d&d' ( beta * (b_d_i+1/2 + b_d_i-1/2)/dx_d^2 )
         // sub =  -beta * b_d_i-1/2 / dx_d^2
         // sup =  -beta * b_d_i+1/2 / dx_d^2
@@ -119,10 +119,10 @@ public:
           else
             pout() << "[ - , ";
           pout()  << diag[i] << ", ";
-          if (i<N-1) 
-            pout() << sup[i] << "]"; 
+          if (i<N-1)
+            pout() << sup[i] << "]";
           else
-            pout() << " - ]"; 
+            pout() << " - ]";
           pout() << " = " << rhs[i] << endl;
         }
       }
@@ -150,18 +150,18 @@ public:
     {
       const IntVect iv = bit();
       a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
-      for (int d=0; d < SpaceDim; ++d)
+      for (int l=0; l < SpaceDim; ++l)
       {
-        a_res(iv,0) -= a_beta*a_bCoef[d](iv+b[d],0)
-                       *(a_phi(iv+b[d],0) - a_phi(iv,0)) / (dx[d]*dx[d]);
-        a_res(iv,0) += a_beta*a_bCoef[d](iv,0)
-                       *(a_phi(iv,0) - a_phi(iv-b[d],0)) / (dx[d]*dx[d]);
+        a_res(iv,0) -= a_beta*a_bCoef[l](iv+b[l],0)
+                       *(a_phi(iv+b[l],0) - a_phi(iv,0)) / (dx[l]*dx[l]);
+        a_res(iv,0) += a_beta*a_bCoef[l](iv,0)
+                       *(a_phi(iv,0) - a_phi(iv-b[l],0)) / (dx[l]*dx[l]);
       }
     }
   }
 
-  void relaxGSRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
-      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef, 
+  void relaxGSRB(FArrayBox& a_phi, const FArrayBox& a_rhs,
+      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef,
       const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::relaxGSRB");
@@ -176,7 +176,7 @@ public:
     {
       const IntVect iv = bit();
       if ((iv.sum() % 2) != whichPass) // Do all R then B
-        continue; 
+        continue;
       a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
       Real rcoef = a_alpha*a_aCoef(iv,0);
       for (int d=0; d < SpaceDim; ++d)
@@ -193,7 +193,7 @@ public:
     }
   }
 
-private: 
+private:
 
 // TODO change these to private eventually
 public:

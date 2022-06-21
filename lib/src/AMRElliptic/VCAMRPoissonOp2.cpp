@@ -133,7 +133,7 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
 }
 
 void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
-                              LevelData<FArrayBox>& a_res, 
+                              LevelData<FArrayBox>& a_res,
                               const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRPoissonOp2::preCond");
@@ -167,7 +167,7 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
       BoxIterator bit(res.box());
       for (bit.begin(); bit.ok(); ++bit) {
           IntVect iv = bit();
-          phi(iv, 0) += lambda(iv, 0) * res(iv, 0); 
+          phi(iv, 0) += lambda(iv, 0) * res(iv, 0);
       }
     }
 
@@ -648,7 +648,7 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                                      const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRPoissonOp2::levelZlineGSRB");
-  
+
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
   CH_assert(a_phi.ghostVect() >= IntVect::Unit);
@@ -700,14 +700,15 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
 
           VC2lineGSRB zebra(region, m_dx_vect);
           // Do a line relaxation step
-          /*
-          const int dir = 2; // only doing this in z direction
-          for (int d=0; d < SpaceDim; ++d)
-            zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit],
+          const int d = 2; // only doing this in z direction
+          // for (int d=0; d < SpaceDim; ++d)
+            zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit], m_lambda[dit],
                               m_alpha, (*m_aCoef)[dit],
                               m_beta, thisBCoef, whichPass);
+          /*
           */
 
+          /*
           FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),
                                  CHF_BOX(region),
@@ -720,12 +721,11 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                                  CHF_CONST_FRA(thisBCoef[2]),
                                  CHF_CONST_FRA(m_lambda[dit]),
                                  CHF_CONST_INT(whichPass));
-          /*
           */
         } // end loop through grids
     } // end loop through red-black
 }
-#endif 
+#endif
 
 
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
@@ -733,24 +733,24 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                int MGiter, int a_ite, int a_depth )
 {
   CH_TIME("VCAMRPoissonOp2::levelGSRB");
-  
+
   if (m_print) {
       char iter_str[100];
       sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
-      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl; 
-      //this->write(&a_rhs, iter_str); 
+      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl;
+      //this->write(&a_rhs, iter_str);
       const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
       const ProblemDomain&     levelDomain = levelGrids.physDomain();
       Vector<DisjointBoxLayout> grids;
       grids.resize(1);
       grids[0] = levelGrids;
-      
+
       Box domain = levelDomain.domainBox();
 
       int numPlotComps = 2;
 
-      string headName("PHI");  
-      string rhsName("RHS");  
+      string headName("PHI");
+      string rhsName("RHS");
       Vector<string> vectName(numPlotComps);
       vectName[0] = headName;
       vectName[1] = rhsName;
@@ -1160,8 +1160,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   for (int i = 1; i < a_grids.size(); i++)
     {
-      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];, 
-             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];, 
+      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];,
+             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];,
              m_dx[i][2] = m_dx[i-1][2] / m_refRatios[i-1];)
 
       m_domains[i] = m_domains[i-1];
@@ -1247,8 +1247,8 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   if (ref > 0)
   {
-    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-           dxCrse[1] = m_dx[ref-1][1];, 
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
            dxCrse[2] = m_dx[ref-1][2];)
   }
 
@@ -1401,8 +1401,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   }
   else if (ref ==  m_domains.size()-1)
   {
-    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-           dxCrse[1] = m_dx[ref-1][1];, 
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
            dxCrse[2] = m_dx[ref-1][2];)
 
     // finest AMR level
@@ -1419,8 +1419,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     }
   else
     {
-      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-             dxCrse[1] = m_dx[ref-1][1];, 
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+             dxCrse[1] = m_dx[ref-1][1];,
              dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define
