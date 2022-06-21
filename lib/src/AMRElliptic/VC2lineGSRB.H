@@ -33,7 +33,7 @@ public:
   // M = L_d + \sum_d' diag(L_d')
   // phi := (I + \lambda M) \ f 
   void lineRelaxRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
-      const Real& a_alpha, const FArrayBox& a_aCoef, 
+      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef, 
       const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIME("VC2lineGSRB::lineRelaxRB");
@@ -58,7 +58,7 @@ public:
     const IntVect e0 = BASISV(id[0]);
     const IntVect e1 = BASISV(id[1]);
     const IntVect e2 = BASISV(id[2]);
-    for (BoxIterator bit(bloop); bit.ok(); bit.next())
+    for (BoxIterator bit(bloop); (whichPass < 2) && bit.ok(); bit.next())
     {
       const IntVect iv = bit();
       if ((iv.sum() % 2) != whichPass) // Do all R then B
@@ -85,6 +85,11 @@ public:
         lres += a_beta*a_bCoef[id[1]](ix,0)*a_phi(ix-e1,0)/(dx[1]*dx[1]);
         lres += a_beta*a_bCoef[id[2]](ix+e2,0)*a_phi(ix+e2,0)/(dx[2]*dx[2]);
         lres += a_beta*a_bCoef[id[2]](ix,0)*a_phi(ix-e2,0)/(dx[2]*dx[2]);
+        // 1.1 Correct for ghost cells in this direction
+        if (i==0) 
+          lres += a_beta*a_bCoef[id[0]](ix,0)*a_phi(ix-e0,0)/(dx[0]*dx[0]);
+        if (i==N-1) 
+          lres += a_beta*a_bCoef[id[0]](ix+e0,0)*a_phi(ix+e0,0)/(dx[0]*dx[0]);
         rhs[i] = lres;
 
         // 2. Copy system into diagonals
@@ -108,8 +113,18 @@ public:
         diag[i] = Mdiag;
         sup[i] = Msup;
         if (m_verbosity == 3)
-          pout() << "[" << sub[i] << ", " << diag[i] << ", " << sup[i] << "] = "
-            <<  rhs[i] << endl;
+        {
+          if (i>0) // sub index is shifted to start at 0
+            pout() << "[" << sub[i-1] << ", ";
+          else
+            pout() << "[ - , ";
+          pout()  << diag[i] << ", ";
+          if (i<N-1) 
+            pout() << sup[i] << "]"; 
+          else
+            pout() << " - ]"; 
+          pout() << " = " << rhs[i] << endl;
+        }
       }
 
       // Solve
@@ -125,6 +140,56 @@ public:
         if (m_verbosity == 3)
           pout() << "soln[" << i << "] = " << rhs[i] << endl;
       }
+    }
+    // Calculate the residual
+    IntVect b[SpaceDim];
+    b[0] = BASISV(0);
+    b[1] = BASISV(1);
+    b[2] = BASISV(2);
+    for (BoxIterator bit(m_b); bit.ok(); bit.next())
+    {
+      const IntVect iv = bit();
+      a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
+      for (int d=0; d < SpaceDim; ++d)
+      {
+        a_res(iv,0) -= a_beta*a_bCoef[d](iv+b[d],0)
+                       *(a_phi(iv+b[d],0) - a_phi(iv,0)) / (dx[d]*dx[d]);
+        a_res(iv,0) += a_beta*a_bCoef[d](iv,0)
+                       *(a_phi(iv,0) - a_phi(iv-b[d],0)) / (dx[d]*dx[d]);
+      }
+    }
+  }
+
+  void relaxGSRB(const int d, FArrayBox& a_phi, const FArrayBox& a_rhs,
+      FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef, 
+      const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
+  {
+    CH_TIME("VC2lineGSRB::relaxGSRB");
+    assert(a_rhs.box().contains(m_b));
+
+    // Calculate the residual
+    IntVect b[SpaceDim];
+    b[0] = BASISV(0);
+    b[1] = BASISV(1);
+    b[2] = BASISV(2);
+    for (BoxIterator bit(m_b); bit.ok(); bit.next())
+    {
+      const IntVect iv = bit();
+      if ((iv.sum() % 2) != whichPass) // Do all R then B
+        continue; 
+      a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
+      Real rcoef = a_alpha*a_aCoef(iv,0);
+      for (int d=0; d < SpaceDim; ++d)
+      {
+        a_res(iv,0) -= a_beta*a_bCoef[d](iv+b[d],0)
+                       *(a_phi(iv+b[d],0) - a_phi(iv,0)) / (m_dx[d]*m_dx[d]);
+        a_res(iv,0) += a_beta*a_bCoef[d](iv,0)
+                       *(a_phi(iv,0) - a_phi(iv-b[d],0)) / (m_dx[d]*m_dx[d]);
+        rcoef += a_beta*(a_bCoef[d](iv,0) + a_bCoef[d](iv+b[d],0))
+          / (m_dx[d]*m_dx[d]);
+      }
+      // Update
+      a_phi(iv,0) -= a_res(iv,0) / rcoef;
     }
   }
 

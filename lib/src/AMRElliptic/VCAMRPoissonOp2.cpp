@@ -703,7 +703,7 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           /*
           const int dir = 2; // only doing this in z direction
           for (int d=0; d < SpaceDim; ++d)
-            zebra.lineRelaxRB(dir, a_phi[dit], a_rhs[dit],
+            zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit],
                               m_alpha, (*m_aCoef)[dit],
                               m_beta, thisBCoef, whichPass);
           */
