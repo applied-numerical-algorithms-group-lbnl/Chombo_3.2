@@ -24,6 +24,7 @@
 #include "VCAMRPoissonOp2.H"
 #include "VCAMRPoissonOpF_F.H"
 #include "DebugOut.H"
+#include "VC2lineGSRB.H"
 
 #include "NamespaceHeader.H"
 
@@ -132,7 +133,7 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
 }
 
 void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
-                              LevelData<FArrayBox>& a_res, 
+                              LevelData<FArrayBox>& a_res,
                               const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRPoissonOp2::preCond");
@@ -166,7 +167,7 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
       BoxIterator bit(res.box());
       for (bit.begin(); bit.ok(); ++bit) {
           IntVect iv = bit();
-          phi(iv, 0) += lambda(iv, 0) * res(iv, 0); 
+          phi(iv, 0) += lambda(iv, 0) * res(iv, 0);
       }
     }
 
@@ -457,7 +458,7 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
   // I'm pretty sure this is not necessary. bvs -- flux calculations use
   // outer ghost cells, but not inner ones
   // phiFineRef.exchange(a_phiFine.interval());
-  IntVect phiGhost = phiFineRef.ghostVect();
+  // IntVect phiGhost = phiFineRef.ghostVect();
   int ncomps = a_phiFine.nComp();
 
   CH_START(t3);
@@ -640,29 +641,116 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
 
 #endif
 
+#if CH_SPACEDIM == 3
+
+// Only for 3D with Z direction needing anisotropic line relaxation
+void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                                     const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("VCAMRPoissonOp2::levelZlineGSRB");
+
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  // Recompute the relaxation coefficient if needed.
+  // resetLambda();
+
+  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
+
+  bool a_homo = false;
+
+  DataIterator dit = a_phi.dataIterator();
+
+  // do first red, then black passes
+  for (int whichPass = 0; whichPass <= 1; whichPass++)
+    {
+
+      // fill in intersection of ghostcells and a_phi's boxes
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+            a_homo = true;
+        }
+      }
+
+      // TODO - only 1 exchange neccesary for 1 R, 1 B sweep of GSRB?
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::exchange");
+        a_phi.exchange(a_phi.interval(), m_exchangeCopier);
+      }
+
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::BCs");
+        // now step through grids...
+        for (dit.begin(); dit.ok(); ++dit)
+          {
+            // invoke physical BC's where necessary
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, a_homo);
+          }
+      }
+
+      for (dit.begin(); dit.ok(); ++dit)
+        {
+          const Box& region = dbl.get(dit());
+          const FluxBox& thisBCoef  = (*m_bCoef)[dit];
+
+          VC2lineGSRB zebra(region, m_dx_vect);
+          // Do a line relaxation step
+          const int d = 2; // only doing this in z direction
+          // for (int d=0; d < SpaceDim; ++d)
+            zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit], m_lambda[dit],
+                              m_alpha, (*m_aCoef)[dit],
+                              m_beta, thisBCoef, whichPass);
+          /*
+          */
+
+          /*
+          FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
+                                 CHF_CONST_FRA(a_rhs[dit]),
+                                 CHF_BOX(region),
+                                 CHF_CONST_REALVECT(m_dx_vect),
+                                 CHF_CONST_REAL(m_alpha),
+                                 CHF_CONST_FRA((*m_aCoef)[dit]),
+                                 CHF_CONST_REAL(m_beta),
+                                 CHF_CONST_FRA(thisBCoef[0]),
+                                 CHF_CONST_FRA(thisBCoef[1]),
+                                 CHF_CONST_FRA(thisBCoef[2]),
+                                 CHF_CONST_FRA(m_lambda[dit]),
+                                 CHF_CONST_INT(whichPass));
+          */
+        } // end loop through grids
+    } // end loop through red-black
+}
+#endif
+
+
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs,
                                int MGiter, int a_ite, int a_depth )
 {
   CH_TIME("VCAMRPoissonOp2::levelGSRB");
-  
+
   if (m_print) {
       char iter_str[100];
       sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
-      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl; 
-      //this->write(&a_rhs, iter_str); 
+      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl;
+      //this->write(&a_rhs, iter_str);
       const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
       const ProblemDomain&     levelDomain = levelGrids.physDomain();
       Vector<DisjointBoxLayout> grids;
       grids.resize(1);
       grids[0] = levelGrids;
-      
+
       Box domain = levelDomain.domainBox();
 
       int numPlotComps = 2;
 
-      string headName("PHI");  
-      string rhsName("RHS");  
+      string headName("PHI");
+      string rhsName("RHS");
       Vector<string> vectName(numPlotComps);
       vectName[0] = headName;
       vectName[1] = rhsName;
@@ -1072,8 +1160,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   for (int i = 1; i < a_grids.size(); i++)
     {
-      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];, 
-             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];, 
+      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];,
+             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];,
              m_dx[i][2] = m_dx[i-1][2] / m_refRatios[i-1];)
 
       m_domains[i] = m_domains[i-1];
@@ -1159,8 +1247,8 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   if (ref > 0)
   {
-    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-           dxCrse[1] = m_dx[ref-1][1];, 
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
            dxCrse[2] = m_dx[ref-1][2];)
   }
 
@@ -1313,8 +1401,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   }
   else if (ref ==  m_domains.size()-1)
   {
-    D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-           dxCrse[1] = m_dx[ref-1][1];, 
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
            dxCrse[2] = m_dx[ref-1][2];)
 
     // finest AMR level
@@ -1331,8 +1419,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     }
   else
     {
-      D_TERM(dxCrse[0] = m_dx[ref-1][0];, 
-             dxCrse[1] = m_dx[ref-1][1];, 
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+             dxCrse[1] = m_dx[ref-1][1];,
              dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define

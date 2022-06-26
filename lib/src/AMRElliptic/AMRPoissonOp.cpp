@@ -27,7 +27,7 @@
 #include "NamespaceHeader.H"
 
 int AMRPoissonOp::s_exchangeMode = 1; // 1: no overlap (default); 0: ...
-int AMRPoissonOp::s_relaxMode = 1; // 1: GSRB; 4: Jacobi
+int AMRPoissonOp::s_relaxMode = 6; // 1: GSRB; 4: Jacobi; 6: Zebra line RB
 int AMRPoissonOp::s_maxCoarse = 2;
 
 // ---------------------------------------------------------
@@ -732,6 +732,9 @@ void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
           break;
         case 5:
           levelMultiColor(a_e, a_residual);
+          break;
+        case 6:
+          levelZlineGSRB(a_e, a_residual);
           break;
         default:
           MayDay::Abort("unrecognized relaxation mode");
@@ -1868,6 +1871,13 @@ void AMRPoissonOp::levelJacobi(LevelData<FArrayBox>&       a_phi,
 
   // Do the Jacobi relaxation
   incr(a_phi, resid, 0.666/weight);
+}
+
+// ---------------------------------------------------------
+void AMRPoissonOp::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                                  const LevelData<FArrayBox>& a_rhs)
+{
+  MayDay::Error("levelZlineGSRB not implemented in AMRPoissonOp");
 }
 
 // ---------------------------------------------------------
