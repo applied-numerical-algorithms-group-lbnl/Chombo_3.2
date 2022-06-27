@@ -27,7 +27,6 @@
 #include "NamespaceHeader.H"
 
 int AMRPoissonOp::s_exchangeMode = 1; // 1: no overlap (default); 0: ...
-int AMRPoissonOp::s_relaxMode = 6; // 1: GSRB; 4: Jacobi; 6: Zebra line RB
 int AMRPoissonOp::s_maxCoarse = 2;
 
 // ---------------------------------------------------------
@@ -177,6 +176,8 @@ void AMRPoissonOp::define(const DisjointBoxLayout& a_grids,
   m_use_FAS = false;
  
   m_print = false;
+
+  m_relax_mode = 1;
 
   m_exchangeCopier = a_exchange;
   // m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
@@ -710,10 +711,14 @@ void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
                          int                         a_depth)
 {
   CH_TIME("AMRPoissonOp::relax");
+  //if (m_relax_mode != 6) {
+  //        pout() << m_relax_mode << endl;
+  //        MayDay::Abort("Bad relaxation mode");
+  //}
 
   for (int i = 0; i < a_iterations; i++)
     {
-      switch (s_relaxMode)
+      switch (m_relax_mode)
         {
         case 0:
           looseGSRB(a_e, a_residual);
@@ -1259,6 +1264,11 @@ void AMRPoissonOp::setAlphaAndBeta(const Real& a_alpha,
 void AMRPoissonOp::setPrint(bool a_print)
 {
   m_print = a_print;
+}
+
+void AMRPoissonOp::setRelaxMode(int a_relax_mode)
+{
+  m_relax_mode = a_relax_mode;
 }
 
 // ---------------------------------------------------------
@@ -2192,6 +2202,8 @@ void AMRPoissonOpFactory::define(const ProblemDomain&             a_coarseDomain
   m_use_FAS = a_use_FAS;
 
   m_print = false;
+
+  m_relax_mode = 1;
 }
 
 // ---------------------------------------------------------
@@ -2210,6 +2222,13 @@ void AMRPoissonOpFactory::define(const ProblemDomain&     a_domain,
   grids[0] = a_grid;
   Vector<int> refRatio(1, 2);
   define(a_domain, grids, refRatio, a_dx, a_bc, a_alpha, a_beta, a_use_FAS);
+}
+
+//
+// ---------------------------------------------------------
+void AMRPoissonOpFactory::setRelaxModeFactory(int a_relax_mode)
+{
+    m_relax_mode = a_relax_mode;
 }
 
 // ---------------------------------------------------------
@@ -2279,6 +2298,8 @@ MGLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::MGnewOp(const ProblemDoma
   newOp->m_bCoef = m_beta;
 
   newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
 
   newOp->m_dxCrse      = dxCrse[0];
   newOp->m_dxCrse_vect = dxCrse;
@@ -2366,6 +2387,8 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   newOp->m_beta  = m_beta;
 
   newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
 
   newOp->m_aCoef = 1.0;
   newOp->m_bCoef = 1.0;

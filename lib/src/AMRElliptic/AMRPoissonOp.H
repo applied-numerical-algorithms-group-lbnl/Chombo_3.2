@@ -400,6 +400,8 @@ public:
 
   virtual void setPrint(bool a_print);
 
+  virtual void setRelaxMode(int a_relax_mode);
+
   /// For tga to reset stuff
   /**
   */
@@ -455,6 +457,8 @@ public:
 
   bool m_print;
 
+  int m_relax_mode;
+
   // needed for homogeneous interpolation
   // set by the factory
   Real      m_dxCrse;
@@ -464,7 +468,6 @@ public:
 
   Vector<IntVect> m_colors;
   static int s_exchangeMode;
-  static int s_relaxMode;
   static int s_maxCoarse;
   static int s_prolongType;
 
@@ -585,6 +588,9 @@ public:
               bool                     a_use_FAS=false);
 
   ///
+  void setRelaxModeFactory(int a_relax_mode);
+
+  ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
                                                      int                  a_depth,
                                                      bool                 a_homoOnly = true);
@@ -610,6 +616,8 @@ private:
   bool m_use_FAS;
 
   bool m_print;
+
+  int m_relax_mode;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;

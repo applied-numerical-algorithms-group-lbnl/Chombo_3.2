@@ -87,6 +87,8 @@ public:
 
   virtual void setPrint(bool a_print);
 
+  virtual void setRelaxMode(int a_relax_mode);
+
   /// For tga stuff
   virtual void setAlphaAndBeta(const Real& a_alpha,
                                const Real& a_beta);
@@ -312,6 +314,11 @@ public:
               const IntVect&                                 a_ghostVect);
 
   ///
+  void setRelaxModeFactory(int a_relax_mode);
+
+  int getRelaxModeFactory(){return m_relax_mode;};
+
+  ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
                                                     int                  a_depth,
                                                     bool                 a_homoOnly = true);
@@ -341,6 +348,8 @@ private:
   bool m_use_FAS;
 
   bool m_print;
+
+  int m_relax_mode;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;

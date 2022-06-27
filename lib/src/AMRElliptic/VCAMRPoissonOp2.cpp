@@ -332,6 +332,11 @@ void VCAMRPoissonOp2::setPrint(bool a_print)
   m_print = a_print;
 }
 
+void VCAMRPoissonOp2::setRelaxMode(int a_relax_mode)
+{
+  m_relax_mode = a_relax_mode;
+}
+
 
 void VCAMRPoissonOp2::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                                const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
@@ -701,12 +706,9 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           VC2lineGSRB zebra(region, m_dx_vect);
           // Do a line relaxation step
           const int d = 2; // only doing this in z direction
-          // for (int d=0; d < SpaceDim; ++d)
-            zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit], m_lambda[dit],
-                              m_alpha, (*m_aCoef)[dit],
-                              m_beta, thisBCoef, whichPass);
-          /*
-          */
+          zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit], m_lambda[dit],
+                            m_alpha, (*m_aCoef)[dit],
+                            m_beta, thisBCoef, whichPass);
 
           /*
           FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
@@ -724,6 +726,8 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
           */
         } // end loop through grids
     } // end loop through red-black
+
+    m_lambdaNeedsResetting = true;
 }
 #endif
 
@@ -1183,6 +1187,8 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   m_print = false;
 
+  m_relax_mode = 1;
+
   m_use_FAS = a_use_FAS;
 }
 //-----------------------------------------------------------------------
@@ -1224,6 +1230,13 @@ define(const ProblemDomain& a_coarseDomain,
          alpha, aCoef, beta, bCoef, a_use_FAS);
 }
 //-----------------------------------------------------------------------
+
+//
+// ---------------------------------------------------------
+void VCAMRPoissonOp2Factory::setRelaxModeFactory(int a_relax_mode)
+{
+    m_relax_mode = a_relax_mode;
+}
 
 MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemDomain& a_indexSpace,
                                                                   int                  a_depth,
@@ -1289,6 +1302,8 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
   newOp->m_beta  = m_beta;
 
   newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
 
   if (a_depth == 0)
     {
@@ -1435,6 +1450,8 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   newOp->m_beta  = m_beta;
 
   newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
 
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
