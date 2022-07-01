@@ -10,10 +10,10 @@ public:
   // Note, if a_dx is not provided unit dx is used
   VC2lineGSRB(Box a_b, RealVect a_dx) : m_b(a_b), m_dx(a_dx)
   {
-    CH_TIME("VC2lineGSRB::define");
-
+    CH_TIME("VC2lineGSRB constructor");
     assert(SpaceDim == 3);   // Only works for 3D
 
+    /*
     // TODO - generalize this, dim, # comp?
     m_diags.define(m_b,3);   // diags, sub/comp 0, diag/comp 1, sup/comp 2
     m_tmp.define(m_b,1);     // tmp for the LAPACK rhs's --> soln's
@@ -25,6 +25,24 @@ public:
     m_diag = m_diags.dataPtr(1);
     m_sup  = m_diags.dataPtr(2);
     m_rhs  = m_tmp.dataPtr(0);
+    */
+    const int Nmax = a_b.longside();
+    m_sub = new double[Nmax];
+    m_diag = new double[Nmax];
+    m_sup = new double[Nmax];
+    m_rhs = new double[Nmax];
+  }
+
+  ~VC2lineGSRB()
+  {
+    if (m_sub != NULL)
+      delete m_sub;
+    if (m_diag != NULL)
+      delete m_diag;
+    if (m_sup != NULL)
+      delete m_sup;
+    if (m_rhs != NULL)
+      delete m_rhs;
   }
 
   // Does a line relaxation for this op in direction d:
@@ -41,11 +59,10 @@ public:
                    const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
     CH_TIMERS("VC2lineGSRB::lineRelaxRB");
-
-    CH_TIMER("VC2lineGSRB::LAPACK", lapackCalc);
-    CH_TIMER("VC2lineGSRB::allocsDeallocs", aDea);
-    //CH_TIMER("VC2lineGSRB::ResCalcl", res);
-
+    CH_TIMER("VC2lineGSRB::lineRelaxRB::setDiagsRHS", t2);
+    CH_TIMER("VC2lineGSRB::lineRelaxRB::LAPACK", t3);
+    CH_TIMER("VC2lineGSRB::lineRelaxRB::copySoln", t4);
+    CH_TIMER("VC2lineGSRB::lineRelaxRB::resid", t5);
     assert(a_rhs.box().contains(m_b));
 
     const int N = m_b.size(d); // size in dir of solve
@@ -75,14 +92,13 @@ public:
         if ((iv.sum() % 2) != whichPass) { // Do all R then B
             continue;
         }
-        CH_START(aDea);
         const IntVect liv(iv[id[0]], iv[id[1]], iv[id[2]]);
-        const size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]);
+        // const size_t offset = liv[0] + lsz[0]*(liv[1] + lsz[1]*liv[2]);
+        const size_t offset = 0;
         double* sub  = m_sub + offset;
         double* diag = m_diag + offset;
         double* sup  = m_sup + offset;
         double* rhs  = m_rhs + offset;
-        CH_STOP(aDea);
 
         if (m_verbosity >= 2) {
             pout() << "  line solve on " << iv << "->" << (iv+(N-1)*e0) << endl;
@@ -91,6 +107,7 @@ public:
             pout() << "Solving this system [sub, diag, sup] = rhs:" << endl;
         }
 
+        CH_START(t2);
         for (int i=0; i < N; ++i) {
             const IntVect ix = iv + i*e0;
             // TODO - more than 1 comp?
@@ -149,14 +166,16 @@ public:
             }
 
         }
+        CH_STOP(t2);
 
+        CH_START(t3);
         // Solve
-        CH_START(lapackCalc);
         int nrhs = 1, ldb = N;
         int info = 0;
         LAPACK(GTSV,gtsv)(&ldb, &nrhs, sub, diag, sup, rhs, &ldb, &info);
-        CH_STOP(lapackCalc);
+        CH_STOP(t3);
 
+        CH_START(t4);
         // Copy updated soln back into phi
         for (int i=0; i < N; ++i) {
             IntVect ix = iv + i*e0;
@@ -165,25 +184,27 @@ public:
                 pout() << "soln[" << i << "] = " << rhs[i] << endl;
             }
         }
+        CH_STOP(t4);
     }
 
-    // Calculate the residual
-    //CH_START(res);
-    //IntVect b[SpaceDim];
-    //b[0] = BASISV(0);
-    //b[1] = BASISV(1);
-    //b[2] = BASISV(2);
-    //for (BoxIterator bit(m_b); bit.ok(); bit.next()) {
-    //    const IntVect iv = bit();
-    //    a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
-    //    for (int l=0; l < SpaceDim; ++l) {
-    //        a_res(iv,0) -= a_beta*a_bCoef[l](iv+b[l],0)
-    //                       *(a_phi(iv+b[l],0) - a_phi(iv,0)) / (dx[l]*dx[l]);
-    //        a_res(iv,0) += a_beta*a_bCoef[l](iv,0)
-    //                       *(a_phi(iv,0) - a_phi(iv-b[l],0)) / (dx[l]*dx[l]);
-    //    }
-    //}
-    //CH_STOP(res);
+    /*
+    CH_START(t5);
+    IntVect b[SpaceDim];
+    b[0] = BASISV(0);
+    b[1] = BASISV(1);
+    b[2] = BASISV(2);
+    for (BoxIterator bit(m_b); bit.ok(); bit.next()) {
+        const IntVect iv = bit();
+        a_res(iv,0) = a_alpha*a_aCoef(iv,0)*a_phi(iv,0) - a_rhs(iv,0);
+        for (int l=0; l < SpaceDim; ++l) {
+            a_res(iv,0) -= a_beta*a_bCoef[l](iv+b[l],0)
+                           *(a_phi(iv+b[l],0) - a_phi(iv,0)) / (dx[l]*dx[l]);
+            a_res(iv,0) += a_beta*a_bCoef[l](iv,0)
+                           *(a_phi(iv,0) - a_phi(iv-b[l],0)) / (dx[l]*dx[l]);
+        }
+    }
+    CH_STOP(t5);
+    */
   }
 
   /* Is this used ? */
