@@ -31,6 +31,20 @@ void CellToEdge(const LevelData<FArrayBox>& a_cellData,
   }
 }
 
+/// -----------------------------------------------------------
+void CellToEdgeHarm(const LevelData<FArrayBox>& a_cellData,
+                    LevelData<FluxBox>& a_edgeData)
+
+{
+  // this is just a wrapper around single-gridBox version
+  DataIterator dit = a_cellData.dataIterator();
+  for (dit.reset(); dit.ok(); ++dit)
+  {
+    CellToEdgeHarm(a_cellData[dit()], a_edgeData[dit()]);
+  }
+}
+
+
 #ifdef USE_PROTO
 using Proto::Point;
 using Proto::BoxData;
@@ -97,6 +111,43 @@ void CellToEdge(const FArrayBox& a_cellData,
                       CHF_BOX(edgeBox),
                       CHF_CONST_INT(dir));
 #endif
+    }
+  }
+}
+
+///
+void CellToEdgeHarm(const FArrayBox& a_cellData,
+                    FluxBox& a_edgeData)
+{
+
+  // loop over components -- assumption is that in cell-centered
+  // data, direction changes faster than component
+  int cellcomp;
+  for (int comp = 0; comp < a_edgeData.nComp(); comp++)
+  {
+    // loop over directions
+    for (int dir = 0; dir < SpaceDim; dir++)
+    {
+      // define faces over which we can do averaging
+      Box edgeBox = surroundingNodes(a_cellData.box(), dir);
+      edgeBox.grow(dir,-1);
+      edgeBox &= a_edgeData[dir].box();
+
+      if (a_cellData.nComp() == a_edgeData.nComp())
+      {
+        // straightforward cell->edge averaging
+        cellcomp = comp;
+      }
+      else
+      {
+        // each cell comp represents a different spatial direction
+        cellcomp = SpaceDim*comp + dir;
+      }
+
+      FORT_CELLTOEDGEHARM(CHF_CONST_FRA1(a_cellData, cellcomp),
+                          CHF_FRA1(a_edgeData[dir], comp),
+                          CHF_BOX(edgeBox),
+                          CHF_CONST_INT(dir));
     }
   }
 }

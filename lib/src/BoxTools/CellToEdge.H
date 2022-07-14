@@ -21,9 +21,15 @@
 void CellToEdge(const LevelData<FArrayBox>& a_cellData,
                 LevelData<FluxBox>& a_edgeData);
 
+void CellToEdgeHarm(const LevelData<FArrayBox>& a_cellData,
+                    LevelData<FluxBox>& a_edgeData);
+
 ///
 void CellToEdge(const FArrayBox& a_cellData,
                 FluxBox& a_edgeData);
+
+void CellToEdgeHarm(const FArrayBox& a_cellData,
+                    FluxBox& a_edgeData);
 
 /// this one does a single direction
 void CellToEdge(const FArrayBox& a_cellData,
