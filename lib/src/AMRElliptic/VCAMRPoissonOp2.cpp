@@ -1328,20 +1328,21 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
       CoarseAverageFace faceAverager(m_bCoef[ref]->getBoxes(),
                                      bCoef->nComp(), coarsening);
 
-      if (m_coefficient_average_type == CoarseAverage::arithmetic)
+      //if (m_coefficient_average_type == CoarseAverage::arithmetic)
+      //  {
+      //    averager.averageToCoarse(*aCoef, *(m_aCoef[ref]));
+      //    faceAverager.averageToCoarse(*bCoef, *(m_bCoef[ref]));
+      //  }
+      //else if (m_coefficient_average_type == CoarseAverage::harmonic)
         {
-          averager.averageToCoarse(*aCoef, *(m_aCoef[ref]));
-          faceAverager.averageToCoarse(*bCoef, *(m_bCoef[ref]));
-        }
-      else if (m_coefficient_average_type == CoarseAverage::harmonic)
-        {
+          pout() << " Using HarmAvg " << endl;
           averager.averageToCoarseHarmonic(*aCoef, *(m_aCoef[ref]));
           faceAverager.averageToCoarseHarmonic(*bCoef, *(m_bCoef[ref]));
         }
-      else
-        {
-          MayDay::Abort("VCAMRPoissonOp2Factory::MGNewOp -- bad averagetype");
-        }
+      //else
+      //  {
+      //    MayDay::Abort("VCAMRPoissonOp2Factory::MGNewOp -- bad averagetype");
+      //  }
 
       newOp->m_aCoef = aCoef;
       newOp->m_bCoef = bCoef;
