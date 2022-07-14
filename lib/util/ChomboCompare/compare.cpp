@@ -1320,8 +1320,17 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
          nRefExact[2] = (int) nRefTemp[2];
      }
 
-     pout() << "computeAMRError:: a_exactDx" << a_exactDx[0] << " " << a_exactDx[1] << endl;
-     pout() << "computeAMRError:: dxLevel" << dxLevel[0] << " " << dxLevel[1]  << endl;
+     pout() << "computeAMRError:: a_exactDx " << a_exactDx[0] << " " << a_exactDx[1];
+#if CH_SPACEDIM > 2
+     pout() << " " << a_exactDx[2] ;
+#endif
+     pout() << endl;
+     pout() << "computeAMRError:: dxLevel " << dxLevel[0] << " " << dxLevel[1];
+#if CH_SPACEDIM > 2
+     pout() << " " << dxLevel[2];
+#endif
+     pout() << endl;
+
      for (int i=0; i<CH_SPACEDIM; i++) {
          // this is to do rounding properly if necessary
          if (nRefTemp[i] - nRefExact[i] > 0.5) nRefExact[i] += 1;
@@ -1372,7 +1381,11 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
          FArrayBox fineTemp(fineBox, 1);
          Box coarsenedFineBox(fineBox);
          coarsenedFineBox.coarsen(nCoarsenExact);
-         if ((a_computedDx[0] == a_exactDx[0]) && (a_computedDx[1] == a_exactDx[1])) {
+         if ((a_computedDx[0] == a_exactDx[0]) && (a_computedDx[1] == a_exactDx[1])
+#if CH_SPACEDIM > 2
+         && (a_computedDx[2] == a_exactDx[2])
+#endif
+         ) {
              // if cell sizes are the same, then copy
              averagedExact[ditFine].copy(exactSolnRef[ditFine]);
          } else {
