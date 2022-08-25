@@ -740,6 +740,49 @@ Real getInverseOfUpperTriangularConditionNumber(const LAPACKMatrix& A)
 
 ///
 /**
+ *  Solves A*X = B using Double General Solve 
+    A is an N-by-N matrix and X and B are N-by-NRHS matrices
+    Answer goes back into B
+ */
+int solveGeneralSolve(LAPACKMatrix& A, LAPACKMatrix& B)
+{
+#ifndef CH_USE_LAPACK
+  MayDay::Error("LAPACKMatrix::solveGeneralSolve requires LAPACK library");
+  return -1;
+#else
+  CH_TIME("LAPACKMatrix::solveGeneralSolve");
+  // TODO - check that the sizes of A, B and C are compatible
+  int M = A.m_nrow;
+  int N = A.m_ncol;
+  CH_assert(N==M);
+  int NRHS = B.m_ncol;
+  int LDA = M;
+  int LDB = Max(M,N);
+  CH_assert(B.m_nrow == M);
+
+  int *IPIV = new int[N];
+  int INFO;
+
+  // N(V), NRHS(V), A(V), LDA(V), IPV, B, LDB, INFO
+  LAPACK(GESV,gesv)(&N, &NRHS, A.dataPtr(), &LDA, IPIV, 
+                    B.dataPtr(), &LDB, &INFO);
+
+  if(INFO != 0)
+    {
+      MayDay::Warning(" info flag from lapack");
+      pout() << PRECCHAR << "gesv matrix may be singular---info = " << INFO << endl;
+    } 
+  else if(LAPACKMatrix::s_checkConditionNumber)
+    {
+      A.checkConditionNumber();
+    }
+
+  return INFO;
+#endif
+}
+
+///
+/**
  *  Solves A*X = B using general least squares, for each column of B
  Answer goes 
  back into B I think
