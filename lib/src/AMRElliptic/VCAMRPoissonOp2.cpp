@@ -398,7 +398,7 @@ void VCAMRPoissonOp2::computeLambda()
   CH_assert(!m_lambda.isDefined());
 
   // Define lambda
-  m_lambda.define(m_aCoef->disjointBoxLayout(),m_aCoef->nComp());
+  m_lambda.define(m_aCoef->disjointBoxLayout(),m_aCoef->nComp(),m_aCoef->ghostVect());
   resetLambda();
 }
 
