@@ -88,3 +88,42 @@ c ::: local variables
 
         return
         end
+
+c -------------------------------------------------------
+c  this subroutine averages the cell-centered cellData to the
+c  edge-centered edgeData in the direction dir
+c
+c  INPUTS/OUTPUTS:
+c  cellData  => cell-centered field
+c  edgeData <=  edge-centered field
+c  edgeBox   => box which defines edgeData valid region
+c  dir       => direction in which to average
+c --------------------------------------------------------
+      subroutine CELLTOEDGEHACK(CHF_CONST_FRA1[cellData],
+     &                          CHF_FRA1[edgeData],
+     &                          CHF_BOX[edgeBox],
+     &                          CHF_CONST_INT[dir])
+
+c ::: local variables
+      integer CHF_DDECL[i;j;k;l;m;n]
+      integer CHF_DDECL[ii;jj;kk;ll;mm;nn]
+      REAL_T mult
+
+      CHF_MULTIDO[edgeBox; i;j;k;l;m;n]
+
+      CHF_DTERM[
+        ii = i-CHF_ID(0,dir);
+        jj = j-CHF_ID(1,dir);
+        kk = k-CHF_ID(2,dir);
+        ll = l-CHF_ID(3,dir);
+        mm = m-CHF_ID(4,dir);
+        nn = n-CHF_ID(5,dir)]
+
+        
+        mult = min(cellData(CHF_IX[ii;jj;kk;ll;mm;nn]), cellData(CHF_IX[i;j;k;l;m;n])) 
+        edgeData(CHF_IX[i;j;k;l;m;n]) = mult
+
+        CHF_ENDDO
+
+        return
+        end

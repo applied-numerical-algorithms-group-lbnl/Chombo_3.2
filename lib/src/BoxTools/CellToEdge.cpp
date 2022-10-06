@@ -144,6 +144,7 @@ void CellToEdgeHarm(const FArrayBox& a_cellData,
         cellcomp = SpaceDim*comp + dir;
       }
 
+      //FORT_CELLTOEDGEHACK(CHF_CONST_FRA1(a_cellData, cellcomp),
       FORT_CELLTOEDGEHARM(CHF_CONST_FRA1(a_cellData, cellcomp),
                           CHF_FRA1(a_edgeData[dir], comp),
                           CHF_BOX(edgeBox),
