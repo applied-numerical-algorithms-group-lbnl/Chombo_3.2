@@ -209,7 +209,17 @@ public:
 
   Real dotProduct(const NodeFArrayBox& a_fab2, const Box& box) const
   {
-    return m_fab.dotProduct(a_fab2.m_fab, box);
+    // it may be that the box being passed in is the relevant cell-centered box
+    if (box.cellCentered() )
+      {
+        Box nodeBox = box;
+        nodeBox.surroundingNodes();
+        return m_fab.dotProduct(a_fab2.m_fab, nodeBox);
+      }
+    else
+      {
+        return m_fab.dotProduct(a_fab2.m_fab, box);
+      }
   }
 
   /*@}*/

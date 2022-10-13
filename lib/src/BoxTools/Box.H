@@ -27,6 +27,10 @@
 #include "SPMD.H"
 #include "NamespaceHeader.H"
 
+#ifdef USE_PROTO
+#include "Proto.H"
+#endif
+
 struct SliceSpec;
 
 /// Cell-Based or Node-Based Indices
@@ -583,7 +587,7 @@ public:
      return smallend if side is low,
      bigend if side is high.
   */
-  IntVect sideEnd(Side::LoHiSide a_side) const;
+  IntVect sideEnd(CH_XD::Side::LoHiSide a_side) const;
 
   ///
   /**
@@ -1143,7 +1147,7 @@ public:
   ///
   friend Box bdryBox(const Box& b,
                      int        dir,
-                     Side::LoHiSide a_sd,
+                     CH_XD::Side::LoHiSide a_sd,
                      int        len);
 
   ///
@@ -1252,7 +1256,7 @@ public:
   ///
   friend Box adjCellBox (const Box& b,
                          int        dir,
-                         Side::LoHiSide a_side,
+                         CH_XD::Side::LoHiSide a_side,
                          int        len);
   ///
   /**
@@ -1351,7 +1355,7 @@ public:
      growHi if a_sd= = Side::Hi
    */
   Box& growDir (int a_idir,
-                const Side::LoHiSide& a_sd,
+                const CH_XD::Side::LoHiSide& a_sd,
                 int a_cell);
 
   ///
@@ -1624,6 +1628,7 @@ public:
   /** Doesn't print the IndexType, and uses square outer brackets. */
   static void setTempestOutputFormat( bool );
 
+
 protected:
   friend class HDF5Handle;
 
@@ -1674,37 +1679,37 @@ void linearOut(void* const a_outBuf, const Vector<Vector<CH_XDIR::Box> >& a_inpu
 #include "NamespaceHeader.H"
 
 // global function prototypes
-Box surroundingNodes (const Box& b,
+CH_XD::Box surroundingNodes (const CH_XD::Box& b,
                       int        dir);
-Box surroundingNodes (const Box& b);
-Box enclosedCells (const Box& b,
+CH_XD::Box surroundingNodes (const CH_XD::Box& b);
+CH_XD::Box enclosedCells (const CH_XD::Box& b,
                    int        dir);
-Box enclosedCells (const Box& b);
-Box bdryBox(const Box& b,
+CH_XD::Box enclosedCells (const CH_XD::Box& b);
+CH_XD::Box bdryBox(const CH_XD::Box& b,
             int        dir,
-            Side::LoHiSide a_sd,
+            CH_XD::Side::LoHiSide a_sd,
             int        len=1);
-Box bdryLo (const Box& b,
-            int        dir,
-            int        len=1);
-Box bdryHi (const Box& b,
+CH_XD::Box bdryLo (const CH_XD::Box& b,
             int        dir,
             int        len=1);
-Box adjCellLo (const Box& b,
+CH_XD::Box bdryHi (const CH_XD::Box& b,
+            int        dir,
+            int        len=1);
+CH_XD::Box adjCellLo (const CH_XD::Box& b,
                int        dir,
                int        len=1);
-Box adjCellHi (const Box& b,
+CH_XD::Box adjCellHi (const CH_XD::Box& b,
                int        dir,
                int        len=1);
-Box minBox (const Box& b1,
-            const Box& b2);
-Box coarsen (const Box&     b,
+CH_XD::Box minBox (const CH_XD::Box& b1,
+            const CH_XD::Box& b2);
+CH_XD::Box coarsen (const CH_XD::Box&     b,
              const IntVect& refinement_ratio);
-Box coarsen (const Box&     b,
+CH_XD::Box coarsen (const CH_XD::Box&     b,
              int refinement_ratio);
-Box refine  (const Box&     b,
+CH_XD::Box refine  (const CH_XD::Box&     b,
              const IntVect& refinement_ratio);
-Box refine  (const Box&     b,
+CH_XD::Box refine  (const CH_XD::Box&     b,
              int refinement_ratio);
 
 //
@@ -1738,8 +1743,8 @@ Box refine  (const Box&     b,
 //}
 
 inline
-IntVect
-Box::sideEnd(Side::LoHiSide a_side) const
+CH_XD::IntVect
+CH_XD::Box::sideEnd(CH_XD::Side::LoHiSide a_side) const
 {
   IntVect retval;
   if (a_side == Side::Lo)
@@ -1751,56 +1756,56 @@ Box::sideEnd(Side::LoHiSide a_side) const
 
 inline
 const IntVect&
-Box::smallEnd () const
+CH_XD::Box::smallEnd () const
 {
   return smallend;
 }
 
 inline
 int
-Box::smallEnd (int dir) const
+CH_XD::Box::smallEnd (int dir) const
 {
   return smallend[dir];
 }
 
 inline
 const IntVect&
-Box::bigEnd () const
+CH_XD::Box::bigEnd () const
 {
   return bigend;
 }
 
 inline
 int
-Box::bigEnd (int dir) const
+CH_XD::Box::bigEnd (int dir) const
 {
   return bigend[dir];
 }
 
 inline
 IndexType
-Box::ixType () const
+CH_XD::Box::ixType () const
 {
   return btype;
 }
 
 inline
 IntVect
-Box::type () const
+CH_XD::Box::type () const
 {
   return btype.ixType();
 }
 
 inline
 IndexType::CellIndex
-Box::type (int dir) const
+CH_XD::Box::type (int dir) const
 {
   return btype.ixType(dir);
 }
 
 inline
 IntVect
-Box::size () const
+CH_XD::Box::size () const
 {
   return IntVect(D_DECL6(bigend[0]-smallend[0]+1,
                          bigend[1]-smallend[1]+1,
@@ -1812,7 +1817,7 @@ Box::size () const
 
 inline
 int
-Box::size (int dir) const
+CH_XD::Box::size (int dir) const
 {
   // return len[dir];
   return bigend[dir]-smallend[dir]+1;
@@ -1820,21 +1825,21 @@ Box::size (int dir) const
 
 inline
 const int*
-Box::loVect () const
+CH_XD::Box::loVect () const
 {
   return smallend.getVect();
 }
 
 inline
 const int*
-Box::hiVect () const
+CH_XD::Box::hiVect () const
 {
   return bigend.getVect();
 }
 
 inline
 const int*
-Box::getVect () const
+CH_XD::Box::getVect () const
 {
   return smallend.getVect();
 }
@@ -1843,7 +1848,7 @@ Box::getVect () const
 
 inline
 bool
-Box::isEmpty () const
+CH_XD::Box::isEmpty () const
 {
   //    return numPts() == 0;
   return D_TERM6((bigend[0] < smallend[0]),
@@ -1856,7 +1861,7 @@ Box::isEmpty () const
 
 inline
 bool
-Box::ok () const
+CH_XD::Box::ok () const
 {
   //    bool typ_ok = btype.ok();
   //     bool len_ok = D_TERM6((len[0] == (bigend[0]-smallend[0]+1)),
@@ -1868,7 +1873,7 @@ Box::ok () const
 
 inline
 bool
-Box::contains (const IntVect& p) const
+CH_XD::Box::contains (const IntVect& p) const
 {
 
   //return ( !isEmpty() && (p >= smallend && p <= bigend) );
@@ -1877,14 +1882,14 @@ Box::contains (const IntVect& p) const
 
 inline
 bool
-Box::sameType (const Box &b) const
+CH_XD::Box::sameType (const CH_XD::Box &b) const
 {
   return btype == b.btype;
 }
 
 inline
 bool
-Box::contains (const Box& b) const
+CH_XD::Box::contains (const CH_XD::Box& b) const
 {
   CH_assert(sameType(b));
   return ( b.isEmpty() ||
@@ -1893,7 +1898,7 @@ Box::contains (const Box& b) const
 
 inline
 bool
-Box::sameSize (const Box& b) const
+CH_XD::Box::sameSize (const CH_XD::Box& b) const
 {
   CH_assert(sameType(b));
   return D_TERM6(bigend[0] -smallend[0] == b.bigend[0]-b.smallend[0],
@@ -1906,21 +1911,21 @@ Box::sameSize (const Box& b) const
 
 inline
 bool
-Box::operator== (const Box& b) const
+CH_XD::Box::operator== (const CH_XD::Box& b) const
 {
   return smallend == b.smallend && bigend == b.bigend && b.btype == btype;
 }
 
 inline
 bool
-Box::operator!= (const Box& b) const
+CH_XD::Box::operator!= (const CH_XD::Box& b) const
 {
   return !operator==(b);
 }
 
 inline
 bool
-Box::cellCentered () const
+CH_XD::Box::cellCentered () const
 {
   return !btype.any();
 }
@@ -1928,7 +1933,7 @@ Box::cellCentered () const
 
 inline
 long
-Box::index (const IntVect& v) const
+CH_XD::Box::index (const IntVect& v) const
 {
   long result = v.vect[0]-smallend.vect[0];
 #if CH_SPACEDIM == 1
@@ -1979,7 +1984,7 @@ Box::index (const IntVect& v) const
 
 inline
 void
-Box::computeBoxLen ()
+CH_XD::Box::computeBoxLen ()
 {
 //   if (isEmpty())
 //     {
@@ -1995,7 +2000,7 @@ Box::computeBoxLen ()
 
 inline
 void
-Box::computeBoxLenNotEmpty()
+CH_XD::Box::computeBoxLenNotEmpty()
 {
 //   D_EXPR6(len[0] = bigend[0]-smallend[0] + 1,
 //          len[1] = bigend[1]-smallend[1] + 1,
@@ -2003,8 +2008,8 @@ Box::computeBoxLenNotEmpty()
 }
 
 inline
-Box&
-Box::setSmall (const IntVect& sm)
+CH_XD::Box&
+CH_XD::Box::setSmall (const IntVect& sm)
 {
   CH_assert (sm <= bigend);
 
@@ -2014,8 +2019,8 @@ Box::setSmall (const IntVect& sm)
 }
 
 inline
-Box&
-Box::setSmall (int dir,
+CH_XD::Box&
+CH_XD::Box::setSmall (int dir,
                int sm_index)
 {
   CH_assert (sm_index <= bigend[dir]);
@@ -2026,8 +2031,8 @@ Box::setSmall (int dir,
 }
 
 inline
-Box&
-Box::setBig (const IntVect& bg)
+CH_XD::Box&
+CH_XD::Box::setBig (const IntVect& bg)
 {
   CH_assert (bg >= smallend);
 
@@ -2037,8 +2042,8 @@ Box::setBig (const IntVect& bg)
 }
 
 inline
-Box&
-Box::setBig (int dir,
+CH_XD::Box&
+CH_XD::Box::setBig (int dir,
              int bg_index)
 {
   CH_assert (bg_index >= smallend[dir]);
@@ -2049,8 +2054,8 @@ Box::setBig (int dir,
 }
 
 inline
-Box&
-Box::setRange (int dir,
+CH_XD::Box&
+CH_XD::Box::setRange (int dir,
                int sm_index,
                int n_cells)
 {
@@ -2063,8 +2068,8 @@ Box::setRange (int dir,
 }
 
 inline
-Box&
-Box::shift (int dir,
+CH_XD::Box&
+CH_XD::Box::shift (int dir,
             int nzones)
 {
   if (!isEmpty())
@@ -2076,8 +2081,8 @@ Box::shift (int dir,
 }
 
 inline
-Box&
-Box::shift (const IntVect& iv)
+CH_XD::Box&
+CH_XD::Box::shift (const IntVect& iv)
 {
   if (!isEmpty())
     {
@@ -2088,8 +2093,8 @@ Box::shift (const IntVect& iv)
 }
 
 inline
-Box&
-Box::convert (const IntVect& typ)
+CH_XD::Box&
+CH_XD::Box::convert (const IntVect& typ)
 {
   CH_assert(typ >= IntVect::Zero && typ <= IntVect::Unit);
   if (!isEmpty())
@@ -2103,8 +2108,8 @@ Box::convert (const IntVect& typ)
 }
 
 inline
-Box&
-Box::surroundingNodes (int dir)
+CH_XD::Box&
+CH_XD::Box::surroundingNodes (int dir)
 {
   if (!(btype[dir]))
     {
@@ -2122,8 +2127,8 @@ Box::surroundingNodes (int dir)
 }
 
 inline
-Box&
-Box::enclosedCells (int dir)
+CH_XD::Box&
+CH_XD::Box::enclosedCells (int dir)
 {
   if (btype[dir])
     {
@@ -2141,42 +2146,42 @@ Box::enclosedCells (int dir)
 }
 
 inline
-Box
-surroundingNodes (const Box& b,
+CH_XD::Box
+surroundingNodes (const CH_XD::Box& b,
                   int        dir)
 {
-  Box bx(b);
+  CH_XD::Box bx(b);
   return bx.surroundingNodes(dir);
 }
 
 inline
-Box
-surroundingNodes (const Box& b)
+CH_XD::Box
+surroundingNodes (const CH_XD::Box& b)
 {
-  Box bx(b);
+  CH_XD::Box bx(b);
   return bx.surroundingNodes();
 }
 
 inline
-Box
-enclosedCells (const Box& b,
+CH_XD::Box
+enclosedCells (const CH_XD::Box& b,
                int        dir)
 {
-  Box bx(b);
+  CH_XD::Box bx(b);
   return bx.enclosedCells(dir);
 }
 
 inline
-Box
-enclosedCells (const Box& b)
+CH_XD::Box
+enclosedCells (const CH_XD::Box& b)
 {
-  Box bx(b);
+  CH_XD::Box bx(b);
   return bx.enclosedCells();
 }
 
 inline
-Box&
-Box::operator+= (const IntVect& v)
+CH_XD::Box&
+CH_XD::Box::operator+= (const IntVect& v)
 {
   if (!isEmpty())
     {
@@ -2187,12 +2192,12 @@ Box::operator+= (const IntVect& v)
 }
 
 inline
-Box
-Box::operator+  (const IntVect& v) const
+CH_XD::Box
+CH_XD::Box::operator+  (const IntVect& v) const
 {
   if (isEmpty())
     {
-      return(Box().convert(btype));
+      return(CH_XD::Box().convert(btype));
     }
   else
     {
@@ -2200,13 +2205,13 @@ Box::operator+  (const IntVect& v) const
       small += v;
       IntVect big(bigend);
       big += v;
-      return Box(small,big,btype);
+      return CH_XD::Box(small,big,btype);
     }
 }
 
 inline
-Box&
-Box::operator-= (const IntVect& v)
+CH_XD::Box&
+CH_XD::Box::operator-= (const IntVect& v)
 {
   if (!isEmpty())
     {
@@ -2218,19 +2223,19 @@ Box::operator-= (const IntVect& v)
 
 inline
 bool
-Box::operator < (const Box& rhs) const
+CH_XD::Box::operator < (const CH_XD::Box& rhs) const
 {
   if (smallend == rhs.smallend) return bigend.lexLT(rhs.bigend);
   return(!isEmpty() && (rhs.isEmpty() || smallend.lexLT(rhs.smallend)));
 }
 
 inline
-Box
-Box::operator-  (const IntVect& v) const
+CH_XD::Box
+CH_XD::Box::operator-  (const IntVect& v) const
 {
   if (isEmpty())
     {
-      return(Box().convert(btype));
+      return(CH_XD::Box().convert(btype));
     }
   else
     {
@@ -2238,65 +2243,65 @@ Box::operator-  (const IntVect& v) const
       small -= v;
       IntVect big = bigend;
       big -= v;
-      return Box(small,big,btype);
+      return CH_XD::Box(small,big,btype);
     }
 }
 
 inline
-Box&
-Box::grow (int i)
+CH_XD::Box&
+CH_XD::Box::grow (int i)
 {
   if (!isEmpty())
     {
       smallend.diagShift(-i);
       bigend.diagShift(i);
-      if (!(bigend >= smallend)) *this = Box().convert(btype);
+      if (!(bigend >= smallend)) *this = CH_XD::Box().convert(btype);
       computeBoxLen();
     }
   return *this;
 }
 
 inline
-Box
-grow (const Box& b,
+CH_XD::Box
+grow (const CH_XD::Box& b,
       int        i)
 {
   if (b.isEmpty())
     {
-      return Box().convert(b.btype);
+      return CH_XD::Box().convert(b.btype);
     }
 
   IntVect small = diagShift(b.smallend,-i);
   IntVect big   = diagShift(b.bigend,i);
   if (!(big >= small))
     {
-      return Box().convert(b.btype);
+      return CH_XD::Box().convert(b.btype);
     }
-  return Box(small,big,b.btype);
+  return CH_XD::Box(small,big,b.btype);
 }
 
 inline
-Box&
-Box::grow (const IntVect& v)
+CH_XD::Box&
+CH_XD::Box::grow (const IntVect& v)
 {
   if (!isEmpty())
     {
       smallend -= v;
       bigend   += v;
-      if (!(bigend >= smallend)) *this = Box().convert(btype);
+      if (!(bigend >= smallend)) *this = CH_XD::Box().convert(btype);
       computeBoxLen();
     }
   return *this;
 }
 
 inline
-Box
-grow (const Box&     b,
+CH_XD::Box
+grow (const CH_XD::Box&     b,
       const IntVect& v)
 {
   if (b.isEmpty())
     {
-      return Box().convert(b.btype);
+      return CH_XD::Box().convert(b.btype);
     }
   else
     {
@@ -2304,48 +2309,48 @@ grow (const Box&     b,
       IntVect big   = b.bigend   + v;
       if (!(big >= small))
         {
-          return Box().convert(b.btype);
+          return CH_XD::Box().convert(b.btype);
         }
       else
         {
-          return Box(small,big,b.btype);
+          return CH_XD::Box(small,big,b.btype);
         }
     }
 }
 
 inline
-Box&
-Box::grow (int idir,
+CH_XD::Box&
+CH_XD::Box::grow (int idir,
            int n_cell)
 {
   if (!isEmpty())
     {
       smallend.shift(idir, -n_cell);
       bigend.shift(idir, n_cell);
-      if (!(bigend >= smallend)) *this = Box().convert(btype);
+      if (!(bigend >= smallend)) *this = CH_XD::Box().convert(btype);
       computeBoxLen();
     }
   return *this;
 }
 
 inline
-Box&
-Box::growLo (int idir,
+CH_XD::Box&
+CH_XD::Box::growLo (int idir,
              int n_cell)
 {
   if (!isEmpty())
     {
       smallend.shift(idir, -n_cell);
-      if (!(bigend >= smallend)) *this = Box().convert(btype);
+      if (!(bigend >= smallend)) *this = CH_XD::Box().convert(btype);
       computeBoxLen();
     }
   return *this;
 }
 
 inline
-Box&
-Box::growDir (int idir,
-              const Side::LoHiSide& a_sd,
+CH_XD::Box&
+CH_XD::Box::growDir (int idir,
+              const CH_XD::Side::LoHiSide& a_sd,
               int n_cell)
 {
   if (a_sd == Side::Lo)
@@ -2360,26 +2365,27 @@ Box::growDir (int idir,
 }
 
 inline
-Box&
-Box::growHi (int idir,
+CH_XD::Box&
+CH_XD::Box::growHi (int idir,
              int n_cell)
 {
   if (!isEmpty())
     {
       bigend.shift(idir,n_cell);
-      if (!(bigend >= smallend)) *this = Box().convert(btype);
+      if (!(bigend >= smallend)) *this = CH_XD::Box().convert(btype);
       computeBoxLen();
     }
   return *this;
 }
 
 inline
-Box
-Box::operator& (const Box& rhs) const
+CH_XD::Box
+CH_XD::Box::operator& (const CH_XD::Box& rhs) const
 {
-  Box lhs(*this);
+  CH_XD::Box  lhs(*this);
   return lhs &= rhs;
 }
+
 
 #endif /* WRAPPER */
 

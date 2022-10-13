@@ -14,7 +14,6 @@
 #include "MayDay.H"
 #include "IntVectSet.H"
 #include "parstream.H"
-#include "SPMD.H"
 #include "DebugOut.H"
 #include "SPMD.H"
 #include "NamespaceHeader.H"
@@ -362,7 +361,7 @@ int IVSFAB<T>::size(const Box& a_region,
     }
   }
   retval += SpaceDim*sizeof(int)*numberThings; // for intvects
-  retval += 2*SpaceDim*sizeof(int); // box
+  retval += 2*SpaceDim*sizeof(Real); // box done as reals for some reason
   return retval;
 }
 ////////////////////

@@ -390,21 +390,27 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Real& a_time,
                      Vector<int>& a_refRatio,
                      int& a_numLevels)
-{
+{ CH_TIME("ReadAMRHierarchyHDF5 long with filename");
   HDF5Handle handle;
+  { CH_TIME("open handle");
   int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
   if ( err < 0)
     {
       return -4;
     }
+  }
   int eekflag = ReadAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
                                      a_vectNames, a_domain, a_dx, a_dt,
                                      a_time, a_refRatio, a_numLevels);
 
 #ifdef CH_MPI
+  { CH_TIME("barrier");
   MPI_Barrier(Chombo_MPI::comm);
+  }
 #endif
+  { CH_TIME("close handle");
   handle.close();
+  }
 
   return (eekflag);
 }
@@ -420,10 +426,11 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Real& a_time,
                      Vector<int>& a_refRatio,
                      int& a_numLevels)
-{
-
+{ CH_TIME("ReadAMRHierarchyHDF5 long with handle");
   HDF5HeaderData header;
+  { CH_TIME("read header");
   header.readFromFile(handle);
+  }
 
   a_numLevels = header.m_int["num_levels"];
   if (a_numLevels <= 0)
@@ -487,7 +494,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Box& a_domain,
                      Vector<int>& a_refRatio,
                      int& a_numLevels)
-{
+{ CH_TIME("ReadAMRHierarchyHDF5 with filename");
   HDF5Handle handle;
   int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
   if ( err < 0)
@@ -512,7 +519,7 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Box& a_domain,
                      Vector<int>& a_refRatio,
                      int& a_numLevels)
-{
+{ CH_TIME("ReadAMRHierarchyHDF5 with handle");
   HDF5HeaderData header;
   header.readFromFile(handle);
 
@@ -861,6 +868,29 @@ viewBFI(const BaseFab<int>* a_dataPtr)
 }
 
 void
+writeBFCname(const BaseFab<char>* a_dataPtr,
+             const char*          a_filename)
+{
+  if (a_dataPtr == NULL)
+  {
+    return;
+  }
+
+  FArrayBox fab(a_dataPtr->box(), a_dataPtr->nComp());
+  BoxIterator bit(fab.box());
+  for (bit.begin(); bit.ok(); bit.next())
+    {
+      const IntVect& iv = bit();
+      for (int ivar = 0; ivar < fab.nComp(); ivar++)
+        {
+          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
+        }
+    }
+
+  writeFABname(&fab, a_filename);
+}
+
+void
 viewBFIV(const BaseFab<IntVect>* a_dataPtr)
 {
   if (a_dataPtr == NULL)
@@ -1066,6 +1096,24 @@ writeBFR(const BaseFab<Real>* a_dataPtr)
 }
 
 void
+writeBFRname(const BaseFab<Real>* a_dataPtr,
+             const char*          a_filename)
+{
+  if (a_dataPtr == NULL)
+  {
+    return;
+  }
+
+  //copy the BaseFab over to a FArrayBox
+  Box fabBox = (*a_dataPtr).box();
+  int  ncomp = (*a_dataPtr).nComp();
+  FArrayBox fab(fabBox,ncomp);
+  fab.copy(*a_dataPtr);
+
+  writeFABname(&fab, a_filename);
+}
+
+void
 viewBFR(const BaseFab<Real>* a_dataPtr)
 {
   if (a_dataPtr == NULL)
@@ -1156,7 +1204,12 @@ writeFABname(const FArrayBox      * a_dataPtr,
 
   const FArrayBox& data = *a_dataPtr;
 
+#ifdef CH_MPI
+  HDF5Handle handle(a_filename, HDF5Handle::CREATE);
+#else
   HDF5Handle handle(a_filename, HDF5Handle::CREATE_SERIAL);
+#endif
+
   HDF5HeaderData header;
 
   int numlevels= 1;
@@ -1341,7 +1394,12 @@ writeVectorLevelName(const Vector<LevelData<FArrayBox>*>* a_dataPtr,
     return;
   }
 
+#ifdef CH_MPI
+  HDF5Handle handle(a_filename, HDF5Handle::CREATE);
+#else
   HDF5Handle handle(a_filename, HDF5Handle::CREATE_SERIAL);
+#endif
+
   HDF5HeaderData header;
 
   int numlevels = a_dataPtr->size();

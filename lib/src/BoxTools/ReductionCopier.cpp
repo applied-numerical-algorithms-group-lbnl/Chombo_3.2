@@ -22,6 +22,52 @@ using std::ostream;
 
 #include "NamespaceHeader.H"
 
+ReductionCopier::ReductionCopier(const bool             & a_usingFaceSumOp,
+                                 const DisjointBoxLayout& a_sourceLayout  ,
+                                 const BoxLayout        & a_destLayout    ,
+                                 const ProblemDomain    & a_domain        ,
+                                 const IntVect          & a_destGhost     ,
+                                 const IntVect          & a_reduceDir     ,
+                                 bool                     a_exchange      )
+{
+  
+  //  pout()<<"Entering ReductionCopier constructor"<<endl;
+  CH_assert(a_usingFaceSumOp == true);
+
+  // add the a ghost cell in the non-reduction directions, which facilitates cell-centered box calculus on face-centered data
+  IntVect ghostVect = a_destGhost;
+  ghostVect += IntVect::Unit;
+  
+  // no ghost cell in the reduction directions
+  IntVect reductionVect = IntVect::Zero;
+  for (int idir = 0; idir < SpaceDim; ++idir)
+    {
+      reductionVect += BASISV(idir)*a_reduceDir[idir];
+    }
+
+  // vector of all ones minus the vector which is one in the reduction directions
+  ghostVect -= reductionVect;
+  Vector<int> reduceDir;
+  for (int idir = 0; idir < SpaceDim; ++idir)
+    {
+      if (a_reduceDir[idir] == 1)
+        {
+          reduceDir.push_back(idir);
+        }
+    }
+
+  bool usingFaceSumOp = true;
+  define(usingFaceSumOp,
+         a_sourceLayout,  
+         a_destLayout  , 
+         a_domain      ,  
+         ghostVect     , 
+         reduceDir   ,
+         a_exchange    );
+
+  //pout()<<"Leaving ReductionCopier constructor"<<endl;
+}
+
 ReductionCopier::ReductionCopier(const DisjointBoxLayout& a_level,
                                  const BoxLayout& a_dest,
                                  int a_transverseDir,
@@ -117,6 +163,325 @@ ReductionCopier::ReductionCopier(const DisjointBoxLayout& a_level,
   define(a_level, a_dest, a_domain, a_destGhost, a_transverseDir,
          a_exchange);
 }
+
+void ReductionCopier::define(const bool              & a_usingFaceSumOp,
+                             const DisjointBoxLayout & a_sourceLayout  ,
+                             const BoxLayout         & a_destLayout    ,
+                             const ProblemDomain     & a_domain        ,
+                             const IntVect           & a_ghostVect     ,
+                             const Vector<int>       & a_reduceDir     ,
+                             bool                      a_exchange      )
+{
+  //pout()<<"Entering define"<<endl;
+ 
+#ifdef MULTIDIM_TIMER
+  CH_TIME("ReductionCopier::define");
+#endif
+  
+  //member data
+  m_isDefined = true;
+  m_reduceDir = a_reduceDir;
+  
+  CH_assert(a_sourceLayout.isClosed());
+  CH_assert(a_destLayout  .isClosed());
+  
+  clear();
+  buffersAllocated = false;
+  
+  //source and dest layouts
+  const BoxLayout& sourceLayout = a_sourceLayout;
+  const BoxLayout& destLayout   = a_destLayout;
+  
+  //domain
+  Box domainBox(a_domain.domainBox());
+  
+  if (!domainBox.ok())
+    {
+      MayDay::Error("ReductionCopier requires a valid ProblemDomain");
+    }
+  
+  Vector<int> reduceDirMin(m_reduceDir.size());
+  Vector<int> reduceDirMax(m_reduceDir.size());
+  
+  for (int n = 0; n < m_reduceDir.size(); n++)
+    {
+      reduceDirMin[n] = domainBox.smallEnd(m_reduceDir[n]);
+      reduceDirMax[n] = domainBox.bigEnd  (m_reduceDir[n]);
+    }
+  
+  // When there is more than one processor, find two vectors of data indices that identify the 
+  // cases where either the source or the destination box are on this processor. Cases where neither the source 
+  // nor the destination box are on this processor are irrelevant.
+  
+  //destination layout indices
+  vector<DataIndex> destDI;
+  vector<DataIndex> localDestDI;
+  
+  // source layout indices
+  vector<DataIndex> sourceDI;
+  vector<DataIndex> localSourceDI;
+  
+  int numProcessors = numProc();
+  if (numProcessors > 1)
+    {
+      // find the subset of the destination layout indices that reside on this processor;
+      for (LayoutIterator destDit(a_destLayout.layoutIterator()); destDit.ok(); ++destDit)
+        {
+          destDI.push_back(DataIndex(destDit()));
+          if (procID() == destLayout.procID(destDit()))
+            {
+              localDestDI.push_back(DataIndex(destDit()));
+            }
+        }
+      
+      // find the subset of the source layout indices that reside on this processor.
+      for (LayoutIterator sourceDit(a_sourceLayout.layoutIterator()); sourceDit.ok(); ++sourceDit)
+        {
+          sourceDI.push_back(DataIndex(sourceDit()));
+          if (procID() == sourceLayout.procID(sourceDit()))
+            {
+              localSourceDI.push_back(DataIndex(sourceDit()));
+            }
+        }
+      //pout()<<"using two processors" <<endl;
+      //pout()<<"destDI       .size()=" <<destDI        .size()<<endl;
+      //pout()<<"localDestDI  .size()=" <<localDestDI   .size()<<endl;
+      //pout()<<"sourceDI     .size()=" <<sourceDI      .size()<<endl;
+      //pout()<<"localSourceDI.size()=" <<localSourceDI .size()<<endl;
+      //pout()<<"procID = "<<procID()<<endl;
+
+      //pout()<<"destDI[0]     =" <<destDI[0]<<endl;
+      //pout()<<"destDI[1]     =" <<destDI[1]<<endl;
+      //pout()<<"localDestDI[0]=" <<destDI[0]<<endl;
+      //pout()<<endl;
+     
+      //pout()<<"sourceDI[0]     =" <<sourceDI     [0]<<endl;
+      //pout()<<"sourceDI[1]     =" <<sourceDI     [1]<<endl;
+      //pout()<<"localSourceDI[0]=" <<localSourceDI[0]<<endl;
+      //pout()<<endl;
+    }
+  
+  if (numProcessors == 1)
+    {
+      // use all the indices
+      for (LayoutIterator to(a_destLayout.layoutIterator()); to.ok(); ++to)
+        {
+          localDestDI.push_back(DataIndex(to()));
+        }
+      for (LayoutIterator from(a_sourceLayout.layoutIterator()); from.ok(); ++from)
+        {
+          sourceDI.push_back(DataIndex(from()));
+        }
+    }
+  
+  bool firstLoop = true;
+  nestedDILoops(firstLoop   ,
+                sourceLayout,
+                destLayout  ,
+                a_ghostVect ,
+                domainBox   ,
+                localDestDI,
+                sourceDI    ,
+                reduceDirMin,
+                reduceDirMax,
+                a_exchange  );
+  
+  // Local copymotion items completed in previous loop. In serial, all motion items are local. However, in parallel: 
+  if (numProcessors > 1)
+    {
+      firstLoop = false;
+      nestedDILoops(firstLoop     ,
+                    sourceLayout  ,
+                    destLayout    ,
+                    a_ghostVect   ,
+                    domainBox     ,
+                    destDI        ,
+                    localSourceDI,
+                    reduceDirMin  ,
+                    reduceDirMax  ,
+                    a_exchange    );
+  
+    }
+    
+  sort();
+  //pout()<<"Leaving define"<<endl;
+  //pout()<<"procID = "<<procID()<<endl;
+}
+void ReductionCopier::setMotionItems(const int       & a_itemProcID,
+                                     const Box       & a_fromBox   ,
+                                     const Box       & a_toBox     ,
+                                     const bool      & a_firstLoop ,
+                                     const DataIndex & a_fromdi    ,
+                                     const DataIndex & a_todi      ,
+                                     const bool      & a_exchange  )
+
+{
+  //pout()<< "Entering setMotionItems"<<endl;
+  // pout()<<""<<endl;
+  //pout()<< "new method. motion item:(fromBox) (" << a_fromBox.smallEnd()<<","<< a_fromBox.bigEnd()<<")"<<endl;
+  //pout()<< "new method. motion item:(toBox  )("  << a_toBox  .smallEnd()<<","<< a_toBox  .bigEnd()<<")"<<endl;
+  //pout()<< "new method. motion item:(fromdi) = " << a_fromdi                                           <<endl;
+  //pout()<< "new method. motion item:(todi  ) = " << a_todi                                             <<endl;
+  //pout()<< "new method. procId               = " << a_itemProcID                                       <<endl;
+  //pout()<< "new method. firstLoop            = " << a_firstLoop                                        <<endl;
+   
+  //pout()<< ""<<endl;
+
+   MotionItem* item = new (s_motionItemPool.getPtr()) MotionItem(a_fromdi, a_todi, a_fromBox, a_toBox);
+   if (item == NULL)
+     {
+       MayDay::Error("Out of Memory in copier::define");
+     }
+
+   if (a_firstLoop)
+     {
+       //non-local
+       if (a_itemProcID != procID())
+         {
+           // to-motion plan
+           //pout()<<"Setting to-motionPlan (in the first loop)"<<endl;
+           item->procID = a_itemProcID;
+           m_toMotionPlan.push_back(item);
+         }
+       
+       // local
+       else
+         {
+           if (a_exchange && a_fromdi == a_todi)
+             { 
+               s_motionItemPool.returnPtr(item);
+             }
+           else
+             {
+               // local motion
+               //pout()<<"Setting local Motion (in the first loop)"<<endl;
+               m_localMotionPlan.push_back(item);
+             }
+         }
+     }
+   
+   if (!a_firstLoop)
+     {
+       // no local motion in this loop
+       if (a_itemProcID != procID())
+         {
+           // from-motion plan
+           //pout()<<"Using fromMotion plan (in the second loop)"<<endl;
+           item->procID = a_itemProcID;
+           m_fromMotionPlan.push_back(item);
+         }
+       else
+         {
+           //pout()<<"Ignoring local motion item, because this is the second loop"<<endl;
+         }
+     }
+
+   //pout()<< "Leaving setMotionItems"<<endl;
+   //pout()<<""<<endl;
+}
+
+void ReductionCopier::nestedDILoops(const bool        & a_firstLoop    ,
+                                    const BoxLayout   & a_sourceLayout ,
+                                    const BoxLayout   & a_destLayout   ,
+                                    const IntVect     & a_ghostVect    ,
+                                    const Box         & a_domainBox    ,
+                                    vector<DataIndex> & a_outerLoop    ,
+                                    vector<DataIndex> & a_innerLoop    ,
+                                    const Vector<int> & a_reduceDirMin ,
+                                    const Vector<int> & a_reduceDirMax ,
+                                    bool                a_exchange     )
+{
+  //pout()<<"entering nestedDILoops"<<endl;
+ 
+  unsigned int itemProcID = 99999;
+  // loop over destination indices 
+  for (vector<DataIndex>::iterator dDit = a_outerLoop.begin(); dDit != a_outerLoop.end(); ++dDit)
+    {
+      // destination box   
+      const DataIndex destDit(*dDit);
+      Box destBox(a_destLayout[destDit]);
+
+      if (!a_firstLoop)
+        {
+           itemProcID = a_destLayout.procID(destDit);
+        }
+
+      // boxes used for intersection calculus; 
+      Box spreadGhostDestBox (destBox);
+      Box ghostDestBox       (destBox);
+        
+      // a_ghostVect = 1 if and only if idir != a reduction direction
+      spreadGhostDestBox.grow(a_ghostVect);
+      ghostDestBox      .grow(a_ghostVect);
+
+      // Extend the destBox: spreadDestBox covers the entire extent of the domain in the reduction directions. 
+      for (int n = 0; n < m_reduceDir.size(); n++)
+        {
+          spreadGhostDestBox.setSmall(m_reduceDir[n], a_reduceDirMin[n]);
+          spreadGhostDestBox.setBig  (m_reduceDir[n], a_reduceDirMax[n]);
+        }
+                
+      // destination boxes are subsets of the domain
+      spreadGhostDestBox &= a_domainBox;
+      ghostDestBox       &= a_domainBox;
+
+      // loop over source indices
+      for (vector<DataIndex>::iterator sDit = a_innerLoop.begin(); sDit != a_innerLoop.end(); ++sDit)
+        {
+          // source data index, source box, and source proc id
+          const DataIndex sourceDit(*sDit);
+          Box sourceBox(a_sourceLayout[sourceDit]);
+
+          if (a_firstLoop)
+            {
+              itemProcID = a_sourceLayout.procID(sourceDit);
+            }
+          
+          if (sourceBox.bigEnd(0) < spreadGhostDestBox.smallEnd(0))
+            {
+              //Empty intersection: move on to the next box
+              continue;
+            }
+          
+          if (spreadGhostDestBox.intersectsNotEmpty(sourceBox)) 
+            {
+              // intersect a layout box with a spread box to create a motion item.
+              Box fromBox(sourceBox); 
+              fromBox &= spreadGhostDestBox;   
+
+              // spreadFromBox covers the entire extent of the domain in the reduction directions. 
+              Box spreadFromBox(fromBox);
+              for (int n = 0; n < m_reduceDir.size(); n++)
+                {
+                  spreadFromBox.setSmall(m_reduceDir[n], a_reduceDirMin[n]);
+                  spreadFromBox.setBig  (m_reduceDir[n], a_reduceDirMax[n]);
+                }
+              
+              // intersect a (ghosted) layout box with a spread box to create a motion item.
+              Box toBox(ghostDestBox);
+              toBox &= spreadFromBox;
+              
+              setMotionItems(itemProcID ,
+                             fromBox    ,
+                             toBox      ,
+                             a_firstLoop,
+                             sourceDit  ,
+                             destDit   ,
+                             a_exchange );
+            }
+
+          if (sourceBox.smallEnd(0) > spreadGhostDestBox.bigEnd(0))
+            {
+              //smallEnd of each remaining boxes is lexigraphically beyond this ghosted box.
+              break;
+            }
+            
+        }      
+    }
+  
+  //pout()<<"Leaving nestedDILoops"<<endl;
+ }
+
 
 void ReductionCopier::define(const DisjointBoxLayout& a_level,
                              const BoxLayout& a_dest,
@@ -237,6 +602,13 @@ void ReductionCopier::define(const BoxLayout& a_level,
   // keeping track of what this radius is.
   // just to make things simpler, start off with a radius of one
   Box grownDomainCheckBox = a_domain.domainBox();
+  // reality check -- ReductionCopier won't work properly if the problemDomain
+  // isn't defined
+  if (!grownDomainCheckBox.ok())
+    {
+      MayDay::Error("ReductionCopier doesn't work properly if DisjointBoxLayout wasn't defined with a valid ProblemDomain");
+    }
+  
   grownDomainCheckBox.grow(1);
   int periodicCheckRadius = 1;
 

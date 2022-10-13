@@ -65,13 +65,16 @@ class FaceSumOp: public LDOperator<FluxBox>
 public:
 
   FaceSumOp();
-  FaceSumOp(const int& a_summingDir);
-  
+
+  // The projection directions are stored in an IntVect: a 1 value denotes summing in that direction. A zero value denotes no summng in that direction
+  FaceSumOp(const IntVect& a_summingDir);
+  FaceSumOp(const int    & a_summingDir);
+
   virtual ~FaceSumOp()
   {
   }
   
-  void setDir  (const int& a_sumDir);
+  void setReductionDir  (const IntVect& a_sumDir);
   void setScale(const Real& a_scale );
   
   void op(FluxBox       & dataTo     ,
@@ -80,8 +83,6 @@ public:
           const Box     & RegionTo   ,
           const FluxBox & src        ,
           const Interval& Csrc       ) const;
-
-
 
   virtual void linearIn(FluxBox       & a_arg  ,  
                         void*           a_buf  , 
@@ -97,10 +98,33 @@ public:
   int size(const FluxBox & a_fluxBox,
            const Box     & a_bx     , 
            const Interval& a_comps  ) const;
+  
+  // reduce a source Intvect or a source box
+  virtual IntVect project(const IntVect & a_iv ) const ;
+  virtual Box     project (const Box     & a_box) const;
 
+  // expand a destination box
+  virtual Box  inject (const Box & a_box)const ;
 
-  Real m_scale     ;
-  int  m_summingDir;
+  virtual void setDestBox   (const Box & a_destDom   )const ;
+  virtual void setSourceBox (const Box & a_sourceDom )const ;
+
+  virtual Box getDestinationBox() const ;
+  virtual Box getSourceBox     () const ;
+
+  virtual void    setProjectionDirections(const IntVect    & a_directions)const;
+  virtual IntVect getProjectionDirections(const IntVect    & a_directions)const;
+  
+
+public:
+  Real    m_scale;
+
+  // one in an entry indicates reduction in that direction; 0 or anything else indicates no reduction
+  mutable IntVect m_projectionDirections;
+
+  // used in op
+  mutable Box m_destBox  ;
+  mutable Box m_sourceBox;
   
 };
 

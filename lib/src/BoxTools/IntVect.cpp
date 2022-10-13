@@ -117,6 +117,10 @@ IntVect::dumpOn (ostream& os) const
     os << "IntVect " << *this << '\n';
 }
 
+const IntVect IntVect::Zero = IntVect(D_DECL6(0,0,0,0,0,0));
+const IntVect IntVect::Unit = IntVect(D_DECL6(1,1,1,1,1,1));
+
+
 //
 // Static object initialization.
 //
@@ -138,8 +142,7 @@ int IntVect::InitStatics()
 
   return 0; // arbitrary
 }
-const IntVect IntVect::Zero;
-const IntVect IntVect::Unit;
+
 static int s_dummyForIntVectCpp( IntVect::InitStatics() );
 // If IntVect::Zero and IntVect::Unit were pointers, we wouldn't need this extra
 // static int.  But they're objects, and the danger is that the initializations

@@ -41,7 +41,15 @@ public:
   ///null constructor, copy constructor and operator= can be compiler defined.
   ReductionCopier()
   {}
-
+  
+  /// face sum op requires that destGhost -> destGhost + Unit; this helps cell-centerd box calculus work for face-centered data
+  ReductionCopier(const bool             & a_usingFaceSumOp  ,
+                  const DisjointBoxLayout& a_sourceLayout    ,
+                  const BoxLayout        & a_destLayout      ,
+                  const ProblemDomain    & a_domain          ,
+                  const IntVect          & a_destGhost       ,
+                  const IntVect          & a_reduceDir       ,
+                  bool                     a_exchange = false);
   ///
   ReductionCopier(const DisjointBoxLayout& a_level, const BoxLayout& a_dest,
                   int a_transverseDir, bool a_exchange = false);
@@ -94,6 +102,35 @@ public:
 
   ///
   virtual ~ReductionCopier();
+
+   ///
+  virtual void define(const bool              & a_usingFaceSumOp  ,
+                      const DisjointBoxLayout & a_sourceLayout    ,
+                      const BoxLayout         & a_destLayout      ,
+                      const ProblemDomain     & a_domain          ,
+                      const IntVect           & a_ghostVect       ,
+                      const Vector<int>       & a_reduceDir       ,
+                      bool                      a_exchange = false);
+
+  virtual void setMotionItems(const int       & a_itemProcID,
+                              const Box       & a_fromBox   ,
+                              const Box       & a_toBox     ,
+                              const bool      & a_firstLoop ,
+                              const DataIndex & a_fromdi    ,
+                              const DataIndex & a_todi      ,
+                              const bool      & a_exchange = false);
+  
+  // utility function for the define
+  virtual void nestedDILoops(const bool        & a_firstLoop    , 
+                             const BoxLayout   & a_sourceLayout ,
+                             const BoxLayout   & a_destLayout   ,
+                             const IntVect     & a_ghostVect    ,
+                             const Box         & a_domainBox    ,
+                             vector<DataIndex> & a_outerLoop    ,
+                             vector<DataIndex> & a_innerLoop    ,
+                             const Vector<int> & a_reduceLo     ,
+                             const Vector<int> & a_reduceHi     ,
+                             bool                a_exchange = false);
 
   ///
   virtual void define(const DisjointBoxLayout& a_level,
@@ -177,7 +214,7 @@ private:
 
   // no really good reason to keep this, except for completeness...
   Vector<int> m_transverseDir;
-
+  Vector<int> m_reduceDir;
 };
 
 //===========================================================================

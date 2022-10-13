@@ -550,10 +550,14 @@ operator>> (istream& is, ProblemDomain& a_probdomain)
     }
 
   else
-    MayDay::Error("operator>>(istream&,ProblemDomain&): expected \',\'");
+    {
+      MayDay::Error("operator>>(istream&,ProblemDomain&): expected \',\'");
+    }
 
   if (is.fail())
-    MayDay::Error("operator>>(istream&,ProblemDomain&) failed");
+    {
+      MayDay::Error("operator>>(istream&,ProblemDomain&) failed");
+    }
 
     return is;
 }

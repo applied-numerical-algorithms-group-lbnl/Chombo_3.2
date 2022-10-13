@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <list>
+#include <limits>
 #include <set>
 using std::cout;
 

@@ -1,6 +1,7 @@
 
 ebase = Multigrid
-
+USE_PROTO=TRUE
+NAMESPACE=TRUE
 # the location of the Chombo "lib" directory
 CHOMBO_HOME = ../../../../lib
 

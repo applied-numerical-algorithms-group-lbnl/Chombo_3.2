@@ -138,7 +138,7 @@ public:
 void
 parseInputs(SolveParams & a_params)
 {
-  ParmParse pp;
+  CH_XD::ParmParse pp;
   pp.get("nx"         , a_params.nx);
   pp.get("do_file_output", a_params.dofileio);
   pp.get("use_dense_stencil", a_params.useDenseStencil);
@@ -200,10 +200,10 @@ PROTO_KERNEL_START void initParabolaT(Point& p, Scalar& data)
 PROTO_KERNEL_END(initParabolaT, initParabola)
 
 /***/
-double absMax(const LevelData<FArrayBox >& a_resid)
+double absMax(const CH_XD::LevelData<CH_XD::FArrayBox >& a_resid)
 {
   double absmaxval = 0;
-  DataIterator dit = a_resid.dataIterator();
+  CH_XD::DataIterator dit = a_resid.dataIterator();
 #pragma omp parallel for
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
@@ -234,23 +234,23 @@ multigridSolve(const SolveParams& a_params)
   CH_TIME("Multigrid_Solve");
   SolveParams params = a_params;
 
-  IntVect domLo = IntVect::Zero;
-  IntVect domHi  = (a_params.nx - 1)*IntVect::Unit;
+  CH_XD::IntVect domLo = CH_XD::IntVect::Zero;
+  CH_XD::IntVect domHi  = (a_params.nx - 1)*CH_XD::IntVect::Unit;
   constexpr bool is_periodic[] = {true, true, true};
 
-  ProblemDomain domain(domLo, domHi, is_periodic);
+  CH_XD::ProblemDomain domain(domLo, domHi, is_periodic);
 
-  Vector<Box> boxes;
+  CH_XD::Vector<CH_XD::Box> boxes;
   unsigned int blockfactor = 8;
-  domainSplit(domain, boxes, a_params.maxgrid, blockfactor);
-  Vector<int> procs;
-  LoadBalance(procs, boxes);
-  DisjointBoxLayout grids(boxes, procs, domain);
-  LevelData<FArrayBox > phi(grids, 1, IntVect::Unit);
-  LevelData<FArrayBox > rhs(grids, 1, IntVect::Zero);
-  LevelData<FArrayBox > res(grids, 1, IntVect::Zero);
+  CH_XD::domainSplit(domain, boxes, a_params.maxgrid, blockfactor);
+  CH_XD::Vector<int> procs;
+  CH_XD::LoadBalance(procs, boxes);
+  CH_XD::DisjointBoxLayout grids(boxes, procs, domain);
+  CH_XD::LevelData<CH_XD::FArrayBox > phi(grids, 1, CH_XD::IntVect::Unit);
+  CH_XD::LevelData<CH_XD::FArrayBox > rhs(grids, 1, CH_XD::IntVect::Zero);
+  CH_XD::LevelData<CH_XD::FArrayBox > res(grids, 1, CH_XD::IntVect::Zero);
 
-  DataIterator dit = grids.dataIterator();
+  CH_XD::DataIterator dit = grids.dataIterator();
 #pragma omp parallel
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
@@ -323,7 +323,7 @@ int main(int argc, char* argv[])
         exit(0);
       }
     char* in_file = argv[1];
-    ParmParse  pp(argc-2,argv+2,NULL,in_file);
+    CH_XD::ParmParse  pp(argc-2,argv+2,NULL,in_file);
 
     SolveParams params;
     parseInputs(params);

@@ -23,14 +23,14 @@ using Proto::Shift;
 /****/
 void
 SGMultigridLevel::
-applyOp(LevelData<FArrayBox >       & a_lph,
-        const LevelData<FArrayBox > & a_phi)
+applyOp(CH_XD::LevelData<CH_XD::FArrayBox >       & a_lph,
+        const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi)
                     
 {
   enforceBoundaryConditions(a_phi);
   {
   CH_TIME("sgmg::applyop_no_comm");
-  DataIterator dit = m_grids.dataIterator();
+  CH_XD::DataIterator dit = m_grids.dataIterator();
 #pragma omp parallel for
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
@@ -42,14 +42,14 @@ applyOp(LevelData<FArrayBox >       & a_lph,
     lphbd |= m_negoperator(phibd,   grid);
     lphbd *= -1.0;
   }
-  ch_flops() += 3*m_numPointsThisProc*m_negoperator.size();
+  CH_XD::ch_flops() += 3*m_numPointsThisProc*m_negoperator.size();
   }
 }
 /****/
 void
 SGMultigrid::
-applyOp(LevelData<FArrayBox >       & a_lph,
-        const LevelData<FArrayBox > & a_phi)
+applyOp(CH_XD::LevelData<CH_XD::FArrayBox >       & a_lph,
+        const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi)
 {
   return m_finest->applyOp(a_lph, a_phi);
 }
@@ -58,7 +58,7 @@ SGMultigrid::
 SGMultigrid(const double & a_alpha,
             const double & a_beta,
             const double & a_dx,
-            const DisjointBoxLayout   & a_grids,
+            const CH_XD::DisjointBoxLayout   & a_grids,
             bool a_useDenseStencil)
 {
   m_finest = std::shared_ptr<SGMultigridLevel>(new SGMultigridLevel(a_alpha, a_beta, a_dx, a_grids, a_useDenseStencil));
@@ -66,9 +66,9 @@ SGMultigrid(const double & a_alpha,
 /***/
 void
 SGMultigrid::
-residual(LevelData<FArrayBox >       & a_res,
-         const LevelData<FArrayBox > & a_phi,
-         const LevelData<FArrayBox > & a_rhs)
+residual(CH_XD::LevelData<CH_XD::FArrayBox >       & a_res,
+         const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi,
+         const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs)
 {
   CH_TIME("sgmg::resid");
   return m_finest->residual(a_res, a_phi, a_rhs);
@@ -76,8 +76,8 @@ residual(LevelData<FArrayBox >       & a_res,
 /***/
 void
 SGMultigrid::
-vCycle(LevelData<FArrayBox >       & a_phi,
-       const LevelData<FArrayBox > & a_rhs)
+vCycle(CH_XD::LevelData<CH_XD::FArrayBox >       & a_phi,
+       const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs)
 {
   CH_TIME("sgmg::vcycle");
   return m_finest->vCycle(a_phi, a_rhs);
@@ -112,7 +112,7 @@ SGMultigridLevel::
 SGMultigridLevel(const double & a_alpha,
                  const double & a_beta,
                  const double & a_dx,
-                 const DisjointBoxLayout & a_grids,
+                 const CH_XD::DisjointBoxLayout & a_grids,
                  bool a_useDenseStencil)
 {
   m_alpha     = a_alpha;
@@ -120,8 +120,8 @@ SGMultigridLevel(const double & a_alpha,
   m_dx        = a_dx;
   m_grids     = a_grids;
   m_useDenseStencil = a_useDenseStencil;
-  m_exchangeCopier.exchangeDefine(m_grids, IntVect::Unit);
-  m_resid.define(m_grids,1, IntVect::Zero);
+  m_exchangeCopier.exchangeDefine(m_grids, CH_XD::IntVect::Unit);
+  m_resid.define(m_grids,1, CH_XD::IntVect::Zero);
   m_numPointsThisProc = numPointsThisProc(a_grids);
 
   defineStencils();
@@ -136,10 +136,10 @@ defineCoarserObjects()
   CH_TIME("sgmglevel::defineCoarser");
   if(m_grids.coarsenable(4))
   {
-    DisjointBoxLayout gridsCoar;
+    CH_XD::DisjointBoxLayout gridsCoar;
     coarsen(gridsCoar,  m_grids, 2);
-    m_residC.define(gridsCoar, 1, IntVect::Zero);
-    m_deltaC.define(gridsCoar, 1, IntVect::Unit);
+    m_residC.define(gridsCoar, 1, CH_XD::IntVect::Zero);
+    m_deltaC.define(gridsCoar, 1, CH_XD::IntVect::Unit);
     m_coarser = std::shared_ptr<SGMultigridLevel>(new SGMultigridLevel(m_alpha, m_beta, 2*m_dx, gridsCoar, m_useDenseStencil));
     m_hasCoarser = true;
   }
@@ -208,15 +208,15 @@ defineStencils()
 /****/
 void
 SGMultigridLevel::
-residual(LevelData<FArrayBox >       & a_res,
-         const LevelData<FArrayBox > & a_phi,
-         const LevelData<FArrayBox > & a_rhs)
+residual(CH_XD::LevelData<CH_XD::FArrayBox >       & a_res,
+         const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi,
+         const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs)
                     
 {
   enforceBoundaryConditions(a_phi);
   {
   CH_TIME("sgmglevel::residual");
-  DataIterator dit = m_grids.dataIterator();
+  CH_XD::DataIterator dit = m_grids.dataIterator();
 #pragma omp parallel for
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
@@ -233,13 +233,13 @@ residual(LevelData<FArrayBox >       & a_res,
 /****/
 void
 SGMultigridLevel::
-relax(LevelData<FArrayBox >       & a_phi,
-      const LevelData<FArrayBox > & a_rhs)
+relax(CH_XD::LevelData<CH_XD::FArrayBox >       & a_phi,
+      const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs)
 {
   CH_TIME("sgmglevel::relax");
   // GSRB. As implemented here, only correct for second-order 5 / 7 point operators. 
   // To go to higher order, need to use full multicolor algorithm. 
-  DataIterator dit = m_grids.dataIterator();
+  CH_XD::DataIterator dit = m_grids.dataIterator();
   if(m_useDenseStencil)
   {
     
@@ -255,7 +255,7 @@ relax(LevelData<FArrayBox >       & a_phi,
           BoxData<double,1> rhsbd, phibd;
           ProtoCh::aliasBoxData<double, 1>(rhsbd, a_rhs[dit[ibox]]);
           ProtoCh::aliasBoxData<double, 1>(phibd, a_phi[dit[ibox]]);
-          Bx coarDom = grid.coarsen(2);
+          Box coarDom = grid.coarsen(2);
           BoxData<double,1> phisrc(coarDom);
           //needs to be coarse domain because of the whole gsrb thing            
           phisrc |= m_relaxOpPhi[icolor](phibd,   coarDom);
@@ -280,7 +280,7 @@ relax(LevelData<FArrayBox >       & a_phi,
           BoxData<double,1> rhsbd, phibd;
           ProtoCh::aliasBoxData<double, 1>(rhsbd, a_rhs[dit[ibox]]);
           ProtoCh::aliasBoxData<double, 1>(phibd, a_phi[dit[ibox]]);
-          Bx coarDom = grid.coarsen(2);
+          Box coarDom = grid.coarsen(2);
           BoxData<double,1> phisrc(coarDom);
           // loop over 2^(DIM-1) coarsened domains in each color. 
           for(int icolor = evenOdd*MG_NUM_COLORS/2; icolor < evenOdd*MG_NUM_COLORS/2 + MG_NUM_COLORS/2; icolor++)
@@ -295,16 +295,16 @@ relax(LevelData<FArrayBox >       & a_phi,
     }
   }
   unsigned long long int stensize = m_relaxOpPhi.size() + m_relaxOpRhs.size() + m_updateOpPhi.size();
-  ch_flops() += 3*m_numPointsThisProc*stensize;
+  CH_XD::ch_flops() += 3*m_numPointsThisProc*stensize;
 }
 /****/
 void
 SGMultigridLevel::
-restrictResidual(LevelData<FArrayBox >       & a_resc,
-                 const LevelData<FArrayBox > & a_res)
+restrictResidual(CH_XD::LevelData<CH_XD::FArrayBox >       & a_resc,
+                 const CH_XD::LevelData<CH_XD::FArrayBox > & a_res)
 {
   CH_TIME("sgmglevel::restrict");
-  DataIterator dit = m_grids.dataIterator();
+  CH_XD::DataIterator dit = m_grids.dataIterator();
 #pragma omp parallel for
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
@@ -315,17 +315,17 @@ restrictResidual(LevelData<FArrayBox >       & a_resc,
     //called by the coarser mg level
     rescbd |= m_restrict(resfbd,  grid);
   }
-  ch_flops() += 3*m_numPointsThisProc*(m_restrict.size());
+  CH_XD::ch_flops() += 3*m_numPointsThisProc*(m_restrict.size());
 }
 /****/
 void
 SGMultigridLevel::
-prolongIncrement(LevelData<FArrayBox >      & a_phi,
-                 const LevelData<FArrayBox >& a_delta)
+prolongIncrement(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phi,
+                 const CH_XD::LevelData<CH_XD::FArrayBox >& a_delta)
 {
   CH_TIME("sgmglevel::prolong");
   //called by the coarser mg level
-  DataIterator dit = m_grids.dataIterator();
+  CH_XD::DataIterator dit = m_grids.dataIterator();
   int nbox = dit.size();
   for(int icolor = 0; icolor < MG_NUM_COLORS; icolor++)
   {
@@ -340,14 +340,14 @@ prolongIncrement(LevelData<FArrayBox >      & a_phi,
     }
   }
   //prolong size = 1 per fine grid point
-  ch_flops() += 3*m_numPointsThisProc*MG_NUM_COLORS;
+  CH_XD::ch_flops() += 3*m_numPointsThisProc*MG_NUM_COLORS;
 
 }
 /****/
 void 
 SGMultigridLevel::
-vCycle(LevelData<FArrayBox >         & a_phi,
-       const LevelData<FArrayBox >   & a_rhs)
+vCycle(CH_XD::LevelData<CH_XD::FArrayBox >         & a_phi,
+       const CH_XD::LevelData<CH_XD::FArrayBox >   & a_rhs)
 {
   CH_TIME("sgmglevel::vcycle");
   for(int irelax = 0; irelax < SGMultigrid::s_numSmoothDown; irelax++)
@@ -360,7 +360,7 @@ vCycle(LevelData<FArrayBox >         & a_phi,
     residual(m_resid,a_phi,a_rhs);                      
     m_coarser->restrictResidual(m_residC,m_resid);
 
-    DataIterator dit = m_grids.dataIterator();
+    CH_XD::DataIterator dit = m_grids.dataIterator();
 #pragma omp parallel for
     for(int ibox = 0; ibox < dit.size(); ibox++)
     {

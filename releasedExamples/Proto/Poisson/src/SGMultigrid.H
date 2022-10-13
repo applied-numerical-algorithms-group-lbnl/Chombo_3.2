@@ -32,11 +32,12 @@ class SGMultigridLevel
 {
 public:
 
+  
   /// called from the finest level
   SGMultigridLevel(const double & a_alpha,
                    const double & a_beta,
                    const double & a_dx,
-                   const DisjointBoxLayout & a_grids,
+                   const CH_XD::DisjointBoxLayout & a_grids,
                    bool useDenseStencil);
                    
 
@@ -46,38 +47,38 @@ public:
   }
 
   /// 
-  void residual(LevelData<FArrayBox >       & a_res,
-                const LevelData<FArrayBox > & a_phi,
-                const LevelData<FArrayBox > & a_rhs);
+  void residual(CH_XD::LevelData<CH_XD::FArrayBox >       & a_res,
+                const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi,
+                const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs);
 
 
   /// 
-  void relax(LevelData<FArrayBox >      & a_phi,
-             const LevelData<FArrayBox >& a_rhs);
+  void relax(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phi,
+             const CH_XD::LevelData<CH_XD::FArrayBox >& a_rhs);
 
 
   /// average down residual to next coarser level.
-  void restrictResidual(LevelData<FArrayBox >      & a_resc,
-                        const LevelData<FArrayBox >& a_res);
+  void restrictResidual(CH_XD::LevelData<CH_XD::FArrayBox >      & a_resc,
+                        const CH_XD::LevelData<CH_XD::FArrayBox >& a_res);
 
   /// Piecewise constant interpolation of coarse correction to increment fine solution.
-  void prolongIncrement(LevelData<FArrayBox >      & a_phiFine,
-                        const LevelData<FArrayBox >& a_deltaCoarse);
+  void prolongIncrement(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phiFine,
+                        const CH_XD::LevelData<CH_XD::FArrayBox >& a_deltaCoarse);
 
 
   /// 
-  void applyOp(LevelData<FArrayBox >       & a_lph,
-               const LevelData<FArrayBox > & a_phi);
+  void applyOp(CH_XD::LevelData<CH_XD::FArrayBox >       & a_lph,
+               const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi);
 
   /// Multigrid v-cycle.
-  void vCycle(LevelData<FArrayBox >      & a_phi,
-              const LevelData<FArrayBox >& a_rhs);
+  void vCycle(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phi,
+              const CH_XD::LevelData<CH_XD::FArrayBox >& a_rhs);
 
   void
-  enforceBoundaryConditions(const LevelData<FArrayBox >& a_phi)
+  enforceBoundaryConditions(const CH_XD::LevelData<CH_XD::FArrayBox >& a_phi)
   {
     CH_TIME("enforce_bcs");
-    LevelData<FArrayBox>& phi = const_cast<LevelData<FArrayBox >& >(a_phi);
+    CH_XD::LevelData<CH_XD::FArrayBox>& phi = const_cast<CH_XD::LevelData<CH_XD::FArrayBox >& >(a_phi);
     phi.exchange(m_exchangeCopier);
   }
 
@@ -98,8 +99,8 @@ private:
   double m_alpha;     
   double m_beta;       
   double m_dx;        
-  DisjointBoxLayout     m_grids;       
-  Copier m_exchangeCopier;
+  CH_XD::DisjointBoxLayout     m_grids;       
+  CH_XD::Copier m_exchangeCopier;
   double m_lambda; //relaxation coeff
   array<Point,MG_NUM_COLORS>  s_colors;
   Stencil<double> m_negoperator; //always need -Lap(phi)
@@ -110,11 +111,11 @@ private:
   array<Stencil<double>, MG_NUM_COLORS> m_relaxOpRhs;
   array<Stencil<double>, MG_NUM_COLORS> m_prolong;
 
-  LevelData<FArrayBox > m_resid;
-  LevelData<FArrayBox > m_residC;
-  LevelData<FArrayBox > m_deltaC; 
+  CH_XD::LevelData<CH_XD::FArrayBox > m_resid;
+  CH_XD::LevelData<CH_XD::FArrayBox > m_residC;
+  CH_XD::LevelData<CH_XD::FArrayBox > m_deltaC; 
   // for flop counts
-  unsigned long long int numPointsThisProc(const DisjointBoxLayout& a_dbl) const
+  unsigned long long int numPointsThisProc(const CH_XD::DisjointBoxLayout& a_dbl) const
   {
     unsigned long long int retval = a_dbl.numPointsThisProc();
     return retval;
@@ -135,45 +136,45 @@ public:
   SGMultigrid(const double & a_alpha,
               const double & a_beta,
               const double & a_dx,
-              const DisjointBoxLayout & a_grids,
+              const CH_XD::DisjointBoxLayout & a_grids,
               bool a_useDenseStencil);
 
   /// 
-  void residual(LevelData<FArrayBox >       & a_res,
-                const LevelData<FArrayBox > & a_phi,
-                const LevelData<FArrayBox > & a_rhs);
+  void residual(CH_XD::LevelData<CH_XD::FArrayBox >       & a_res,
+                const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi,
+                const CH_XD::LevelData<CH_XD::FArrayBox > & a_rhs);
 
   /// 
-  void applyOp(LevelData<FArrayBox >       & a_lph,
-               const LevelData<FArrayBox > & a_phi);
+  void applyOp(CH_XD::LevelData<CH_XD::FArrayBox >       & a_lph,
+               const CH_XD::LevelData<CH_XD::FArrayBox > & a_phi);
 
   /// Multigrid v-cycle.
-  void vCycle(LevelData<FArrayBox >      & a_phi,
-              const LevelData<FArrayBox >& a_rhs);
+  void vCycle(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phi,
+              const CH_XD::LevelData<CH_XD::FArrayBox >& a_rhs);
 
   /// average down residual to next coarser level.
-  void restrictResidual(LevelData<FArrayBox >      & a_resc,
-                        const LevelData<FArrayBox >& a_res)
+  void restrictResidual(CH_XD::LevelData<CH_XD::FArrayBox >      & a_resc,
+                        const CH_XD::LevelData<CH_XD::FArrayBox >& a_res)
   {
     m_finest->m_coarser->restrictResidual(a_resc, a_res);
   }
 
   /// Piecewise constant interpolation of coarse correction to increment fine solution.
-  void prolongIncrement(LevelData<FArrayBox >      & a_phiFine,
-                        const LevelData<FArrayBox >& a_deltaCoarse)
+  void prolongIncrement(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phiFine,
+                        const CH_XD::LevelData<CH_XD::FArrayBox >& a_deltaCoarse)
   {
     m_finest->m_coarser->prolongIncrement(a_phiFine, a_deltaCoarse);
   }
 
   /// 
-  void relax(LevelData<FArrayBox >      & a_phi,
-             const LevelData<FArrayBox >& a_rhs)
+  void relax(CH_XD::LevelData<CH_XD::FArrayBox >      & a_phi,
+             const CH_XD::LevelData<CH_XD::FArrayBox >& a_rhs)
   {
     m_finest->relax(a_phi, a_rhs);
   }
   ///
   void
-  enforceBoundaryConditions(LevelData<FArrayBox >& a_phi)
+  enforceBoundaryConditions(CH_XD::LevelData<CH_XD::FArrayBox >& a_phi)
   {
     m_finest->enforceBoundaryConditions(a_phi);
   }

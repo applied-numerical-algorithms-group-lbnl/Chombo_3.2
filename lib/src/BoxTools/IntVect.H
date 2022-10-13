@@ -23,6 +23,10 @@
 #include "Misc.H"
 #include <functional>
 
+#ifdef USE_PROTO
+#include "Proto.H"
+#endif
+
 namespace BLfacade
 {
   class IntVect;
@@ -473,7 +477,7 @@ public:
     int retval = vect[0];
     for(int idir = 1; idir < SpaceDim; idir++)
       {
-        retval = Max(retval, vect[idir]);
+        retval = CH_XD::Max<Real>(retval, vect[idir]);
       }
     return retval;
   }
@@ -484,7 +488,7 @@ public:
     int retval = vect[0];
     for(int idir = 1; idir < SpaceDim; idir++)
       {
-        retval = Min(retval, vect[idir]);
+        retval = CH_XD::Min<Real>(retval, vect[idir]);
       }
     return retval;
   }
@@ -669,6 +673,21 @@ public:
 
   inline uint64_t hash(const IntVect& origin, const IntVect& blockingFactor) const; 
 
+#ifdef USE_PROTO
+    IntVect(Proto::Point a_pt)
+    {
+        for (int ii = 0; ii < DIM; ii++)
+        {
+            vect[ii] = a_pt[ii];
+        }
+    }
+
+    operator Proto::Point() const
+    {
+        return Proto::Point(vect);
+    }
+#endif
+
 protected:
   //
   // Box is a friend of ours.
@@ -696,8 +715,15 @@ protected:
 };
 #include "NamespaceFooter.H"
 
-namespace std { template <> inline bool less<CH_XD::IntVect>::operator()(const CH_XD::IntVect& a, const CH_XD::IntVect& b) const { return a.lexLT(b);}
+
+namespace std { template <> inline  bool less<CH_XD::IntVect>::operator()(const CH_XD::IntVect& a, const CH_XD::IntVect& b) const { return a.lexLT(b);}
 }
+
+// C++14 version
+//namespace std { template <> inline constexpr bool less<CH_XD::IntVect>::operator()(const CH_XD::IntVect& a, const CH_XD::IntVect& b) const { return a.lexLT(b);}
+//}
+
+
 #include "BaseNamespaceHeader.H"
 
 #include "NamespaceVar.H"
@@ -736,6 +762,8 @@ void linearOut(void* const a_outBuf, const Vector<Vector<CH_XDIR::IntVect> >& a_
 
 
 //
+
+// garbage thinking here.  I've removed this function  (bvs)
 // Static initialization.  Gotta make sure there are no static object
 // definitions above here (except possibly stuff in headers).  Otherwise,
 // the danger is that some static object's constructor calls IntVect::Zero or
@@ -1114,12 +1142,12 @@ inline
 IntVect&
 IntVect::min (const IntVect& p)
 {
-  D_EXPR6(vect[0] = Min(vect[0], p.vect[0]),
-          vect[1] = Min(vect[1], p.vect[1]),
-          vect[2] = Min(vect[2], p.vect[2]),
-          vect[3] = Min(vect[3], p.vect[3]),
-          vect[4] = Min(vect[4], p.vect[4]),
-          vect[5] = Min(vect[5], p.vect[5]));
+  D_EXPR6(vect[0] = CH_XD::Min<Real>(vect[0], p.vect[0]),
+          vect[1] = CH_XD::Min<Real>(vect[1], p.vect[1]),
+          vect[2] = CH_XD::Min<Real>(vect[2], p.vect[2]),
+          vect[3] = CH_XD::Min<Real>(vect[3], p.vect[3]),
+          vect[4] = CH_XD::Min<Real>(vect[4], p.vect[4]),
+          vect[5] = CH_XD::Min<Real>(vect[5], p.vect[5]));
   return *this;
 }
 
@@ -1127,12 +1155,12 @@ inline
 IntVect&
 IntVect::max (const IntVect& p)
 {
-  D_EXPR6(vect[0] = Max(vect[0], p.vect[0]),
-          vect[1] = Max(vect[1], p.vect[1]),
-          vect[2] = Max(vect[2], p.vect[2]),
-          vect[3] = Max(vect[3], p.vect[3]),
-          vect[4] = Max(vect[4], p.vect[4]),
-          vect[5] = Max(vect[5], p.vect[5]));
+  D_EXPR6(vect[0] = CH_XD::Max<Real>(vect[0], p.vect[0]),
+          vect[1] = CH_XD::Max<Real>(vect[1], p.vect[1]),
+          vect[2] = CH_XD::Max<Real>(vect[2], p.vect[2]),
+          vect[3] = CH_XD::Max<Real>(vect[3], p.vect[3]),
+          vect[4] = CH_XD::Max<Real>(vect[4], p.vect[4]),
+          vect[5] = CH_XD::Max<Real>(vect[5], p.vect[5]));
   return *this;
 }
 

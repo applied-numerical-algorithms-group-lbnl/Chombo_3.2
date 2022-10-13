@@ -29,13 +29,6 @@ using std::string;
 using std::sprintf;
 #endif
 
-template <>
-inline void dataSize(const NodeFArrayBox& item, Vector<int>& a_sizes,
-                     const Box& box, const Interval& comps)
-{
-  Box boxNodes = surroundingNodes(box);
-  a_sizes[0] = boxNodes.numPts() * comps.size();
-}
 
 template <>
 inline const char* name(const NodeFArrayBox& a_dummySpecializationArg)
@@ -57,12 +50,6 @@ inline const char* name(const NodeFArrayBox& a_dummySpecializationArg)
 #include "VisItChomboDriver.H"
 #include "NamespaceHeader.H"
 
-template <>
-inline void dataTypes(Vector<hid_t>& a_types, const NodeFArrayBox& dummy)
-{
-  a_types.resize(1);
-  a_types[0] = H5T_NATIVE_REAL;
-}
 
 // ---------------------------------------------------------
 /*

@@ -1002,7 +1002,7 @@ domainSplit(const Box& a_domain, Vector<Box>& a_vbox, int a_maxBoxSize, int a_bl
   
   /*
     //recursive version here is too cute for very large box counts (bvs)
-    // apparently testRThetaZ needs domainSplit to work thsi way.  I suspect the test needs a larger block factor
+    // apparently testRThetaZ needs domainSplit to work this way.  I suspect the test needs a larger block factor
   a_vbox.push_back(d);
   for (int i=0; i<CH_SPACEDIM; ++i)
     {

@@ -16,7 +16,7 @@
 
 ///get point from intvect
 Point
-ProtoCh::getPoint( const IntVect& a_iv)
+ProtoCh::getPoint( const CH_XD::IntVect& a_iv)
 {
   Point retval;
   for(int idir = 0; idir < SpaceDim; idir++)
@@ -29,7 +29,7 @@ ProtoCh::getPoint( const IntVect& a_iv)
 
 /// gets proto box from chombo box
 Proto::Box  
-ProtoCh::getProtoBox( const Box& a_box)
+ProtoCh::getProtoBox( const CH_XD::Box& a_box)
 {
   Point ptlo = getPoint(a_box.smallEnd());
   Point pthi = getPoint(a_box.bigEnd());
@@ -37,10 +37,10 @@ ProtoCh::getProtoBox( const Box& a_box)
 }
 
 ///get intvect from point
-IntVect 
+CH_XD::IntVect 
 ProtoCh::getIntVect(const  Point  & a_pt)
 {
-  IntVect retval;
+  CH_XD::IntVect retval;
   for(int idir = 0; idir < SpaceDim; idir++)
   {
     retval[idir] = a_pt[idir];
@@ -49,12 +49,12 @@ ProtoCh::getIntVect(const  Point  & a_pt)
 }
 
 ///get chombo box from proto box
-Box 
+CH_XD::Box 
 ProtoCh::getBox(const Proto::Box & a_bx)
 {
-  IntVect ivlo = getIntVect(a_bx.low());
-  IntVect ivhi = getIntVect(a_bx.high());
-  return Box(ivlo, ivhi);
+  CH_XD::IntVect ivlo = getIntVect(a_bx.low());
+  CH_XD::IntVect ivhi = getIntVect(a_bx.high());
+  return CH_XD::Box(ivlo, ivhi);
 }
 
 

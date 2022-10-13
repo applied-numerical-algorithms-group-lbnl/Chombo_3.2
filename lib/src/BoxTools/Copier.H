@@ -17,6 +17,8 @@
 #include "ProblemDomain.H"
 #include <unordered_map>
 #include <cstdint>
+#include "SPMD.H"
+
 #include "NamespaceHeader.H"
 
 
@@ -115,6 +117,11 @@ public:
   mutable std::vector<bufEntry> m_toMe;
   mutable std::vector<std::vector<bufEntry> > m_toMeUnpack;
 
+#ifdef CH_MPI
+  mutable Vector<MPI_Request>  m_sendRequests,  m_receiveRequests;
+  mutable Vector<MPI_Status>   m_receiveStatus, m_sendStatus;
+#endif
+  mutable int numSends, numReceives;
 
 protected:
 
@@ -223,10 +230,30 @@ public:
                           bool  a_includeSelf=false,
                           bool  a_reverse=false);
 
+  void defineFixedBoxSize(const DisjointBoxLayout& a_src,
+                          const LMap&  a_lmapSrc,
+                          const IntVect&  a_refRatioSrc,
+                          const DisjointBoxLayout& a_dst,
+                          const LMap&  a_lmapDst,
+                          const IntVect&  a_refRatioDst,
+                          const IntVect&  a_ghost,
+                          const ProblemDomain& a_domain,
+                          bool  a_reverse = false);
+
   void defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
                                    const LMap&  a_lmap,
                                    const IntVect& a_ghostSrc,
                                    const IntVect& a_ghostDst,
+                                   const ProblemDomain& a_domain);
+  
+  void defineFixedSizeNodesCollect(const DisjointBoxLayout& a_src,
+                                   const LMap&  a_lmapSrc,
+                                   const IntVect&  a_refRatioSrc,
+                                   const IntVect& a_ghostSrc,
+                                   const DisjointBoxLayout& a_dst,
+                                   const LMap&  a_lmapDst,
+                                   const IntVect&  a_refRatioDst,
+                                   const IntVect&  a_ghostDst,
                                    const ProblemDomain& a_domain);
   
   /// performs the computation necessary for moving from ghost+valid cells to all valid cells in a_dest

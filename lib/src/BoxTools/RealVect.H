@@ -702,12 +702,12 @@ inline
 RealVect&
 RealVect::min (const RealVect& p)
 {
-  D_EXPR6(vect[0] = Min(vect[0], p.vect[0]),
-          vect[1] = Min(vect[1], p.vect[1]),
-          vect[2] = Min(vect[2], p.vect[2]),
-          vect[3] = Min(vect[3], p.vect[3]),
-          vect[4] = Min(vect[4], p.vect[4]),
-          vect[5] = Min(vect[5], p.vect[5]));
+  D_EXPR6(vect[0] = CH_XD::Min<Real>(vect[0], p.vect[0]),
+          vect[1] = CH_XD::Min<Real>(vect[1], p.vect[1]),
+          vect[2] = CH_XD::Min<Real>(vect[2], p.vect[2]),
+          vect[3] = CH_XD::Min<Real>(vect[3], p.vect[3]),
+          vect[4] = CH_XD::Min<Real>(vect[4], p.vect[4]),
+          vect[5] = CH_XD::Min<Real>(vect[5], p.vect[5]));
   return *this;
 }
 
@@ -715,12 +715,12 @@ inline
 RealVect&
 RealVect::max (const RealVect& p)
 {
-  D_EXPR6(vect[0] = Max(vect[0], p.vect[0]),
-          vect[1] = Max(vect[1], p.vect[1]),
-          vect[2] = Max(vect[2], p.vect[2]),
-          vect[3] = Max(vect[3], p.vect[3]),
-          vect[4] = Max(vect[4], p.vect[4]),
-          vect[5] = Max(vect[5], p.vect[5]));
+  D_EXPR6(vect[0] = CH_XD::Max<Real>(vect[0], p.vect[0]),
+          vect[1] = CH_XD::Max<Real>(vect[1], p.vect[1]),
+          vect[2] = CH_XD::Max<Real>(vect[2], p.vect[2]),
+          vect[3] = CH_XD::Max<Real>(vect[3], p.vect[3]),
+          vect[4] = CH_XD::Max<Real>(vect[4], p.vect[4]),
+          vect[5] = CH_XD::Max<Real>(vect[5], p.vect[5]));
   return *this;
 }
 
