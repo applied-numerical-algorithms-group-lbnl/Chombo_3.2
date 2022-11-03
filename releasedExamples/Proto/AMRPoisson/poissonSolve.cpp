@@ -27,9 +27,6 @@
 
 
 
-/**
-End pirated bits.   Back to ChomboLand.
-**/
   
 shared_ptr<pr_amr_poisson>  >
 getAMRPoissonSolver(const shared_ptr<pr_amrgrid>& pr_hierarchy)
@@ -52,13 +49,30 @@ int runFASSolver()
 {
   //Proto has to drive the grid generation
   //get the grid hierarchy
-  shared_ptr<pr_amr_grid>   pr_hierarchy =  getProtoAMRGrid();
+  unsigned int nghost = 4;  unsigned int ncomp = 1;
+  shared_ptr<pr_amr_grid>   pr_grid =  getProtoAMRGrid();
   //get the chombo equivalent of the grid hierarchy
-  shared_ptr<ch_amr_grid>   ch_hierarchy =  getChomboAMRGrid(pr_hierarchy);
-  
+  shared_ptr<ch_amr_grid>   ch_grid =  getChomboAMRGrid(pr_grid);
+  Point pghost = Proto::Point::Ones(nghost);
+  //define the data on both sides of the divide
+  shared_ptr<pr_amr_data>   pr_rhs(new pr_data(*pr_grid, pghost,      ));
+  shared_ptr<pr_amr_data>   pr_phi(new pr_data(*pr_grid, pghost,      ));
+  shared_ptr<ch_amr_data>   ch_rhs(new ch_data(*ch_grid, nghost, ncomp));
+  shared_ptr<ch_amr_data>   ch_phi(new ch_data(*ch_grid, nghost, ncomp));
+  fillChomboData(ch_rhs, ch_phi);
+  //set rhs and initial guess to phi
+  copyChomboDataToProto(pr_rhs, ch_rhs);
+  copyChomboDataToProto(pr_phi, ch_phi);
+
+  unsigned int maxiter = 100;  Real tolerance = 1.0e-10;
   //get the poisson solver
-  shared_ptr<pr_amr_solver> amrpoisPtr = getAMRPoissonSolver(pr_hierarchy);
+  shared_ptr<pr_amr_solver> pr_pois = getAMRPoissonSolver(pr_hierarchy);
+  pr_pois->solve(pr_phi, pr_rhs, maxiter, tolerance);
   
+  copyProtoDataToChombo(ch_rhs, pr_rhs);
+  copyProtoDataToChombo(ch_phi, pr_phi);
+
+  writeDataToFile(ch_rhs, ch_phi, ch_grid);
 }
 
 /**
