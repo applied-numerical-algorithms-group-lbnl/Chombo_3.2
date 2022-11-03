@@ -99,6 +99,7 @@ shared_ptr<Proto::AMRGrid>  >
 getProtoAMRGrid()
 {
   #include "PR_CH_typedefs.H"
+  
   unsigned int domsize, boxsize, refrat, maxilev, pt;
   ParmParse pp(amrgrid);
   pp.get("domain_size"     , domsize);
@@ -116,7 +117,8 @@ getProtoAMRGrid()
 }
 namespace Chombo
 {
-  ///
+
+  ///these are  the primary tools one would use to adapt a Chombo3 code into using proto  
   /**
      Meta data for AMR calculation in Chombo Land
    */
@@ -129,25 +131,73 @@ namespace Chombo
 
   ///
   /**
-     Meta data and data all in one place.
-     Why we never made this awfully convenient container is beyond me.
+     The reason we have not made this awfully convenient container before now is beyond me.
    */
-  class AMRHierarchy
+  class AMRData
   {
   public:
-
+    typedef LevelData<FArrayBox> ch_ldfab;
+    
+    AMRData(shared_ptr<AMRGrid> a_amrgrid, unsigned int a_nghost, unsigned int a_ncomp)
+    {
+      IntVect      ghostVect = a_nghost*IntVect::Unit;
+      unsigned int numLevels = m_amrgrid.m_grids.size();
+      m_amrgrid = a_amrgrid;
+      m_data.resize(numLevels);
+      m_ncomp = a_ncomp;
+      for(int ilev = 0; ilev < numLevels; ilev++)
+      {
+        auto dbl = m_amrgrids.m_grids[ilev];
+        m_data[ilev] = shared_ptr<ch_ldfab>(new ch_ldfab(dbl, a_ncomp, ghostVect));
+      }
+      
+    }
+    //beats writing access functions
+    vector<shared_ptr<ch_ldfab> > m_data;
+    AMRGrid                       m_grid;
+    unsigned int                  m_ncomp; //strictly speaking redundant but still useful
   private:
     //not a good candidate for weak construction
-    AMRHierarchy();
+    AMRData();
     void operator=(const AMRHierarchy & a_amr);
-
-
-    Vector<LevelData<FArrayBox>* > m_data;
-    AMRGrid                        m_hierarchy;
-
-    
   };
+
+  inline void
+  writeDataToFile(shared_ptr<AMRData> a_data, shared_ptr<AMRGrid> a_grid, string a_filename)
+  {
+
+    Vector<string> varnames(a_data->m_ncomp);
+    for(int icomp = 0; icomp < a_data->m_ncomp; icomp++)
+    {
+      varnames[icomp] = string("variable_") + to_string(icomp);
+    }
+    Real scal = 1; //cannot be zero, used for dx, time and dt
+    Box domain = a_data->m_grid[0].physDomain().domainBox();
+    
+    writeAMRHierarchyHDF5(a_filename,
+                          a_data->m_data,
+                          a_data->m_grid->m_grids,
+                          varnames, domain,
+                          scal, scal, scal,  //dx dt time 
+                          a_data->m_grid->m_ratio,
+                          numlev);
+  }
 }
+
+inline void
+copyProtoDataToChombo(ch_amr_data       & a_ch_data,
+                      const pr_amr_data & a_pr_data)
+{
+  Chombo::MayDay::Error("not implemented");
+}
+
+inline void
+copyChomboDataToProto(ch_amr_data       & a_ch_data,
+                      const pr_amr_data & a_pr_data)
+{
+  Chombo::MayDay::Error("not implemented");
+}
+
 /**
  **/
 inline  Chombo::DisjointBoxLayout
@@ -155,8 +205,10 @@ inline  Chombo::DisjointBoxLayout
   
 {
 #include "PR_CH_TYPEDEFS.H"
-  Vector<
-  DisjointBoxLayout retval(boxes, loads);
+  Vector<int> procs;
+  Vector<int> boxes;
+  
+  DisjointBoxLayout retval(boxes, procs);
   return retval;
 }
 /**
@@ -179,4 +231,5 @@ shared_ptr<ch_amr_grid>
   }
   return retval;
 }
+
 #endif

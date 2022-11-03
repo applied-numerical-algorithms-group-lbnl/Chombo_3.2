@@ -45,6 +45,24 @@ getAMRPoissonSolver(const shared_ptr<pr_amrgrid>& pr_hierarchy)
 }
 /**
  **/
+void fillChomboData(shared_ptr<ch_data> a_phi,
+                    shared_ptr<ch_data> a_rhs,
+                    shared_ptr<ch_grid> a_grid)
+{
+  int nlev = a_grid->m_grids.size();
+  for(int ilev = 0; ilev < nlev; ilev++)
+  {
+    auto  dbl = a_grid->m_grids[ilev];
+    auto  dit = dbl.dataIterator();
+    auto& phi = (*(a_phi->m_data))[ilev];
+    auto& rhs = (*(a_rhs->m_data))[ilev];
+    for(int ibox = 0; ibox < dit.size(); ibox++)
+    {
+    }
+  }
+}
+/**
+ **/
 int runFASSolver()
 {
   //Proto has to drive the grid generation
@@ -59,7 +77,7 @@ int runFASSolver()
   shared_ptr<pr_amr_data>   pr_phi(new pr_data(*pr_grid, pghost,      ));
   shared_ptr<ch_amr_data>   ch_rhs(new ch_data(*ch_grid, nghost, ncomp));
   shared_ptr<ch_amr_data>   ch_phi(new ch_data(*ch_grid, nghost, ncomp));
-  fillChomboData(ch_rhs, ch_phi);
+  fillChomboData(ch_rhs, ch_phi, ch_grid);
   //set rhs and initial guess to phi
   copyChomboDataToProto(pr_rhs, ch_rhs);
   copyChomboDataToProto(pr_phi, ch_phi);
@@ -72,7 +90,8 @@ int runFASSolver()
   copyProtoDataToChombo(ch_rhs, pr_rhs);
   copyProtoDataToChombo(ch_phi, pr_phi);
 
-  writeDataToFile(ch_rhs, ch_phi, ch_grid);
+  writeDataToFile(ch_rhs,  ch_grid, string("rhs.hdf5"));
+  writeDataToFile(ch_phi,  ch_grid, string("phi.hdf5"));
 }
 
 /**
