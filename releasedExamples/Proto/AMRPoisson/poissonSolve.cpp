@@ -26,74 +26,81 @@
 #include "ProtoTestCommon.H"
 
 
-
-  
-shared_ptr<pr_amr_poisson>  >
-getAMRPoissonSolver(const shared_ptr<pr_amrgrid>& pr_hierarchy)
+///this space is mostly so I can use the typedefs without putting the include in too open a scope.
+namespace Introspection
 {
-  const auto& hierarchy = *pr_hierarchy;
-  unsigned int domsize = hierarchy[0].problemDomain.sizes()[0];
-  Real dx  = 1./Real(domsize);
-  std::array<double, DIM> dxarray;
-  dxarray.fill(dx);
-  typedef BoxOp_Laplace<double> POISSON_OP;
-  
-  shared_ptr<AMRSolver_FASMultigrid<POISSON_OP, double> >  retval =
-    new AMRSolver_FASMultigrid<POISSON_OP, double>(hierarchy, dxarray);
-  
-  return retval;
-}
+#include "PR_CH_Typedefs.H" 
+
 /**
  **/
-void fillChomboData(shared_ptr<ch_data> a_phi,
-                    shared_ptr<ch_data> a_rhs,
-                    shared_ptr<ch_grid> a_grid)
-{
-  int nlev = a_grid->m_grids.size();
-  for(int ilev = 0; ilev < nlev; ilev++)
+  shared_ptr<pr_amr_poisson>  >
+  getAMRPoissonSolver(const shared_ptr<pr_amrgrid>& pr_hierarchy)
   {
-    auto  dbl = a_grid->m_grids[ilev];
-    auto  dit = dbl.dataIterator();
-    auto& phi = (*(a_phi->m_data))[ilev];
-    auto& rhs = (*(a_rhs->m_data))[ilev];
-    for(int ibox = 0; ibox < dit.size(); ibox++)
+    const auto& hierarchy = *pr_hierarchy;
+    unsigned int domsize = hierarchy[0].problemDomain.sizes()[0];
+    Real dx  = 1./Real(domsize);
+    std::array<double, DIM> dxarray;
+    dxarray.fill(dx);
+    shared_ptr<pr_amr_poisson>  retval(new pr_amr_poisson(hierarchy, dxarray));
+  
+    return retval;
+  }
+/**
+ **/
+  void fillChomboData(shared_ptr<ch_data> a_phi,
+                      shared_ptr<ch_data> a_rhs,
+                      shared_ptr<ch_grid> a_grid)
+  {
+    int nlev = a_grid->m_grids.size();
+    for(int ilev = 0; ilev < nlev; ilev++)
     {
+      auto  dbl = a_grid->m_grids[ilev];
+      auto  dit = dbl.dataIterator();
+      auto& phi = (*(a_phi->m_data))[ilev];
+      auto& rhs = (*(a_rhs->m_data))[ilev];
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        phi[dit[ibox]].setVal(0.);
+        rhs[dit[ibox]].setVal(1.);
+      }
     }
   }
-}
 /**
  **/
-int runFASSolver()
-{
-  //Proto has to drive the grid generation
-  //get the grid hierarchy
-  unsigned int nghost = 4;  unsigned int ncomp = 1;
-  shared_ptr<pr_amr_grid>   pr_grid =  getProtoAMRGrid();
-  //get the chombo equivalent of the grid hierarchy
-  shared_ptr<ch_amr_grid>   ch_grid =  getChomboAMRGrid(pr_grid);
-  Point pghost = Proto::Point::Ones(nghost);
-  //define the data on both sides of the divide
-  shared_ptr<pr_amr_data>   pr_rhs(new pr_data(*pr_grid, pghost,      ));
-  shared_ptr<pr_amr_data>   pr_phi(new pr_data(*pr_grid, pghost,      ));
-  shared_ptr<ch_amr_data>   ch_rhs(new ch_data(*ch_grid, nghost, ncomp));
-  shared_ptr<ch_amr_data>   ch_phi(new ch_data(*ch_grid, nghost, ncomp));
-  fillChomboData(ch_rhs, ch_phi, ch_grid);
-  //set rhs and initial guess to phi
-  copyChomboDataToProto(pr_rhs, ch_rhs);
-  copyChomboDataToProto(pr_phi, ch_phi);
+  static void runFASSolver()
+  {
+    //Proto has to drive the grid generation
+    //get the grid hierarchy
+    unsigned int nghost = 4;  unsigned int ncomp = 1;
+    shared_ptr<pr_grid>   pr_hier =  PrChCommon::getTelescopingProtoAMRGrid();
+    
+    //get the chombo equivalent of the grid hierarchy
+    shared_ptr<ch_grid>   ch_hier =  PrChCommon::getChomboAMRGrid(pr_grid);
+    
+    Point pghost = Proto::Point::Ones(nghost);
+    //define the data on both sides of the divide
+    shared_ptr<pr_data>   pr_rhs(new pr_data(*pr_hier, pghost,      ));
+    shared_ptr<pr_data>   pr_phi(new pr_data(*pr_hier, pghost,      ));
+    shared_ptr<ch_data>   ch_rhs(new ch_data(*ch_hier, nghost, ncomp));
+    shared_ptr<ch_data>   ch_phi(new ch_data(*ch_hier, nghost, ncomp));
+    Introspection::fillChomboData(ch_rhs, ch_phi, ch_grid);
+    
+    //set rhs and initial guess to phi
+    PrChCommon::copyChomboDataToProto(pr_rhs, ch_rhs);
+    PrChCommon::copyChomboDataToProto(pr_phi, ch_phi);
 
-  unsigned int maxiter = 100;  Real tolerance = 1.0e-10;
-  //get the poisson solver
-  shared_ptr<pr_amr_solver> pr_pois = getAMRPoissonSolver(pr_hierarchy);
-  pr_pois->solve(pr_phi, pr_rhs, maxiter, tolerance);
+    unsigned int maxiter = 100;  Real tolerance = 1.0e-10;
+    //get the poisson solver
+    shared_ptr<pr_amr_solver> pr_pois = Introspection::getAMRPoissonSolver(pr_hier);
+    pr_pois->solve(pr_phi, pr_rhs, maxiter, tolerance);
   
-  copyProtoDataToChombo(ch_rhs, pr_rhs);
-  copyProtoDataToChombo(ch_phi, pr_phi);
+    TestCommon::copyProtoDataToChombo(ch_rhs, pr_rhs);
+    TestCommon::copyProtoDataToChombo(ch_phi, pr_phi);
 
-  writeDataToFile(ch_rhs,  ch_grid, string("rhs.hdf5"));
-  writeDataToFile(ch_phi,  ch_grid, string("phi.hdf5"));
+    Chombo::writeDataToFile(ch_rhs,  string("rhs.hdf5"));
+    Chombo::writeDataToFile(ch_phi,  string("phi.hdf5"));
+  }
 }
-
 /**
  **/
 int main(int argc, char* argv[])
@@ -101,9 +108,6 @@ int main(int argc, char* argv[])
 #ifdef CH_MPI
   MPI_Init(&argc, &argv);
 #endif
-  int status = 0;
-
-  // scoping...
   {
     if (argc < 2)
       {
@@ -113,10 +117,8 @@ int main(int argc, char* argv[])
     char* in_file = argv[1];
     ParmParse  pp(argc-2,argv+2,NULL,in_file);
 
-    int solverStatus = runFASSolver();
-    status += solverStatus;
+    Introspection::runFASSolver();
   }
-  //end scoping trick
   
 #ifdef CH_MPI
   dumpmemoryatexit();
@@ -124,5 +126,5 @@ int main(int argc, char* argv[])
   MPI_Finalize();
 #endif
 
-  return(status);
+  return 0;
 }

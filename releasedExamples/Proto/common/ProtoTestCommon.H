@@ -94,27 +94,7 @@ End pirated bits.   Back to ChomboLand.
 **/
 
 
-//get grids useful for testing
-shared_ptr<Proto::AMRGrid>  > 
-getProtoAMRGrid()
-{
-  #include "PR_CH_typedefs.H"
-  
-  unsigned int domsize, boxsize, refrat, maxilev, pt;
-  ParmParse pp(amrgrid);
-  pp.get("domain_size"     , domsize);
-  pp.get("fixed_box_size"  , boxsize);
-  pp.get("refinement_ratio", refirat);
-  pp.get("max_level"       , maxilev);
-  unsigned int numLevels = maxilev+1;
-  
-  ///Proto defines the grid hierarchy
-  Point refiRatPt = Point::Ones(refirat);
-  Point boxSizePt = Point::Ones(boxsize);
-  shared_ptr<pr_amrgrid>
-    retval(new  telescopingGrid(domsize, numLevels, refRatPt, boxSizePt));
-  return retval;
-}
+///
 namespace Chombo
 {
 
@@ -127,6 +107,10 @@ namespace Chombo
   public:
     Vector<DisjointBoxLayout> m_grids;
     Vector<int>               m_ratio;
+    unsigned int size() const
+    {
+      return m_grids.size();
+    }
   };
 
   ///
@@ -184,52 +168,125 @@ namespace Chombo
   }
 }
 
-inline void
-copyProtoDataToChombo(ch_amr_data       & a_ch_data,
-                      const pr_amr_data & a_pr_data)
+namespace PrChCommon
 {
-  Chombo::MayDay::Error("not implemented");
-}
+#include "PR_CH_typedefs.H"
+  
+  shared_ptr<pr_grid>  > 
+  getTelescopingProtoAMRGrid()
+  {
+    unsigned int domsize, boxsize, refrat, maxilev, pt;
+    ParmParse pp(amrgrid);
+    pp.get("domain_size"     , domsize);
+    pp.get("fixed_box_size"  , boxsize);
+    pp.get("refinement_ratio", refirat);
+    pp.get("max_level"       , maxilev);
+    unsigned int numLevels = maxilev+1;
+  
+    ///Proto defines the grid hierarchy
+    Point refiRatPt = Point::Ones(refirat);
+    Point boxSizePt = Point::Ones(boxsize);
+    shared_ptr<pr_amrgrid>
+      retval(new  Proto::telescopingGrid(domsize, numLevels, refRatPt, boxSizePt));
+    return retval;
+  }
 
-inline void
-copyChomboDataToProto(ch_amr_data       & a_ch_data,
-                      const pr_amr_data & a_pr_data)
-{
-  Chombo::MayDay::Error("not implemented");
-}
+  inline void
+  copyProtoDataToChombo(ch_data       & a_ch_data,
+                        const pr_data & a_pr_data)
+  {
+    for(int ilev = 0; ilev < a_ch_data.m_grid.size(); ilev++)
+    {
+      auto dbl = a_ch_data->m_grid[ilev];
+      auto ch_dit = dbl.dataIterator();
+      auto&       ch_levdat = (*a_ch_data).m_data[ilev];
+      const auto& pr_levdat = (*a_pr_data)[ilev];
+      int ibox = 0;
+      for(auto pr_dit: pr_levdat)
+      {
+        const auto& pr_fab = pr_levdat[pr_dit];
+        auto      & ch_fab = ch_levdat[ch_dit[ibox]];
+
+        double* ch_ptr = ch_fab.dataPtr(0);
+        const double* pr_ptr = pr_fab.dataPtr(0);
+#ifdef PROTO_CUDA
+        cuda_memcopy(....);
+#else
+        cpu_memcopy(....);
+#endif
+        ibox++;
+      }
+    }
+  }
+
+  inline void
+  copyChomboDataToProto(ch_data       & a_ch_data,
+                        const pr_data & a_pr_data)
+  {
+    for(int ilev = 0; ilev < a_ch_data.m_grid.size(); ilev++)
+    {
+      auto dbl = a_ch_data->m_grid[ilev];
+      auto ch_dit = dbl.dataIterator();
+      const auto&       ch_levdat = (*a_ch_data).m_data[ilev];
+      auto      & pr_levdat = (*a_pr_data)[ilev];
+      int ibox = 0;
+      for(auto pr_dit: pr_levdat)
+      {
+        auto       & pr_fab = pr_levdat[pr_dit];
+        const auto & ch_fab = ch_levdat[ch_dit[ibox]];
+
+        double* ch_ptr = ch_fab.dataPtr(0);
+        const double* pr_ptr = pr_fab.dataPtr(0);
+#ifdef PROTO_CUDA
+        cuda_memcopy(....);
+#else
+        cpu_memcopy(....);
+#endif
+        ibox++;
+      }
+    }
+
+  }
 
 /**
  **/
-inline  Chombo::DisjointBoxLayout
+  inline  Chombo::DisjointBoxLayout
   getChomboDBL(const Proto::DisjointBoxLayout & a_pr_grids)
   
-{
+  {
 #include "PR_CH_TYPEDEFS.H"
-  Vector<int> procs;
-  Vector<int> boxes;
-  
-  DisjointBoxLayout retval(boxes, procs);
-  return retval;
-}
+    const std::vector<pair<Point, unsigned int>>  box_pairs= a_pr_grids.boxes();
+    Vector<int> procs(box_pairs.size());
+    Vector<int> boxes(box_pairs.size());
+    for(int ibox = 0; ibox < box_pairs.size(); ibox++)
+    {
+      boxes[ibox] = box_pairs[ibox].first;
+      procs[ibox] = box_pairs[ibox].second;
+    }
+    
+    ch_dbl retval(boxes, procs);
+    return retval;
+  }
+
 /**
  **/
-shared_ptr<ch_amr_grid>
+  shared_ptr<ch_amr_grid>
   getChomboAMRGrid(const shared_ptr<Proto::AMRGrid>& a_pr_hierarchy)
-{
-
-  shared_ptr<ch_amr_grid> retval(newChombo::AMRGrid());
-  unsigned int numlev = a_pr_hierarchy-numLevels();
-  retval->m_grids.resize(numlev);
-  retval->m_ratio.resize(numlev, 2);
-  for(int ilev = 0; ilev < numlev; ilev++)
   {
-    auto ptrefrat = a_pr_hierarchy->refRatio(ilev)
-      
-    (*retval).m_grids= getChomboDBL((*a_pr_hierarchy)[ilev]);
-    (*retval).m_ratio= ptrefrat[0]
-    
-  }
-  return retval;
-}
 
+    shared_ptr<ch_amr_grid> retval(newChombo::AMRGrid());
+    unsigned int numlev = a_pr_hierarchy-numLevels();
+    retval->m_grids.resize(numlev);
+    retval->m_ratio.resize(numlev, 2);
+    for(int ilev = 0; ilev < numlev; ilev++)
+    {
+      auto ptrefrat = a_pr_hierarchy->refRatio(ilev);
+      
+      (*retval).m_grids[ilev] = getChomboDBL((*a_pr_hierarchy)[ilev]);
+      (*retval).m_ratio[ilev] = ptrefrat[0];
+      
+    }
+    return retval;
+  }
+}
 #endif
