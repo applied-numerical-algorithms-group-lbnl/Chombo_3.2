@@ -207,12 +207,19 @@ namespace PrChCommon
         const auto& pr_fab = pr_levdat[pr_dit];
         auto      & ch_fab = ch_levdat[ch_dit[ibox]];
 
-        double* ch_ptr = ch_fab.dataPtr(0);
-        const double* pr_ptr = pr_fab.dataPtr(0);
+        double*       dataPtrHost = ch_fab.dataPtr(0);
+        const double* dataPtrDevi = pr_fab.dataPtr(0);
 #ifdef PROTO_CUDA
-        cuda_memcopy(....);
+        protoMemcpy(HOST, dataPtrDevi, dataPtrHost, datSize,  protoMemcpyDeviceToHost);
+        protoError err = protoGetLastError();
+        if (err != protoSuccess)
+        {
+          fprintf(stderr, "protoGetLastError() failed at %s:%i : %s\n",
+                  __FILE__, __LINE__, protoGetErrorString(err));
+          std::abort();
+        }
 #else
-        cpu_memcopy(....);
+        memcpy(dataPtrDevi, dataPtrHost, datSize);
 #endif
         ibox++;
       }
@@ -235,12 +242,22 @@ namespace PrChCommon
         auto       & pr_fab = pr_levdat[pr_dit];
         const auto & ch_fab = ch_levdat[ch_dit[ibox]];
 
-        double* ch_ptr = ch_fab.dataPtr(0);
-        const double* pr_ptr = pr_fab.dataPtr(0);
+        double*       dataPtrHost = ch_fab.dataPtr(0);
+        const double* dataPtrDevi = pr_fab.dataPtr(0);
+        size_t datSize = sizeof(Real)*ch_fab.box().numPts() * ch_fab.nComp();
+
+        
 #ifdef PROTO_CUDA
-        cuda_memcopy(....);
+        protoMemcpy(DEVICE, dataPtrHost, dataPtrDevi, datSize,  protoMemcpyHostToDevice);
+        protoError err = protoGetLastError();
+        if (err != protoSuccess)
+        {
+          fprintf(stderr, "protoGetLastError() failed at %s:%i : %s\n",
+                  __FILE__, __LINE__, protoGetErrorString(err));
+          std::abort();
+        }
 #else
-        cpu_memcopy(....);
+        memcpy(dataPtrDevi, dataPtrHost, datSize);
 #endif
         ibox++;
       }
