@@ -1,11 +1,6 @@
-# -*- Mode: Makefile -*- 
-
-# trace the chain of included makefiles
-makefiles += releasedExamples_AMRPoisson_execCell
-
-## Define the variables needed by Make.example
-
 # the base name(s) of the application(s) in this directory
+USE_PROTO=TRUE
+NAMESPACE=TRUE
 ebase = poissonSolve
 
 # the location of the Chombo "lib" directory
@@ -16,7 +11,7 @@ LibNames = AMRElliptic AMRTools BoxTools
 
 # the locations of the source code directories
 base_dir = .
-src_dirs = 
+src_dirs = ../common
 
 # input file for 'run' target
 INPUT = regression.inputs
