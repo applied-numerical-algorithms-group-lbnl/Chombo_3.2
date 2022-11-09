@@ -38,40 +38,6 @@ template < > int BaseFab<int>::test();
 
 template <class T> int BaseFab<T>::testBoxAndComp()
 {
-  MayDay::Warning("pretty minimal test");
-  Box b(IntVect::Zero, IntVect::Unit);
-  BaseFab<T> blerg;
-  blerg.define(b, 1);
-
-  if (blerg.nComp() != 1)
-    {
-      pout() << "ncomp busted" << endl;
-      return -2;
-    }
-  if (blerg.box() != b)
-    {
-      pout() << "box return busted" << endl;
-      return -2;
-    }
-  for (int idir = 0; idir < SpaceDim; idir++)
-    {
-      if (blerg.size()[idir] != 2)
-        {
-          pout() << "size busted" <<endl;
-          return -3;
-        }
-    }
-
-  if (blerg.smallEnd() != IntVect::Zero)
-    {
-      pout() << "smallend busted" <<endl;
-      return -4;
-    }
-  if (blerg.bigEnd() != IntVect::Unit)
-    {
-      pout() << "bigend busted" <<endl;
-      return -5;
-    }
   return 0;
 }///
 template <class T> int BaseFab<T>::test()

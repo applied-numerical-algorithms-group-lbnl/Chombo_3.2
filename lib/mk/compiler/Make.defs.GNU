@@ -63,7 +63,7 @@ _gppminorver:= $(word 2,$(_gppversion))
   # -Wno-unused-local-typedefs turns off a set of annoying "typedef locally 
   #defined but not used warnings in RefCountedPtr.H
 
-_cxxbaseflags := -std=c++11 -Wno-unused-but-set-variable -Wno-long-long -Wno-sign-compare -Wno-deprecated -ftemplate-depth-99  -Wno-unused-local-typedefs -Wno-literal-suffix
+_cxxbaseflags := -std=c++14 -Wno-unused-but-set-variable -Wno-long-long -Wno-sign-compare -Wno-deprecated -ftemplate-depth-99  -Wno-unused-local-typedefs -Wno-literal-suffix
 
   # g++ v3.4.0 started objecting to some uses of HOFFSET()
   # TJL - Changed moving from csh to sh...

@@ -19,13 +19,13 @@
 #include "ProblemDomain.H"
 
 #include "Proto.H"
-
+#include "amr/Proto_AMRGrid.H"
 /**
    Begin bits pirated from Proto/examples and Proto/tests
 **/
 namespace Proto
 {
-  inline AMRGrid
+  Proto::AMRGrid
   telescopingGrid(
     Point crseDomainSize,
     unsigned int numLevels,
@@ -170,7 +170,7 @@ namespace Chombo
 
 namespace PrChCommon
 {
-#include "PR_CH_typedefs.H"
+#include "PR_CH_TypeDefs.H"
   
   shared_ptr<pr_grid>  > 
   getTelescopingProtoAMRGrid()
@@ -271,7 +271,7 @@ namespace PrChCommon
   getChomboDBL(const Proto::DisjointBoxLayout & a_pr_grids)
   
   {
-#include "PR_CH_TYPEDEFS.H"
+#include "PR_CH_TypeDefs.H"
     const std::vector<pair<Point, unsigned int>>  box_pairs= a_pr_grids.boxes();
     Vector<int> procs(box_pairs.size());
     Vector<int> boxes(box_pairs.size());

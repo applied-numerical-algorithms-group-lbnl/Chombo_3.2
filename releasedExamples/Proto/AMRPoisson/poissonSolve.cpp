@@ -29,7 +29,7 @@
 ///this space is mostly so I can use the typedefs without putting the include in too open a scope.
 namespace Introspection
 {
-#include "PR_CH_Typedefs.H" 
+#include "PR_CH_TypeDefs.H" 
 
 /**
  **/
