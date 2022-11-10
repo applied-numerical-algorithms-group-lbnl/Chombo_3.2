@@ -73,7 +73,7 @@
 ################################################################
 
 makefiles+=local/Make.defs.ANAG
-
+PROTO_HOME= $(HOME)/_proto/proto
 CXX:=g++
 FC:=gfortran
 MPICXX=mpiCC
@@ -171,7 +171,7 @@ ifeq ($(EFENCE),TRUE)
   lddbgflags += -lefence
 endif
 
-XTRALDFLAGS += -Wl,-zmuldefs
+#XTRALDFLAGS += -Wl,-zmuldefs
 
 # The Intel version 7.0 compiler installation is broken on most ANAG
 # systems.  The Fortran compiler is in a different directory from the C++
@@ -223,6 +223,6 @@ ifneq ($(ANAG_OPENMPI_DIR),)
 endif
 
 ifeq ($(USE_PROTO),TRUE)
- XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1 -DPR_TURN_OFF_TIMERS=1
+ XTRACPPFLAGS += -I$(PROTO_HOME)/include -I$(PROTO_HOME)/include/base -I$(PROTO_HOME)/include -I$(PROTO_HOME)/include/amr -I$(PROTO_HOME)/include/ops  -DDIM=$(DIM) -DUSE_PROTO=1 -DPR_TURN_OFF_TIMERS=1
 endif
 

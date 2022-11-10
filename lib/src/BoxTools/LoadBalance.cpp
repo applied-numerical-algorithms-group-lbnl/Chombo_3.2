@@ -166,16 +166,16 @@ int LoadBalance(Vector<int>&             a_procAssignments,
 // is enabled
 ///
 
-static unsigned int mylog2 (unsigned int val) {
-    if (val == 0) return std::numeric_limits<unsigned int>::max();
-    if (val == 1) return 0;
-    unsigned int ret = 0;
-    while (val > 1) {
-        val >>= 1;
-        ret++;
-    }
-    return ret;
-}
+//static unsigned int mylog2 (unsigned int val) {
+//    if (val == 0) return std::numeric_limits<unsigned int>::max();
+//    if (val == 1) return 0;
+//    unsigned int ret = 0;
+//    while (val > 1) {
+//        val >>= 1;
+//        ret++;
+//    }
+//    return ret;
+//}
 
 void split_load(Vector<int>& procs, Vector<long long>& loads,
                 Vector<long long>& sum, int p0, int p1, int start, int end)

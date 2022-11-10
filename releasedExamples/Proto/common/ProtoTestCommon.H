@@ -143,7 +143,7 @@ namespace Chombo
   private:
     //not a good candidate for weak construction
     AMRData();
-    void operator=(const AMRHierarchy & a_amr);
+    void operator=(const AMRData& a_amr);
   };
 
   inline void
