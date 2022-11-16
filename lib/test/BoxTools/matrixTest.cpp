@@ -78,6 +78,65 @@ int solveLeastSquaresTest()
   return 0;
 }
 
+int solveGeneralSolveTest()
+{
+  int size = 3;
+  /* matrix A */
+  //Real cA[3*3] = { 3.1, 1.0 , 3.4,   
+  //                   1.3,-6.9 , 7.2,    
+  //                  -5.7, 5.8 ,-8.8}   ;
+  Real cA[3*3] = { 0, 1, 0, 2, 5, 2, 3, 0, 0 };
+
+  /* matrix B */
+  //Real cB[3*3] = {-1.3, -0.1, 1.8,   
+  //                  -1.2, -0.3, 1.9,    
+  //                  -1.2, -0.2,  1.8}  ; 
+  Real cB[3*1] = {23, 23, 8};
+
+  /* least squares solution from octave, A \ B */
+  //Real cC[3*3] = {1.,                1.,                1.,
+  //                  0.941236852109999, 0.973843619313142, 0.944531745025979 ,
+  //                  0.938461538461539, 0.953846153846154, 0.938461538461539};
+  Real cC[3*1] =  { 3, 4, 5};
+
+
+  LAPACKMatrix A(size, size, cA);
+  //LAPACKMatrix B(size, size, cB);
+  //LAPACKMatrix C(size, size, cC);
+  LAPACKMatrix B(size, 1, cB);
+  LAPACKMatrix C(size, 1, cC);
+
+  pout() << "general solve test" << endl;
+  pout() << "A = " << endl;
+  A.poutAll();
+  pout() << "B = " << endl;
+  B.poutAll();
+  solveGeneralSolve(A, B);
+  pout() << "Answer = " << endl;
+  B.poutAll();
+  pout() << "correct Answer = " << endl;
+  C.poutAll();
+  
+
+  // Check the answer
+  C -= B;
+  for(int irow = 0; irow < size; irow++)
+    {
+      //for(int icol = 0; icol < size; icol++)
+      for(int icol = 0; icol < 1; icol++)
+        {
+          if(Abs(C(irow,icol)) > g_tol)
+            {
+              pout() << "at row = " << irow << ", icol = " << icol << endl;
+              pout() << "general solve test returned error of "<< C(irow,icol) << endl;
+              return -7;
+            }
+        }
+    }
+
+  return 0;
+}
+
 int inverseTest()
 {
   int n =4;
@@ -473,6 +532,19 @@ int main(int argc, char* argv[])
   else
     {
       pout() << "least squares test passed" << endl;
+    }
+  /**/
+
+  retval = 0; 
+  retval = solveGeneralSolveTest();
+  icode += retval;
+  if(retval != 0)
+    {
+      pout() << "Error: solveGeneralSolve test returned with value = " << retval << endl;
+    }
+  else
+    {
+      pout() << "general solve test passed" << endl;
     }
   /**/
 
