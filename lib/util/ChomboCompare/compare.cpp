@@ -650,16 +650,16 @@ int main(int argc, char* argv[])
         }
 
       if (isAniMesh) {
-          L0 = computeNorm(error,
-                           computedRefRatioVect,
-                           computedDxVect,
-                           errComps,
+          L0 = computeNorm(error,                 // Vector<LevelData<FArrayBox>* >
+                           computedRefRatioVect,  //  Vector<IntVect>
+                           computedDxVect,        // RealVect
+                           errComps,              //Interval
                            normType,
                            lBase);
       } else {
-          L0 = computeNorm(error,
-                           computedRefRatio,
-                           normDx,
+          L0 = computeNorm(error,                // Vector<LevelData<FArrayBox>* >
+                           computedRefRatio,     // Vector<int>
+                           normDx,               // Real
                            errComps,
                            normType,
                            lBase);
