@@ -59,9 +59,140 @@ namespace Proto
     std::vector<Point> boxSizes(numLevels, boxSize);
     Point crseDomainSize = Point::Ones(domainSize);
     std::array<bool, DIM> periodicity;
-    periodicity.fill(true);
+    periodicity.fill(false);
     return telescopingGrid(crseDomainSize, numLevels, refRatios, boxSizes, periodicity);
   }
+
+  class BCHolder
+  {
+  public:
+    BCHolder(const Box                 & a_validBox,
+             const Box                 & a_domain,
+             const Point               & a_srcGhost,
+             string                      a_domainBCName[2*DIM])
+    {
+      m_validBox = a_validBox;
+      m_domain   = a_domain  ;
+      m_srcGhost = a_srcGhost;
+      for(int ivec = 0; ivec < 2*DIM; ivec++)
+      {
+        m_domainBCName[ivec] = a_domainBC[ivec];
+      }
+    
+      Point lobox = a_validBox.low();
+      Point hibox = a_validBox.high();
+      Point lodom = a_domain.low();
+      Point hidom = a_domain.high();
+      Box srcBox = a_validBox.grow(a_srcGhost);
+
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        int numghost = a_srcGhost[idir]; //need a bc stencil for each ghost cell
+        Point loapp  = srcBox.low();
+        Point hiapp  = srcBox.high();
+        loapp[idir]  = lodom[idir]-1;
+        hiapp[idir]  = lodom[idir]-1;
+
+        if(lobox[idir] == lodom[idir])
+        {
+          int loindex = ebp_index(idir, Side::Lo);
+          m_regStencilBC[loindex].resize(numghost);
+          m_BCApplyBoxes[loindex].resize(numghost);
+          string bcname = a_domainBCName[loindex];
+          if((bcname == string("Dirichlet")) || (bcname == string("Neumann")))
+          {
+            double  stenSign = getStenSign(bcname);
+            Box appBox0(loapp, hiapp);
+
+            for(int igh = 0; igh < numghost; igh++)
+            {
+              m_BCApplyBoxes[loindex][igh] = appBox0.shift(idir, -igh);
+              m_regStencilBC[loindex][igh] = (stenSign)*Shift(Point::Basis(idir, 2*igh+1));
+            }
+          }
+          else if(bcname == string("LinearExtrapolation"))
+          {
+            //just going to do one ghost cell as extrapolation.  the rest are piecewise constant
+            Box appBox0(loapp, hiapp);
+            m_BCApplyBoxes[loindex][0] = appBox0;
+            m_regStencilBC[loindex][0] = (2.)*Shift(Point::Basis(idir, 1)) + (-1.)*Shift(Point::Basis(idir, 2));
+
+            for(int igh = 1; igh < numghost; igh++)
+            {
+              m_BCApplyBoxes[loindex][igh] = appBox0.shift(idir, -igh);
+              m_regStencilBC[loindex][igh] = (1.)*Shift(Point::Basis(idir, 1));
+            }
+          }
+          else if(bcname == string("no_bcs"))
+          {
+            //do nothing
+          }
+          else
+          {
+            std::cout << "bogus bc name = " << bcname << std::endl;
+            PROTO_ASSERT(false, "getsecondorderbcs: bogus bc string lo");
+          }
+        }
+        if(hibox[idir] == hidom[idir])
+        {
+          int hiindex = ebp_index(idir, Side::Hi);
+          m_regStencilBC[hiindex].resize(numghost);
+          m_BCApplyBoxes[hiindex].resize(numghost);
+          string bcname = a_domainBCName[hiindex];
+          Point loapp = srcBox.low();
+          Point hiapp = srcBox.high();
+          loapp[idir] = hidom[idir]+1;
+          hiapp[idir] = hidom[idir]+1;
+
+          if((bcname == string("Dirichlet")) || (bcname == string("Neumann")))
+          {
+            double  stenSign = getStenSign(bcname);
+            Box appBox0(loapp, hiapp);
+        
+            for(int igh = 0; igh < numghost; igh++)
+            {
+              m_BCApplyBoxes[hiindex][igh] = appBox0.shift(idir,  igh);
+              m_regStencilBC[hiindex][igh] = (stenSign)*Shift(Point::Basis(idir, -2*igh-1));
+            }
+          }
+          else if(bcname == string("LinearExtrapolation"))
+          {
+            //just going to do one ghost cell as extrapolation.  the rest are piecewise constant
+            Box appBox0(loapp, hiapp);
+            m_BCApplyBoxes[hiindex][0] = appBox0;
+            m_regStencilBC[hiindex][0] = (2.)*Shift(Point::Basis(idir, -1)) + (-1.)*Shift(Point::Basis(idir, -2));
+
+            for(int igh = 1; igh < numghost; igh++)
+            {
+              m_BCApplyBoxes[hiindex][igh] = appBox0.shift(idir, igh);
+              m_regStencilBC[hiindex][igh] = (1.)*Shift(Point::Basis(idir, -1));
+            }
+          }
+          else if(bcname == string("no_bcs"))
+          {
+            //do nothing
+          }
+          else
+          {
+            std::cout << "bogus bc name = " << bcname << std::endl;
+            PROTO_ASSERT(false, "getsecondorderbcs: bogus bc string hi");
+          }
+        }
+      }
+    }
+      
+    
+    vector<Stencil<double> >    m_regStencilBC[2*DIM];
+    vector<Box>                 m_BCApplyBoxes[2*DIM];       
+    string                      m_domainBCName[2*DIM];               
+    Box                         m_validBox;
+    Box                         m_domain  ;
+    Point                       m_srcGhost;
+
+  private:
+    BCHolder();
+  };
+  
 
   template<typename T, MemType MEM = MEMTYPE_DEFAULT>
   class BoxOp_Laplace : public BoxOp<T, 1, 0, MEM>
@@ -83,15 +214,36 @@ namespace Proto
       const BoxData<T, 1, MEM>& a_state,
       int a_dir) const
     {
+      //monkey with the ghost cells
+      BoxData<T, 1, MEM>& caststate = (BoxData<T, 1, MEM>&)(a_state);
+      applyDomainBoundaryConditions(caststate, a_dir);
       auto GRAD = Stencil<T>::DiffCellToFace(a_dir, Side::Lo);
       //auto GRAD = 1.0*Shift::Zeros() - 1.0*Shift::Basis(a_dir, -1);
       a_flux |= GRAD(a_state, 1.0 / this->dx()[a_dir]); 
     }
+
+
+    ///
+    inline void applyDomainBoundaryConditions(BoxData<Real, 1>& a_src)
+    {
+
+        BoxData<data_t, 1>& castSrc = const_cast<BoxData<data_t, 1> &>(a_src.getRegData());
+        for(int ibc = 0; ibc < 2*DIM; ibc++)
+        {
+          for(int ivec = 0; ivec < m_regStencilBCS[ibc].size(); ivec++)
+          {
+            Box bcsrcbox = m_BCApplyBoxes[ibc][ivec];
+            m_regStencilBCS[ibc][ivec].apply(castSrc, castSrc,
+                                             bcsrcbox, initToZero, 1.0);
+          }
+        }
+    }
+
+  private:
+    
+   
   };
 } //end namespace proto
-/**
-End pirated bits.   Back to ChomboLand.
-**/
 
 
 ///
