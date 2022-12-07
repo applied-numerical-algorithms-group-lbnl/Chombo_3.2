@@ -15,9 +15,11 @@ typedef  Proto::AMRGrid                                        pr_grid;
 typedef  Chombo::AMRGrid                                       ch_grid;
 typedef  Proto::AMRData                                        pr_data;
 typedef  Chombo::AMRData                                       ch_data;
+typedef  Chombo::AMRData                                       ch_data;
 typedef  Proto::ProblemDomain                                  pr_probdom;
-typedef  Proto::BoxOp_Laplace<double>                          pr_poissonop;
-typedef  Proto::AMRSolver_FASMultigrid<pr_poissonop, double>   pr_amr_solver;
 
+
+typedef  Proto::LevelBoxData<Real> >                           pr_leveldata;
+typedef Chombo::AMRMultigrid<pr_leveldata>                     ch_solver;
 
 #endif
