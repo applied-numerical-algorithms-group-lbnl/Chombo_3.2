@@ -84,25 +84,49 @@ MGLevelOp (from MultiGrid.H):
                                const T& a_rhs,
                                const int&     a_refRat) = 0;
 **/
-
+private:
+  /** going to try to do this with strong construction
+   */
+  ProtoAMRPoissonOp();
+  unsigned int m_refToCoar;
+  unsigned int m_refToFine;
+  pr_ldb       m_phic;
+public:
 
   typedef Proto::LevelBoxData<Real> pr_lbd;
+  virtual void applyDomainBoundaryConditions (pr_ldb& a_phi)
+  {
+    
+  }
+  virtual void homogeneousCFInterp(pr_lbd& a_phi)
+  {
+    m_phiC.setVal(0);
+    Proto::InterpStencil<Real> interpSten = Proto::InterpStencil<Real>::Build(2, m_refToCoar);
+    a_phi.interpBoundaries(m_phiC, interpSten); 
+  }
 
   ///
   virtual void residual(  pr_lbd& a_lhs, const pr_lbd& a_phi, const pr_lbd& a_rhs, bool a_homogeneous = false)
-
   {
+    a_lhs.setVal(0.);
+    applyOp(a_lhs, a_phi, a_homogeneous);
+    a_lhs.increment(a_rhs, -1.);
   }
 
   ///
   virtual void preCond(   pr_lbd& a_cor, const pr_lbd& a_residual)
-
   {
+    
+    relax(a_cor, a_residual, 27);
   }
-  
+
   ///
   virtual void applyOp(   pr_lbd& a_lhs, const pr_lbd& a_phi, bool a_homogeneous = false)
   {
+    //fill ghost cells
+    homogeneousCFInterp(a_phi);
+    applyDomainBoundaryConditions(a_phi);
+    //apply the actual operator
   }
 
   ///
@@ -221,10 +245,6 @@ MGLevelOp (from MultiGrid.H):
   virtual ~ProtoAMRPoissonOp()
   {
   }
-private:
-  /** going to try to do this with strong construction
-   */
-  ProtoAMRPoissonOp();
 
 };
 
