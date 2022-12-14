@@ -5,6 +5,11 @@
 
 #include "AMRMultiGrid.H"
 #include "Proto.H"
+#if DIM==2
+#define MG_NUM_COLORS 4
+#else
+#define MG_NUM_COLORS 8
+#endif
 
 ///
 /**
@@ -88,9 +93,32 @@ private:
   /** going to try to do this with strong construction
    */
   ProtoAMRPoissonOp();
+
+  
   unsigned int m_refToCoar;
   unsigned int m_refToFine;
+  pr_ldb       m_resid;
+  pr_ldb       m_residC;
+  pr_ldb       m_deltaC; 
   pr_ldb       m_phic;
+
+  bool   m_hasCoarser; //not strictly necessary--could check the pointer
+  double m_alpha;     
+  double m_beta;       
+  double m_dx;        
+  Box     m_domain;       
+  double m_lambda; //relaxation coeff
+  
+  pr_lbd m_scratch;
+
+  array<Point,MG_NUM_COLORS>  s_colors;
+  Stencil<double> m_negoperator; //always need -Lap(phi)
+  Stencil<double> m_restrict;
+
+  array<Stencil<double>, MG_NUM_COLORS> m_relaxOpPhi;
+  array<Stencil<double>, MG_NUM_COLORS> m_updateOpPhi;
+  array<Stencil<double>, MG_NUM_COLORS> m_relaxOpRhs;
+  array<Stencil<double>, MG_NUM_COLORS> m_prolong;
 public:
 
   typedef Proto::LevelBoxData<Real> pr_lbd;
@@ -126,44 +154,88 @@ public:
     //fill ghost cells
     homogeneousCFInterp(a_phi);
     applyDomainBoundaryConditions(a_phi);
+    auto dbl = a_lhs.layout();
     //apply the actual operator
+    for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
+    {
+      auto valid = dbl[dit];
+      a_lph[dit] |= m_negoperator(phi[dit], valid);
+      a_lph *= -1.0;
+    }
   }
 
   ///
   virtual void create(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
   {
+    a_lhs.define(a_rhs.disjointBoxLayotu(), a_rhs.ghostVect());
   }
 
   ///
   virtual void assign(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
   {
+    a_lhs.setVal(0.);
+    a_lhs.increment(a_rhs);
   }
 
   ///
   virtual Real dotProduct(const pr_lbd& a_1, const pr_lbd& a_2)
   {
+    pr_lbd& dotprod = m_scratch;
+    Real sumdotprod = 0;
+    for(auto dit = a_1.begin(); dit != a_1.end(); ++dit)
+    {
+      auto valid = dbl[dit];
+      dotprod[dit].setVal(0.);
+      dotprod[dit] += a_1[dit];
+      dotprod[dit] *= a_2[dit];
+      sumdotprod += dotprod[dit].sum();
+    }
+
+#ifdef CH_MPI
+    Real sendBuf = sumdotprod;
+    int result = MPI_Allreduce(&sendBuf, &sumdotprod, 1, MPI_CH_REAL,MPI_SUM, Chombo_MPI::comm);
+
+    if (result != MPI_SUCCESS)
+    {
+      MayDay::Error("Communication error in Proto_AMRPoissonOp::dotProduct");
+    }
+#endif
+
   }
 
   ///
   virtual void incr  (    pr_lbd& a_lhs, const pr_lbd& a_x, Real a_scale)
   {
+    pr_lbd& increm = m_scratch;
+    for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
+    {
+      increm[dit].setVal(0);
+      increm[dit] += a_x[dit];
+      increm[dit] *= a_scale;
+      a_lhs[dit]  += increm[dit];
+    }
   }
 
   ///
   virtual void axby(      pr_lbd& a_lhs, const pr_lbd& a_x, const pr_lbd& a_y, Real a_a, Real a_b)
   {
+    a_lhs.setVal(0);
+    a_lhs.incr(a_x, a_a);
+    a_lhs.incr(a_y, a_b);
   }
   
   virtual void scale(     pr_lbd& a_lhs,   const Real& a_scale)
   {
+    a_lhs
   }
   
   virtual Real norm(const pr_lbd& a_rhs, int a_ord)
   {
   }
   
-  virtual void setpr_lbdoZero(pr_lbd& a_lhs)
+  virtual void setToZero(pr_lbd& a_lhs)
   {
+    a_lhs.setVal(0.);
   }
 
 ///MGLevelOp (from MultiGrid.H):
