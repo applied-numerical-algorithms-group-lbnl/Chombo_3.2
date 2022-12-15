@@ -100,9 +100,9 @@ private:
   pr_ldb       m_resid;
   pr_ldb       m_residC;
   pr_ldb       m_deltaC; 
-  pr_ldb       m_phic;
+  pr_ldb       m_phiC;
 
-  bool   m_hasCoarser; //not strictly necessary--could check the pointer
+  bool   m_hasCoarser; 
   double m_alpha;     
   double m_beta;       
   double m_dx;        
@@ -124,13 +124,17 @@ public:
   typedef Proto::LevelBoxData<Real> pr_lbd;
   virtual void applyDomainBoundaryConditions (pr_ldb& a_phi)
   {
-    
+    CH_TIME("applyDomainBoundaryConditions");
   }
   virtual void homogeneousCFInterp(pr_lbd& a_phi)
   {
-    m_phiC.setVal(0);
-    Proto::InterpStencil<Real> interpSten = Proto::InterpStencil<Real>::Build(2, m_refToCoar);
-    a_phi.interpBoundaries(m_phiC, interpSten); 
+    if(m_hasCoarser)
+    {
+      m_phiC.setVal(0);
+      Proto::InterpStencil<Real> interpSten = Proto::InterpStencil<Real>::Build(2, m_refToCoar);
+      a_phi.interpBoundaries(m_phiC, interpSten);
+    }
+    a_phi.exchange();
   }
 
   ///
@@ -226,11 +230,12 @@ public:
   
   virtual void scale(     pr_lbd& a_lhs,   const Real& a_scale)
   {
-    a_lhs
+    a_lhs *= a_scale;
   }
   
   virtual Real norm(const pr_lbd& a_rhs, int a_ord)
   {
+    return a_rhs.absMax();
   }
   
   virtual void setToZero(pr_lbd& a_lhs)
@@ -243,11 +248,48 @@ public:
   ///
   virtual void createCoarser(pr_lbd& a_coarse, const pr_lbd& a_fine, bool ghosted)
   {
+    auto dblFine = a_fine.disjointBoxLayout();
+    auto ghost   = a_fine.ghostVect();
+    auto dblCoar = dblFine.coarsen(Point::Ones(2));
+    a_coarse.define(dblCoar, ghost);
   }
 
   ///
-  virtual void relax(pr_lbd& a_correction, const pr_lbd& a_residual, int a_iterations)
+  virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter)
   {
+    for(int iter = 0; iter < a_maxiter; iter++)
+    {
+      for(int iredblack = 0; iredblack < 2; iredblack++)
+      {
+        auto & resid = const_cast<pr_lbd &>(m_resid);
+        resid.setVal(0.);
+        residual(resid, a_phi, a_rhs, true);
+        
+        for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
+        {
+
+        Box grid = m_grids[dit[ibox]];
+        Bx  grbx = getProtoBox(grid);
+        //lambda = safety/diag
+        //phi = phi - lambda*(res)
+        ///lambda takes floating point to calculate
+        //also does an integer check for red/black but I am not sure what to do with that
+        auto& phifab   =   a_phi[dit[ibox]];
+        auto& resfab   =   resid[dit[ibox]];
+        auto& stendiag = m_diagW[dit[ibox]];
+        auto& kappa    = m_kappa[dit[ibox]];
+        Bx  inputBox = phifab.inputBox();
+        ebforall_i(inputBox, gsrbResid,  grbx, 
+                   phifab, resfab, stendiag,
+                   kappa, m_alpha, m_beta, m_dx, iredblack);
+      
+        ideb++;
+      } //end loop over boxes
+
+    } //end loop over red and black
+    ideb++;
+  }// end loop over iteratioons
+}
   }
   
   ///
