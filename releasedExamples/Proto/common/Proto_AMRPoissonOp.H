@@ -16,7 +16,7 @@
    Operator for solving (alpha I + beta*Laplacian)(phi) = rho
    over an AMR hierarchy.
 */
-class ProtoAMRPoissonOp : public AMRLevelOp<Proto::LevelBoxData<Real> >
+class ProtoAMRPoissonOp : public AMRLevelOp<Proto::LevelBoxData<double> >
 {
 public:
 
@@ -31,11 +31,11 @@ LinearOp (from LinearSolver.H)":
   virtual void applyOp(   T& a_lhs, const T& a_phi, bool a_homogeneous = false) = 0;
   virtual void create(    T& a_lhs, const T& a_rhs) = 0;
   virtual void assign(    T& a_lhs, const T& a_rhs)       = 0;
-  virtual Real dotProduct(const T& a_1, const T& a_2)     = 0;
-  virtual void incr  (    T& a_lhs, const T& a_x, Real a_scale) = 0;
-  virtual void axby(      T& a_lhs, const T& a_x, const T& a_y, Real a_a, Real a_b) = 0;
-  virtual void scale(     T& a_lhs, const Real& a_scale)  = 0;
-  virtual Real norm(const T& a_rhs, int a_ord) = 0;
+  virtual double dotProduct(const T& a_1, const T& a_2)     = 0;
+  virtual void incr  (    T& a_lhs, const T& a_x, double a_scale) = 0;
+  virtual void axby(      T& a_lhs, const T& a_x, const T& a_y, double a_a, double a_b) = 0;
+  virtual void scale(     T& a_lhs, const double& a_scale)  = 0;
+  virtual double norm(const T& a_rhs, int a_ord) = 0;
   virtual void setToZero(T& a_lhs) = 0;
 
 MGLevelOp (from MultiGrid.H):
@@ -121,17 +121,17 @@ private:
   array<Stencil<double>, MG_NUM_COLORS> m_prolong;
 public:
 
-  typedef Proto::LevelBoxData<Real> pr_lbd;
+  typedef Proto::LevelBoxData<double> pr_lbd;
   virtual void applyDomainBoundaryConditions (pr_ldb& a_phi)
   {
     CH_TIME("applyDomainBoundaryConditions");
   }
-  virtual void homogeneousCFInterp(pr_lbd& a_phi)
+  virtual void homogeneousCFInterp(pr_lbd& a_phi) 
   {
     if(m_hasCoarser)
     {
       m_phiC.setVal(0);
-      Proto::InterpStencil<Real> interpSten = Proto::InterpStencil<Real>::Build(2, m_refToCoar);
+      Proto::InterpStencil<double> interpSten = Proto::InterpStencil<double>::Build(2, m_refToCoar);
       a_phi.interpBoundaries(m_phiC, interpSten);
     }
     a_phi.exchange();
@@ -182,10 +182,10 @@ public:
   }
 
   ///
-  virtual Real dotProduct(const pr_lbd& a_1, const pr_lbd& a_2)
+  virtual double dotProduct(const pr_lbd& a_1, const pr_lbd& a_2)
   {
     pr_lbd& dotprod = m_scratch;
-    Real sumdotprod = 0;
+    double sumdotprod = 0;
     for(auto dit = a_1.begin(); dit != a_1.end(); ++dit)
     {
       auto valid = dbl[dit];
@@ -196,7 +196,7 @@ public:
     }
 
 #ifdef CH_MPI
-    Real sendBuf = sumdotprod;
+    double sendBuf = sumdotprod;
     int result = MPI_Allreduce(&sendBuf, &sumdotprod, 1, MPI_CH_REAL,MPI_SUM, Chombo_MPI::comm);
 
     if (result != MPI_SUCCESS)
@@ -208,7 +208,7 @@ public:
   }
 
   ///
-  virtual void incr  (    pr_lbd& a_lhs, const pr_lbd& a_x, Real a_scale)
+  virtual void incr  (    pr_lbd& a_lhs, const pr_lbd& a_x, double a_scale)
   {
     pr_lbd& increm = m_scratch;
     for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
@@ -221,19 +221,19 @@ public:
   }
 
   ///
-  virtual void axby(      pr_lbd& a_lhs, const pr_lbd& a_x, const pr_lbd& a_y, Real a_a, Real a_b)
+  virtual void axby(      pr_lbd& a_lhs, const pr_lbd& a_x, const pr_lbd& a_y, double a_a, double a_b)
   {
     a_lhs.setVal(0);
     a_lhs.incr(a_x, a_a);
     a_lhs.incr(a_y, a_b);
   }
   
-  virtual void scale(     pr_lbd& a_lhs,   const Real& a_scale)
+  virtual void scale(     pr_lbd& a_lhs,   const double& a_scale)
   {
     a_lhs *= a_scale;
   }
   
-  virtual Real norm(const pr_lbd& a_rhs, int a_ord)
+  virtual double norm(const pr_lbd& a_rhs, int a_ord)
   {
     return a_rhs.absMax();
   }
@@ -255,42 +255,7 @@ public:
   }
 
   ///
-  virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter)
-  {
-    for(int iter = 0; iter < a_maxiter; iter++)
-    {
-      for(int iredblack = 0; iredblack < 2; iredblack++)
-      {
-        auto & resid = const_cast<pr_lbd &>(m_resid);
-        resid.setVal(0.);
-        residual(resid, a_phi, a_rhs, true);
-        
-        for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
-        {
-
-        Box grid = m_grids[dit[ibox]];
-        Bx  grbx = getProtoBox(grid);
-        //lambda = safety/diag
-        //phi = phi - lambda*(res)
-        ///lambda takes floating point to calculate
-        //also does an integer check for red/black but I am not sure what to do with that
-        auto& phifab   =   a_phi[dit[ibox]];
-        auto& resfab   =   resid[dit[ibox]];
-        auto& stendiag = m_diagW[dit[ibox]];
-        auto& kappa    = m_kappa[dit[ibox]];
-        Bx  inputBox = phifab.inputBox();
-        ebforall_i(inputBox, gsrbResid,  grbx, 
-                   phifab, resfab, stendiag,
-                   kappa, m_alpha, m_beta, m_dx, iredblack);
-      
-        ideb++;
-      } //end loop over boxes
-
-    } //end loop over red and black
-    ideb++;
-  }// end loop over iteratioons
-}
-  }
+  virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter);
   
   ///
   virtual void restrictResidual(pr_lbd& a_resCoarse, pr_lbd& a_phiFine, const pr_lbd& a_rhsFine)
