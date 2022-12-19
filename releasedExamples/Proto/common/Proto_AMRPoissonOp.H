@@ -11,6 +11,8 @@
 #define MG_NUM_COLORS 8
 #endif
 
+namespace Chombo
+{
 ///
 /**
    Operator for solving (alpha I + beta*Laplacian)(phi) = rho
@@ -255,68 +257,102 @@ public:
   }
 
   ///
+  virtual int refToCoarser()
+  {
+    return m_refToCoar;
+  }
+
+  ///
   virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter);
   
   ///
-  virtual void restrictResidual(pr_lbd& a_resCoarse, pr_lbd& a_phiFine, const pr_lbd& a_rhsFine)
-  {
-  }
+  virtual void restrictResidual(pr_lbd& a_resCoarse, pr_lbd& a_phiFine, const pr_lbd& a_rhsFine);
 
   
-  virtual void prolongIncrement(pr_lbd& a_phiThisLevel, const pr_lbd& a_correctCoarse)
-  {
-  }
+  virtual void prolongIncrement(pr_lbd& a_phiThisLevel, const pr_lbd& a_correctCoarse);
 
-  ///
-  virtual int refToCoarser()
-  {
-  }
   
   virtual void AMRResidual(pr_lbd& a_residual, const pr_lbd& a_phiFine, const pr_lbd& a_phi,
                            const pr_lbd& a_phiCoarse, const pr_lbd& a_rhs,
                            bool a_homogeneousDomBC,
-                           AMRLevelOp<pr_lbd>*  a_finerOp) = 0;
+                           AMRLevelOp<pr_lbd>*  a_finerOp)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   virtual void AMRResidualNF(pr_lbd& a_residual, const pr_lbd& a_phi, const pr_lbd& a_phiCoarse,
-                             const pr_lbd& a_rhs, bool a_homogeneousBC) = 0;
+                             const pr_lbd& a_rhs, bool a_homogeneousBC)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
+    
 
   virtual void AMRResidualNC(pr_lbd& a_residual, const pr_lbd& a_phiFine, const pr_lbd& a_phi,
                              const pr_lbd& a_rhs, bool a_homogeneousBC,
-                             AMRLevelOp<pr_lbd>* a_finerOp) = 0;
+                             AMRLevelOp<pr_lbd>* a_finerOp) 
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   virtual void AMROperator(pr_lbd& a_LofPhi,
                            const pr_lbd& a_phiFine, const pr_lbd& a_phi,
                            const pr_lbd& a_phiCoarse,
                            bool a_homogeneousDomBC,
-                           AMRLevelOp<pr_lbd>*  a_finerOp) = 0;
+                           AMRLevelOp<pr_lbd>*  a_finerOp)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
+
 
   virtual void AMROperatorNF(pr_lbd& a_LofPhi,
                              const pr_lbd& a_phi,
                              const pr_lbd& a_phiCoarse,
-                             bool a_homogeneousBC) = 0;
+                             bool a_homogeneousBC)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   virtual void AMROperatorNC(pr_lbd& a_LofPhi,
                              const pr_lbd& a_phiFine,
                              const pr_lbd& a_phi,
                              bool a_homogeneousBC,
-                             AMRLevelOp<pr_lbd>* a_finerOp) = 0;
+                             AMRLevelOp<pr_lbd>* a_finerOp)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   virtual void AMRRestrict(pr_lbd& a_resCoarse, const pr_lbd& a_residual, const pr_lbd& a_correction,
-                           const pr_lbd& a_coarseCorrection, bool a_skip_res) = 0;
+                           const pr_lbd& a_coarseCorrection, bool a_skip_res)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
-  virtual void AMRProlong(pr_lbd& a_correction, const pr_lbd& a_coarseCorrection) = 0;
+  virtual void AMRProlong(pr_lbd& a_correction, const pr_lbd& a_coarseCorrection)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
+
 
   virtual void AMRUpdateResidual(pr_lbd& a_residual, const pr_lbd& a_correction,
-                                 const pr_lbd& a_coarseCorrection) = 0;
+                                 const pr_lbd& a_coarseCorrection)
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   virtual void createCoarsened(pr_lbd&       a_lhs,
                                const pr_lbd& a_rhs,
-                               const int&     a_refRat) = 0;
+                               const int&     a_refRat)
 
+  {
+    MayDay::Error("not doing AMR yet");
+  }
 
   /** going to try to do this with strong construction --placeholder
    */
-  ProtoAMRPoissonOp(const ProblemDomain& a_indexSpace);
+  ProtoAMRPoissonOp(const ProblemDomain& a_indexSpace)
+  {
+    MayDay::Error("Still need a constructor");
+  }
 
   ///
   /**
@@ -327,5 +363,5 @@ public:
 
 };
 
-
+} //end namespace
 #endif
