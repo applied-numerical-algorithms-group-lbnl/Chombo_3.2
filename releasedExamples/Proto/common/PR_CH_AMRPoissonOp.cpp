@@ -1,6 +1,6 @@
 
 
-#include "Proto_AMRPoissonOp.H"
+#include "PR_CH_AMRPoissonOp.H"
 #include "ProtoForAllFunctions.H"
 /****/
 /****/
@@ -37,13 +37,11 @@ namespace Chombo
 {
   ///
   void
-  Proto_AMRPoissonOp::
+  PR_CH_AMRPoissonOp::
   relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter)
   {
 
-    double diagvalu = -2.*DIM/(a_dx*a_dx);
-    double realdiag = a_alpha + a_beta*diagvalu;
-    double lambda = 1./realdiag;
+    double lambda = m_lambda;
     for(int iter = 0; iter < a_maxiter; iter++)
     {
       for(int iredblack = 0; iredblack < 2; iredblack++)
@@ -64,7 +62,7 @@ namespace Chombo
   }
   ///
   void
-  Proto_AMRPoissonOp::
+  PR_CH_AMRPoissonOp::
   restrictResidual(pr_lbd& a_resCoar, const pr_lbd& a_phiFine, const pr_lbd & a_rhsFine)
   {
 
@@ -83,7 +81,7 @@ namespace Chombo
   
   ///
   void
-  Proto_AMRPoissonOp::
+  PR_CH_AMRPoissonOp::
   prolongIncrement(pr_lbd& a_phiFine, const pr_lbd& a_corCoar)
   {
     auto dbl = a_phiFine.layout();

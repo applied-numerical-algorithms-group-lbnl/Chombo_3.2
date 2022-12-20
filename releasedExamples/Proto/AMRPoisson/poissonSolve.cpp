@@ -67,7 +67,7 @@ namespace Introspection
   }
 /**
  **/
-  static void runFASSolver()
+  static void runSolver()
   {
     //Proto has to drive the grid generation
     //get the grid hierarchy
@@ -90,6 +90,7 @@ namespace Introspection
     PrChCommon::copyChomboDataToProto(pr_phi, ch_phi);
 
     unsigned int maxiter = 100;  Real tolerance = 1.0e-10;
+    
     //get the poisson solver
     shared_ptr<pr_amr_solver> pr_pois = Introspection::getAMRPoissonSolver(pr_hier);
     pr_pois->solve(pr_phi, pr_rhs, maxiter, tolerance);
@@ -117,7 +118,7 @@ int main(int argc, char* argv[])
     char* in_file = argv[1];
     ParmParse  pp(argc-2,argv+2,NULL,in_file);
 
-    Introspection::runFASSolver();
+    Introspection::runSolver();
   }
   
 #ifdef CH_MPI
