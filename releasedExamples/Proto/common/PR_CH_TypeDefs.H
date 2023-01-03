@@ -19,7 +19,7 @@ typedef  Chombo::AMRData                                       ch_data;
 typedef  Proto::ProblemDomain                                  pr_probdom;
 
 
-typedef  Proto::LevelBoxData<Real> >                           pr_leveldata;
+typedef  Proto::LevelBoxData<Real>                             pr_leveldata;
 typedef Chombo::AMRMultigrid<pr_leveldata>                     ch_solver;
-typedef Chombo::PR_CH_AMRPoissonOpFactory                       prch_amrp_factory;
+typedef Chombo::PR_CH_AMRPoissonOpFactory                      prch_amrp_factory;
 

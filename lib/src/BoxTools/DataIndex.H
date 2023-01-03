@@ -83,7 +83,7 @@ public:
   */
   virtual void output() const
   {
-    pout() << *this << endl;
+    Chombo::pout() << *this << endl;
   }
 
   friend std::ostream& operator<< (std::ostream&   os,

@@ -29,6 +29,7 @@
 #include "BRMeshRefine.H"
 #include "LoadBalance.H"
 #include "DebugDump.H"
+#include "parstream.H"
 #include "AMRIO.H"
 
 
@@ -90,47 +91,46 @@ public:
 
   void print() const
   {
-    pout() << "Multigrid Solve of alpha I + beta Lapl phi = rhs  with periodic boundary conditions " << endl;
-
-    pout() << "multigrid solve parameters: " << endl;
-    pout() << "max iterations =  "   << maxiter   << endl;
-    pout() << "num smooths    =  "   << numsmooth << endl;
-    pout() << "nx             =  "   << nx        << endl;
-    pout() << "max_grid       =  "   << maxgrid   << endl;
-    pout() << "domain size    =  "   << domsize   << endl;
-    pout() << "tolerance      =  "   << tol       << endl;
-    pout() << "dx             =  "   << dx        << endl;
-    pout() << "alpha          =  "   << alpha     << endl;
-    pout() << "beta           =  "   << beta      << endl;
-    pout() << "blobrad        =  "   << blobrad   << endl;
-    pout() << "using multicolor gauss seidel smoothing  " << endl;
+    Chombo::pout() << "Multigrid Solve of alpha I + beta Lapl phi = rhs  with periodic boundary conditions " << endl;
+    Chombo::pout() << "multigrid solve parameters: " << endl;
+    Chombo::pout() << "max iterations =  "   << maxiter   << endl;
+    Chombo::pout() << "num smooths    =  "   << numsmooth << endl;
+    Chombo::pout() << "nx             =  "   << nx        << endl;
+    Chombo::pout() << "max_grid       =  "   << maxgrid   << endl;
+    Chombo::pout() << "domain size    =  "   << domsize   << endl;
+    Chombo::pout() << "tolerance      =  "   << tol       << endl;
+    Chombo::pout() << "dx             =  "   << dx        << endl;
+    Chombo::pout() << "alpha          =  "   << alpha     << endl;
+    Chombo::pout() << "beta           =  "   << beta      << endl;
+    Chombo::pout() << "blobrad        =  "   << blobrad   << endl;
+    Chombo::pout() << "using multicolor gauss seidel smoothing  " << endl;
     if(relaxOnly == 1)
     {
-      pout() << "doing relax only"  << endl;
+      Chombo::pout() << "doing relax only"  << endl;
     }
     else
     {
-      pout() << "doing full multigrid solve"  << endl;
+      Chombo::pout() << "doing full multigrid solve"  << endl;
     }
     if(dofileio == 0)
     {
-      pout() << "file output turned off" << endl;
+      Chombo::pout() << "file output turned off" << endl;
     }
     else
     {
-      pout() << "file output turned on" << endl;
+      Chombo::pout() << "file output turned on" << endl;
     }
     if(useDenseStencil == 0)
     {
-      pout() << "using standard sparse Laplacian stencil"  << endl;
+      Chombo::pout() << "using standard sparse Laplacian stencil"  << endl;
     }
     else if(DIM==2)
     {
-      pout() << "using dense (9 pt) Laplacian stencil"  << endl;
+      Chombo::pout() << "using dense (9 pt) Laplacian stencil"  << endl;
     }
     else 
     {
-      pout() << "using dense (27 pt) Laplacian stencil"  << endl;
+      Chombo::pout() << "using dense (27 pt) Laplacian stencil"  << endl;
     }
   }
 };                  
@@ -271,7 +271,7 @@ multigridSolve(const SolveParams& a_params)
   double resStart = rhsabsmax;
   resStart = std::max(resStart, a_params.tol);
   double resIter  = resStart;
-  pout() << "iter = " << iter << ", ||resid|| = " << resIter << endl;
+  Chombo::pout() << "iter = " << iter << ", ||resid|| = " << resIter << endl;
   bool useDense = (a_params.useDenseStencil != 0);
   SGMultigrid solver(a_params.alpha, a_params.beta, a_params.dx, grids, useDense);
   if(a_params.relaxOnly == 0)
@@ -284,7 +284,7 @@ multigridSolve(const SolveParams& a_params)
   
       iter++;
       resIter = absMax(res);
-      pout() << "iter = " << iter << ", ||resid|| = " << resIter << endl;
+      Chombo::pout() << "iter = " << iter << ", ||resid|| = " << resIter << endl;
     }
   }
   else
@@ -292,7 +292,7 @@ multigridSolve(const SolveParams& a_params)
     CH_TIME("relaxation");
     for(int irelax = 0; irelax <a_params.maxiter ; irelax++)
     {
-      pout() << "relax iter = " << iter << endl;
+      Chombo::pout() << "relax iter = " << iter << endl;
       solver.relax(phi, rhs);
       iter++;
     }
@@ -301,7 +301,7 @@ multigridSolve(const SolveParams& a_params)
   if(a_params.dofileio != 0)
   {
     CH_TIME("writing_files");
-    pout() << "writing files" << endl;
+    Chombo::pout() << "writing files" << endl;
     writeLevelname(&rhs, "rhs.hdf5");
     writeLevelname(&phi, "phi.hdf5");
   }
