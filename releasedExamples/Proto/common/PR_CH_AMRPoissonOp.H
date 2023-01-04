@@ -93,7 +93,7 @@ namespace Chombo
 **/
   private:
 
-#include "PR_CH_"
+#include "PR_CH_TypeDefs.H"
     /// strong construction only
     PR_CH_AMRPoissonOp();
 
@@ -114,20 +114,22 @@ namespace Chombo
     pr_dbl m_dblCoar;
     
     ///internal
-    pr_ldb       m_resid;
-    pr_ldb       m_residC;
-    pr_ldb       m_deltaC; 
-    pr_ldb       m_phiC;
+    pr_lbd       m_resid;
+    pr_lbd       m_residC;
+    pr_lbd       m_deltaC; 
+    pr_lbd       m_phiC;
+    pr_pt        m_ghost;
     double m_lambda; //relaxation coeff
     pr_lbd m_scratch;
-    array<Point,MG_NUM_COLORS>  s_colors;
-    Stencil<double> m_negoperator; //always need -Lap(phi)
-    Stencil<double> m_restrict;
+    array<Proto::Point,MG_NUM_COLORS>  s_colors;
+    
+    pr_sten m_negoperator; //always need -Lap(phi)
+    pr_sten m_restrict;
 
-    array<Stencil<double>, MG_NUM_COLORS> m_relaxOpPhi;
-    array<Stencil<double>, MG_NUM_COLORS> m_updateOpPhi;
-    array<Stencil<double>, MG_NUM_COLORS> m_relaxOpRhs;
-    array<Stencil<double>, MG_NUM_COLORS> m_prolong;
+    array<pr_sten, MG_NUM_COLORS> m_relaxOpPhi;
+    array<pr_sten, MG_NUM_COLORS> m_updateOpPhi;
+    array<pr_sten, MG_NUM_COLORS> m_relaxOpRhs;
+    array<pr_sten, MG_NUM_COLORS> m_prolong;
 
     array<std::string, 2*DIM> m_bcNames;
   public:
@@ -156,8 +158,8 @@ namespace Chombo
       {
         m_dblCoar = a_fine->first;
         m_refCoar = a_fine->second;
-        m_residC.define(m_dblCoar,  m_ghost);
-        m_deltaC.define(m_dblCoar,  m_ghost);
+        m_residC.define(m_dblCoar,  a_ghost);
+        m_deltaC.define(m_dblCoar,  a_ghost);
       }
       m_dx = a_dx;
       double diagvalu = -2.*DIM/(a_dx*a_dx);
@@ -167,8 +169,8 @@ namespace Chombo
       
 
     }
-    typedef Proto::LevelBoxData<double> pr_lbd;
-    virtual void applyDomainBoundaryConditions (pr_ldb& a_phi)
+
+    virtual void applyDomainBoundaryConditions (pr_lbd& a_phi)
     {
       CH_TIME("applyDomainBoundaryConditions");
       MayDay::Error("not implemented");
@@ -176,7 +178,7 @@ namespace Chombo
     }
     virtual void homogeneousCFInterp(pr_lbd& a_phi) 
     {
-      if(m_hasCoarser)
+      if(m_hasCoar)
       {
         m_phiC.setVal(0);
         Proto::InterpStencil<double> interpSten = Proto::InterpStencil<double>::Build(2, m_refToCoar);
@@ -420,7 +422,7 @@ namespace Chombo
 //                       std::pair<pr_dbl, int>* a_fine,   // = NULL if not there, int is the refinement ratio
 //                       std::pair<pr_dbl, int>* a_coar)   // = NULL if not there, int is the refinement ratio
   public:
-#include "PR_CH_Typedefs.H"
+#include "PR_CH_TypeDefs.H"
     PR_CH_AMRPoissonFactory(pr_amrdata a_data, 
                             double     a_dxLevel0)
     {

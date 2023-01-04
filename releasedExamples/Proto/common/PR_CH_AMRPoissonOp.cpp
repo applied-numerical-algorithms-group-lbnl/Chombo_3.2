@@ -1,7 +1,7 @@
 
 
 #include "PR_CH_AMRPoissonOp.H"
-#include "ProtoForAllFunctions.H"
+
 /****/
 /****/
 PROTO_KERNEL_START 
@@ -96,4 +96,4 @@ namespace Chombo
   }
     
 }
-#endif
+
