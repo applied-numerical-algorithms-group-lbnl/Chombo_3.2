@@ -5,6 +5,7 @@
 
 #include "AMRMultiGrid.H"
 #include "Proto.H"
+#include "Proto_AMRData.H"
 #if DIM==2
 #define MG_NUM_COLORS 4
 #else
@@ -180,9 +181,10 @@ namespace Chombo
     {
       if(m_hasCoar)
       {
+        MayDay::Error("cf interp not there yet");
         m_phiC.setVal(0);
-        Proto::InterpStencil<double> interpSten = Proto::InterpStencil<double>::Build(2, m_refToCoar);
-        a_phi.interpBoundaries(m_phiC, interpSten);
+//        Proto::InterpStencil<double> interpSten = Proto::InterpStencil<double>::Build(2, m_refToCoar);
+//        a_phi.interpBoundaries(m_phiC, interpSten);
       }
       a_phi.exchange();
     }
@@ -192,7 +194,8 @@ namespace Chombo
     {
       a_lhs.setVal(0.);
       applyOp(a_lhs, a_phi, a_homogeneous);
-      a_lhs.increment(a_rhs, -1.);
+      pr_lbd& castrhs = (pr_lbd &) a_rhs;
+      a_lhs.increment(castrhs, -1.);
     }
 
     ///
@@ -206,29 +209,32 @@ namespace Chombo
     virtual void applyOp(   pr_lbd& a_lhs, const pr_lbd& a_phi, bool a_homogeneous = false)
     {
       //fill ghost cells
-      homogeneousCFInterp(a_phi);
-      applyDomainBoundaryConditions(a_phi);
+      pr_lbd& castphi = (pr_lbd &)(a_phi);
+      homogeneousCFInterp(castphi);
+      applyDomainBoundaryConditions(castphi);
       auto dbl = a_lhs.layout();
       //apply the actual operator
       for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
       {
-        auto valid = dbl[dit];
-        a_lph[dit] |= m_negoperator(phi[dit], valid);
-        a_lph *= -1.0;
+        auto index = *dit;
+        auto valid = dbl[index];
+        a_lhs[index] |= m_negoperator(a_phi[index], valid);
+        a_lhs[index] *= -1.0;
       }
     }
 
     ///
     virtual void create(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
     {
-      a_lhs.define(a_rhs.disjointBoxLayotu(), a_rhs.ghostVect());
+      a_lhs.define(a_rhs.disjointBoxLayout(), a_rhs.ghostVect());
     }
 
     ///
     virtual void assign(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
     {
       a_lhs.setVal(0.);
-      a_lhs.increment(a_rhs);
+      pr_lbd & castrhs = (pr_lbd& )(a_rhs);
+      a_lhs.increment(castrhs);
     }
 
     ///
@@ -236,13 +242,14 @@ namespace Chombo
     {
       pr_lbd& dotprod = m_scratch;
       double sumdotprod = 0;
+      auto dbl = a_1.disjointBoxLayout();
       for(auto dit = a_1.begin(); dit != a_1.end(); ++dit)
       {
-        auto valid = dbl[dit];
-        dotprod[dit].setVal(0.);
-        dotprod[dit] += a_1[dit];
-        dotprod[dit] *= a_2[dit];
-        sumdotprod += dotprod[dit].sum();
+        auto valid = dbl[*dit];
+        dotprod[*dit].setVal(0.);
+        dotprod[*dit] += a_1[*dit];
+        dotprod[*dit] *= a_2[*dit];
+        sumdotprod += dotprod[*dit].sum();
       }
 
 #ifdef CH_MPI
@@ -254,7 +261,7 @@ namespace Chombo
         MayDay::Error("Communication error in PR_CH_AMRPoissonOp::dotProduct");
       }
 #endif
-
+      return sumdotprod;
     }
 
     ///
@@ -263,10 +270,10 @@ namespace Chombo
       pr_lbd& increm = m_scratch;
       for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
       {
-        increm[dit].setVal(0);
-        increm[dit] += a_x[dit];
-        increm[dit] *= a_scale;
-        a_lhs[dit]  += increm[dit];
+        increm[*dit].setVal(0);
+        increm[*dit] += a_x[*dit];
+        increm[*dit] *= a_scale;
+        a_lhs[ *dit]  += increm[*dit];
       }
     }
 
@@ -274,8 +281,8 @@ namespace Chombo
     virtual void axby(      pr_lbd& a_lhs, const pr_lbd& a_x, const pr_lbd& a_y, double a_a, double a_b)
     {
       a_lhs.setVal(0);
-      a_lhs.incr(a_x, a_a);
-      a_lhs.incr(a_y, a_b);
+      incr(a_lhs,a_x, a_a);
+      incr(a_lhs,a_y, a_b);
     }
   
     virtual void scale(     pr_lbd& a_lhs,   const double& a_scale)
@@ -300,14 +307,14 @@ namespace Chombo
     {
       auto dblFine = a_fine.disjointBoxLayout();
       auto ghost   = a_fine.ghostVect();
-      auto dblCoar = dblFine.coarsen(Point::Ones(2));
+      auto dblCoar = dblFine.coarsen(Proto::Point::Ones(2));
       a_coarse.define(dblCoar, ghost);
     }
 
     ///
     virtual int refToCoarser()
     {
-      return m_refToCoar;
+      return m_refCoar;
     }
 
     ///
@@ -423,8 +430,9 @@ namespace Chombo
 //                       std::pair<pr_dbl, int>* a_coar)   // = NULL if not there, int is the refinement ratio
   public:
 #include "PR_CH_TypeDefs.H"
-    PR_CH_AMRPoissonFactory(pr_amrdata a_data, 
-                            double     a_dxLevel0)
+    typedef  Proto::AMRData<Real>   pr_amrdata;
+    PR_CH_AMRPoissonOpFactory(pr_amrdata a_data, 
+                              double     a_dxLevel0)
     {
       m_data     = a_data;
       m_dxLevel0 = a_dxLevel0;
