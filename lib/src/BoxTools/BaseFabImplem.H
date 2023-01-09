@@ -56,10 +56,6 @@ template <class T> inline BaseFab<T>::BaseFab(BaseFab<T>&& a_in) noexcept
    m_truesize(a_in.m_truesize),
    m_dptr(a_in.m_dptr),
    m_aliased(a_in.m_aliased)
-#if CXXSTD>=14
-   ,
-   m_mdarray(a_in.m_mdarray)
-#endif
 {
   a_in.m_aliased=true;
 }
@@ -72,9 +68,6 @@ template <class T> inline BaseFab<T>& BaseFab<T>::operator=(BaseFab<T>&& a_in) n
   std::swap(m_truesize,a_in.m_truesize);
   std::swap(m_dptr,a_in.m_dptr);
   std::swap(m_aliased,a_in.m_aliased);
-#if CXXSTD>=14
-  m_mdarray=a_in.m_mdarray;
-#endif
   return *this;
 }
 
@@ -109,10 +102,6 @@ template <class T> inline BaseFab<T>::BaseFab(const Box& a_bx,
   {
     define();
   }
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
 }
 
 template <class T> inline BaseFab<T>::BaseFab(const Interval& a_comps,
@@ -125,10 +114,6 @@ template <class T> inline BaseFab<T>::BaseFab(const Interval& a_comps,
   m_dptr(a_original.dataPtr(a_comps.begin())),
   m_aliased(true)
 {
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
 }
 
 template <class T> inline BaseFab<T>::~BaseFab()
@@ -171,10 +156,6 @@ template <class T> void BaseFab<T>::resize(const Box& a_b,
     m_aliased = false;
     define();
   }
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
 }
 
 template <class T> inline void BaseFab<T>::define(const Interval& a_comps,
@@ -188,10 +169,6 @@ template <class T> inline void BaseFab<T>::define(const Interval& a_comps,
   m_nvar     = a_comps.size();
   m_dptr     = a_original.dataPtr(a_comps.begin());
   m_aliased  = true;
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
   // resize(a_original.m_domain, a_comps.size(),
   //        a_original.dataPtr(a_comps.begin()));
 }
@@ -204,9 +181,6 @@ template <class T> inline void BaseFab<T>::clear()
   m_domain = Box();
   m_nvar   = 0;
   m_numpts = 0;
-#if CXXSTD>=14
-  m_mdarray.clear();
-#endif
 }
 
 template <class T> inline int BaseFab<T>::nComp() const
@@ -465,9 +439,6 @@ template <class T> inline BaseFab<T>& BaseFab<T>::shift(const IntVect& a_v)
 {
   CH_assert(isUsable());
   m_domain += a_v;
-#if CXXSTD>=14
-  m_mdarray.resetData(m_dptr + m_domain.index(IntVect::Zero));
-#endif
 
   return *this;
 }
@@ -477,9 +448,6 @@ template <class T> inline BaseFab<T>& BaseFab<T>::shift(int a_idir,
 {
   CH_assert(isUsable());
   m_domain.shift(a_idir,a_ncells);
-#if CXXSTD>=14
-  m_mdarray.resetData(m_dptr + m_domain.index(IntVect::Zero));
-#endif
 
   return *this;
 }
@@ -489,9 +457,6 @@ template <class T> inline BaseFab<T> & BaseFab<T>::shiftHalf(int a_idir,
 {
   CH_assert(isUsable());
   m_domain.shiftHalf(a_idir,a_numHalfs);
-#if CXXSTD>=14
-  m_mdarray.resetData(m_dptr + m_domain.index(IntVect::Zero));
-#endif
 
   return *this;
 }
@@ -500,9 +465,6 @@ template <class T> inline BaseFab<T> & BaseFab<T>::shiftHalf(const IntVect& a_v)
 {
   CH_assert(isUsable());
   m_domain.shiftHalf(a_v);
-#if CXXSTD>=14
-  m_mdarray.resetData(m_dptr + m_domain.index(IntVect::Zero));
-#endif
 
   return *this;
 }
