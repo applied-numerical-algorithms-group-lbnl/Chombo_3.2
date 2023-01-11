@@ -440,15 +440,15 @@ namespace Chombo
 
 
   public:
-    virtual AMRLevelOp<Proto::>* AMRnewOp(const ProblemDomain& a_indexSpace)
+    virtual AMRLevelOp<Proto::LevelBoxData<double> >* AMRnewOp(const ProblemDomain& a_indexSpace)
     {
       MayDay::Error("not implemented");
       return NULL;
     }
 
-    MGLevelOp<Proto::LevelBoxData<double> >* AMRPoissonOpFactory::MGnewOp(const ProblemDomain& a_indexSpace,
-                                                                          int                  a_depth,
-                                                                          bool                 a_homoOnly)
+    MGLevelOp<Proto::LevelBoxData<double> >* MGnewOp(const ProblemDomain& a_indexSpace,
+                                                     int                  a_depth,
+                                                     bool                 a_homoOnly)
     {
       MayDay::Error("not implemented");
       return NULL;
@@ -462,7 +462,7 @@ namespace Chombo
 
   private:
     //I have decided that I am team strong construction
-    Proto_AMRPoissonOpFactory();
+    PR_CH_AMRPoissonOpFactory();
     
     pr_amrdata m_data;
     double     m_dxLevel0;

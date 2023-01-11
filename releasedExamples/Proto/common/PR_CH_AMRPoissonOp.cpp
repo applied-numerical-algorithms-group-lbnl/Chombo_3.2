@@ -9,7 +9,7 @@ unsigned int
 gsrbResidF(int                       a_pt[DIM],
            Proto::Var<double, 1>     a_phi,
            Proto::Var<double, 1>     a_res,
-           double     a_lambda
+           double     a_lambda,
            int     a_iredBlack)
 {
   int sumpt = 0;
@@ -19,10 +19,7 @@ gsrbResidF(int                       a_pt[DIM],
   }
   if(sumpt%2 == a_iredBlack)
   {
-    double diagvalu = -2.*DIM/(a_dx*a_dx);
-    double realdiag = a_alpha + a_beta*diagvalu;
-
-    double lambda = 1./realdiag;
+    double lambda = a_lambda;
 
     double phival = a_phi(0);
     double resval = a_res(0);
@@ -41,7 +38,6 @@ namespace Chombo
   relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter)
   {
 
-    double lambda = m_lambda;
     for(int iter = 0; iter < a_maxiter; iter++)
     {
       for(int iredblack = 0; iredblack < 2; iredblack++)
@@ -51,9 +47,9 @@ namespace Chombo
         
         for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
         {
-          auto& resfab = m_resid[dit];
-          auto& phifab = a_phi[dit];
-          Proto::forall_i(gsrbResid, resfab.box(), phi, res, lambda, iredblack);
+          auto& resfab = m_resid[*dit];
+          auto& phifab = a_phi[*dit];
+          protoForall_i(gsrbResid, resfab.box(), phifab, resfab, m_lambda, iredblack);
         } //end loop over boxes
 
       } //end loop over red and black
