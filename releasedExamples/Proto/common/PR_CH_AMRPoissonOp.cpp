@@ -66,11 +66,11 @@ namespace Chombo
     residual(residFine, a_phiFine, a_rhsFine, true);
     auto dbl = a_phiFine.layout();
     //this one is all on proc
-    for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
+    for(auto dit = a_phiFine.begin(); dit != a_phiFine.end(); ++dit)
     {
-      auto valid = dbl[dit];
-      auto& resfabFine = residFine[dit];
-      auto& resfabCoar = a_resCoar[dit];
+      auto valid = dbl[*dit];
+      auto& resfabFine = residFine[*dit];
+      auto& resfabCoar = a_resCoar[*dit];
       resfabCoar |= m_restrict(resfabFine, valid);
     } //end loop over boxes
   }
@@ -82,13 +82,16 @@ namespace Chombo
   {
     auto dbl = a_phiFine.layout();
     //this one is all on proc
-    for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
+    for(int icolor = 0; icolor < MG_NUM_COLORS; icolor++)
     {
-      auto valid = dbl[dit];
-      auto& phifabFine = a_phiFine[dit];
-      auto& corfabCoar = a_corCoar[dit];
-      phifabFine |= m_prolong[icolor](corfabCoar, valid);
-    } //end loop over boxes
+      for(auto dit = a_phiFine.begin(); dit != a_phiFine.end(); ++dit)
+      {
+        auto valid = dbl[*dit];
+        auto& phifabFine = a_phiFine[*dit];
+        auto& corfabCoar = a_corCoar[*dit];
+        phifabFine |= m_prolong[icolor](corfabCoar, valid);
+      } //end loop over boxes
+    }
   }
     
 }

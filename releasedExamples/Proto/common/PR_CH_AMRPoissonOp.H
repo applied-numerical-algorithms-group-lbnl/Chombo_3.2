@@ -321,7 +321,7 @@ namespace Chombo
     virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter);
   
     ///
-    virtual void restrictResidual(pr_lbd& a_resCoarse, pr_lbd& a_phiFine, const pr_lbd& a_rhsFine);
+    virtual void restrictResidual(pr_lbd& a_resCoarse, const pr_lbd& a_phiFine, const pr_lbd& a_rhsFine);
 
   
     virtual void prolongIncrement(pr_lbd& a_phiThisLevel, const pr_lbd& a_correctCoarse);
