@@ -133,6 +133,8 @@ namespace Chombo
     array<pr_sten, MG_NUM_COLORS> m_prolong;
 
     array<std::string, 2*DIM> m_bcNames;
+    
+
   public:
 
     ///called by the factory class
@@ -168,14 +170,91 @@ namespace Chombo
       m_lambda = 1./realdiag;
       m_ghost = a_ghost;
       
-
     }
 
+
+    Box
+    getBCBox(Bx a_valid,
+             unsigned int idir,
+             Side::LoHiSide a_sd)
+    {
+      Point loapp, hiapp
+    }
+    Stencil<double>
+    getGhostFillStencil(unsigned int    a_idir,
+                        Side::LoHiSide, a_sd,
+                        string          a_bcname,
+                        unsigned int a_ghostLayer) //which layer of ghost cells are we filling
+    {
+      int isign = sign(a_sd);
+      int shiftSign = -isign;
+      int shiftval  = (a_ghostLayer+1)*shiftSign;
+      
+      Real coeff = 0;
+      if(a_bcname == string("Dirichlet"))
+      {
+        coeff = -1;//Dirichlet is reflect odd
+      }
+      else if(a_bcname == string("Neumann"))
+      {
+        coeff = 1; //Neumann is reflect even
+      }
+      else
+      {
+        MayDay::Error("PR_CH_AMRPoissonOp::getGhostFillStencil: unknown bc string");
+      }
+          
+      Stencil<double> retval = (coeff)*Shift(Point::Basis(a_idir, shiftval));
+      
+      return retval;
+
+             
+    }
+    //fill one ghost cell outside the domain
+    inline void
+    applyDomainBoundaryConditions(BoxData<Real, 1>& a_src,
+                                  unsigned int      a_idir,
+                                  Side::LoHiSide    a_sd,
+                                  string            a_bcname,
+                                  Proto::DataIndex  a_dit)
+    {
+      int isign = sign(a_sd);
+      auto bx = a_src.box();
+      auto probdom = m_dblMedi.problemDomain();
+      
+      if(!probdom.contains(bx))
+      {
+        Box valid = m_dblMedi[a_dit];
+
+        Stencil<double> dombcsten = getGhostFillStencil(a_idir, a_sd, a_bcname, 0);
+        Bx bcbox = getBCBox(valid, a_idir, a_sd);
+        for(int ibc = 0; ibc < 2*DIM; ibc++)
+        {
+          for(int ivec = 0; ivec < m_regStencilBCS[ibc].size(); ivec++)
+          {
+            Box bcsrcbox = m_BCApplyBoxes[ibc][ivec];
+            m_regStencilBCS[ibc][ivec].apply(castSrc, castSrc,
+                                             bcsrcbox, initToZero, 1.0);
+          }
+        }
+      }
+    }
+    
     virtual void applyDomainBoundaryConditions (pr_lbd& a_phi)
     {
       CH_TIME("applyDomainBoundaryConditions");
-      MayDay::Error("not implemented");
-      
+      for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
+      {
+        for(SideIterator sit; sit.ok(); ++sit)
+        {
+          for(unsigned int idir = 0; idir < DIM; idir++)
+          {
+            unsigned int index = ebp_index(idir, sit());
+            string bcname = m_bcNames[index];
+            applyDomainBoundaryConditions(a_phi[*dit], idir, sit(), bcname, *dit);
+          }
+      }
+
     }
     virtual void homogeneousCFInterp(pr_lbd& a_phi) 
     {
@@ -301,6 +380,7 @@ namespace Chombo
     }
 
 ///MGLevelOp (from MultiGrid.H):
+    vector<Stencil<double> >  m_regStencilBCS[2*DIM];
 
     ///
     virtual void createCoarser(pr_lbd& a_coarse, const pr_lbd& a_fine, bool ghosted)
