@@ -172,15 +172,14 @@ namespace Chombo
       
     }
 
-
-    Box
-    getBCBox(Bx a_valid,
-             unsigned int idir,
-             Side::LoHiSide a_sd)
+    struct
+    bc_eval_t
     {
-      Point loapp, hiapp
-    }
-    Stencil<double>
+      pr_box  m_applyBox;
+      pr_sten m_stencil;
+    };
+    
+    pr_stencil
     getGhostFillStencil(unsigned int    a_idir,
                         Side::LoHiSide, a_sd,
                         string          a_bcname,
@@ -210,6 +209,59 @@ namespace Chombo
 
              
     }
+    //returns empty vector if there are no bcs to apply
+    vector<bc_eval_t>
+    getBCMetaData(pr_box         a_valid) const
+    {
+      vector<bc_eval_t> retval;
+      pr_box dombx = m_dblMedi.problemDomain().domainBox();
+      pr_pt lobox = a_validBox.low();
+      pr_pt hibox = a_validBox.high();
+      pr_pt lodom = domainbx.low();
+      pr_pt hidom = domainbx.high();
+      for(unsigned int idir = 0; idir < DIM; idir++)
+      {
+        pr_box srcbx = a_valid.grow(Point::Basis(dir));
+        
+        if(lobox[idir] == lodom[idir])
+        {
+          Point loapp 
+          bc_eval_t entry;
+          unsigned int index = ebp_index(idir, Side::Lo);
+          string       bcname = m_bcNames[index];
+          Stencil<double> dombcsten = getGhostFillStencil(a_idir, Side::Lo, bcname, 0);
+
+          Point loapp  = srcbx.low();
+          Point hiapp  = srcbx.high();
+          loapp[idir]  = lodom[idir]-1;
+          hiapp[idir]  = lodom[idir]-1;
+
+         //for numbers of ghost cells > 1, need to do more shifting.   See Proto_SecondOrderCellImplem.H for an example
+          pr_bx appBox0(loapp, hiapp);  
+          entry.m_applyBox = appBox0;
+          entry.m_stencil  = dombcsten;
+          retval.push_back(entry);
+        }
+        if(hibox[idir] == hidom[idir])
+        {
+          unsigned int index = ebp_index(idir, Side::Hi);
+          string       bcname = m_bcNames[index];
+          Stencil<double> dombcsten = getGhostFillStencil(a_idir, Side::Hi, bcname, 0);
+
+          Point loapp = srcbx.low();
+          Point hiapp = srcbx.high();
+          loapp[idir] = hidom[idir]+1;
+          hiapp[idir] = hidom[idir]+1;
+         //for numbers of ghost cells > 1, need to do more shifting.   See Proto_SecondOrderCellImplem.H for an example
+          pr_bx appBox0(loapp, hiapp);
+          entry.m_applyBox = appBox0;
+          entry.m_stencil  = dombcsten;
+          retval.push_back(entry);
+        }
+
+      return retval;
+
+    }
     //fill one ghost cell outside the domain
     inline void
     applyDomainBoundaryConditions(BoxData<Real, 1>& a_src,
@@ -220,22 +272,18 @@ namespace Chombo
     {
       int isign = sign(a_sd);
       auto bx = a_src.box();
-      auto probdom = m_dblMedi.problemDomain();
       
       if(!probdom.contains(bx))
       {
         Box valid = m_dblMedi[a_dit];
 
-        Stencil<double> dombcsten = getGhostFillStencil(a_idir, a_sd, a_bcname, 0);
-        Bx bcbox = getBCBox(valid, a_idir, a_sd);
-        for(int ibc = 0; ibc < 2*DIM; ibc++)
+        std::vector<pr_box> bcmeta = getBCMetaData(valid);
+        for(int ibc = 0; ibc < bcmeta.size(); ibc++)
         {
-          for(int ivec = 0; ivec < m_regStencilBCS[ibc].size(); ivec++)
-          {
-            Box bcsrcbox = m_BCApplyBoxes[ibc][ivec];
-            m_regStencilBCS[ibc][ivec].apply(castSrc, castSrc,
-                                             bcsrcbox, initToZero, 1.0);
-          }
+          const pr_box &  bcsrcbox  = bcmeta[ibc].m_applyBox;
+          const pr_sten&  bcstencil = bcmeta[ibc].m_stencil;
+
+          bcstencil.apply(a_src. a_src, bcsrcbox, true, 1.0); //true is to make this copy not increment
         }
       }
     }
