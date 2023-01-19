@@ -30,7 +30,7 @@ gsrbResidF(int                       a_pt[DIM],
 }
 PROTO_KERNEL_END(gsrbResidF, gsrbResid)
 
-namespace Chombo
+namespace PrChCommon
 {
   ///
   void

@@ -12,7 +12,7 @@
 #define MG_NUM_COLORS 8
 #endif
 
-namespace Chombo
+namespace PrChCommon
 {
 ///
 /**
@@ -178,10 +178,11 @@ namespace Chombo
       pr_box  m_applyBox;
       pr_sten m_stencil;
     };
-    
-    pr_stencil
+
+    ///pick stencil for boundary conditions
+    pr_sten
     getGhostFillStencil(unsigned int    a_idir,
-                        Side::LoHiSide, a_sd,
+                        ch_sd::LoHiSide a_sd,
                         string          a_bcname,
                         unsigned int a_ghostLayer) //which layer of ghost cells are we filling
     {
@@ -200,23 +201,23 @@ namespace Chombo
       }
       else
       {
-        MayDay::Error("PR_CH_AMRPoissonOp::getGhostFillStencil: unknown bc string");
+        ch_mayday::Error("PR_CH_AMRPoissonOp::getGhostFillStencil: unknown bc string");
       }
           
-      Stencil<double> retval = (coeff)*Shift(Point::Basis(a_idir, shiftval));
+      pr_sten retval = (coeff)*pr_shift(pr_pt::Basis(a_idir, shiftval));
       
       return retval;
 
              
     }
-    //returns empty vector if there are no bcs to apply
+    ///returns empty vector if there are no bcs to apply
     vector<bc_eval_t>
     getBCMetaData(pr_box         a_valid) const
     {
       vector<bc_eval_t> retval;
-      pr_box dombx = m_dblMedi.problemDomain().domainBox();
-      pr_pt lobox = a_validBox.low();
-      pr_pt hibox = a_validBox.high();
+      pr_box dombx = m_dblMedi.domain().domainBox();
+      pr_pt lobox = a_valid.low();
+      pr_pt hibox = a_valid.high();
       pr_pt lodom = domainbx.low();
       pr_pt hidom = domainbx.high();
       for(unsigned int idir = 0; idir < DIM; idir++)
@@ -594,6 +595,8 @@ namespace Chombo
     
     pr_amrdata m_data;
     double     m_dxLevel0;
+  }
+    }
   };
 } //end namespace
 #endif
