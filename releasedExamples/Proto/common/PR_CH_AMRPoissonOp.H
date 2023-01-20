@@ -115,13 +115,14 @@ namespace PrChCommon
     pr_dbl m_dblCoar;
     
     ///internal
-    pr_lbd       m_resid;
-    pr_lbd       m_residC;
-    pr_lbd       m_deltaC; 
-    pr_lbd       m_phiC;
-    pr_pt        m_ghost;
+    pr_lbd1       m_resid;
+    pr_lbd1       m_residC;
+    pr_lbd1       m_deltaC; 
+    pr_lbd1       m_phiC;
+    pr_lbd1       m_scratch;
+    
+    pr_pt         m_ghost;
     double m_lambda; //relaxation coeff
-    pr_lbd m_scratch;
     array<Proto::Point,MG_NUM_COLORS>  s_colors;
     
     pr_sten m_negoperator; //always need -Lap(phi)
@@ -184,7 +185,7 @@ namespace PrChCommon
     getGhostFillStencil(unsigned int    a_idir,
                         ch_sd::LoHiSide a_sd,
                         string          a_bcname,
-                        unsigned int a_ghostLayer) //which layer of ghost cells are we filling
+                        unsigned int a_ghostLayer) const //which layer of ghost cells are we filling
     {
       int isign = sign(a_sd);
       int shiftSign = -isign;
@@ -207,9 +208,14 @@ namespace PrChCommon
       pr_sten retval = (coeff)*pr_shift(pr_pt::Basis(a_idir, shiftval));
       
       return retval;
-
-             
+    }    
+    
+    // 
+    int ebp_index(int a_idir, ch_sd::LoHiSide a_side)  const
+    {
+      return a_idir + a_side*DIM;
     }
+    
     ///returns empty vector if there are no bcs to apply
     vector<bc_eval_t>
     getBCMetaData(pr_box         a_valid) const
@@ -218,67 +224,68 @@ namespace PrChCommon
       pr_box dombx = m_dblMedi.domain().domainBox();
       pr_pt lobox = a_valid.low();
       pr_pt hibox = a_valid.high();
-      pr_pt lodom = domainbx.low();
-      pr_pt hidom = domainbx.high();
+      pr_pt lodom = dombx.low();
+      pr_pt hidom = dombx.high();
       for(unsigned int idir = 0; idir < DIM; idir++)
       {
-        pr_box srcbx = a_valid.grow(Point::Basis(dir));
+        pr_box srcbx = a_valid.grow(pr_pt::Basis(idir));
         
         if(lobox[idir] == lodom[idir])
         {
-          Point loapp 
-          bc_eval_t entry;
-          unsigned int index = ebp_index(idir, Side::Lo);
+          unsigned int  index = ebp_index(idir, ch_sd::Lo);
           string       bcname = m_bcNames[index];
-          Stencil<double> dombcsten = getGhostFillStencil(a_idir, Side::Lo, bcname, 0);
+          pr_sten   dombcsten = getGhostFillStencil(idir, ch_sd::Lo, bcname, 0);
 
-          Point loapp  = srcbx.low();
-          Point hiapp  = srcbx.high();
+          pr_pt loapp  = srcbx.low();
+          pr_pt hiapp  = srcbx.high();
           loapp[idir]  = lodom[idir]-1;
           hiapp[idir]  = lodom[idir]-1;
 
-         //for numbers of ghost cells > 1, need to do more shifting.   See Proto_SecondOrderCellImplem.H for an example
-          pr_bx appBox0(loapp, hiapp);  
+          //for numbers of ghost cells > 1, need to do more shifting.   See Chombo4/src/EBProto/implem/Proto_SecondOrderCellImplem.H for an example
+          pr_box appBox0(loapp, hiapp);  
+          bc_eval_t entry;
           entry.m_applyBox = appBox0;
           entry.m_stencil  = dombcsten;
           retval.push_back(entry);
         }
         if(hibox[idir] == hidom[idir])
         {
-          unsigned int index = ebp_index(idir, Side::Hi);
-          string       bcname = m_bcNames[index];
-          Stencil<double> dombcsten = getGhostFillStencil(a_idir, Side::Hi, bcname, 0);
+          unsigned int index = ebp_index(idir, ch_sd::Hi);
+          string      bcname = m_bcNames[index];
+          pr_sten  dombcsten = getGhostFillStencil(idir, ch_sd::Hi, bcname, 0);
 
-          Point loapp = srcbx.low();
-          Point hiapp = srcbx.high();
+          pr_pt loapp = srcbx.low();
+          pr_pt hiapp = srcbx.high();
           loapp[idir] = hidom[idir]+1;
           hiapp[idir] = hidom[idir]+1;
-         //for numbers of ghost cells > 1, need to do more shifting.   See Proto_SecondOrderCellImplem.H for an example
-          pr_bx appBox0(loapp, hiapp);
+          //for numbers of ghost cells > 1, need to do more shifting.   See Chombo4/src/EBProto/implem/Proto_SecondOrderCellImplem.H for an example
+          pr_box appBox0(loapp, hiapp);
+          bc_eval_t entry;
           entry.m_applyBox = appBox0;
           entry.m_stencil  = dombcsten;
           retval.push_back(entry);
         }
-
+      }
       return retval;
 
     }
     //fill one ghost cell outside the domain
     inline void
-    applyDomainBoundaryConditions(BoxData<Real, 1>& a_src,
+    applyDomainBoundaryConditions(pr_bd1          & a_src,
                                   unsigned int      a_idir,
-                                  Side::LoHiSide    a_sd,
+                                  ch_sd::LoHiSide   a_sd,
                                   string            a_bcname,
-                                  Proto::DataIndex  a_dit)
+                                  pr_di             a_dit)
     {
       int isign = sign(a_sd);
       auto bx = a_src.box();
-      
-      if(!probdom.contains(bx))
+      auto probdom = m_dblMedi.domain();
+      auto probbox = probdom.domainBox();
+      if(!probbox.contains(bx))
       {
-        Box valid = m_dblMedi[a_dit];
+        pr_box valid = m_dblMedi[a_dit];
 
-        std::vector<pr_box> bcmeta = getBCMetaData(valid);
+        std::vector<bc_eval_t> bcmeta = getBCMetaData(valid);
         for(int ibc = 0; ibc < bcmeta.size(); ibc++)
         {
           const pr_box &  bcsrcbox  = bcmeta[ibc].m_applyBox;
@@ -289,7 +296,7 @@ namespace PrChCommon
       }
     }
     
-    virtual void applyDomainBoundaryConditions (pr_lbd& a_phi)
+    virtual void applyDomainBoundaryConditions (pr_lbd1 & a_phi)
     {
       CH_TIME("applyDomainBoundaryConditions");
       for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
@@ -302,10 +309,11 @@ namespace PrChCommon
             string bcname = m_bcNames[index];
             applyDomainBoundaryConditions(a_phi[*dit], idir, sit(), bcname, *dit);
           }
-      }
+        }
 
+      }
     }
-    virtual void homogeneousCFInterp(pr_lbd& a_phi) 
+    virtual void homogeneousCFInterp(pr_lbd1& a_phi) 
     {
       if(m_hasCoar)
       {
@@ -318,26 +326,26 @@ namespace PrChCommon
     }
 
     ///
-    virtual void residual(  pr_lbd& a_lhs, const pr_lbd& a_phi, const pr_lbd& a_rhs, bool a_homogeneous = false)
+    virtual void residual(  pr_lbd1& a_lhs, const pr_lbd1& a_phi, const pr_lbd1& a_rhs, bool a_homogeneous = false)
     {
       a_lhs.setVal(0.);
       applyOp(a_lhs, a_phi, a_homogeneous);
-      pr_lbd& castrhs = (pr_lbd &) a_rhs;
+      pr_lbd1& castrhs = (pr_lbd1 &) a_rhs;
       a_lhs.increment(castrhs, -1.);
     }
 
     ///
-    virtual void preCond(   pr_lbd& a_cor, const pr_lbd& a_residual)
+    virtual void preCond(   pr_lbd1& a_cor, const pr_lbd1& a_residual)
     {
     
       relax(a_cor, a_residual, 27);
     }
 
     ///
-    virtual void applyOp(   pr_lbd& a_lhs, const pr_lbd& a_phi, bool a_homogeneous = false)
+    virtual void applyOp(   pr_lbd1& a_lhs, const pr_lbd1& a_phi, bool a_homogeneous = false)
     {
       //fill ghost cells
-      pr_lbd& castphi = (pr_lbd &)(a_phi);
+      pr_lbd1& castphi = (pr_lbd1 &)(a_phi);
       homogeneousCFInterp(castphi);
       applyDomainBoundaryConditions(castphi);
       auto dbl = a_lhs.layout();
@@ -352,23 +360,23 @@ namespace PrChCommon
     }
 
     ///
-    virtual void create(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
+    virtual void create(    pr_lbd1& a_lhs, const pr_lbd1& a_rhs)
     {
       a_lhs.define(a_rhs.disjointBoxLayout(), a_rhs.ghostVect());
     }
 
     ///
-    virtual void assign(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
+    virtual void assign(    pr_lbd1& a_lhs, const pr_lbd1& a_rhs)
     {
       a_lhs.setVal(0.);
-      pr_lbd & castrhs = (pr_lbd& )(a_rhs);
+      pr_lbd1 & castrhs = (pr_lbd1& )(a_rhs);
       a_lhs.increment(castrhs);
     }
 
     ///
-    virtual double dotProduct(const pr_lbd& a_1, const pr_lbd& a_2)
+    virtual double dotProduct(const pr_lbd1& a_1, const pr_lbd1& a_2)
     {
-      pr_lbd& dotprod = m_scratch;
+      pr_lbd1& dotprod = m_scratch;
       double sumdotprod = 0;
       auto dbl = a_1.disjointBoxLayout();
       for(auto dit = a_1.begin(); dit != a_1.end(); ++dit)
@@ -393,9 +401,9 @@ namespace PrChCommon
     }
 
     ///
-    virtual void incr  (    pr_lbd& a_lhs, const pr_lbd& a_x, double a_scale)
+    virtual void incr  (    pr_lbd1& a_lhs, const pr_lbd1& a_x, double a_scale)
     {
-      pr_lbd& increm = m_scratch;
+      pr_lbd1& increm = m_scratch;
       for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
       {
         increm[*dit].setVal(0);
@@ -406,33 +414,33 @@ namespace PrChCommon
     }
 
     ///
-    virtual void axby(      pr_lbd& a_lhs, const pr_lbd& a_x, const pr_lbd& a_y, double a_a, double a_b)
+    virtual void axby(      pr_lbd1& a_lhs, const pr_lbd1& a_x, const pr_lbd1& a_y, double a_a, double a_b)
     {
       a_lhs.setVal(0);
       incr(a_lhs,a_x, a_a);
       incr(a_lhs,a_y, a_b);
     }
   
-    virtual void scale(     pr_lbd& a_lhs,   const double& a_scale)
+    virtual void scale(     pr_lbd1& a_lhs,   const double& a_scale)
     {
       a_lhs *= a_scale;
     }
   
-    virtual double norm(const pr_lbd& a_rhs, int a_ord)
+    virtual double norm(const pr_lbd1& a_rhs, int a_ord)
     {
       return a_rhs.absMax();
     }
   
-    virtual void setToZero(pr_lbd& a_lhs)
+    virtual void setToZero(pr_lbd1& a_lhs)
     {
       a_lhs.setVal(0.);
     }
 
 ///MGLevelOp (from MultiGrid.H):
-    vector<Stencil<double> >  m_regStencilBCS[2*DIM];
+    std::vector<pr_sten>  m_regStencilBCS[2*DIM];
 
     ///
-    virtual void createCoarser(pr_lbd& a_coarse, const pr_lbd& a_fine, bool ghosted)
+    virtual void createCoarser(pr_lbd1& a_coarse, const pr_lbd1& a_fine, bool ghosted)
     {
       auto dblFine = a_fine.disjointBoxLayout();
       auto ghost   = a_fine.ghostVect();
@@ -447,84 +455,84 @@ namespace PrChCommon
     }
 
     ///
-    virtual void relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter);
+    virtual void relax(pr_lbd1& a_phi, const pr_lbd1& a_rhs, int a_maxiter);
   
     ///
-    virtual void restrictResidual(pr_lbd& a_resCoarse, const pr_lbd& a_phiFine, const pr_lbd& a_rhsFine);
+    virtual void restrictResidual(pr_lbd1& a_resCoarse, const pr_lbd1& a_phiFine, const pr_lbd1& a_rhsFine);
 
   
-    virtual void prolongIncrement(pr_lbd& a_phiThisLevel, const pr_lbd& a_correctCoarse);
+    virtual void prolongIncrement(pr_lbd1& a_phiThisLevel, const pr_lbd1& a_correctCoarse);
 
   
-    virtual void AMRResidual(pr_lbd& a_residual, const pr_lbd& a_phiFine, const pr_lbd& a_phi,
-                             const pr_lbd& a_phiCoarse, const pr_lbd& a_rhs,
+    virtual void AMRResidual(pr_lbd1& a_residual, const pr_lbd1& a_phiFine, const pr_lbd1& a_phi,
+                             const pr_lbd1& a_phiCoarse, const pr_lbd1& a_rhs,
                              bool a_homogeneousDomBC,
-                             AMRLevelOp<pr_lbd>*  a_finerOp)
+                             AMRLevelOp<pr_lbd1>*  a_finerOp)
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void AMRResidualNF(pr_lbd& a_residual, const pr_lbd& a_phi, const pr_lbd& a_phiCoarse,
-                               const pr_lbd& a_rhs, bool a_homogeneousBC)
+    virtual void AMRResidualNF(pr_lbd1& a_residual, const pr_lbd1& a_phi, const pr_lbd1& a_phiCoarse,
+                               const pr_lbd1& a_rhs, bool a_homogeneousBC)
     {
       MayDay::Error("not doing AMR yet");
     }
     
 
-    virtual void AMRResidualNC(pr_lbd& a_residual, const pr_lbd& a_phiFine, const pr_lbd& a_phi,
-                               const pr_lbd& a_rhs, bool a_homogeneousBC,
-                               AMRLevelOp<pr_lbd>* a_finerOp) 
+    virtual void AMRResidualNC(pr_lbd1& a_residual, const pr_lbd1& a_phiFine, const pr_lbd1& a_phi,
+                               const pr_lbd1& a_rhs, bool a_homogeneousBC,
+                               AMRLevelOp<pr_lbd1>* a_finerOp) 
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void AMROperator(pr_lbd& a_LofPhi,
-                             const pr_lbd& a_phiFine, const pr_lbd& a_phi,
-                             const pr_lbd& a_phiCoarse,
+    virtual void AMROperator(pr_lbd1& a_LofPhi,
+                             const pr_lbd1& a_phiFine, const pr_lbd1& a_phi,
+                             const pr_lbd1& a_phiCoarse,
                              bool a_homogeneousDomBC,
-                             AMRLevelOp<pr_lbd>*  a_finerOp)
+                             AMRLevelOp<pr_lbd1>*  a_finerOp)
     {
       MayDay::Error("not doing AMR yet");
     }
 
 
-    virtual void AMROperatorNF(pr_lbd& a_LofPhi,
-                               const pr_lbd& a_phi,
-                               const pr_lbd& a_phiCoarse,
+    virtual void AMROperatorNF(pr_lbd1& a_LofPhi,
+                               const pr_lbd1& a_phi,
+                               const pr_lbd1& a_phiCoarse,
                                bool a_homogeneousBC)
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void AMROperatorNC(pr_lbd& a_LofPhi,
-                               const pr_lbd& a_phiFine,
-                               const pr_lbd& a_phi,
+    virtual void AMROperatorNC(pr_lbd1& a_LofPhi,
+                               const pr_lbd1& a_phiFine,
+                               const pr_lbd1& a_phi,
                                bool a_homogeneousBC,
-                               AMRLevelOp<pr_lbd>* a_finerOp)
+                               AMRLevelOp<pr_lbd1>* a_finerOp)
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void AMRRestrict(pr_lbd& a_resCoarse, const pr_lbd& a_residual, const pr_lbd& a_correction,
-                             const pr_lbd& a_coarseCorrection, bool a_skip_res)
+    virtual void AMRRestrict(pr_lbd1& a_resCoarse, const pr_lbd1& a_residual, const pr_lbd1& a_correction,
+                             const pr_lbd1& a_coarseCorrection, bool a_skip_res)
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void AMRProlong(pr_lbd& a_correction, const pr_lbd& a_coarseCorrection)
+    virtual void AMRProlong(pr_lbd1& a_correction, const pr_lbd1& a_coarseCorrection)
     {
       MayDay::Error("not doing AMR yet");
     }
 
 
-    virtual void AMRUpdateResidual(pr_lbd& a_residual, const pr_lbd& a_correction,
-                                   const pr_lbd& a_coarseCorrection)
+    virtual void AMRUpdateResidual(pr_lbd1& a_residual, const pr_lbd1& a_correction,
+                                   const pr_lbd1& a_coarseCorrection)
     {
       MayDay::Error("not doing AMR yet");
     }
 
-    virtual void createCoarsened(pr_lbd&       a_lhs,
-                                 const pr_lbd& a_rhs,
+    virtual void createCoarsened(pr_lbd1&       a_lhs,
+                                 const pr_lbd1    & a_rhs,
                                  const int&     a_refRat)
 
     {
@@ -533,7 +541,7 @@ namespace PrChCommon
 
     /** going to try to do this with strong construction --placeholder
      */
-    PR_CH_AMRPoissonOp(const ProblemDomain& a_indexSpace)
+    PR_CH_AMRPoissonOp(const pr_probdom& a_indexSpace)
     {
       MayDay::Error("Still need a constructor");
     }
@@ -569,25 +577,29 @@ namespace PrChCommon
 
 
   public:
-    virtual AMRLevelOp<Proto::LevelBoxData<double> >* AMRnewOp(const ProblemDomain& a_indexSpace)
+    virtual AMRLevelOp<Proto::LevelBoxData<double> >* AMRnewOp(const ch_probdom& a_indexSpace)
     {
       MayDay::Error("not implemented");
       return NULL;
     }
 
-    MGLevelOp<Proto::LevelBoxData<double> >* MGnewOp(const ProblemDomain& a_indexSpace,
-                                                     int                  a_depth,
-                                                     bool                 a_homoOnly)
+    MGLevelOp<Proto::LevelBoxData<double> >* MGnewOp(const ch_probdom & a_indexSpace,
+                                                     int           a_depth,
+                                                     bool          a_homoOnly)
     {
       MayDay::Error("not implemented");
       return NULL;
     }
 
-  ///
-  /**
-     return refinement ratio  to next finer level.
-   */
-  virtual int refToFiner(const ProblemDomain& a_indexSpace) const =0;
+    ///
+    /**
+       return refinement ratio  to next finer level.
+    */
+    virtual int refToFiner(const ch_probdom& a_indexSpace) const
+    {
+      MayDay::Error("not implemented");
+      return 2;
+    }
 
   private:
     //I have decided that I am team strong construction
@@ -595,8 +607,6 @@ namespace PrChCommon
     
     pr_amrdata m_data;
     double     m_dxLevel0;
-  }
-    }
   };
-} //end namespace
+}
 #endif
