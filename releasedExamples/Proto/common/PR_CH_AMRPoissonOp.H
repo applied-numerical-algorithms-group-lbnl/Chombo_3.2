@@ -277,7 +277,6 @@ namespace PrChCommon
                                   string            a_bcname,
                                   pr_di             a_dit)
     {
-      int isign = sign(a_sd);
       auto bx = a_src.box();
       auto probdom = m_dblMedi.domain();
       auto probbox = probdom.domainBox();
@@ -291,7 +290,7 @@ namespace PrChCommon
           const pr_box &  bcsrcbox  = bcmeta[ibc].m_applyBox;
           const pr_sten&  bcstencil = bcmeta[ibc].m_stencil;
 
-          bcstencil.apply(a_src. a_src, bcsrcbox, true, 1.0); //true is to make this copy not increment
+          bcstencil.apply(a_src, a_src, bcsrcbox, true, 1.0); //true is to make this copy not increment
         }
       }
     }
@@ -299,9 +298,9 @@ namespace PrChCommon
     virtual void applyDomainBoundaryConditions (pr_lbd1 & a_phi)
     {
       CH_TIME("applyDomainBoundaryConditions");
-      for(auto dit = a_lhs.begin(); dit != a_lhs.end(); ++dit)
+      for(auto dit = a_phi.begin(); dit != a_phi.end(); ++dit)
       {
-        for(SideIterator sit; sit.ok(); ++sit)
+        for(ch_sit sit; sit.ok(); ++sit)
         {
           for(unsigned int idir = 0; idir < DIM; idir++)
           {
@@ -317,7 +316,7 @@ namespace PrChCommon
     {
       if(m_hasCoar)
       {
-        MayDay::Error("cf interp not there yet");
+        ch_mayday::Error("cf interp not there yet");
         m_phiC.setVal(0);
 //        Proto::InterpStencil<double> interpSten = Proto::InterpStencil<double>::Build(2, m_refToCoar);
 //        a_phi.interpBoundaries(m_phiC, interpSten);
@@ -469,13 +468,13 @@ namespace PrChCommon
                              bool a_homogeneousDomBC,
                              AMRLevelOp<pr_lbd1>*  a_finerOp)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void AMRResidualNF(pr_lbd1& a_residual, const pr_lbd1& a_phi, const pr_lbd1& a_phiCoarse,
                                const pr_lbd1& a_rhs, bool a_homogeneousBC)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
     
 
@@ -483,7 +482,7 @@ namespace PrChCommon
                                const pr_lbd1& a_rhs, bool a_homogeneousBC,
                                AMRLevelOp<pr_lbd1>* a_finerOp) 
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void AMROperator(pr_lbd1& a_LofPhi,
@@ -492,7 +491,7 @@ namespace PrChCommon
                              bool a_homogeneousDomBC,
                              AMRLevelOp<pr_lbd1>*  a_finerOp)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
 
@@ -501,7 +500,7 @@ namespace PrChCommon
                                const pr_lbd1& a_phiCoarse,
                                bool a_homogeneousBC)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void AMROperatorNC(pr_lbd1& a_LofPhi,
@@ -510,25 +509,25 @@ namespace PrChCommon
                                bool a_homogeneousBC,
                                AMRLevelOp<pr_lbd1>* a_finerOp)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void AMRRestrict(pr_lbd1& a_resCoarse, const pr_lbd1& a_residual, const pr_lbd1& a_correction,
                              const pr_lbd1& a_coarseCorrection, bool a_skip_res)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void AMRProlong(pr_lbd1& a_correction, const pr_lbd1& a_coarseCorrection)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
 
     virtual void AMRUpdateResidual(pr_lbd1& a_residual, const pr_lbd1& a_correction,
                                    const pr_lbd1& a_coarseCorrection)
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     virtual void createCoarsened(pr_lbd1&       a_lhs,
@@ -536,14 +535,14 @@ namespace PrChCommon
                                  const int&     a_refRat)
 
     {
-      MayDay::Error("not doing AMR yet");
+      ch_mayday::Error("not doing AMR yet");
     }
 
     /** going to try to do this with strong construction --placeholder
      */
     PR_CH_AMRPoissonOp(const pr_probdom& a_indexSpace)
     {
-      MayDay::Error("Still need a constructor");
+      ch_mayday::Error("Still need a constructor");
     }
 
     ///
@@ -555,7 +554,7 @@ namespace PrChCommon
 
   };
 
-  class PR_CH_AMRPoissonOpFactory: public Chombo::AMRLevelOpFactory<Proto::LevelBoxData<double> > 
+  class PR_CH_AMRPoissonOpFactory: public Chombo::AMRLevelOpFactory<Proto::LevelBoxData<double, 1>> 
   {
 //    PR_CH_AMRPoissonOp(pr_dbl& a_dblMedi,  
 //                       double a_alpha,
@@ -567,6 +566,8 @@ namespace PrChCommon
 //                       std::pair<pr_dbl, int>* a_coar)   // = NULL if not there, int is the refinement ratio
   public:
 #include "PR_CH_TypeDefs.H"
+    typedef  Chombo::AMRLevelOp<pr_lbd1>        ch_amrlevelop1;
+    typedef  Chombo::MGLevelOp< pr_lbd1>        ch_mglevelop1;
     typedef  Proto::AMRData<Real>   pr_amrdata;
     PR_CH_AMRPoissonOpFactory(pr_amrdata a_data, 
                               double     a_dxLevel0)
@@ -577,17 +578,17 @@ namespace PrChCommon
 
 
   public:
-    virtual AMRLevelOp<Proto::LevelBoxData<double> >* AMRnewOp(const ch_probdom& a_indexSpace)
+    virtual ch_amrlevelop1* AMRnewOp(const ch_probdom& a_indexSpace)
     {
-      MayDay::Error("not implemented");
+      ch_mayday::Error("not implemented");
       return NULL;
     }
 
-    MGLevelOp<Proto::LevelBoxData<double> >* MGnewOp(const ch_probdom & a_indexSpace,
+    virtual ch_mglevelop1* MGnewOp(const ch_probdom & a_indexSpace,
                                                      int           a_depth,
                                                      bool          a_homoOnly)
     {
-      MayDay::Error("not implemented");
+      ch_mayday::Error("not implemented");
       return NULL;
     }
 
@@ -597,7 +598,7 @@ namespace PrChCommon
     */
     virtual int refToFiner(const ch_probdom& a_indexSpace) const
     {
-      MayDay::Error("not implemented");
+      ch_mayday::Error("not implemented");
       return 2;
     }
 

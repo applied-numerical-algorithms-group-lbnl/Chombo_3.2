@@ -35,7 +35,7 @@ namespace PrChCommon
   ///
   void
   PR_CH_AMRPoissonOp::
-  relax(pr_lbd& a_phi, const pr_lbd& a_rhs, int a_maxiter)
+  relax(pr_lbd1& a_phi, const pr_lbd1& a_rhs, int a_maxiter)
   {
 
     for(int iter = 0; iter < a_maxiter; iter++)
@@ -59,7 +59,7 @@ namespace PrChCommon
   ///
   void
   PR_CH_AMRPoissonOp::
-  restrictResidual(pr_lbd& a_resCoar, const pr_lbd& a_phiFine, const pr_lbd & a_rhsFine)
+  restrictResidual(pr_lbd1& a_resCoar, const pr_lbd1& a_phiFine, const pr_lbd1& a_rhsFine)
   {
 
     auto &   residFine = m_resid;
@@ -78,7 +78,7 @@ namespace PrChCommon
   ///
   void
   PR_CH_AMRPoissonOp::
-  prolongIncrement(pr_lbd& a_phiFine, const pr_lbd& a_corCoar)
+  prolongIncrement(pr_lbd1& a_phiFine, const pr_lbd1& a_corCoar)
   {
     auto dbl = a_phiFine.layout();
     //this one is all on proc
