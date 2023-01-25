@@ -26,6 +26,7 @@
 #include "IVSFAB.H"
 #include "RealVect.H"
 #include <string>
+#include <memory>
 #include "NamespaceHeader.H"
 using std::string;
 using std::istream;
@@ -184,6 +185,29 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const Box& a_domain,
                       const Vector<int>& a_vectRatio,
                       const int& a_numLevels);
+
+///a version that uses more modern c++  (yes, Chombo predates functional STL)
+void
+WriteAMRHierarchyHDF5(const std::string                                          & a_filename,
+                      const std::vector<DisjointBoxLayout>                       & a_stdGrid,
+                      const std::vector<std::shared_ptr<LevelData<FArrayBox> > > & a_stdData,
+                      const std::vector<int>                                     & a_stdRati,
+                      const Box                                                  & a_domain)
+{
+  int numLevels = a_stdGrid.size();
+  Vector<DisjointBoxLayout>       oldVGrid(numLevels);
+  Vector<LevelData<FArrayBox>* >  oldVData(numLevels);
+  Vector<int>                     oldVRati(numLevels);
+  for(int ilev  = 0; ilev < numLevels; ilev++)
+  {
+    oldVGrid[ilev] =    a_stdGrid[ilev];
+    oldVData[ilev] = &(*a_stdData[ilev]);
+    oldVRati[ilev] =    a_stdRati[ilev];
+  }
+      
+  WriteAMRHierarchyHDF5(a_filename, oldVGrid, oldVData, a_domain, oldVRati, numLevels);
+}
+
 
 ///
 /**

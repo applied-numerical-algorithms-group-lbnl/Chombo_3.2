@@ -5,7 +5,7 @@
 
 # included makefiles need an absolute path
 CHOMBO_HOME := $(shell pwd)/../..
-
+NAMESPACE= TRUE
 lbase := boxtools
 
 LibNames :=
