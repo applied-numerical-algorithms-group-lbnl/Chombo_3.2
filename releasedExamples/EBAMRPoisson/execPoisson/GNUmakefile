@@ -5,7 +5,7 @@ makefiles += releasedExamples_EBAMRPoisson_execPoisson
 
 # This is an embedded boundary example
 USE_EB=TRUE
-
+NAMESPACE=TRUE
 ## Define the variables needed by Make.example
 
 # the base name(s) of the application(s) in this directory
