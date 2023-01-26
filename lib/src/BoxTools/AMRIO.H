@@ -187,7 +187,7 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const int& a_numLevels);
 
 ///a version that uses more modern c++  (yes, Chombo predates functional STL)
-void
+inline void
 WriteAMRHierarchyHDF5(const std::string                                          & a_filename,
                       const std::vector<DisjointBoxLayout>                       & a_stdGrid,
                       const std::vector<std::shared_ptr<LevelData<FArrayBox> > > & a_stdData,
