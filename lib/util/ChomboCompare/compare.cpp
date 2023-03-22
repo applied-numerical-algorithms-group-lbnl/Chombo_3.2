@@ -104,6 +104,19 @@ void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
                           bool                                  a_computeRelativeError,
                           bool                                  a_doGhostCells=false);
 
+void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
+                          const Vector<string>&                 a_errorVars,
+                          const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                          const Vector<string>&                 a_computedVars,
+                          const Vector<DisjointBoxLayout>&      a_computedGrids,
+                          const RealVect                        a_dx,
+                          const Vector<IntVect>&                a_refRatio,
+                          const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                          const Vector<string>&                 a_exactVars,
+                          Real                                  a_bogus_value,
+                          bool                                  a_computeRelativeError,
+                          bool                                  a_doGhostCells=false);
+
 void constructErrorNames(Vector<string>&       a_errorNames,
                          const Vector<string>& a_errorVars);
 
@@ -405,7 +418,6 @@ int main(int argc, char* argv[])
         } // end loop over errorVars
     } // end if errorVars was specified in the inputs file
 
-
     Vector<string> errorNames;
     errorNames.resize(numError);
 
@@ -446,6 +458,7 @@ int main(int argc, char* argv[])
           aliasLevelData(*(weighting[level]), computedSoln[level], weightIntvl);
         }
     }
+      pout() << " issamesize " << isSameSize  << endl;
 
     if (!isSameSize)
     {
@@ -492,31 +505,58 @@ int main(int argc, char* argv[])
     }
     else
     {
-      // first make sure refRatios are the same
-      for (int lev = 0; lev < computedRefRatio.size() - 1; lev++)
-      {
-        CH_assert(computedRefRatio[lev] == exactRefRatio[lev]);
-      }
-
-      CH_assert(exactDx == computedDx);
-
       if (verbose)
       {
-        pout () << "compute sameSize error..." << endl;
+        pout () << "compute sameSize error ..." << endl;
       }
 
-      computeSameSizeError(error,
-                           errorVars,
-                           computedSoln,
-                           computedVars,
-                           computedGrids,
-                           computedDx,
-                           computedRefRatio,
-                           exactSoln,
-                           exactVars,
-                           bogusValue,
-                           computeRelativeError,
-                           doGhostCells);
+      if (isAniMesh || isAniExact) {
+          // first make sure refRatios are the same
+          for (int lev = 0; lev < computedRefRatioVect.size() - 1; lev++) {
+              for (int dir = 0; dir < SpaceDim; dir++) {
+                  CH_assert(computedRefRatioVect[lev][dir] == exactRefRatioVect[lev][dir]);
+              }
+          }
+
+          for (int dir = 0; dir < SpaceDim; dir++) {
+              CH_assert(exactDxVect == computedDxVect);
+          }
+
+          computeSameSizeError(error,
+                               errorVars,
+                               computedSoln,
+                               computedVars,
+                               computedGrids,
+                               computedDxVect,
+                               computedRefRatioVect,
+                               exactSoln,
+                               exactVars,
+                               bogusValue,
+                               computeRelativeError,
+                               doGhostCells);
+      } else {
+          // first make sure refRatios are the same
+          for (int lev = 0; lev < computedRefRatio.size() - 1; lev++)
+          {
+            pout()  << "HERE , computedRefRatio, exactRefRatio "<< computedRefRatio[lev] << " "<< exactRefRatio[lev] << endl;
+            CH_assert(computedRefRatio[lev] == exactRefRatio[lev]);
+          }
+
+          CH_assert(exactDx == computedDx);
+
+          computeSameSizeError(error,
+                               errorVars,
+                               computedSoln,
+                               computedVars,
+                               computedGrids,
+                               computedDx,
+                               computedRefRatio,
+                               exactSoln,
+                               exactVars,
+                               bogusValue,
+                               computeRelativeError,
+                               doGhostCells);
+      }
 
       if (verbose)
       {
@@ -1660,6 +1700,227 @@ void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
                           const Vector<LevelData<FArrayBox>* >& a_computedSoln,
                           const Vector<string>&                 a_computedVars,
                           const Vector<DisjointBoxLayout>&      a_computedGrids,
+                          const RealVect                        a_dx,
+                          const Vector<IntVect>&                a_refRatio,
+                          const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                          const Vector<string>&                 a_exactVars,
+                          Real                                  a_bogus_value,
+                          bool                                  a_computeRelativeError,
+                          bool                                  a_doGhostCells)
+
+{
+  int numLevels = a_computedSoln.size();
+
+  CH_assert(a_exactSoln.size() == numLevels);
+  CH_assert(a_error.size() == numLevels);
+  CH_assert(a_refRatio.size() >= numLevels - 1);
+
+  RealVect dxLevel = a_dx;
+
+  // outer loop is over levels
+  for (int level = 0; level < numLevels; level++)
+  {
+    LevelData<FArrayBox>& thisLevelError = *a_error[level];
+    LevelData<FArrayBox>& thisLevelComputed = *a_computedSoln[level];
+    LevelData<FArrayBox>& thisLevelExact = *a_exactSoln[level];
+
+    const DisjointBoxLayout levelGrids = thisLevelComputed.getBoxes();
+    const DisjointBoxLayout exactGrids = thisLevelExact.getBoxes();
+
+    DataIterator levelDit = levelGrids.dataIterator();
+    for (levelDit.begin(); levelDit.ok(); ++levelDit)
+    {
+      // initialize error to a bogus value
+      thisLevelError[levelDit()].setVal(a_bogus_value);
+    }
+
+    // loop over variables
+    for (int nErr = 0; nErr < a_errorVars.size(); nErr++)
+    {
+      string thisErrVar = a_errorVars[nErr];
+      bool done = false;
+
+      // this is where things differ between the ghost-cell
+      // and non-ghost-cell approach.
+      if (a_doGhostCells)
+      {
+        // this is the older approach to things --
+        // do everything grid-by-grid
+
+        // first loop over exact variables
+        for (int exactComp = 0; exactComp < a_exactVars.size(); exactComp++)
+        {
+          string thisExactVar = a_exactVars[exactComp];
+          // check if this exact variable is "the one"
+          if ((thisExactVar == thisErrVar) || nonAverageVar(thisErrVar))
+          {
+            int computedComp = 0;
+
+            // now loop over computed variables
+            while (!done && (computedComp < a_computedVars.size()))
+            {
+              if (a_computedVars[computedComp] == thisErrVar)
+              {
+                // copy exact solution -> error
+                // and then subtract computed solution
+                DataIterator exactDit = thisLevelExact.dataIterator();
+                for (levelDit.reset(); levelDit.ok(); ++levelDit)
+                {
+                  FArrayBox& thisComputed = thisLevelComputed[levelDit()];
+                  FArrayBox& thisError = thisLevelError[levelDit()];
+                  const Box& thisBox = levelGrids[levelDit()];
+
+                  for (exactDit.begin(); exactDit.ok(); ++exactDit)
+                  {
+                    if (thisBox.contains(exactGrids[exactDit()]))
+                    {
+                      thisError.copy(thisLevelExact[exactDit()],
+                                     exactComp, nErr, 1);
+                    } // end if exact and computed boxes match
+                  } // end loop over exact grids
+
+                  if (a_computeRelativeError)
+                  {
+                    // do this a little strangely -- relative
+                    // error is one - computed/exact.
+                    thisError.divide(thisComputed, computedComp, nErr, 1);
+                    thisError.invert(-1.0, nErr, 1);
+                    thisError.plus(1.0, nErr, 1);
+                  }
+                  else if (!nonAverageVar(thisErrVar))
+                  {
+                    thisError.minus(thisComputed, computedComp, nErr, 1);
+                  }
+                } // end loop over grids
+
+                done = true;
+              } // if a_computedVar is a_errorVar
+
+              computedComp += 1;
+            } // end loop over a_computedVars
+
+            if (!done)
+            {
+              pout() << "Variable " << thisErrVar  << " not found!!!" << endl;
+              MayDay::Error();
+            }
+          } // end if this exactVar is correct
+        }  // end loop over exact variables
+      }
+      else
+        // non-ghost cell case; this is simpler:
+      {
+        // first loop over exact variables and copy into error
+        for (int exactComp=0; exactComp<a_exactVars.size(); ++exactComp)
+        {
+          string thisExactVar = a_exactVars[exactComp];
+
+          // check if this exact variable is "the one"
+          if (thisExactVar == thisErrVar)
+          {
+            // copy exact solution -> error
+            Interval exactInterval(exactComp, exactComp);
+            Interval errInterval(nErr, nErr);
+            thisLevelExact.copyTo(exactInterval,
+                                  thisLevelError,
+                                  errInterval);
+            done = true;
+          } // end if this exact var is the error var
+        } // end loop over exact comps
+
+        if (!done)
+        {
+          pout() << "Variable " << thisErrVar
+                 << " not found in exact solution!!!" << endl;
+          MayDay::Error();
+        }
+
+        done = false;
+        int computedComp = 0;
+        // now loop over computed variables and subtract computed solution
+        while (!done && (computedComp < a_computedVars.size()))
+        {
+          if (a_computedVars[computedComp] == thisErrVar)
+          {
+            if ( !nonAverageVar(thisErrVar) )
+              {
+            for (levelDit.reset(); levelDit.ok(); ++levelDit)
+            {
+              FArrayBox& thisComputed = thisLevelComputed[levelDit()];
+              FArrayBox& thisError = thisLevelError[levelDit()];
+
+              thisError.minus(thisComputed, computedComp, nErr, 1);
+            } // end loop over computed/error grids
+              }
+            done = true;
+          } // if a_computedVar is a_errorVar
+
+          computedComp += 1;
+        } // end loop over a_computedVars
+
+        if (!done)
+        {
+          pout() << "Variable " << thisErrVar  << " not found!!!" << endl;
+          MayDay::Error();
+        }
+      } // end non-ghost-cell case
+    } // end loop over errors
+
+    // now need to set covered regions to 0
+    if (level < numLevels - 1)
+    {
+      // will need to loop over all boxes in finer level, not just
+      // those on this processor...
+      const BoxLayout& finerGrids = a_computedSoln[level + 1]->boxLayout();
+      LayoutIterator fineLit = finerGrids.layoutIterator();
+
+      // outer loop over this level's grids, since there are fewer of them
+      DataIterator levelDit = thisLevelError.dataIterator();
+      for (levelDit.reset(); levelDit.ok(); ++levelDit)
+      {
+        const Box& coarseBox = levelGrids[levelDit()];
+        FArrayBox& thisError = thisLevelError[levelDit()];
+        int numError = thisError.nComp();
+
+        for (fineLit.reset(); fineLit.ok(); ++fineLit)
+        {
+          Box fineBox(finerGrids[fineLit()]);
+          // now coarsen box down to this level
+          fineBox.coarsen(a_refRatio[level]);
+          // if coarsened fine box intersects error's box, set
+          // overlap to 0
+          fineBox &= coarseBox;
+          if (!fineBox.isEmpty())
+          {
+            thisError.setVal(0.0, fineBox, 0, numError);
+          }
+        } // end loop over finer-level grids
+      } // end loop over this-level grids
+
+      // this is a good place to update dx as well
+      dxLevel = dxLevel / a_refRatio[level];
+    } // end if there is a finer level
+
+    // finally, if we're not doing ghost cells, do an exchange just
+    // to "prettify" the output
+    if (!a_doGhostCells)
+    {
+      thisLevelError.exchange(thisLevelError.interval());
+    }
+  } // end loop over levels
+}
+
+// this function works on two solutions on equivalent grids.
+// It subtracts the computed solution from the exact solution
+// if a_doGhostCells == true, then does box-by-box comparison,
+// including ghost cells (boxes must be the same for each).
+// Otherwise, only does this for valid cells, but boxes don't
+// need to be the same.
+void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
+                          const Vector<string>&                 a_errorVars,
+                          const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                          const Vector<string>&                 a_computedVars,
+                          const Vector<DisjointBoxLayout>&      a_computedGrids,
                           const Real                            a_dx,
                           const Vector<int>&                    a_refRatio,
                           const Vector<LevelData<FArrayBox>* >& a_exactSoln,
@@ -1946,13 +2207,9 @@ void init(string&         a_exactRoot,
       a_isAniMesh = (temp == 1);
   }
 
-  if (a_isAniMesh) { 
-      a_isSameSize = false;
-  } else {
-      temp = a_isSameSize;
-      ppCompare.query("sameSize", temp);
-      a_isSameSize = (temp == 1);
-  } 
+  temp = a_isSameSize;
+  ppCompare.query("sameSize", temp);
+  a_isSameSize = (temp == 1);
 
   // ghost cells thing only really matters for sameSize
   if (a_isSameSize)
