@@ -58,6 +58,7 @@ public:
                    FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef,
                    const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
+#if CH_SPACEDIM == 3
     CH_TIMERS("VC2lineGSRB::lineRelaxRB");
     CH_TIMER("VC2lineGSRB::lineRelaxRB::setDiagsRHS", t2);
     CH_TIMER("VC2lineGSRB::lineRelaxRB::LAPACK", t3);
@@ -205,6 +206,7 @@ public:
     }
     CH_STOP(t5);
     */
+#endif
   }
 
   /* Is this used ? */
@@ -212,6 +214,7 @@ public:
                  FArrayBox& a_res, const Real& a_alpha, const FArrayBox& a_aCoef,
                  const Real& a_beta, const FluxBox& a_bCoef, const int whichPass)
   {
+#if CH_SPACEDIM == 3
       CH_TIME("VC2lineGSRB::relaxGSRB");
       assert(a_rhs.box().contains(m_b));
 
@@ -238,6 +241,7 @@ public:
           // Update
           a_phi(iv,0) -= a_res(iv,0) / rcoef;
       }
+#endif
   }
 
 private:

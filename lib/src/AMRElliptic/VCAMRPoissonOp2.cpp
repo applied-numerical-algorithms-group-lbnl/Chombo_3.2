@@ -646,13 +646,13 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
 
 #endif
 
-#if CH_SPACEDIM == 3
 
 // Only for 3D with Z direction needing anisotropic line relaxation
 void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
                                      const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRPoissonOp2::levelZlineGSRB");
+#if CH_SPACEDIM == 3
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -728,8 +728,8 @@ void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
     } // end loop through red-black
 
     m_lambdaNeedsResetting = true;
-}
 #endif
+}
 
 
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
