@@ -18,7 +18,7 @@
 std::ostream&
 operator<< (std::ostream&   os,            const LayoutIndex& dit)
 {
-  os << " (" << dit.m_index << "," << dit.m_datInd << ") " ;
+//  os << " (" << dit.m_index << "," << dit.m_datInd << ") " ;
   return os;
 }
 #include "NamespaceFooter.H"
