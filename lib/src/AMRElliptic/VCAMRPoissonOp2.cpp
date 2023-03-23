@@ -1335,7 +1335,6 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
       //  }
       //else if (m_coefficient_average_type == CoarseAverage::harmonic)
         {
-          pout() << " Using HarmAvg " << endl;
           averager.averageToCoarseHarmonic(*aCoef, *(m_aCoef[ref]));
           faceAverager.averageToCoarseHarmonic(*bCoef, *(m_bCoef[ref]));
         }
