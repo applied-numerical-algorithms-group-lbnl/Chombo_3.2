@@ -182,6 +182,33 @@ ppfound (const char*    keyword,
         return (key == keyword);
 }
 
+
+//
+// loose version of Keyword aware string comparison.
+//
+
+static
+bool
+pploosefound (const char*    keyword,
+              const PP_String& key,
+              const PP_String& prefix)
+{
+    //
+    // Return true if key==keyword || key == prefix.keyword.
+    //
+    if (!prefix.isNull())
+    {
+        PP_String tmp(prefix);
+        tmp += '.';
+        tmp += keyword;
+        return(strlen(tmp.c_str()) == strspn(tmp.c_str(), key.c_str()));
+    }
+    else
+      {
+        return (strlen(keyword) == strspn(keyword, key.c_str()));
+      }
+}
+
 //
 // Return number of occurences of parameter name.
 //
@@ -217,6 +244,36 @@ ParmParse::contains (const std::string& name) const
     for (PP_ListIterator<PP_entry*> li(table); li; ++li)
     {
        if (ppfound(name.c_str(), li()->defname, thePrefix))
+           return true;
+    }
+    return false;
+}
+
+
+
+//
+//  Returns true if name is part of an entry in table.
+//     (i.e. returns true if name = "name.this" and there 
+//     is a "name.this.list")
+//
+
+bool
+ParmParse::looseContains (const char* name) const
+{
+    for (PP_ListIterator<PP_entry*> li(table); li; ++li)
+    {
+       if (pploosefound(name,li()->defname,thePrefix))
+           return true;
+    }
+    return false;
+}
+
+bool
+ParmParse::looseContains (const std::string& name) const
+{
+    for (PP_ListIterator<PP_entry*> li(table); li; ++li)
+    {
+       if (pploosefound(name.c_str(), li()->defname, thePrefix))
            return true;
     }
     return false;
