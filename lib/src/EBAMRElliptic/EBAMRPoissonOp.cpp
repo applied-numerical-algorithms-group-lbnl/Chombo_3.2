@@ -159,6 +159,26 @@ getPetscMatrix(Mat& a_petsc_mat)
 
   return 0;
 }
+
+void 
+EBAMRPoissonOp::
+getVoFStencil(VoFStencil&      a_stenc,
+              const VolIndex&  a_vof,
+              const DataIndex& a_dit) const
+{
+  LayoutData<BaseIVFAB<VoFStencil> >* ebFluxStencil = m_ebBC->getFluxStencil(0);
+  getDivFStencil(a_stenc, a_vof, a_dit, true);
+  if (ebFluxStencil != NULL)
+  {
+    const BaseIVFAB<VoFStencil>& ebfab = (*ebFluxStencil)[a_dit];
+    //only exists for irregular cells
+    if(ebfab.getIVS().contains(a_vof.gridIndex()))
+    {
+      //add in stencil due to EB boundary conditions
+      a_stenc += (*ebFluxStencil)[a_dit](a_vof,0);
+    }
+  }
+}
 /***/
 int 
 EBAMRPoissonOp::
@@ -691,6 +711,12 @@ defineStencils()
       for (vofit.reset(); vofit.ok(); ++vofit)
         {
           const VolIndex& VoF = vofit();
+          IntVect iv = VoF.gridIndex();
+          int ideb = 0;
+          if((iv[0]==55) && (iv[1]==14))
+          {
+            ideb = 1;
+          }
 
           VoFStencil& curStencil = curStencilBaseIVFAB(VoF,0);
           VoFStencil& relStencil = relStencilBaseIVFAB(VoF,0);
@@ -714,8 +740,10 @@ defineStencils()
               curAlphaWeight *= curEBISBox.areaFracScaling(VoF);
             }
 
+
+
           curBetaWeight = EBArith::getDiagWeight(relStencil, VoF);
-          const IntVect& iv = VoF.gridIndex();
+
           for (int idir = 0; idir < SpaceDim; idir++)
             {
               Box loSide = bdryLo(m_eblg.getDomain(),idir);
@@ -964,7 +992,7 @@ defineStencils()
               bool doThisVoF = true;
               for (int idir = 0; idir < SpaceDim; idir++)
                 {
-                  if (iv[idir] % 2 != m_colors[icolor][idir])
+                  if (abs(iv[idir]) % 2 != m_colors[icolor][idir])
                     {
                       doThisVoF = false;
                       break;
@@ -1159,7 +1187,7 @@ EBAMRPoissonOp::
 getDivFStencil(VoFStencil&      a_vofStencil,
                const VolIndex&  a_vof,
                const DataIndex& a_dit,
-               bool             a_doFaceInterp)
+               bool             a_doFaceInterp) const
 {
   const EBISBox& ebisBox  =    m_eblg.getEBISL()[a_dit];
   const IntVectSet& cfivs = (*m_eblg.getCFIVS())[a_dit];
@@ -2213,10 +2241,10 @@ relax(LevelData<EBCellFAB>&       a_e,
     }
   else  if (m_relaxType == 2)
     {
-      for (int i = 0; i < a_iterations; i++)
-        {
-          levelGSRB(a_e,a_residual);
-        }
+    for (int i = 0; i < a_iterations; i++)
+      {
+        levelGSRB(a_e,a_residual);
+      }
     }
   else  if (m_relaxType == 3)
     {
@@ -3556,7 +3584,7 @@ GSColorAllRegular(BaseFab<Real>&               a_phi,
 
   for (int idir = 0; idir < SpaceDim; idir++)
     {
-      if (loIV[idir] % 2 != m_colors[a_icolor][idir])
+      if (abs(loIV[idir]) % 2 != m_colors[a_icolor][idir])
         {
           loIV[idir]++;
         }
@@ -3619,7 +3647,7 @@ levelGSRB(LevelData<EBCellFAB>&       a_phi,
   CH_assert(a_phi.ghostVect()    == m_ghostCellsPhi);
 
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-
+  int ideb = 0;
   int nComps = a_phi.nComp();
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
@@ -3704,6 +3732,7 @@ levelGSRB(LevelData<EBCellFAB>&       a_phi,
             {
               GSColorAllIrregular(phifab, rhsfab, m_colors.size()/2*redBlack+c, homogeneous, dit[mybox]);
             }
+          ideb++;
         }//dit
     }//red-black
 }
@@ -3795,7 +3824,7 @@ GSColorAllRegularClone(LevelData<EBCellFAB>&       a_phi,
 
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != m_colors[a_icolor][idir])
+          if (abs(loIV[idir]) % 2 != m_colors[a_icolor][idir])
             {
               loIV[idir]++;
             }
@@ -3934,7 +3963,7 @@ levelGSRB(LevelData<EBCellFAB>&       a_phi,
           const VolIndex& VoF = vofit();
           const IntVect&  iv = VoF.gridIndex();
 
-          if (iv.sum()%2 == a_color)
+          if (abs(iv.sum())%2 == a_color)
             {
               Real weightIrreg = m_alpha*curAlphaWeight(VoF,0)
                 + m_beta*curBetaWeight(VoF, 0);
@@ -3990,7 +4019,7 @@ levelMultiColorGS(LevelData<EBCellFAB>&       a_phi,
       IntVect hiIV = box.bigEnd();
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != color[idir])
+          if (abs(loIV[idir]) % 2 != color[idir])
             {
               loIV[idir]++;
             }
@@ -4021,7 +4050,7 @@ levelMultiColorGS(LevelData<EBCellFAB>&       a_phi,
           bool ok = true;
           for (int idir = 0; idir < SpaceDim; idir++)
             {
-              if (iv[idir] % 2 != color[idir])
+              if (abs(iv[idir]) % 2 != color[idir])
                 {
                   ok = false;
                   break;
@@ -4065,120 +4094,78 @@ levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
   CH_assert(a_phi.nComp() == 1);
   CH_assert(a_rhs.nComp() == 1);
 
-  LevelData<EBCellFAB> lphi;
-  create(lphi, a_rhs);
-  for (int icolor = 0; icolor < m_colors.size(); icolor++)
+  LevelData<EBCellFAB> resid;
+  create(resid, a_rhs);
+  for(int iredblack = 0; iredblack <= 1; iredblack++)
+  {
+    if (m_hasCoar)
     {
-      if (m_hasCoar)
-        {
-          applyHomogeneousCFBCs(a_phi);
-        }
-
-      //after this lphi = L(phi)
-      //this call contains bcs and exchange
-      applyOp(  lphi,  a_phi, true);
-      slowGSRBColor(a_phi, lphi, a_rhs, m_colors[icolor]);
+      applyHomogeneousCFBCs(a_phi);
     }
-}
 
+    residual(resid, a_phi, a_rhs, true);
+
+    slowGSRBColor(a_phi, resid, iredblack);
+  }
+}
+//for debugging---this runs pretty slowly
 void
 EBAMRPoissonOp::
 slowGSRBColor(LevelData<EBCellFAB>&       a_phi,
-              const LevelData<EBCellFAB>& a_lph,
-              const LevelData<EBCellFAB>& a_rhs,
-              const IntVect&              a_color)
+              const LevelData<EBCellFAB>& a_res,
+              int a_iredblack)
 {
 
-  LevelData<EBCellFAB> relCoef;
-  Real safety = 0.5;
-  create(relCoef, a_rhs);
+  Real safety = 1.0;
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-  Real weight = m_alpha;
-  for (int idir = 0; idir < SpaceDim; idir++)
+  DataIterator dit = dbl.dataIterator();;
+
+  for(int ibox = 0; ibox < dit.size(); ibox++)
+  {
+    Box dblBox  = dbl[dit[ibox]];
+    BaseIVFAB<Real>&  betairreg =  m_betaDiagWeight[dit[ibox]];    
+    BaseIVFAB<Real>& alphairreg = m_alphaDiagWeight[dit[ibox]];    
+    const EBGraph& ebgraph = m_eblg.getEBISL()[dit[ibox]].getEBGraph();
+    IntVectSet ivs(dblBox);
+//    auto& phifab = a_phi[dit[ibox]];
+//    auto& resfab = a_res[dit[ibox]];
+    
+    for (VoFIterator vofit(ivs, ebgraph); vofit.ok(); ++vofit)
     {
-      weight += -2.0 * m_beta * m_invDx2[idir];
+      const VolIndex& vof = vofit();
+      const IntVect& iv = vof.gridIndex();
+      int sumiv = iv.sum();
+      if(abs(sumiv) %2 == a_iredblack)
+      {
+//        int ideb = 0;
+//        if((iv[0]== 55)&&(iv[1]== 14))
+//        if((iv[0]== 31)&&(iv[1]== 31))
+//        {
+//          ideb = 1;
+//        }
+        Real resid    = a_res[dit[ibox]](vof, 0);
+
+        bool useIrreg = ebgraph.isIrregular(iv);
+        Real dx = m_dx[0];
+        Real alphaWeight = 1;
+        Real betaWeight  = -2*SpaceDim/(dx*dx);
+        if(useIrreg)
+        {
+          alphaWeight = alphairreg(vof, 0);
+          betaWeight  =  betairreg(vof, 0);
+        }
+        Real denom = m_alpha*alphaWeight + m_beta*betaWeight;
+        Real lambda = 0;
+        if(std::abs(denom) > 1.0e-12)
+        {
+          lambda = safety/denom;
+        }
+        Real phiold = a_phi[dit[ibox]](vof, 0);
+        Real phinew = phiold +  lambda*resid;
+        a_phi[dit[ibox]](vof, 0) = phinew;
+      }
     }
-  for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
-    {
-      //set relaxation coeff to the regular value and fix
-      // it up at irregular cells
-      relCoef[dit()].setVal(safety/weight);
-      const EBGraph& ebgraph = m_eblg.getEBISL()[dit()].getEBGraph();
-      IntVectSet irregIVS = ebgraph.getIrregCells(dbl.get(dit()));
-
-      for (VoFIterator vofit(irregIVS, ebgraph); vofit.ok(); ++vofit)
-        {
-          const VolIndex& VoF = vofit();
-          Real alphaWeight  = m_alphaDiagWeight[dit()](VoF,0);
-          Real  betaWeight  =  m_betaDiagWeight[dit()](VoF,0);
-          Real weightIrreg = m_alpha*alphaWeight + m_beta*betaWeight;
-          if (weightIrreg > 1.0e-12)
-            {
-              relCoef[dit()](VoF,0) = safety/weightIrreg;
-            }
-          else
-            {
-              relCoef[dit()](VoF,0) = 0.0;
-            }
-        }
-    }
-
-  for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
-    {
-      Box dblBox  = dbl.get(dit());
-      BaseFab<Real>&       regPhi =     a_phi[dit()].getSingleValuedFAB();
-      const BaseFab<Real>& regLph =     a_lph[dit()].getSingleValuedFAB();
-      const BaseFab<Real>& regRhs =     a_rhs[dit()].getSingleValuedFAB();
-      const BaseFab<Real>& regRel =   relCoef[dit()].getSingleValuedFAB();
-      IntVect loIV = dblBox.smallEnd();
-      IntVect hiIV = dblBox.bigEnd();
-
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          if (loIV[idir] % 2 != a_color[idir])
-            {
-              loIV[idir]++;
-            }
-        }
-
-      if (loIV <= hiIV)
-        {
-          Box coloredBox(loIV, hiIV);
-          FORT_SLOWGSRBEBAMRPO(CHF_FRA1(regPhi,0),
-                               CHF_CONST_FRA1(regLph,0),
-                               CHF_CONST_FRA1(regRhs,0),
-                               CHF_CONST_FRA1(regRel,0),
-                               CHF_BOX(coloredBox));
-        }
-
-      const EBGraph& ebgraph = m_eblg.getEBISL()[dit()].getEBGraph();
-      IntVectSet multiIVS = ebgraph.getMultiCells(dbl.get(dit()));
-
-      for (VoFIterator vofit(multiIVS, ebgraph); vofit.ok(); ++vofit)
-        {
-          const VolIndex& vof = vofit();
-          const IntVect& iv = vof.gridIndex();
-
-          bool doThisVoF = true;
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              if (iv[idir] % 2 != a_color[idir])
-                {
-                  doThisVoF = false;
-                  break;
-                }
-            }
-
-          if (doThisVoF)
-            {
-              Real lph    = a_lph[dit()](vof, 0);
-              Real rhs    = a_rhs[dit()](vof, 0);
-              Real resid  = rhs - lph;
-              Real lambda = relCoef[dit()](vof, 0);
-              a_phi[dit()](vof, 0) += lambda*resid;
-            }
-        }
-    }
+  }
 }
 
 #include "NamespaceFooter.H"

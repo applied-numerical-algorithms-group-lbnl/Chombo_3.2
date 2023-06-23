@@ -91,6 +91,13 @@ public:
   }
 
   ///
+  virtual void setData(Vector<LevelData<EBCellFAB>* >& a_data)
+  {
+    m_dataDomain = a_data;
+    m_dataBasedDomain = true;
+  }
+
+  ///
   virtual void setType(Vector< RefCountedPtr<LevelData<BaseIVFAB<int> > > >& a_type)
   {
     m_type = a_type;
@@ -182,6 +189,9 @@ private:
 
   Vector< RefCountedPtr<LevelData<BaseIVFAB<Real> > > > m_data;
   bool m_dataBased;
+
+  Vector<LevelData<EBCellFAB>* > m_dataDomain;
+  bool m_dataBasedDomain;
 
   Vector< RefCountedPtr<LevelData<BaseIVFAB<int> > > > m_type;
   bool m_typeBased;

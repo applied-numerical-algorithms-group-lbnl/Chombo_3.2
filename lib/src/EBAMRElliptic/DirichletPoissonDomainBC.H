@@ -42,6 +42,13 @@ public:
    */
   virtual void setFunction(RefCountedPtr<BaseBCValue> a_func);
 
+  virtual void setData(LevelData<EBCellFAB>* a_data)
+  {
+    m_data = a_data;
+    m_dataBased = true;
+    m_onlyHomogeneous = false;
+  }
+
   ///
   /** use this for order of domain boundary
    */
@@ -290,6 +297,9 @@ private:
   Real m_value;
   RefCountedPtr<BaseBCValue> m_func;
 
+  LevelData<EBCellFAB>*  m_data;
+  bool m_dataBased;
+
   int m_ebOrder;
 };
 
@@ -326,7 +336,20 @@ public:
   ///
   /**
    */
+  virtual void setData(Vector<LevelData<EBCellFAB>* > a_data)
+  {
+    m_data = a_data;
+    m_dataBased = true;
+    m_onlyHomogeneous = false;
+  }
+
+  ///
+  /**
+   */
   virtual void setEBOrder(int a_ebOrder);
+
+  Vector<LevelData<EBCellFAB>* > m_data;
+  bool m_dataBased;
 
 private:
   bool m_onlyHomogeneous;

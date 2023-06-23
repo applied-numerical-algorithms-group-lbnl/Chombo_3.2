@@ -20,6 +20,7 @@
 DirichletPoissonDomainBC::DirichletPoissonDomainBC()
  : m_onlyHomogeneous(true),
    m_isFunctional(false),
+   m_dataBased(false),
    m_value(12345.6789),
    m_func(RefCountedPtr<BaseBCValue>()),
    m_ebOrder(2)
@@ -34,6 +35,7 @@ void DirichletPoissonDomainBC::setValue(Real a_value)
 {
    m_onlyHomogeneous = false;
    m_isFunctional = false;
+   m_dataBased = false;
    m_value = a_value;
    m_func = RefCountedPtr<BaseBCValue>();
 }
@@ -41,6 +43,7 @@ void DirichletPoissonDomainBC::setValue(Real a_value)
 void DirichletPoissonDomainBC::setFunction(RefCountedPtr<BaseBCValue> a_func)
 {
   m_value = 12345.6789;
+  m_dataBased = false;
   m_func = a_func;
 
   m_onlyHomogeneous = false;
@@ -163,6 +166,26 @@ void DirichletPoissonDomainBC::getHigherOrderFaceFlux(BaseFab<Real>&        a_fa
                 const RealVect  point = EBArith::getFaceLocation(face,a_dx,a_probLo);
                 const RealVect normal = EBArith::getDomainNormal(a_idir,a_side);
                 Real value = m_func->value(face,a_side,a_dit,point,normal,a_time,comp);
+                Real phi0 = a_phi(iv,comp);
+                iv[a_idir] += iside;
+                Real phi1 = a_phi(iv,comp);
+                iv[a_idir] -= iside;
+                a_faceFlux(iv,comp) = -iside*(8.0*value + phi1 - 9.0*phi0)/(3.0*a_dx[a_idir]);
+              }
+          }
+        else if(m_dataBased)
+          {
+            BoxIterator bit(box);
+
+            for (bit.begin(); bit.ok(); ++bit)
+              {
+                IntVect iv = bit();
+                IntVect ivNeigh = iv;
+                ivNeigh[a_idir] += sign(a_side);
+                const VolIndex vof      = VolIndex(iv,     0);
+                const VolIndex vofNeigh = VolIndex(ivNeigh,0);
+                const FaceIndex face = FaceIndex(vof,vofNeigh,a_idir);
+                Real value = (*m_data)[a_dit](vof,0);
                 Real phi0 = a_phi(iv,comp);
                 iv[a_idir] += iside;
                 Real phi1 = a_phi(iv,comp);
@@ -294,6 +317,11 @@ void DirichletPoissonDomainBC::getHigherOrderFaceFlux(Real&                 a_fa
       RealVect point = EBArith::getFaceLocation(a_face,a_dx,a_probLo);
       value = m_func->value(a_face,a_side,a_dit,point,normal,a_time,a_comp);
     }
+  else if(m_dataBased)
+    {
+      const VolIndex vof = a_face.getVoF(flip(a_side));
+      value = (*m_data)[a_dit](vof,0);
+    }
   else
     {
       if (m_onlyHomogeneous)
@@ -309,7 +337,7 @@ void DirichletPoissonDomainBC::getHigherOrderFaceFlux(Real&                 a_fa
   if (facesInsideDomain.size() == 1)
     {
       const VolIndex& vofNextInsideDomain = facesInsideDomain[0].getVoF(flip(a_side));
-          a_faceFlux = iside*(9.0*a_phi(vof,a_comp) - a_phi(vofNextInsideDomain,a_comp) - 8.0*value)/(3.0*a_dx[a_idir]);
+      a_faceFlux = iside*(9.0*a_phi(vof,a_comp) - a_phi(vofNextInsideDomain,a_comp) - 8.0*value)/(3.0*a_dx[a_idir]);
     }
   else
     {
@@ -417,6 +445,11 @@ void DirichletPoissonDomainBC::getHigherOrderInhomFaceFlux(Real&                
       const RealVect normal = EBArith::getDomainNormal(a_idir,a_side);
       RealVect point = EBArith::getFaceLocation(a_face,a_dx,a_probLo);
       value = m_func->value(a_face,a_side,a_dit,point,normal,a_time,a_comp);
+    }
+  else if(m_dataBased)
+    {
+      const VolIndex vof = a_face.getVoF(flip(a_side));
+      value = (*m_data)[a_dit](vof,0);
     }
   else
     {
@@ -533,6 +566,26 @@ void DirichletPoissonDomainBC::getFaceFlux(BaseFab<Real>&        a_faceFlux,
                   Real value = m_func->value(face,a_side,a_dit,point,normal,a_time,comp);
                   Real phiVal = a_phi(iv,comp);
                   a_faceFlux(iv,comp) = iside * ihdx * (phiVal - value);
+                }
+            }
+          else if(m_dataBased)
+            {
+              BoxIterator bit(box);
+              
+              for (bit.begin(); bit.ok(); ++bit)
+                {
+                  IntVect iv = bit();
+                  IntVect ivNeigh = iv;
+                  ivNeigh[a_idir] += sign(a_side);
+                  const VolIndex vof      = VolIndex(iv,     0);
+                  const VolIndex vofNeigh = VolIndex(ivNeigh,0);
+                  const FaceIndex face = FaceIndex(vof,vofNeigh,a_idir);
+                  Real value = (*m_data)[a_dit](vof,0);
+                  Real phi0 = a_phi(iv,comp);
+                  iv[a_idir] += iside;
+                  Real phi1 = a_phi(iv,comp);
+                  iv[a_idir] -= iside;
+                  a_faceFlux(iv,comp) = -iside*(8.0*value + phi1 - 9.0*phi0)/(3.0*a_dx[a_idir]);
                 }
             }
           else
@@ -652,7 +705,7 @@ void DirichletPoissonDomainBC::getFaceGradPhi(Real&                 a_faceFlux,
   const Real ihdx = 2.0 / a_dx[a_idir];
 
   Real value = -1.e99;
-  if (a_useHomogeneous)
+  if (a_useHomogeneous || m_dataBased)
     {
       value = 0.0;
     }
@@ -662,6 +715,11 @@ void DirichletPoissonDomainBC::getFaceGradPhi(Real&                 a_faceFlux,
       RealVect point = EBArith::getFaceLocation(a_face,a_dx,a_probLo);
       value = m_func->value(a_face,a_side,a_dit,point,normal,a_time,a_comp);
     }
+  // else if(m_dataBased)
+  //   {
+  //     const VolIndex vof = a_face.getVoF(flip(a_side));
+  //     value = (*m_data)[a_dit](vof,0);
+  //   }
   else
     {
       if (m_onlyHomogeneous)
@@ -777,7 +835,7 @@ void DirichletPoissonDomainBC::getInhomFaceGradPhi(Real&                 a_faceF
   const Real ihdx = 2.0 / a_dx[a_idir];
 
   Real value = -1.e99;
-  if (m_onlyHomogeneous)
+  if (m_onlyHomogeneous || m_dataBased)
     {
       value = 0.0;
     }
@@ -787,6 +845,11 @@ void DirichletPoissonDomainBC::getInhomFaceGradPhi(Real&                 a_faceF
       RealVect point = EBArith::getFaceLocation(a_face,a_dx,a_probLo);
       value = m_func->value(a_face,a_side,a_dit,point,normal,a_time,a_comp);
     }
+  // else if(m_dataBased)
+  //   {
+  //     const VolIndex vof = a_face.getVoF(flip(a_side));
+  //     value = (*m_data)[a_dit](vof,0);
+  //   }
   else
     {
       value = m_value;
@@ -916,6 +979,7 @@ void DirichletPoissonDomainBC::getSecondOrderFluxStencil(      VoFStencil&      
 DirichletPoissonDomainBCFactory::DirichletPoissonDomainBCFactory()
 : m_onlyHomogeneous(true),
   m_isFunctional(false),
+  m_dataBased(false),
   m_value(12345.6789),
   m_func(RefCountedPtr<BaseBCValue>()),
   m_ebOrder(2)
@@ -933,6 +997,7 @@ void DirichletPoissonDomainBCFactory::setValue(Real a_value)
 
   m_onlyHomogeneous = false;
   m_isFunctional = false;
+  m_dataBased = false;
 }
 
 void DirichletPoissonDomainBCFactory::setFunction(RefCountedPtr<BaseBCValue> a_func)
@@ -942,6 +1007,7 @@ void DirichletPoissonDomainBCFactory::setFunction(RefCountedPtr<BaseBCValue> a_f
 
   m_onlyHomogeneous = false;
   m_isFunctional = true;
+  m_dataBased = false;
 }
 
 //use this for order of domain boundary
@@ -966,6 +1032,22 @@ create(const ProblemDomain& a_domain,
       if (m_isFunctional)
         {
           newBC->setFunction(m_func);
+        }
+      else if (m_dataBased)
+        {
+          int whichLev = -1;
+          bool found = false;
+          for(int ilev=0; ilev < m_data.size();ilev++)
+            {
+              DisjointBoxLayout dbl = m_data[ilev]->disjointBoxLayout();
+              if(a_domain == a_layout.getDomain())
+                {
+                  found=true;
+                  whichLev=ilev;
+                }
+            }
+          CH_assert(found);
+          newBC->setData(m_data[whichLev]);
         }
       else
         {

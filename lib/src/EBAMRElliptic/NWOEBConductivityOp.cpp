@@ -1182,7 +1182,7 @@ gsrbColor(LevelData<EBCellFAB>&       a_phi,
         
       for (int idir = 0; idir < SpaceDim; idir++)
         {
-          if (loIV[idir] % 2 != a_color[idir])
+          if (abs(loIV[idir]) % 2 != a_color[idir])
             {
               loIV[idir]++;
             }
