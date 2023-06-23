@@ -99,16 +99,18 @@ ifneq ($(USE_HDF),FALSE)
     # For parallel: do  'module load hdf5/parallel'
     _hdf_root=$(ANAG_HDF5_DIR)
     # check that the hdf module is consistent with parallel
-    ifeq ($(MPI),TRUE)
-      ifeq ($(findstring par,$(_hdf_root))$(findstring mpich,$(_hdf_root)),)
-        $(error HDF5 directory [$(_hdf_root)] is not parallel but MPI is TRUE.  Are you using the right library?)
-      endif
-    else
-      ifeq ($(findstring par,$(_hdf_root)),par)
-        $(error HDF5 directory [$(_hdf_root)] is parallel but MPI is FALSE.  Are you using the right library?)
-      endif
-      ifeq ($(findstring mpich,$(_hdf_root)),mpich)
-        $(error HDF5 directory [$(_hdf_root)] is parallel but MPI is FALSE.  Are you using the right library?)
+    ifneq ($(NODEPENDS),TRUE)
+      ifeq ($(MPI),TRUE)
+        ifeq ($(findstring par,$(_hdf_root))$(findstring mpich,$(_hdf_root)),)
+          $(error HDF5 directory [$(_hdf_root)] is not parallel but MPI is TRUE.  Are you using the right library?)
+        endif
+      else
+        ifeq ($(findstring par,$(_hdf_root)),par)
+          $(error HDF5 directory [$(_hdf_root)] is parallel but MPI is FALSE.  Are you using the right library?)
+        endif
+        ifeq ($(findstring mpich,$(_hdf_root)),mpich)
+          $(error HDF5 directory [$(_hdf_root)] is parallel but MPI is FALSE.  Are you using the right library?)
+        endif
       endif
     endif
 
@@ -171,7 +173,7 @@ ifeq ($(EFENCE),TRUE)
   lddbgflags += -lefence
 endif
 
-XTRALDFLAGS += -Wl,-zmuldefs
+#XTRALDFLAGS += -Wl,-zmuldefs
 
 # The Intel version 7.0 compiler installation is broken on most ANAG
 # systems.  The Fortran compiler is in a different directory from the C++
@@ -198,13 +200,15 @@ ifeq ($(USE_PETSC),TRUE)
     _petsc_arch=$(ANAG_PETSC_ARCH)
     # check that the petsc module is consistent with parallel
     PETSCTESTER=${shell fgrep  PETSC_HAVE_MPIUNI $(_petsc_root)/$(_petsc_arch)/include/petscconf.h}
-    ifeq ($(MPI),TRUE)
-      ifneq ($(PETSCTESTER),)
-        $(error PETSC installation in  [$(_petsc_root)/$(_petsc_arch)] is not parallel but MPI is TRUE.  Are you using the right library?)
-      endif
-    else
-      ifeq ($(PETSCTESTER),)
-        $(error PETSC installation in [$(_petsc_root)/$(_petsc_arch)] is parallel but MPI is FALSE.  Are you using the right library?)
+    ifneq ($(NODEPENDS),TRUE)
+      ifeq ($(MPI),TRUE)
+        ifneq ($(PETSCTESTER),)
+          $(error PETSC installation in  [$(_petsc_root)/$(_petsc_arch)] is not parallel but MPI is TRUE.  Are you using the right library?)
+        endif
+      else
+        ifeq ($(PETSCTESTER),)
+          $(error PETSC installation in [$(_petsc_root)/$(_petsc_arch)] is parallel but MPI is FALSE.  Are you using the right library?)
+        endif
       endif
     endif
 
@@ -223,6 +227,6 @@ ifneq ($(ANAG_OPENMPI_DIR),)
 endif
 
 ifeq ($(USE_PROTO),TRUE)
- XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1 -DPR_TURN_OFF_TIMERS=1
+ XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1
 endif
 
