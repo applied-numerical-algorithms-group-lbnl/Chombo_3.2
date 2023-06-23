@@ -237,6 +237,13 @@ void ReductionCopier::define(const BoxLayout& a_level,
   // keeping track of what this radius is.
   // just to make things simpler, start off with a radius of one
   Box grownDomainCheckBox = a_domain.domainBox();
+  // reality check -- ReductionCopier won't work properly if the problemDomain
+  // isn't defined
+  if (!grownDomainCheckBox.ok())
+    {
+      MayDay::Error("ReductionCopier doesn't work properly if DisjointBoxLayout wasn't defined with a valid ProblemDomain");
+    }
+  
   grownDomainCheckBox.grow(1);
   int periodicCheckRadius = 1;
 

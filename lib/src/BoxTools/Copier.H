@@ -223,10 +223,30 @@ public:
                           bool  a_includeSelf=false,
                           bool  a_reverse=false);
 
+  void defineFixedBoxSize(const DisjointBoxLayout& a_src,
+                          const LMap&  a_lmapSrc,
+                          const IntVect&  a_refRatioSrc,
+                          const DisjointBoxLayout& a_dst,
+                          const LMap&  a_lmapDst,
+                          const IntVect&  a_refRatioDst,
+                          const IntVect&  a_ghost,
+                          const ProblemDomain& a_domain,
+                          bool  a_reverse = false);
+
   void defineFixedSizeNodesCollect(const DisjointBoxLayout& a_layout,
                                    const LMap&  a_lmap,
                                    const IntVect& a_ghostSrc,
                                    const IntVect& a_ghostDst,
+                                   const ProblemDomain& a_domain);
+  
+  void defineFixedSizeNodesCollect(const DisjointBoxLayout& a_src,
+                                   const LMap&  a_lmapSrc,
+                                   const IntVect&  a_refRatioSrc,
+                                   const IntVect& a_ghostSrc,
+                                   const DisjointBoxLayout& a_dst,
+                                   const LMap&  a_lmapDst,
+                                   const IntVect&  a_refRatioDst,
+                                   const IntVect&  a_ghostDst,
                                    const ProblemDomain& a_domain);
   
   /// performs the computation necessary for moving from ghost+valid cells to all valid cells in a_dest

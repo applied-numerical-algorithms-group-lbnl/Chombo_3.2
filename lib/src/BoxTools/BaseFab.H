@@ -21,6 +21,7 @@
 #include "Arena.H"
 #include "Interval.H"
 #include "REAL.H"
+#include "ShapeArray.H"
 #include "NamespaceHeader.H"
 
 struct SliceSpec;
@@ -235,6 +236,20 @@ public:
                   int            a_N);
 
   T& operator () (const IntVect& a_p);
+
+#if CXXSTD>=14
+  /**
+     Begins C-style multi-dimensional array indexing.  E.g., fab[c][k][j][i].
+     The m_mdarray only stores a pointer to the data so while this function
+     is const (the pointer does not change), it ultimately returns a modifiable
+     lvalue
+   */
+  auto operator[](const int a_idx) const noexcept
+    {
+      CH_assert(isUsable());
+      return m_mdarray[a_idx];
+    }
+#endif
 
   /**
      Returns a conatant reference to the Nth component value defined at
@@ -530,6 +545,11 @@ public:
   ///
   bool isAliased() const;
 
+  /**
+     The BaseFab is defined and the number of elements is > 0
+   */
+  bool isUsable() const;
+
   ///regression test
   static int test();
 
@@ -580,6 +600,10 @@ protected:
                    //   (only if m_aliased == false).
   T* __restrict  m_dptr;     // The data pointer.
   bool m_aliased;  // The BaseFab is not allocated memory, but is an alias. bvs
+#if CXXSTD>=14
+  shape::ShapeArray<T, SpaceDim + 1, int> m_mdarray;
+                   // Reshapes m_dptr into a multidimensional array
+#endif
 
 private:
   //

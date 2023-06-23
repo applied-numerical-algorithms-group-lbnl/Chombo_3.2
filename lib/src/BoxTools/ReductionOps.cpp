@@ -87,6 +87,7 @@ SumOp::SumOp(int a_summingDir ):scale(1.0)
 SumOp::SumOp(const Vector<int>& a_summingDir ):scale(1.0)
 {
   m_summingDir = a_summingDir;
+ 
 }
 
 void
@@ -298,13 +299,7 @@ SumOp::op(FArrayBox& dest,
     } // end if more than one summing direction
 }
 
-// (DFM 11/13/08) as currently implemented, FaceSumOp doesn't
-// do the right thing for multiple adjoining grids -- it will
-// double-count overlying faces where boxes adjoin. Since we don't
-// actually need the face-centered summing operator at the moment,
-// take the cowardly path of just commenting it out to revisit if it
-// becomes a needed member of the Chombo family
-
+// FaceSumOp
 
 FaceSumOp::FaceSumOp():m_scale(1.0), m_summingDir(-1)
 {
@@ -313,6 +308,7 @@ FaceSumOp::FaceSumOp():m_scale(1.0), m_summingDir(-1)
 FaceSumOp::FaceSumOp(const int& a_summingDir ):m_scale(1.0)
 {
   m_summingDir = a_summingDir;
+ cout<<"constructing FaceSumOp"<<endl;
 }
 
 void FaceSumOp::setDir(const int& a_sumDir)
@@ -326,9 +322,9 @@ void FaceSumOp::setScale(const Real& a_scale)
 }
 
 void FaceSumOp::linearIn(FluxBox       & a_arg  ,  
-                      void*           a_buf  , 
-                      const Box     & a_R    ,
-                      const Interval& a_comps) const
+                         void*           a_buf  , 
+                         const Box     & a_R    ,
+                         const Interval& a_comps) const
 {
   // pout()<<"Beginning LinearIn"<<endl;
   //pout()<<"sumDir = "<<m_summingDir<<endl;
@@ -336,12 +332,13 @@ void FaceSumOp::linearIn(FluxBox       & a_arg  ,
   // use temp to call linearIn before summing over directions
   
   Box reducedBox = a_R;
-  reducedBox.setSmall(m_summingDir,0);
-  reducedBox.setBig  (m_summingDir,0);
+  int lo = reducedBox.smallEnd(m_summingDir);
+  reducedBox.setSmall(m_summingDir,lo);
+  reducedBox.setBig  (m_summingDir,lo);
   
   //pout()<<"reducedBox = "<< reducedBox<<endl;
   CH_assert(a_R == reducedBox);
-  FluxBox temp(reducedBox);
+  FluxBox temp(reducedBox, a_arg.nComp());
   temp.setVal(12345);
   temp.linearIn(a_buf     , 
                 reducedBox, 
@@ -350,26 +347,33 @@ void FaceSumOp::linearIn(FluxBox       & a_arg  ,
   //pout()<<"finished fluxBox LinearIn"<<endl;
   for (int idir = 0; idir < SpaceDim; ++idir)
     {
-      //pout()<<"idir = "<<idir<<endl;
-      // comp loop
-      for (int iComp = a_comps.begin(); iComp <= a_comps.end(); ++iComp)
+
+      Box intersectBox = reducedBox;
+      intersectBox.surroundingNodes(idir);
+      intersectBox &= a_arg[idir].box();
+
+      if (!intersectBox.isEmpty())
         {
-          //boxIterator
-          for(BoxIterator bit(temp[idir].box()); bit.ok(); ++bit)
+          //pout()<<"idir = "<<idir<<endl;
+          // comp loop
+          for (int iComp = a_comps.begin(); iComp <= a_comps.end(); ++iComp)
             {
-              IntVect iv = bit();
-              a_arg[idir](iv, iComp) += temp[idir](iv,iComp);
+              //boxIterator
+              for(BoxIterator bit(intersectBox); bit.ok(); ++bit)
+                {
+                  IntVect iv = bit();
+                  a_arg[idir](iv, iComp) += temp[idir](iv,iComp);
+                }
             }
         }
     }
-
   pout()<<"Finishing LinearIn"<<endl;
 }
 
 void FaceSumOp::linearOut(const FluxBox       & a_arg  ,  
-                       void*                 a_buf  , 
-                       const Box           & a_R    ,
-                       const Interval      & a_comps) const
+                          void*                 a_buf  , 
+                          const Box           & a_R    ,
+                          const Interval      & a_comps) const
 {
   
 //  pout()<<"Beginning LinearOut"<<endl;
@@ -377,13 +381,14 @@ void FaceSumOp::linearOut(const FluxBox       & a_arg  ,
  // pout()<<"Box = "<< a_R<<endl;
   
   Box reducedBox = a_R;
-  reducedBox.setSmall(m_summingDir,0);
-  reducedBox.setBig  (m_summingDir,0);
+  int lo = reducedBox.smallEnd(m_summingDir);
+  reducedBox.setSmall(m_summingDir,lo);
+  reducedBox.setBig  (m_summingDir,lo);
   
   pout()<<"reducedBox = "<< reducedBox<<endl;
   
   // use temp to call op before writing to buffer
-  FluxBox temp(reducedBox);
+  FluxBox temp(reducedBox, a_arg.nComp());
   temp.setVal(0.0);
    
   // reduce a face
@@ -403,12 +408,12 @@ void FaceSumOp::linearOut(const FluxBox       & a_arg  ,
   //  pout()<<"finished LinearOut"<<endl;
 }
 
-void FaceSumOp::op(FluxBox       & a_dataTo    ,
-                const Box     & a_regionFrom,
-                const Interval& a_compTo    ,
-                const Box     & a_regionTo  ,
-                const FluxBox & a_dataFrom  ,
-                const Interval& a_compFrom  ) const
+void FaceSumOp::op(FluxBox       & a_dataTo ,
+                   const Box     & a_regionFrom,
+                   const Interval& a_compTo    ,
+                   const Box     & a_regionTo  ,
+                   const FluxBox & a_dataFrom  ,
+                   const Interval& a_compFrom  ) const
 {
   // Before calling this function, one must
   //a)Construct a LevelData<FluxBox> weights using the same layout as a_dataFrom
@@ -419,11 +424,14 @@ void FaceSumOp::op(FluxBox       & a_dataTo    ,
   CH_assert(a_dataTo  .nComp()  > a_compTo   .end ());
   CH_assert(a_dataFrom.nComp()  > a_compFrom .end ());
   
-  int offset = a_compTo.begin() - a_compFrom.begin();
+  // cout<<"entering FaceSumOp::op"<<endl;
   
+  int offset = a_compTo.begin() - a_compFrom.begin();
+
+  // iDir = 0 corresponds to a face that is constant in the 0 direction
   for (int iDir = 0; iDir < SpaceDim; iDir++)
     {
-      // src and destination for corresponidng elements of two flux boxes
+      // src and destination for corresponding elements of two flux boxes
       FArrayBox      & dataToDir   = a_dataTo  [iDir];
       const FArrayBox& dataFromDir = a_dataFrom[iDir];
 
@@ -433,15 +441,18 @@ void FaceSumOp::op(FluxBox       & a_dataTo    ,
       Box regionFromDir(a_regionFrom);
       regionFromDir.surroundingNodes(iDir);
 
+      //low side and high side indices of the one dimensional column 
       int toBoxLo = regionToDir.smallEnd(m_summingDir);
       int toBoxHi = regionToDir.bigEnd  (m_summingDir);
+
       if (iDir == m_summingDir)
         {
           //  pout()<<"destination box = "<<regionToDir<<endl;
+
+          //destination box is only one wide in the summing direction
           CH_assert(toBoxLo + 1 == toBoxHi);
         }
-      
-     
+          
       for (BoxIterator fromBit(regionFromDir); fromBit.ok(); ++fromBit)
         {
           IntVect fromIv = fromBit();
@@ -449,6 +460,8 @@ void FaceSumOp::op(FluxBox       & a_dataTo    ,
           if (m_summingDir != iDir)
             {
               IntVect toIv = fromIv;
+
+              // convention of flux box data: each cell centered intvect corresponds to the low face
               toIv[m_summingDir] = toBoxLo;
               
               // for all components
@@ -465,13 +478,14 @@ void FaceSumOp::op(FluxBox       & a_dataTo    ,
               toIvLo[m_summingDir] = toBoxLo;
               toIvHi[m_summingDir] = toBoxHi;
               
-              // write the same value twice
+              // write the (scaled) data to both faces of the one dimensional box (iDir != non-summing directions)
               for (int comp = a_compFrom.begin(); comp <= a_compFrom.end(); comp++)
                 {
                   CH_assert(dataToDir(toIvLo, comp+offset) == dataToDir(toIvHi, comp+offset));
+                  CH_assert(dataToDir(toIvLo, comp+offset) == dataToDir(toIvHi, comp+offset));
+
                   dataToDir(toIvLo, comp+offset) += m_scale*dataFromDir(fromIv, comp);
                   dataToDir(toIvHi, comp+offset) += m_scale*dataFromDir(fromIv, comp);
-                  CH_assert(dataToDir(toIvLo, comp+offset) == dataToDir(toIvHi, comp+offset));
                 } 
             }
         } 
@@ -480,14 +494,15 @@ void FaceSumOp::op(FluxBox       & a_dataTo    ,
 
 
 int FaceSumOp::size(const FluxBox & a_fluxBox,
-                 const Box     & a_bx     , 
-                 const Interval& a_comps  ) const
+                    const Box     & a_bx     , 
+                    const Interval& a_comps  ) const
 {
   //pout()<<"Using FaceSumOp::size()"<<endl;
   int totalSize = 0;
   Box reducedBox = a_bx;
-  reducedBox.setSmall(m_summingDir,0);
-  reducedBox.setBig  (m_summingDir,0);
+  int lo = reducedBox.smallEnd(m_summingDir);  
+  reducedBox.setSmall(m_summingDir,lo);
+  reducedBox.setBig  (m_summingDir,lo);
   // pout()<<"reducedBox = "<< reducedBox<<endl;
  
   return totalSize = a_fluxBox.size(reducedBox,

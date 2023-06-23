@@ -141,7 +141,7 @@ public:
               const int a_maxSize);
 
   /// Define function -- size of RefRatios will define maximum number of levels
-  void define(/// :evel 0 domain
+  void define(/// level 0 domain
               const ProblemDomain& a_baseDomain,
               /// Refinement ratios -- refRatio[0] is btwn levels 0 and 1
               const Vector<int>& a_refRatios,
@@ -163,7 +163,7 @@ public:
       to call it on it's own, so it has been left public.
   */
   void
-  makeBoxes(/// Putput: refined boxes at each new level
+  makeBoxes(/// Output: refined boxes at each new level
             Vector<Box>&      a_mesh,
             /// Input: set of tagged cells to cover
             const IntVectSet& a_tags,

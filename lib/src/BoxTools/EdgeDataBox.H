@@ -102,6 +102,34 @@ public:
             const EdgeDataBox& src,
             const Interval& Csrc);
 
+  /// Modifes this EdgeDataBox by adding src in the CELL-CENTERED sub-box
+  /** Modifies this EdgeDataBox by pointwise addition of values in the argument
+      EdgeDataBox.  Adds src's components (a_srccomp : a_srccomp+a_numcomp-1)
+      to this EdgeDataBox's components (a_destcomp : a_destcomp+numcomp-1)
+      where the domain of this EdgeDataBox intersects the a_subbox.  The actual
+      directionally-dependent subbox is given by 
+      a_subbox.surroundingNodes();
+      a_subbox.enclosedCells(dir);
+      NOTE:
+      a_subbox must be contained in the cell-centered Box of this EdgeDataBox.
+      Returns *this
+   */
+  EdgeDataBox& plus(const EdgeDataBox& a_src,
+                    const Box&     a_subbox,
+                    int            a_srccomp,
+                    int            a_destcomp,
+                    int            a_numcomp = 1);
+
+  //  plus operator with calling sequence similar to matching copy (for use in additive exchange operations)
+  void plus (const Box&        srcbox,
+             const Interval&   destcomps,
+             const Box&        destbox,
+             const EdgeDataBox&    src,
+             const Interval&   srccomps);
+
+
+  
+  
   /// {\bf Linearization Functions}
 
   /*@ManMemo: returns size, in number of bytes, of a flat linear
@@ -114,16 +142,25 @@ public:
     memory for the buffer has already been allocated by the caller */
   void linearOut(void*buf, const Box& R, const Interval& comps) const;
 
-  ///
+  /// like linearOut, but returns current position in the buffer
+  void* linearOut2(void*buf, const Box& R, const Interval& comps) const;
+  
+  /// 
   void linearIn(void* buf);
 
-  ///
+  /// read a linear representation of the data over the box \rm R
+  /** 
+      Reads in the output of LinearOut
+  */
   void linearIn(void*buf, const Box& R, const Interval& comps);
 
+  /// like linearIn, but returns current position in the buffer
+  void* linearIn2(void*buf, const Box& R, const Interval& comps);
+
   ///
-  static bool preAllocatable()
+  static int preAllocatable()
   {
-    return true;
+    return 0;
   }
 
 

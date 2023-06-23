@@ -320,6 +320,94 @@ EdgeDataBox::copy(const Box& RegionFrom,
 
 }
 
+
+// ---------------------------------------------------------
+EdgeDataBox&
+EdgeDataBox::plus(const EdgeDataBox& a_src,
+                  const Box&     a_subbox,
+                  int            a_srccomp,
+                  int            a_destcomp,
+                  int            a_numcomp)
+{
+  CH_assert(m_bx.contains(a_subbox));
+  CH_assert(a_src.box().contains(a_subbox));
+
+  for (int dir=0; dir<SpaceDim; dir++)
+    {
+      Box edgeBox(surroundingNodes(a_subbox));
+      edgeBox.enclosedCells(dir);
+      // now call corresponding FArrayBox function
+      m_data[dir]->plus(a_src[dir], edgeBox,
+                        a_srccomp, a_destcomp, a_numcomp);
+    }
+
+  return *this;
+}
+
+// ---------------------------------------------------------
+// overloaded plus with calling sequence similar to matching copy
+// (for use in additive exchange operations)
+void
+EdgeDataBox::plus(const Box& srcbox,
+                  const Interval& destcomps,
+                  const Box& destbox,
+                  const EdgeDataBox& src,
+                  const Interval& srccomps)
+{
+  CH_TIME("EdgeDataBox::plus()");
+  
+  // boxes do need to be the same size
+  CH_assert(srcbox.sameSize(destbox));
+  
+  for (int dir=0; dir<SpaceDim; dir++)
+    {
+      CH_assert (m_data[dir] != NULL);
+      const FArrayBox& srcFab = src[dir];
+
+      Box srcEdgeBox;
+      //Box srcEdgeBox(srcbox);
+      //srcEdgeBox.surroundingNodes(dir);
+      Box destEdgeBox(destbox);
+      destEdgeBox.surroundingNodes();
+      destEdgeBox.enclosedCells(dir);
+      // this is somewhat different if src and dest
+      // boxes don't coincide...
+      if (srcbox == destbox)
+        {
+          // safety check -- due to edge-centered nature of things,
+          // destbox may not be contained in m_fluxes[dir]
+          // (DFM 11-4-09) however, both src and dest boxes need to
+          // be the same size assume, however, that we only need to
+          // intersect with the dest, and not the src
+          destEdgeBox &= (m_data[dir]->box());
+          srcEdgeBox = destEdgeBox;
+        }
+      else
+        {
+          // (DFM 11-4-09) if src and dest boxes are not the same
+          // (probably due to a periodic wrapping), then this is a bit
+          // more complicated.
+
+          // first compute the shift
+          IntVect shiftVect(srcbox.smallEnd());
+          shiftVect -= destbox.smallEnd();
+          // intersect destBox with dest
+          destEdgeBox &= (m_data[dir]->box());
+          srcEdgeBox = destEdgeBox;
+          srcEdgeBox.shift(shiftVect);
+        }
+      // don't even bother to do this for an empty box
+      if (!destEdgeBox.isEmpty())
+        {
+          m_data[dir]->plus(srcFab, srcEdgeBox, destEdgeBox,
+                            srccomps.begin(), destcomps.begin(),
+                            srccomps.size());
+        }
+    } // end loop over edge directions
+
+}
+
+
 // ---------------------------------------------------------
 size_t
 EdgeDataBox::size(const Box& bx, const Interval& comps) const
@@ -344,21 +432,37 @@ EdgeDataBox::size(const Box& bx, const Interval& comps) const
 void
 EdgeDataBox::linearOut(void* buf, const Box& R, const Interval& comps) const
 {
+  linearOut2(buf, R, comps);
+}
+
+// ---------------------------------------------------------
+void*
+EdgeDataBox::linearOut2(void* buf, const Box& R, const Interval& comps) const
+{  
   Real* buffer = (Real*) buf;
   for (int dir=0; dir<SpaceDim; dir++)
   {
     CH_assert(m_data[dir] != NULL);
     Box dirBox(surroundingNodes(R));
     dirBox.enclosedCells(dir);
-    int dirSize = m_data[dir]->size(dirBox, comps);
-    m_data[dir]->linearOut(buffer, dirBox, comps);
-    buffer += dirSize/sizeof(Real);
+    //int dirSize = m_data[dir]->size(dirBox, comps);
+    void* newBuf = m_data[dir]->linearOut2(buffer, dirBox, comps);
+    buffer = (Real*) newBuf;
+    //buffer += dirSize/sizeof(Real);
   }
+  return (void*) buffer;  
 }
 
 // ---------------------------------------------------------
 void
 EdgeDataBox::linearIn(void* buf, const Box& R, const Interval& comps)
+{
+  linearIn2(buf, R, comps);
+}
+  
+// ---------------------------------------------------------
+void*
+EdgeDataBox::linearIn2(void* buf, const Box& R, const Interval& comps)
 {
   Real* buffer = (Real*) buf;
   for (int dir=0; dir<SpaceDim; dir++)
@@ -366,10 +470,12 @@ EdgeDataBox::linearIn(void* buf, const Box& R, const Interval& comps)
     CH_assert(m_data[dir] != NULL);
     Box dirBox(surroundingNodes(R));
     dirBox.enclosedCells(dir);
-    int dirSize = m_data[dir]->size(dirBox, comps);
-    m_data[dir]->linearIn(buffer,dirBox,comps);
-    buffer += dirSize/sizeof(Real);
+    //int dirSize = m_data[dir]->size(dirBox, comps);
+    void* newBuf = m_data[dir]->linearIn2(buffer,dirBox,comps);
+    buffer = (Real*) newBuf;
+    //buffer += dirSize/sizeof(Real);
   }
+  return (void*) buffer;
 }
 
 #include "NamespaceFooter.H"
