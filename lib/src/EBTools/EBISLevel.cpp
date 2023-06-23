@@ -418,48 +418,96 @@ EBISLevel::defineGraphFromGeo(LevelData<EBGraph>             & a_graph,
 {
   CH_TIME("EBISLevel::defineGraphFromGeo");
   //define the graph stuff
+#if 0  
   for (DataIterator dit = a_grids.dataIterator(); dit.ok(); ++dit)
+  {
+    Box region = a_grids.get(dit());
+    region.grow(1);
+    Box ghostRegion = grow(region,1);
+    ghostRegion &= a_domain;
+    region &= a_domain;
+
+    EBGraph& ebgraph = a_graph[dit()];
+    GeometryService::InOut inout;
+  
+    inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit());
+  
+    if (inout == GeometryService::Regular)
     {
-      Box region = a_grids.get(dit());
-      region.grow(1);
-      Box ghostRegion = grow(region,1);
-      ghostRegion &= a_domain;
-      region &= a_domain;
-
-      EBGraph& ebgraph = a_graph[dit()];
-      GeometryService::InOut inout;
-  
-      inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit());
-  
-      if (inout == GeometryService::Regular)
-        {
-          ebgraph.setToAllRegular();
-        }
-      else if (inout == GeometryService::Covered)
-        {
-          ebgraph.setToAllCovered();
-        }
-      else
-        {
-          BaseFab<int>       regIrregCovered(ghostRegion, 1);
-          Vector<IrregNode>&  nodes = a_allNodes[dit()];
-
-          // if (!a_distributedData)
-          //   {
-          //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
-          //                           ghostRegion, a_domain,
-          //                           a_origin, a_dx);
-          //   }
-          // else
-          //   {
-          a_geoserver.fillGraph(regIrregCovered, nodes, region,
-                                ghostRegion, a_domain,
-                                a_origin, a_dx, dit());
-          // }
-          ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
-          
-        }
+      ebgraph.setToAllRegular();
     }
+    else if (inout == GeometryService::Covered)
+    {
+      ebgraph.setToAllCovered();
+    }
+    else
+    {
+      BaseFab<int>       regIrregCovered(ghostRegion, 1);
+      Vector<IrregNode>&  nodes = a_allNodes[dit()];
+
+      // if (!a_distributedData)
+      //   {
+      //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
+      //                           ghostRegion, a_domain,
+      //                           a_origin, a_dx);
+      //   }
+      // else
+      //   {
+      a_geoserver.fillGraph(regIrregCovered, nodes, region,
+                            ghostRegion, a_domain,
+                            a_origin, a_dx, dit());
+      // }
+      ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
+          
+    }
+  }
+#else
+  DataIterator dit = a_grids.dataIterator();
+
+#pragma omp parallel for
+  for (unsigned int ibox = 0; ibox < dit.size(); ibox++)
+  {
+    Box region = a_grids.get(dit[ibox]);
+    region.grow(1);
+    Box ghostRegion = grow(region,1);
+    ghostRegion &= a_domain;
+    region &= a_domain;
+
+    EBGraph& ebgraph = a_graph[dit[ibox]];
+    GeometryService::InOut inout;
+  
+    inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit[ibox]);
+  
+    if (inout == GeometryService::Regular)
+    {
+      ebgraph.setToAllRegular();
+    }
+    else if (inout == GeometryService::Covered)
+    {
+      ebgraph.setToAllCovered();
+    }
+    else
+    {
+      BaseFab<int>       regIrregCovered(ghostRegion, 1);
+      Vector<IrregNode>&  nodes = a_allNodes[dit[ibox]];
+
+      // if (!a_distributedData)
+      //   {
+      //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
+      //                           ghostRegion, a_domain,
+      //                           a_origin, a_dx);
+      //   }
+      // else
+      //   {
+      a_geoserver.fillGraph(regIrregCovered, nodes, region,
+                            ghostRegion, a_domain,
+                            a_origin, a_dx, dit[ibox]);
+      // }
+      ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
+          
+    }
+  }
+#endif  
 }
 
 EBISLevel::EBISLevel(const ProblemDomain   & a_domain,

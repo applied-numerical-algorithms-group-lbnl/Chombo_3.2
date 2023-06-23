@@ -164,6 +164,19 @@ public:
   void poutFortranRelative(const IntVect& a_startIV, const string& a_prefix, const Real& wgtScaling) const;
 
   void outputToPout() const;
+
+  friend std::ostream& operator<<(std::ostream& os, const VoFStencil& a_sten )
+  {
+    int n = a_sten.size();
+    os << "[";
+    for( int i=0; i<n; i++ ) {
+      if( i ) os << " ";
+      os << a_sten.vofs[i] << ":" << a_sten.weights[i] << "," << a_sten.variables[i];
+    }
+    os << "]";
+    return os;
+  }
+
 protected:
 
   /// the VoFs

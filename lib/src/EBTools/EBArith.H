@@ -65,6 +65,13 @@ class EBArith
 public:
 
   ///
+  static void
+  getAllVoFsWithinRadiusExcludingStartVoF(Vector<VolIndex>& a_vofList,
+                                          Vector<IntVect>    & a_dist,
+                                          const VolIndex&   a_vof,
+                                          const EBISBox&    a_ebisBox,
+                                          const int&        a_redistRad);
+  ///
   static void convertToITM(IndexTM<Real, SpaceDim>& a_diffrv,  const RealVect& a_rv);
 
 

@@ -38,6 +38,38 @@ Real     EBArith::s_minVolFrac = 0.0;
 /*******/
 void
 EBArith::
+getAllVoFsWithinRadiusExcludingStartVoF(Vector<VolIndex>& a_vofList,
+                                        Vector<IntVect>    & a_dist,
+                                        const VolIndex&   a_vof,
+                                        const EBISBox&    a_ebisBox,
+                                        const int&        a_redistRad)
+{
+  a_vofList.clear();
+  Box grownBox(a_vof.gridIndex(), a_vof.gridIndex());
+  grownBox.grow(a_redistRad);
+  grownBox &= a_ebisBox.getDomain().domainBox();
+  IntVectSet vis(grownBox);
+  VoFIterator vofit(vis, a_ebisBox.getEBGraph());
+  Vector<VolIndex> biglist =  vofit.getVector();
+  for(int ilist = 0; ilist < biglist.size(); ilist++)
+  {
+    if(biglist[ilist] != a_vof)
+    {
+      a_vofList.push_back(biglist[ilist]);
+    }
+  }
+  a_dist.resize(a_vofList.size());
+  for(int ilist = 0; ilist < a_vofList.size(); ilist++)
+  {
+    for(int idir = 0; idir < SpaceDim;idir++)
+    {
+      a_dist[ilist][idir] = Abs(a_vofList[ilist].gridIndex()[idir]- a_vof.gridIndex()[idir]);
+    }
+  }
+}
+/*******/
+void
+EBArith::
 getAllVoFsWithinRadius(Vector<VolIndex>& a_vofList,
                        Vector<IntVect>    & a_dist,
                        const VolIndex&   a_vof,
