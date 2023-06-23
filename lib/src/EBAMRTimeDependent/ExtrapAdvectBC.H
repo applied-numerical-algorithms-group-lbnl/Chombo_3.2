@@ -37,6 +37,10 @@ public:
   void define(const ProblemDomain&  a_domain,
               const RealVect&       a_dx);
 
+  void setCurDataIndex(const DataIndex& a_dit)
+  {
+  }
+
   ///  For every box in this level, this function is called.
   void fluxBC(EBFluxFAB&            a_flux,
               const EBCellFAB&      a_Wcenter,
