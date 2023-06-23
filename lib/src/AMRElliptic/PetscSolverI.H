@@ -222,13 +222,24 @@ int PetscSolver<T>::create_mat_vec( const T& a_phi )
         }
 
       ierr = MatCreate(wcomm,&m_mat);CHKERRQ(ierr);
+      ierr = MatSetOptionsPrefix(m_mat,m_prestring);CHKERRQ(ierr);
+      //ierr = MatSetOptionsPrefix(m_mat,"");CHKERRQ(ierr);
+
+      pout() << "debug::matsetsize NN = " << NN << endl;
       ierr = MatSetSizes(m_mat,NN,NN,PETSC_DECIDE,PETSC_DECIDE);CHKERRQ(ierr);
+      pout() << "debug::matblocksize nc = " << nc << endl;
       ierr = MatSetBlockSize(m_mat,nc);CHKERRQ(ierr);
       ierr = MatSetType(m_mat,MATAIJ);CHKERRQ(ierr);
+      // ierr = MatSetOption(m_mat,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) ;CHKERRQ(ierr);
+      ierr = MatSetFromOptions( m_mat ); CHKERRQ(ierr);
+      pout() << "debug::matsetpreallocation nnzrow = " << nnzrow << endl;
       ierr = MatSeqAIJSetPreallocation(m_mat,nnzrow, d_nnz);CHKERRQ(ierr);
       ierr = MatMPIAIJSetPreallocation(m_mat,nnzrow, d_nnz, nnzrow/2, o_nnz);CHKERRQ(ierr);
       ierr = MatSetOption(m_mat,MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_FALSE) ;CHKERRQ(ierr);
-      ierr = MatSetFromOptions( m_mat ); CHKERRQ(ierr);
+
+#if defined(PETSC_HAVE_HYPRE)
+  ierr = MatHYPRESetPreallocation(m_mat,nnzrow, d_nnz, nnzrow/2, o_nnz);CHKERRQ(ierr);
+#endif
       
       if ( d_nnz )
         {
@@ -237,11 +248,12 @@ int PetscSolver<T>::create_mat_vec( const T& a_phi )
         }
 
       // create vectors
-      ierr = VecCreate( wcomm, &m_bb ); CHKERRQ(ierr);
-      ierr = VecSetFromOptions( m_bb ); CHKERRQ(ierr);
-      ierr = VecSetSizes( m_bb, NN, PETSC_DECIDE ); CHKERRQ(ierr);
+      ierr = MatCreateVecs(m_mat,&m_bb,&m_xx);CHKERRQ(ierr);
+      //ierr = VecCreate( wcomm, &m_bb ); CHKERRQ(ierr);
+      //ierr = VecSetFromOptions( m_bb ); CHKERRQ(ierr);
+      //ierr = VecSetSizes( m_bb, NN, PETSC_DECIDE ); CHKERRQ(ierr);
       ierr = VecDuplicate( m_bb, &m_rr ); CHKERRQ(ierr);
-      ierr = VecDuplicate( m_bb, &m_xx ); CHKERRQ(ierr);
+      //ierr = VecDuplicate( m_bb, &m_xx ); CHKERRQ(ierr);
     }
 #endif
   return 0;
@@ -495,6 +507,7 @@ int PetscSolver<T>::solve_private( T& a_phi,
 #ifdef CH_MPI
   MPI_Barrier(Chombo_MPI::comm);
 #endif
+//  VecView(m_bb,PETSC_VIEWER_STDOUT_WORLD);
   if ( m_snes )
     {
       ierr = SNESSolve( m_snes, m_bb, m_xx );CHKERRQ(ierr);
@@ -507,6 +520,7 @@ int PetscSolver<T>::solve_private( T& a_phi,
   CH_STOP(t3);
   // put solution into output
   CH_START(t4);
+//  VecView(m_xx,PETSC_VIEWER_STDOUT_WORLD);
   ierr = putPetscInChombo( a_phi, m_xx );CHKERRQ(ierr);
   a_phi.exchange();
   CH_STOP(t4);

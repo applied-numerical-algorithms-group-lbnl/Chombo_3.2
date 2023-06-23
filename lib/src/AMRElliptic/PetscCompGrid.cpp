@@ -712,7 +712,11 @@ if (m_repartition)
 #endif
       sprintf(suffix, "A%d.m",nGrids);
       ierr = PetscViewerASCIIOpen(comm, suffix, &viewer);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,11,0)      
       ierr = PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#else
+      ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#endif
       ierr = MatView(m_mat,viewer);CHKERRQ(ierr);
       ierr = PetscViewerDestroy(&viewer);
     }
@@ -772,7 +776,11 @@ PetscCompGrid::permuteDataAndMaps(Vector<StencilTensor> &patchStencil)
     PetscViewer viewer;
     char suffix[30] = "G0.m";
     ierr = PetscViewerASCIIOpen(Chombo_MPI::comm,suffix,&viewer);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,11,0)      
     ierr = PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#else
+    ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#endif
     ierr = MatView(graph,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   }
@@ -805,12 +813,21 @@ PetscCompGrid::permuteDataAndMaps(Vector<StencilTensor> &patchStencil)
     
     ierr = ISSort(old_new_patchids);CHKERRQ(ierr); /* is this needed? */
     // MatGetSubMatrix -- not needed
+#if PETSC_VERSION_LT(3,11,0)            
     ierr = MatGetSubMatrix(graph, old_new_patchids, old_new_patchids, MAT_INITIAL_MATRIX, &graph_new);CHKERRQ(ierr);
+#else
+    ierr = MatCreateSubMatrix(graph, old_new_patchids, old_new_patchids, MAT_INITIAL_MATRIX, &graph_new);CHKERRQ(ierr);
+#endif
+    
     if (false) {          
       PetscViewer viewer;
       char suffix[30] = "G2.m";
       ierr = PetscViewerASCIIOpen(Chombo_MPI::comm,suffix,&viewer);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,11,0)            
       ierr = PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#else
+      ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#endif
       ierr = MatView(graph_new,viewer);CHKERRQ(ierr);
       ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
     }
@@ -834,7 +851,11 @@ PetscCompGrid::permuteDataAndMaps(Vector<StencilTensor> &patchStencil)
     ierr = ISCreateGeneral(Chombo_MPI::comm,nloc_new*m_dof,tidx,PETSC_COPY_VALUES,&old_new_geqs);CHKERRQ(ierr);
     ierr = PetscFree(tidx);CHKERRQ(ierr);
     // get new matrix
+#if PETSC_VERSION_LT(3,11,0)                
     ierr = MatGetSubMatrix(m_mat, old_new_geqs, old_new_geqs, MAT_INITIAL_MATRIX, &new_mat);CHKERRQ(ierr);
+#else
+    ierr = MatCreateSubMatrix(m_mat, old_new_geqs, old_new_geqs, MAT_INITIAL_MATRIX, &new_mat);CHKERRQ(ierr);
+#endif
 
     Vec newvec;
     ierr = VecCreate(Chombo_MPI::comm,&newvec);CHKERRQ(ierr);
@@ -859,7 +880,11 @@ PetscCompGrid::permuteDataAndMaps(Vector<StencilTensor> &patchStencil)
     PetscViewer viewer;
     char suffix[30] = "A2.m";
     ierr = PetscViewerASCIIOpen(Chombo_MPI::comm,suffix,&viewer);CHKERRQ(ierr);
+#if PETSC_VERSION_LT(3,11,0)          
     ierr = PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#else
+    ierr = PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);CHKERRQ(ierr);
+#endif
     ierr = MatView(m_mat,viewer);CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&viewer);CHKERRQ(ierr);
   }

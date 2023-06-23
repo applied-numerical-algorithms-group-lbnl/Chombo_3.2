@@ -167,12 +167,24 @@ public:
                           const LevelData<FArrayBox>& a_rhs,
                           bool a_homogeneous = false);
 
+
+  virtual void residualNoExchange(  LevelData<FArrayBox>& a_lhs,
+                                    const LevelData<FArrayBox>& a_phi,
+                                    const LevelData<FArrayBox>& a_rhs,
+                                    bool a_homogeneous = false);  
+  
   virtual void preCond(   LevelData<FArrayBox>& a_correction,
                           const LevelData<FArrayBox>& a_residual);
 
   virtual void applyOp(   LevelData<FArrayBox>& a_lhs,
                           const LevelData<FArrayBox>& a_phi,
                           bool a_homogeneous = false);
+
+  // version of applyOp which doesn't call exchange
+  virtual void applyOpNoExchange(   LevelData<FArrayBox>& a_lhs,
+                                    const LevelData<FArrayBox>& a_phi,
+                                    bool a_homogeneous = false);
+  
   virtual void create(    LevelData<FArrayBox>& a_lhs,
                           const LevelData<FArrayBox>& a_rhs);
   virtual void createCoarsened(    LevelData<FArrayBox>& a_lhs,
@@ -422,6 +434,9 @@ public:
 
   void fillGrad(const LevelData<FArrayBox>& a_phiFine);
 
+  /// optimized version of fillGrad which doesn't call exchange on phi
+  void fillGradNoExchange(const LevelData<FArrayBox>& a_phiFine);
+
   static void loHiCenterFace(Box&                 a_loBox,
                              int&                 a_hasLo,
                              Box&                 a_hiBox,
@@ -464,6 +479,13 @@ public:
   */
   static int s_prolongType;
 
+
+  /// if true, only do exchange once per GSRB pass, rather than for each color
+  /** make this public/static to make it easy to change, while
+      also ensuring that it remains constent across all instances
+  */
+  static bool s_lazy_gsrb;
+  
   /// access function
   
   RefCountedPtr<LevelData<FluxBox> > getEta() const {return m_eta;}

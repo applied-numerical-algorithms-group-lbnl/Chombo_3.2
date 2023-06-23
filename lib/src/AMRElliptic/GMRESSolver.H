@@ -65,6 +65,27 @@ public:
 
   ///
   /**
+     public member data: iteration number. This is a member so that it can be
+     queried after a solve, for example.
+  */
+  int m_iter;
+
+  ///
+  /** 
+      public member data: current residual norm. This is a member so that 
+      it can be queried after a solve, for example
+  */
+  Real m_residual;
+
+  ///
+  /** 
+      public member data: initial residual norm. This is a member so that 
+      it can be queried after a solve, for example
+  */
+  Real m_initial_residual;  
+  
+  ///
+  /**
      public member data: operator to solve.
    */
   LinearOp<T>* m_op;
@@ -191,6 +212,9 @@ void GMRESSolver<T>::setRestartLen(int mm)
 template <class T>
 GMRESSolver<T>::GMRESSolver()
   :m_homogeneous(false),
+   m_iter(-1),
+   m_residual(-1e300),
+   m_initial_residual(-1e300),   
    m_op(NULL),
    m_restrtLen(30),
    m_imax(1000),
@@ -261,14 +285,18 @@ void GMRESSolver<T>::solve( T& a_xx, const T& a_bb )
       m_op->create(m_work_arr[i], a_bb);
     }
 
-  int it;
-  Real rnorm0 = 0.0;
+  // (DFM 1/19/21) replace with m_iter
+  //int it;
+  // (DFM 1/19/21) replace with m_initial_residual
+  //Real rnorm0 = 0.0;
   T &vv_0 = VEC_VV(0);
 
   /* Compute the initial (preconditioned) residual (into 'vv_0')*/
   m_op->assign( vv_0, a_bb );
   m_op->setToZero( a_xx );
-
+  m_op->applyOp( m_work_arr[0], a_xx, m_homogeneous); /* t <- Ax */
+  m_op->incr( vv_0, m_work_arr[0], -1.0); /* b - A(B)x */
+  
   CH_STOP(timeInitialize);
 
   ///
@@ -282,19 +310,19 @@ void GMRESSolver<T>::solve( T& a_xx, const T& a_bb )
   CH_START(timeMainLoop);
 
   // doit
-  it = 0; m_exitStatus = -1;
-  CycleGMRES( a_xx, m_exitStatus, it, rnorm0 );
+  m_iter = 0; m_exitStatus = -1;
+  CycleGMRES( a_xx, m_exitStatus, m_iter, m_initial_residual );
   // loop for restarts
-  while ( m_exitStatus==-1 && it < m_imax )
+  while ( m_exitStatus==-1 && m_iter < m_imax )
   {
     if (m_verbosity >= 3)
       {
         pout() << "*";
       }
     ResidualGMRES( vv_0, a_xx, a_bb, VEC_TEMP_RHS );
-    CycleGMRES( a_xx, m_exitStatus, it, rnorm0 );
+    CycleGMRES( a_xx, m_exitStatus, m_iter, m_initial_residual );
   }
-  if (m_exitStatus==-1 && it >= m_imax)
+  if (m_exitStatus==-1 && m_iter >= m_imax)
     {
       m_exitStatus = 3;
     }
@@ -322,11 +350,13 @@ void GMRESSolver<T>::solve( T& a_xx, const T& a_bb )
 
 template <class T>
 void GMRESSolver<T>::CycleGMRES( T &a_xx,
-                 int &a_reason, int &a_itcount, Real &a_rnorm0,
+                                 int &a_reason, int &a_itcount, Real &a_rnorm0,
                                  const bool a_avoidnorms/*=false*/ )
 {
   CH_assert(m_op != 0);
-  Real        res_norm,res,hapbnd,tt;
+  // (DFM -- 1/19/21) replace local res with m_residual member
+  Real        res_norm,hapbnd,tt;
+  //Real        res_norm,res,hapbnd,tt;
   int         it;
   bool        hapend = false;
   T          &vv_0 = VEC_VV(0);
@@ -334,11 +364,11 @@ void GMRESSolver<T>::CycleGMRES( T &a_xx,
   /* scale VEC_VV (the initial residual) */
   //ierr = vv_0->Normalize( &res_norm ); CHKERRQ(ierr);
   res_norm = m_op->norm( vv_0, m_normType );
-  res = res_norm;
+  m_residual = res_norm;
   *GRS(0) = res_norm;
 
   /* check for the convergence */
-  if ( res == 0. )
+  if ( m_residual == 0. )
   {
     if (m_verbosity >= 3)
       {
@@ -347,19 +377,19 @@ void GMRESSolver<T>::CycleGMRES( T &a_xx,
     a_reason = 1; // 1 == converged,
     return;
   }
-  // normilize
-  tt = 1./res;
+  // normalize
+  tt = 1./m_residual;
   m_op->scale( vv_0, tt);
 
-  if ( a_itcount == 0 ) a_rnorm0 = res;
-  bool conv = CONVERGED( a_rnorm0, res );
+  if ( a_itcount == 0 ) a_rnorm0 = m_residual;
+  bool conv = CONVERGED( a_rnorm0, m_residual );
   a_reason = conv ? 1 : -1;
   it = 0;
   while ( a_reason == -1 && it < m_restrtLen && a_itcount < m_imax )
   {
     if ( m_verbosity>=4 && (it!=0 || a_itcount==0) )
       {
-        pout() << a_itcount << ") GMRES residual = " << res << endl;
+        pout() << a_itcount << ") GMRES residual = " << m_residual << endl;
       }
 
     const T &vv_it = VEC_VV(it);
@@ -396,18 +426,18 @@ void GMRESSolver<T>::CycleGMRES( T &a_xx,
     /* save the magnitude */
     *HH(it+1,it) = tt; *HES(it+1,it) = tt;
 
-    UpdateGMRESHessenberg( it, hapend, res );
+    UpdateGMRESHessenberg( it, hapend, m_residual );
 
     // increment
     it++; (a_itcount)++;
-    conv = CONVERGED( a_rnorm0, res );
+    conv = CONVERGED( a_rnorm0, m_residual );
     a_reason = conv ? 1 : -1;
     /* Catch error in happy breakdown and signal convergence and break from loop */
     if ( hapend )
     {
       if ( !conv && m_verbosity>=3)
       {
-        pout() << "You reached the happy break down, but convergence was not indicated. Residual norm=" << res << endl;
+        pout() << "You reached the happy break down, but convergence was not indicated. Residual norm=" << m_residual << endl;
       }
       break;
     }
@@ -415,7 +445,7 @@ void GMRESSolver<T>::CycleGMRES( T &a_xx,
   /* Monitor if we know that we will not return for a restart */
   if ( (a_reason!=1 || a_itcount>=m_imax) && m_verbosity>=4 )
     {
-      pout() << a_itcount << ") GMRES residual = " << res << endl;
+      pout() << a_itcount << ") GMRES residual = " << m_residual << endl;
     }
 
   /*
@@ -432,7 +462,7 @@ void GMRESSolver<T>::ResidualGMRES( T &a_vv, const T &a_xx,
                                     const T &a_bb, T &a_temp_rhs )
 {
   CH_assert(m_op != 0);
-  m_op->applyOp( a_temp_rhs, a_xx, true); /* t <- Ax */
+  m_op->applyOp( a_temp_rhs, a_xx, m_homogeneous); /* t <- Ax */
   m_op->assign( a_vv, a_bb );
   m_op->incr( a_vv, a_temp_rhs, -1.0); /* b - A(B)x */
 }
@@ -683,7 +713,7 @@ template <class T>
 void GMRESSolver<T>::ApplyAB( T &a_dest, const T &a_xx, T &a_tmp_lhs ) const
 {
   m_op->preCond( a_tmp_lhs, a_xx );
-  m_op->applyOp( a_dest, a_tmp_lhs, true);
+  m_op->applyOp( a_dest, a_tmp_lhs, m_homogeneous);
 }
 
 template <class T>

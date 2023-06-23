@@ -1308,7 +1308,7 @@ void AMRPoissonOp::levelMultiColor(LevelData<FArrayBox>&       a_phi,
 
           for (int idir = 0; idir < SpaceDim; idir++)
             {
-              if (loIV[idir] % 2 != color[idir])
+              if (abs(loIV[idir]) % 2 != color[idir])
                 {
                   loIV[idir]++;
                 }
@@ -1554,7 +1554,7 @@ void AMRPoissonOp::levelGSRBLazy( LevelData<FArrayBox>&       a_phi,
 
           for (int idir = 0; idir < SpaceDim; idir++)
             {
-              if (loIV[idir] % 2 != color[idir])
+              if (abs(loIV[idir]) % 2 != color[idir])
                 {
                   loIV[idir]++;
                 }
@@ -2009,7 +2009,12 @@ AMRLevelOp<LevelData<FArrayBox> >* AMRPoissonOpFactory::AMRnewOp(const ProblemDo
   if (ref == 0)
     {
       // coarsest AMR level
-      if (m_domains.size() == 1)
+      // (DFM 1/19/21) Second check handles the case where we allow
+      // for more levels, but this particular solver only has a single level
+      // second check should only get invoked if first one is false, so
+      // shouldn't cause problems if only a single level is allowed
+      // (since in that case there is no m_boxes[1])
+      if (m_domains.size() == 1 || !m_boxes[1].isClosed())
         {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],

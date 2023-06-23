@@ -390,6 +390,9 @@ public:
   // m_convergenceMetric.
   Real m_convergenceMetric;
 
+  /// initial residual from this solve
+  Real m_initial_rnorm;
+  
   // used to give an additional cushion in the EPS used for bottom solves
   Real m_bottomSolverEpsCushion;
 
@@ -970,22 +973,22 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       }
   //compute initial residual and initialize internal residual to it
 
-  Real initial_rnorm = 0;
+  m_initial_rnorm = 0;
   {
     CH_TIME("Initial AMR Residual");
-    initial_rnorm=computeAMRResidual(uberResidual, a_phi, a_rhs, l_max, l_base, a_forceHomogeneous, true);
+    m_initial_rnorm=computeAMRResidual(uberResidual, a_phi, a_rhs, l_max, l_base, a_forceHomogeneous, true);
   }
 
   if (m_convergenceMetric != 0.)
     {
-      initial_rnorm = m_convergenceMetric;
+      m_initial_rnorm = m_convergenceMetric;
     }
 
-  Real rnorm = initial_rnorm;
-  Real norm_last = 2*initial_rnorm;
+  Real rnorm = m_initial_rnorm;
+  Real norm_last = 2*m_initial_rnorm;
 
   /// set bottom solver convergence norm and solver tolerance
-  m_bottomSolver->setConvergenceMetrics(initial_rnorm, m_bottomSolverEpsCushion*m_eps);
+  m_bottomSolver->setConvergenceMetrics(m_initial_rnorm, m_bottomSolverEpsCushion*m_eps);
 
   int iter=0;
   if (m_verbosity >= 2) ////
@@ -998,7 +1001,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     }
 
   bool goNorm = rnorm > m_normThresh;                        //iterate if norm is not small enough
-  bool goRedu = rnorm > m_eps*initial_rnorm;                 //iterate if initial norm is not reduced enough
+  bool goRedu = rnorm > m_eps*m_initial_rnorm;                 //iterate if initial norm is not reduced enough
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   bool goMin = iter < m_iterMin ; // iterate if iter < min
@@ -1083,12 +1086,12 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
         }
 
       goNorm = rnorm > m_normThresh;                        //keep iterating if norm is not small enough
-      goRedu = rnorm > m_eps*initial_rnorm;                 //keep iterating if initial norm is not reduced enough
+      goRedu = rnorm > m_eps*m_initial_rnorm;                 //keep iterating if initial norm is not reduced enough
       goIter = iter < m_iterMax;                            //keep iterating if iter < max iteration count
       goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//keep iterating if we didn't hang
       goMin = iter < m_iterMin ; // keep iterating if iter < min
     }
-  // if ((rnorm > 10.*initial_rnorm) && (rnorm > 10.*m_eps))
+  // if ((rnorm > 10.*m_initial_rnorm) && (rnorm > 10.*m_eps))
   //   {
   //     pout() << "solver seems to have blown up" << endl;
   //     MayDay::Error("kaboom");
@@ -1141,9 +1144,9 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
 
   //compute initial residual and initialize internal residual to it
   m_op[0]->residual(*uberResidual[0], *a_phi[0], *a_rhs[0], true);
-  Real initial_rnorm = m_op[0]->norm(*uberResidual[0], 0);
-  Real rnorm = initial_rnorm;
-  Real norm_last = 2*initial_rnorm;
+  Real m_initial_rnorm = m_op[0]->norm(*uberResidual[0], 0);
+  Real rnorm = m_initial_rnorm;
+  Real norm_last = 2*m_initial_rnorm;
 
   int iter=0;
   if (m_verbosity >= 3)
@@ -1151,7 +1154,7 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
       pout() << "    AMRMultiGrid::relaxOnly iteration = " << iter << ", residual norm = " << rnorm  << std::endl;
     }
   bool goNorm = rnorm > m_normThresh;                        //iterate if norm is not small enough
-  bool goRedu = rnorm > m_eps*initial_rnorm;                 //iterate if initial norm is not reduced enough
+  bool goRedu = rnorm > m_eps*m_initial_rnorm;                 //iterate if initial norm is not reduced enough
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   while (goIter && goRedu && goHang && goNorm)
@@ -1169,7 +1172,7 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
                  << ", rate = " << norm_last/rnorm << std::endl;
         }
       goNorm = rnorm > m_normThresh;                        //keep iterating if norm is not small enough
-      goRedu = rnorm > m_eps*initial_rnorm;                 //keep iterating if initial norm is not reduced enough
+      goRedu = rnorm > m_eps*m_initial_rnorm;                 //keep iterating if initial norm is not reduced enough
       goIter = iter < m_iterMax;                            //keep iterating if iter < max iteration count
       goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//keep iterating if we didn't hang
     }
