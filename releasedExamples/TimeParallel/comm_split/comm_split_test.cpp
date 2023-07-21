@@ -77,17 +77,17 @@ chomboCommSplitTest()
   // Determine color based on original rank
   int icolor = world_rank / numSubset; 
 
-  MPI_Comm row_comm;
-  MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &row_comm);
+  MPI_Comm color_comm;
+  MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
   
-  int row_rank, row_size;
-  MPI_Comm_rank(row_comm, &row_rank);
-  MPI_Comm_size(row_comm, &row_size);
+  int color_rank, color_size;
+  MPI_Comm_rank(color_comm, &color_rank);
+  MPI_Comm_size(color_comm, &color_size);
   
   pout() << "chomboCommSplit: world rank = " << world_rank << endl;
   pout() << "chomboCommSplit: world size = " << world_size << endl;
-  pout() << "chomboCommSplit: row   rank = " <<   row_rank << endl;
-  pout() << "chomboCommSplit: row   size = " <<   row_size << endl;
+  pout() << "chomboCommSplit: color rank = " << color_rank << endl;
+  pout() << "chomboCommSplit: color size = " << color_size << endl;
   pout() << "chomboCommSplit: proc color = " << icolor     << endl;
   
   IntVect ivlo =        IntVect::Zero;
@@ -97,7 +97,8 @@ chomboCommSplitTest()
   Vector<int> procs;
   domainSplit(domain, boxes,  maxBoxSize);
   LoadBalance(procs, boxes);
-  DisjointBoxLayout(boxes, procs);
+  DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
+  DisjointBoxLayout dblColor(boxes, procs, color_comm);
     
   
   return 0;

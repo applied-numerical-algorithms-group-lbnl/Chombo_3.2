@@ -8,19 +8,14 @@
  */
 #endif
 
-//
-// These are the inevitable functions that people
-// can't avoid using when writing a SPMD program.
-// It is a minimal set from which more elaborate
-// functionality can be generated.  As always, a
-// user is free to utilize the entire MPI programming
-// on their own platform.  The functions are
-// assured to work on all machines supported.
-//
-
 #ifndef _SPMD_H_
 #define _SPMD_H_
-
+///
+/**
+  This is a grab bag of useful stuff used in Chombo MPI code.
+  This includes utilities for Chombo serialization routines used in more advanced 
+  parallel data structures.
+*/
 #include "REAL.H"
 #include <string>
 #include "Vector.H"

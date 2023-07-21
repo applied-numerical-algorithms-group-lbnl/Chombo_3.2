@@ -187,14 +187,24 @@ LayoutIterator BoxLayout::layoutIterator() const
   return LayoutIterator(*this, m_layout);
 }
 
-BoxLayout::BoxLayout(const Vector<Box>& a_boxes, const Vector<int>& assignments)
+BoxLayout::
+BoxLayout(const Vector<Box>& a_boxes,
+          const Vector<int>& assignments
+#ifdef CH_MPI            
+          ,MPI_Comm a_comm
+#endif            
+  )
   :m_boxes( new Vector<Entry>()),
    m_layout(new int),
    m_closed(new bool(false)),
    m_sorted(new bool(false)),
    m_indicies(new Vector<LayoutIndex>())
 {
-  define(a_boxes, assignments);
+  define(a_boxes, assignments
+#ifdef CH_MPI         
+         ,a_comm
+#endif         
+    );
 }
 
 BoxLayout::BoxLayout(const LayoutData<Box>& a_newLayout)
@@ -235,9 +245,18 @@ void BoxLayout::checkDefine(const Vector<Box>& a_boxes, const Vector<int>& a_pro
 }
 
 void
-BoxLayout::define(const Vector<Box>& a_boxes, const Vector<int>& a_procIDs)
+BoxLayout::
+define(const Vector<Box>& a_boxes,
+       const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+          ,MPI_Comm a_comm
+#endif            
+  )
 {
   checkDefine(a_boxes, a_procIDs);
+#ifdef CH_MPI            
+  m_comm = a_comm;
+#endif    
   const int num_boxes = a_boxes.size();
   //const int num_procs = a_procIDs.size();
   m_boxes->resize(num_boxes);

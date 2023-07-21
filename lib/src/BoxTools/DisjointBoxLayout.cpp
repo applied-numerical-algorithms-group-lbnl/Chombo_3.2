@@ -39,8 +39,16 @@ numPointsThisProc() const
 }
 
 DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
-                                     const Vector<int>& a_procIDs)
-  :BoxLayout(a_boxes,a_procIDs)
+                                     const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+                                     ,MPI_Comm a_comm
+#endif
+)
+  :BoxLayout(a_boxes,a_procIDs
+#ifdef CH_MPI            
+             ,a_comm
+#endif
+    )
 {
   CH_assert(isDisjoint());
   computeNeighbors();
@@ -49,8 +57,17 @@ DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
 
 DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
                                      const Vector<int>& a_procIDs,
-                                     const ProblemDomain& a_physDomain)
-  :BoxLayout(a_boxes,a_procIDs), m_physDomain(a_physDomain)
+                                     const ProblemDomain& a_physDomain
+#ifdef CH_MPI            
+                                     ,MPI_Comm a_comm
+#endif
+)
+  :BoxLayout(a_boxes,
+             a_procIDs
+#ifdef CH_MPI            
+             ,a_comm
+#endif
+    ), m_physDomain(a_physDomain)             
 {
   CH_assert(isDisjoint());
   computeNeighbors(); // even though BoxLayout::close is virtual, virtual dispatch does not
@@ -67,9 +84,19 @@ DisjointBoxLayout::DisjointBoxLayout(const LayoutData<Box>& a_newLayout)
                                      
 void
 DisjointBoxLayout::define(const Vector<Box>& a_boxes,
-                          const Vector<int>& a_procIDs)
+                          const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+                          ,MPI_Comm a_comm
+#endif
+)
 {
-  BoxLayout::define(a_boxes,a_procIDs);
+  BoxLayout::define(a_boxes,
+                    a_procIDs
+#ifdef CH_MPI            
+                    ,a_comm
+#endif
+    );
+                    
   CH_assert(isDisjoint());
 
 }
@@ -77,10 +104,19 @@ DisjointBoxLayout::define(const Vector<Box>& a_boxes,
 void
 DisjointBoxLayout::define(const Vector<Box>& a_boxes,
                           const Vector<int>& a_procIDs,
-                          const ProblemDomain& a_physDomain)
+                          const ProblemDomain& a_physDomain
+#ifdef CH_MPI            
+                          ,MPI_Comm a_comm
+#endif
+)
 {
   m_physDomain = a_physDomain;
-  BoxLayout::define(a_boxes,a_procIDs);
+  BoxLayout::define(a_boxes,
+                    a_procIDs
+#ifdef CH_MPI            
+                    ,a_comm
+#endif
+    );
   CH_assert(isDisjoint());
 
 }

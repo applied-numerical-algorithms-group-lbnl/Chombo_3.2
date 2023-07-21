@@ -52,7 +52,11 @@ public:
       as the Box Vector.  On exit, the DisjointBoxLayout will be closed.
   */
   DisjointBoxLayout(const Vector<Box>& a_boxes,
-                    const Vector<int>& a_procIDs);
+                    const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+                    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif
+                    );
 
   ///
   /** Construct from a Vector of Boxes and optionally a Vector of
@@ -62,7 +66,11 @@ public:
   */
   DisjointBoxLayout(const Vector<Box>& a_boxes,
                     const Vector<int>& a_procIDs,
-                    const ProblemDomain& a_physDomain);
+                    const ProblemDomain& a_physDomain
+#ifdef CH_MPI            
+                    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif
+                    );
 
   ///
   /** Construct from a LayoutData<Box>.
@@ -91,7 +99,11 @@ public:
   */
   virtual void
   define(const Vector<Box>& a_boxes,
-         const Vector<int>& a_procIDs);
+         const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif
+    );
 
   ///
   /**
@@ -132,7 +144,9 @@ public:
       the problem domain).
   */
   virtual void
-  define(const BoxLayout& a_layout, const ProblemDomain& a_physDomain);
+  define(const BoxLayout& a_layout,
+         const ProblemDomain& a_physDomain
+    );
 
   ///
   /** Define this DisjointBoxLayout from a Vector of Boxes.  This is a
@@ -143,7 +157,11 @@ public:
   virtual void
   define(const Vector<Box>& a_boxes,
          const Vector<int>& a_procIDs,
-         const ProblemDomain& a_physDomain);
+         const ProblemDomain& a_physDomain
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif
+    );
 
   ///
   /** Define this DisjointBoxLayout from a Vector of Boxes.
@@ -152,8 +170,14 @@ public:
   virtual void
   define_pd(const Vector<Box>& a_boxes,
             const Vector<int>& a_procIDs,
-            const ProblemDomain& a_physDomain)
-  {define(a_boxes, a_procIDs,  a_physDomain);}
+            const ProblemDomain& a_physDomain
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif
+    )
+  {
+    define(a_boxes, a_procIDs,  a_physDomain, a_comm);
+  }
 
   /*@}*/
 
