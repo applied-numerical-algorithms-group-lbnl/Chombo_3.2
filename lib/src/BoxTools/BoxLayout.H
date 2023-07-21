@@ -173,7 +173,11 @@ public:
   /** Construct from a LayoutData<Box>.
       On exit, the BoxLayout will be closed.
   */
-  BoxLayout(const LayoutData<Box>& a_newLayout);
+  BoxLayout(const LayoutData<Box>& a_newLayout
+#ifdef CH_MPI
+                  ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif                  
+    );
 
   ///
   void transform(BaseTransform& a_transform);
@@ -216,7 +220,11 @@ public:
       each Box in the LayoutData<Box>.
       On exit, the BoxLayout will be closed, and NOT re-sorted.
   */
-  virtual void define(const LayoutData<Box>& a_newLayout);
+  virtual void define(const LayoutData<Box>& a_newLayout
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif            
+    );
 
   /*@}*/
 
