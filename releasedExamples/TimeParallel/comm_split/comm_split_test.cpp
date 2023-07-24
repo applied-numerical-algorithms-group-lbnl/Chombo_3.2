@@ -173,9 +173,9 @@ int runSolver(const DisjointBoxLayout  & a_grid,
 {
   CH_TIME("runSolver");
 
-  int status = 0;
   ParmParse ppMain("runSolver");
 
+  pout() << "runSolver: making vector structures" << endl;
   // single level only solve
   Vector<DisjointBoxLayout> amrGrids(1, a_grid);
   Vector<ProblemDomain>   amrDomains(1, a_domain);
@@ -183,6 +183,7 @@ int runSolver(const DisjointBoxLayout  & a_grid,
   Vector<int> refRatios(1, 2);
   int finestLevel = 0;
 
+  pout() << "runSolver: defining the solver " << endl;
   // initialize solver
   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
@@ -192,42 +193,40 @@ int runSolver(const DisjointBoxLayout  & a_grid,
               refRatios, amrDx, finestLevel);
 
 
-  // allocate solution and RHS, initialize RHS
+  pout() << "runSolver: allocate solution and RHS" << endl;
   int numLevels = amrGrids.size();
   Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
   Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
-  // this is for convenience
-  Vector<LevelData<FArrayBox>* > resid(numLevels, NULL);
 
   for (int lev=0; lev<=finestLevel; lev++)
   {
     const DisjointBoxLayout& levelGrids = amrGrids[lev];
     phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-    resid[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
+  pout() << "runSolver: setting the rhs" << endl;
   setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
+  pout() << "runSolver: running amrmultigrid::solve" << endl;
   bool zeroInitialGuess = true;
   amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
 
 #ifdef CH_USE_HDF5
-    string fname = a_prefixForIO + string("chombo.hdf5");
-    writeLevelname(phi[0], fname.c_str());
+  string fname = a_prefixForIO + string("chombo.hdf5");
+  pout() << "runSolver: writing solution to " << fname << endl;
+  writeLevelname(phi[0], fname.c_str());
 #endif 
 
-  // clean up
+  pout() << "runSolver: clean up " << endl;
   for (int lev=0; lev<phi.size(); lev++)
   {
     delete phi[lev];
     delete rhs[lev];
-    delete resid[lev];
   }
-
   delete amrSolver;
 
-  return status;
+  return 0;
 }
 /**
    just to get something working
@@ -335,11 +334,11 @@ runColoredSolvers()
   MPI_Comm_rank(color_comm, &color_rank);
   MPI_Comm_size(color_comm, &color_size);
   
-  pout() << "chomboCommSplit: world rank = " << world_rank << endl;
-  pout() << "chomboCommSplit: world size = " << world_size << endl;
-  pout() << "chomboCommSplit: color rank = " << color_rank << endl;
-  pout() << "chomboCommSplit: color size = " << color_size << endl;
-  pout() << "chomboCommSplit: proc color = " << icolor     << endl;
+  pout() << "runColoredSolvers: world rank = " << world_rank << endl;
+  pout() << "runColoredSolvers: world size = " << world_size << endl;
+  pout() << "runColoredSolvers: color rank = " << color_rank << endl;
+  pout() << "runColoredSolvers: color size = " << color_size << endl;
+  pout() << "runColoredSolvers: proc color = " << icolor     << endl;
   
   IntVect ivlo =        IntVect::Zero;
   IntVect ivhi = (nx-1)*IntVect::Unit;
@@ -350,15 +349,18 @@ runColoredSolvers()
   LoadBalance(procs, boxes);
   DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
   DisjointBoxLayout dblColor(boxes, procs, color_comm);
+  pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
   double dx = 1./nx;
   {
     CH_TIME("running world solver Ncolor times");
     for(int isolve = 0; isolve < numColors; isolve++)
     {
+      pout() << "isolve = " << isolve << endl;
       string ioprefix = string("world_comm_") + to_string(isolve);
       runSolver(dblWorld, domain, dx, ioprefix);
     }
   }
+  pout() << "runColoredSolvers: running colored solvers" << endl;
   {
     CH_TIME("colored solves");
     string ioprefix = string("color_comm_") + to_string(icolor);
