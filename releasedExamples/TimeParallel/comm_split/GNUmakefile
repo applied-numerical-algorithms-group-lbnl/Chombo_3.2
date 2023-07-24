@@ -6,7 +6,7 @@ ebase = comm_split_test
 
 CHOMBO_HOME = ../../../lib
 
-LibNames = BoxTools
+LibNames = AMRElliptic AMRTools BoxTools BaseTools
 
 base_dir = .
 src_dirs = 

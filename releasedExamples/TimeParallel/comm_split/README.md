@@ -9,3 +9,4 @@
   * Each processor will know about the world communcator and one row comunicator.
   * Each process knows its place in both the world and its row communcators.
   * Data transfer for this experimental bit will be via file I/O using HDF5.
+  * Example adapted from the AMRPoisson/execCell example.
