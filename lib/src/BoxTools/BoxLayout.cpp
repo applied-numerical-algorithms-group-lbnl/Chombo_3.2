@@ -124,7 +124,7 @@ void BoxLayout::buildDataIndex()
   std::list<DataIndex> dlist;
   unsigned int index = 0;
   unsigned int datIn = 0;
-  unsigned int p = ::procID(m_comm);
+  unsigned int p = ::procID(*m_comm_ptr);
   int count=0;
   const Entry* box;
 
@@ -191,7 +191,7 @@ BoxLayout::
 BoxLayout(const Vector<Box>& a_boxes,
           const Vector<int>& assignments
 #ifdef CH_MPI            
-          ,MPI_Comm a_comm
+          ,MPI_Comm* a_comm_ptr
 #endif            
   )
   :m_boxes( new Vector<Entry>()),
@@ -202,14 +202,14 @@ BoxLayout(const Vector<Box>& a_boxes,
 {
   define(a_boxes, assignments
 #ifdef CH_MPI         
-         ,a_comm
+         ,a_comm_ptr
 #endif         
     );
 }
 
 BoxLayout::BoxLayout(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI
-                  ,MPI_Comm a_comm
+                  ,MPI_Comm* a_comm
 #endif
   )
   :m_boxes( new Vector<Entry>()),
@@ -253,14 +253,14 @@ BoxLayout::
 define(const Vector<Box>& a_boxes,
        const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-       ,MPI_Comm a_comm
+       ,MPI_Comm* a_comm_ptr
 #endif            
   )
 {
-  checkDefine(a_boxes, a_procIDs);
 #ifdef CH_MPI            
-  m_comm = a_comm;
+  m_comm_ptr = a_comm_ptr;
 #endif    
+  checkDefine(a_boxes, a_procIDs);
   const int num_boxes = a_boxes.size();
   //const int num_procs = a_procIDs.size();
   m_boxes->resize(num_boxes);
@@ -282,11 +282,11 @@ define(const Vector<Box>& a_boxes,
 void
 BoxLayout::define(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI
-                  ,MPI_Comm a_comm
+                  ,MPI_Comm* a_comm_ptr
 #endif                  
   )
 {
-  m_comm = a_comm;
+  m_comm_ptr = a_comm_ptr;
   const BoxLayout& baseLayout = a_newLayout.boxLayout();
 
   // First copy from the base layout.
@@ -318,7 +318,7 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
   // but we have to do it one Vector<Box> at a time.
   Vector< Vector<Box> > allNewBoxes;
   allNewBoxes.resize(numProc());
-  if (::procID(m_comm) == iprocdest)
+  if (::procID(*m_comm_ptr) == iprocdest)
   {
     for (int iproc = 0; iproc < numProc(); iproc++)
     {
@@ -804,159 +804,14 @@ int maxBits(std::vector<Box>::iterator a_first, std::vector<Box>::iterator a_las
   return bits;
 }
 
-#ifdef CH_MPI
-
-void parallelMortonOrdering(std::vector<Box>::iterator a_first, std::vector<Box>::iterator a_last,
-                            int& a_maxBits, MPI_Comm& comm)
-{
-  int procs = 0, rank=0;
-  int size = a_last - a_first;
-  const bool newversion = true;
-
-  MPI_Comm_size ( comm, &procs );
-  MPI_Comm_rank ( comm, &rank  );
-
-  if (size < 2000 || procs == 1)
-  {
-    a_maxBits = maxBits(a_first, a_last);
-    std::sort(a_first, a_last, MortonOrdering(a_maxBits));
-  }
-  else
-  {
-    MPI_Comm split_comm;
-    int middleRank = procs/2;
-    int color;
-    std::vector<Box>::iterator first, last, middle = a_first + size/2;
-    if ( newversion )
-    {
-      color = rank%2;
-      if (color == 0)
-      {
-        first = a_first;
-        last  = middle;
-      }
-      else
-      {
-        first = middle;
-        last  = a_last;
-      }
-    }
-    else
-    {
-      if (rank < middleRank)
-      {
-        color = 0;
-        first = a_first;
-        last  = middle;
-      }
-      else
-      {
-        color = 1;
-        first = middle;
-        last  = a_last;
-      }
-    }
-
-    MPI_Comm_split(comm, color, rank, &split_comm);
-    int maxBits;
-    parallelMortonOrdering(first, last, maxBits, split_comm);
-
-    MPI_Comm_free(&split_comm);
-
-    int countLo = (middle - a_first )*sizeof(Box);
-    int countHi = (a_last - middle )*sizeof(Box);
-    MPI_Status status;
-
-    if ( !newversion )
-    {
-      if (color == 0)
-      {
-        MPI_Send(&(*a_first), countLo, MPI_CHAR, rank+middleRank, 0, comm);
-        MPI_Recv(&(*middle),countHi, MPI_CHAR, rank+middleRank, 0, comm, &status);
-      }
-      else
-      {
-        MPI_Recv(&(*a_first),  countLo, MPI_CHAR, rank-middleRank, 0, comm, &status);
-        MPI_Send(&(*middle), countHi, MPI_CHAR, rank-middleRank, 0, comm);
-      }
-      // middle sends to end of ragged edge
-      if (middleRank*2 != procs && rank == middleRank)
-      {
-        MPI_Send(&(*a_first),  countLo, MPI_CHAR, procs-1, 0, comm);
-        MPI_Recv(&(*middle), countHi, MPI_CHAR, procs-1, 0, comm, &status);
-      }
-    }
-    else
-    {
-      if (color == 0)
-      {
-        // last proc of ragged edge -- s/r back
-        if (procs%2 != 0 && rank == procs-1)
-        {
-          MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank-1, 0,
-                       &(*middle),  countHi, MPI_CHAR, rank-1, 0, comm, &status);
-        }
-        else
-        {
-          // normal s/r up
-          MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank+1, 0,
-                       &(*middle),  countHi, MPI_CHAR, rank+1, 0, comm, &status);
-        }
-      }
-      else
-      {
-        // normal s/r back
-        MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank-1, 0,
-                     &(*a_first),countLo, MPI_CHAR, rank-1, 0, comm, &status);
-        // special r/s forward
-        if (procs%2 != 0 && rank == procs-2)
-        {
-          MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank+1, 0,
-                       &(*a_first),countLo, MPI_CHAR, rank+1, 0, comm, &status);
-
-        }
-      }
-    }
-    MPI_Allreduce (&maxBits, &a_maxBits, 1, MPI_INT, MPI_MAX, comm );
-    std::inplace_merge(a_first, middle, a_last, MortonOrdering(a_maxBits));
-  }
-}
-#endif
-
-// testing version that runs both the serial and parallel versions and compares.
-// void mortonOrdering(Vector<Box>& a_boxes)
-// {
-//   int bits;
-// #ifdef CH_MPI
-//   Vector<Box> tmp(a_boxes);
-//   std::vector<Box>& a = tmp.stdVector();
-//   parallelMortonOrdering(a.begin(), a.end(), bits, Chombo_MPI::comm);
-// #endif
-//   std::vector<Box>& b = a_boxes.stdVector();
-
-//   bits = maxBits(b.begin(), b.end());
-//   std::sort(b.begin(), b.end(), MortonOrdering(bits));
-
-// #ifdef CH_MPI
-//   std::vector<Box>::iterator ita=a.begin(), itb=b.begin();
-//   for (;itb<b.end(); ++ita, ++itb)
-//     {
-//       if (*ita != *itb) MayDay::Error("parallel Morton ordering failed");
-//     }
-// #endif
-// }
 
 void mortonOrdering(Vector<Box>& a_boxes)
 {
   CH_TIME("mortonOrdering");
   std::vector<Box>& b = a_boxes.stdVector();
   int bits;
-#ifdef CH_MPI
-  parallelMortonOrdering(b.begin(), b.end(), bits, Chombo_MPI::comm);
-#else
   bits = maxBits(b.begin(), b.end());
   std::sort(b.begin(), b.end(), MortonOrdering(bits));
-#endif
 
 }
 #include "NamespaceFooter.H"

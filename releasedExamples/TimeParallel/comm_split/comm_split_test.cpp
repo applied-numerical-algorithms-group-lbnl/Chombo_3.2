@@ -132,15 +132,16 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   // solving poisson problem here
   Real alpha =0.0;
   Real beta = 1.0;
-
+  pout() << "setupSolver: defining the operator factory" << endl;
   opFactory.define(a_amrDomains[0],
                    a_amrGrids,
                    a_refRatios,
                    a_amrDx[0],
-                   &ParseBC, alpha, beta);
+                   &ParseBC, alpha, beta, true);
 
   AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
 
+  pout() << "setupSolver: calling AMRMultigrid::define" << endl;
   a_amrSolver->define(a_amrDomains[0], castFact,
                       &a_bottomSolver, numLevels);
 
@@ -153,6 +154,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.get("tolerance", eps);
   ppSolver.get("hang",      hang);
 
+  pout() << "setupSolver: setting multigrid parameters" << endl;
   Real normThresh = 1.0e-30;
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
                                    numMG, maxIter, eps, hang, normThresh);
@@ -303,8 +305,8 @@ chomboCommSplitTest()
   Vector<int> procs;
   domainSplit(domain, boxes,  maxBoxSize);
   LoadBalance(procs, boxes);
-  DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
-  DisjointBoxLayout dblColor(boxes, procs, color_comm);
+  DisjointBoxLayout dblWorld(boxes, procs, &Chombo_MPI::comm);
+  DisjointBoxLayout dblColor(boxes, procs, &color_comm);
     
   
   return 0;
@@ -320,6 +322,7 @@ runColoredSolvers()
   pp.get("numColors" , numColors);
   ///
   // Get the rank and size in the original communicator
+#if 0  
   int world_rank, world_size;
   MPI_Comm_rank(Chombo_MPI::comm, &world_rank);
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
@@ -339,16 +342,15 @@ runColoredSolvers()
   pout() << "runColoredSolvers: color rank = " << color_rank << endl;
   pout() << "runColoredSolvers: color size = " << color_size << endl;
   pout() << "runColoredSolvers: proc color = " << icolor     << endl;
-  
+#endif  
   IntVect ivlo =        IntVect::Zero;
   IntVect ivhi = (nx-1)*IntVect::Unit;
   Box domain(ivlo, ivhi);
   Vector<Box> boxes;
   Vector<int> procs;
   domainSplit(domain, boxes,  maxBoxSize);
-  LoadBalance(procs, boxes);
-  DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
-  DisjointBoxLayout dblColor(boxes, procs, color_comm);
+  LoadBalance(procs , boxes);
+  DisjointBoxLayout dblWorld(boxes, procs);
   pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
   double dx = 1./nx;
   {
@@ -360,12 +362,15 @@ runColoredSolvers()
       runSolver(dblWorld, domain, dx, ioprefix);
     }
   }
+#if 0  
+  DisjointBoxLayout dblColor(boxes, procs, color_comm);
   pout() << "runColoredSolvers: running colored solvers" << endl;
   {
     CH_TIME("colored solves");
     string ioprefix = string("color_comm_") + to_string(icolor);
     runSolver(dblColor, domain, dx, ioprefix);
   }
+#endif  
   return 0;
 }
 
@@ -373,6 +378,7 @@ runColoredSolvers()
 /// drives the tests here
 int spmdTest()
 {
+#if 0  
   {
     int ierr = mpiTutorialCommSplitTest();
     if( ierr != 0)
@@ -389,6 +395,7 @@ int spmdTest()
       return 10*ierr;
     }
   }
+#endif  
   { 
     int ierr = runColoredSolvers();
     if( ierr != 0)

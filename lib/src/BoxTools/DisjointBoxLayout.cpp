@@ -41,7 +41,7 @@ numPointsThisProc() const
 DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
                                      const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-                                     ,MPI_Comm a_comm
+                                     ,MPI_Comm* a_comm
 #endif
 )
   :BoxLayout(a_boxes,a_procIDs
@@ -59,7 +59,7 @@ DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
                                      const Vector<int>& a_procIDs,
                                      const ProblemDomain& a_physDomain
 #ifdef CH_MPI            
-                                     ,MPI_Comm a_comm
+                                     ,MPI_Comm* a_comm
 #endif
 )
   :BoxLayout(a_boxes,
@@ -86,7 +86,7 @@ void
 DisjointBoxLayout::define(const Vector<Box>& a_boxes,
                           const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-                          ,MPI_Comm a_comm
+                          ,MPI_Comm* a_comm
 #endif
 )
 {
@@ -106,7 +106,7 @@ DisjointBoxLayout::define(const Vector<Box>& a_boxes,
                           const Vector<int>& a_procIDs,
                           const ProblemDomain& a_physDomain
 #ifdef CH_MPI            
-                          ,MPI_Comm a_comm
+                          ,MPI_Comm* a_comm
 #endif
 )
 {

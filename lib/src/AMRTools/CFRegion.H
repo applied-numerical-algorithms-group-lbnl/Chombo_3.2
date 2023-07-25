@@ -24,7 +24,7 @@
 /**
 
 
-  */
+ */
 class CFRegion
 {
 public:
@@ -57,9 +57,10 @@ public:
 
   */
   CFRegion(const DisjointBoxLayout& a_grids,
-           const ProblemDomain&     a_domain)
+           const ProblemDomain&     a_domain,
+           bool a_print = false)
   {
-    define(a_grids, a_domain);
+    define(a_grids, a_domain, a_print);
   }
   ///
   /**
@@ -67,7 +68,8 @@ public:
   */
   void
   define(const DisjointBoxLayout& a_grids,
-         const ProblemDomain&     a_domain);
+         const ProblemDomain&     a_domain,
+         bool a_print = false);
 
 
   const CFRegion& operator=(const CFRegion& a_rhs);

@@ -165,7 +165,7 @@ public:
   BoxLayout(const Vector<Box>& a_boxes,
             const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-            ,MPI_Comm a_comm = Chombo_MPI::comm
+            ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif            
     );
 
@@ -175,7 +175,7 @@ public:
   */
   BoxLayout(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI
-                  ,MPI_Comm a_comm = Chombo_MPI::comm
+                  ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif                  
     );
 
@@ -208,7 +208,7 @@ public:
   define(const Vector<Box>& a_boxes,
          const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+         ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif            
             );
 
@@ -222,7 +222,7 @@ public:
   */
   virtual void define(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+         ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif            
     );
 
@@ -662,7 +662,7 @@ protected:
   friend class LayoutIterator;
   friend class DataIterator;
 #ifdef CH_MPI
-  MPI_Comm m_comm;
+  MPI_Comm* m_comm_ptr;
 #endif  
   RefCountedPtr<Vector<Entry> >        m_boxes;
   RefCountedPtr<int>                   m_layout;

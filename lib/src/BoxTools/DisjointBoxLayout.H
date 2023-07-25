@@ -54,7 +54,7 @@ public:
   DisjointBoxLayout(const Vector<Box>& a_boxes,
                     const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-                    ,MPI_Comm a_comm = Chombo_MPI::comm
+                    ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif
                     );
 
@@ -68,7 +68,7 @@ public:
                     const Vector<int>& a_procIDs,
                     const ProblemDomain& a_physDomain
 #ifdef CH_MPI            
-                    ,MPI_Comm a_comm = Chombo_MPI::comm
+                    ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif
                     );
 
@@ -101,7 +101,7 @@ public:
   define(const Vector<Box>& a_boxes,
          const Vector<int>& a_procIDs
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+         ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif
     );
 
@@ -159,7 +159,7 @@ public:
          const Vector<int>& a_procIDs,
          const ProblemDomain& a_physDomain
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+         ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif
     );
 
@@ -172,7 +172,7 @@ public:
             const Vector<int>& a_procIDs,
             const ProblemDomain& a_physDomain
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+         ,MPI_Comm* a_comm = &Chombo_MPI::comm
 #endif
     )
   {

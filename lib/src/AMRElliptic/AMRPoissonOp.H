@@ -538,16 +538,18 @@ public:
               const Real&                      a_coarsedx,
               BCHolder                         a_bc,
               Real                             a_alpha = 0.0,
-              Real                             a_beta  = 1.0);
+              Real                             a_beta  = 1.0,
+              bool                             a_print = false);
 
   // regular multigrid definition function --deprecated
-  void define(const ProblemDomain&     a_domain,
-              const DisjointBoxLayout& a_grid,
-              const Real&              a_dx,
-              BCHolder                 a_bc,
-              int                      a_maxDepth = -1,
-              Real                     a_alpha = 0.0,
-              Real                     a_beta  = 1.0);
+  void define(const ProblemDomain&             a_domain,
+              const DisjointBoxLayout&         a_grid,
+              const Real&                      a_dx,
+              BCHolder                         a_bc,
+              int                              a_maxDepth = -1,
+              Real                             a_alpha = 0.0,
+              Real                             a_beta  = 1.0,
+              bool                             a_print = false);
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
@@ -573,7 +575,7 @@ private:
   Real m_beta;
 
   Vector<Copier>   m_exchangeCopiers;
-  Vector<CFRegion> m_cfregion;
+  Vector<shared_ptr<CFRegion> > m_cfregionVector;
 };
 
 #include "NamespaceFooter.H"
