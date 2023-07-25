@@ -124,7 +124,7 @@ void BoxLayout::buildDataIndex()
   std::list<DataIndex> dlist;
   unsigned int index = 0;
   unsigned int datIn = 0;
-  unsigned int p = ::procID(m_comm);
+  unsigned int p = ::procID(Chombo_MPI::comm);
   int count=0;
   const Entry* box;
 
@@ -259,7 +259,7 @@ define(const Vector<Box>& a_boxes,
 {
   checkDefine(a_boxes, a_procIDs);
 #ifdef CH_MPI            
-  m_comm = a_comm;
+  //m_comm = a_comm;
 #endif    
   const int num_boxes = a_boxes.size();
   //const int num_procs = a_procIDs.size();
@@ -286,7 +286,7 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
 #endif                  
   )
 {
-  m_comm = a_comm;
+//  m_comm = a_comm;
   const BoxLayout& baseLayout = a_newLayout.boxLayout();
 
   // First copy from the base layout.
@@ -318,7 +318,7 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
   // but we have to do it one Vector<Box> at a time.
   Vector< Vector<Box> > allNewBoxes;
   allNewBoxes.resize(numProc());
-  if (::procID(m_comm) == iprocdest)
+  if (::procID(Chombo_MPI::comm) == iprocdest)
   {
     for (int iproc = 0; iproc < numProc(); iproc++)
     {

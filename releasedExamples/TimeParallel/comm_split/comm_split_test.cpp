@@ -315,9 +315,30 @@ runColoredSolvers()
 {
   ParmParse pp("runColoredSolvers");
   int nx, maxBoxSize, numColors;
-  pp.get("nx", nx);
-  pp.get("maxBoxSize", maxBoxSize);
-  pp.get("numColors" , numColors);
+  pp.get("nx"        , nx         );
+  pp.get("maxBoxSize", maxBoxSize );
+  pp.get("numColors" , numColors  );
+
+  pout() << "runColoredSolvers:nx         =" << nx         << endl;
+  pout() << "runColoredSolvers:maxBoxSize =" << maxBoxSize << endl;
+  pout() << "runColoredSolvers:numColors  =" << numColors  << endl;
+  IntVect ivlo =        IntVect::Zero;
+  IntVect ivhi = (nx-1)*IntVect::Unit;
+  Box domain(ivlo, ivhi);
+  Vector<Box> boxes;
+  Vector<int> procs;
+  domainSplit(domain, boxes,  maxBoxSize);
+  double dx = 1./nx;
+  LoadBalance(procs, boxes);
+  {
+    CH_TIME("runColoredSolvers: run4586");
+    pout() << "runColoredSolvers: running on standard" << endl;
+    string  ioprefix("dbl4586");
+    DisjointBoxLayout dbl4586(boxes, procs);
+    runSolver(        dbl4586, domain, dx, ioprefix);
+  }
+#if 0  
+
   ///
   // Get the rank and size in the original communicator
   int world_rank, world_size;
@@ -350,7 +371,6 @@ runColoredSolvers()
   DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
   DisjointBoxLayout dblColor(boxes, procs, color_comm);
   pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
-  double dx = 1./nx;
   {
     CH_TIME("running world solver Ncolor times");
     for(int isolve = 0; isolve < numColors; isolve++)
@@ -366,6 +386,7 @@ runColoredSolvers()
     string ioprefix = string("color_comm_") + to_string(icolor);
     runSolver(dblColor, domain, dx, ioprefix);
   }
+#endif  
   return 0;
 }
 

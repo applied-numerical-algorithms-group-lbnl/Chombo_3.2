@@ -662,7 +662,8 @@ protected:
   friend class LayoutIterator;
   friend class DataIterator;
 #ifdef CH_MPI
-  MPI_Comm m_comm;
+  ////commenting out the comm!
+  ///MPI_Comm m_comm;
 #endif  
   RefCountedPtr<Vector<Entry> >        m_boxes;
   RefCountedPtr<int>                   m_layout;
