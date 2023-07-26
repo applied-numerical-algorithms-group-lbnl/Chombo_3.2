@@ -342,17 +342,23 @@ public:
      Solve L(phi) = rho from l_base to l_max.  To solve over all levels,
      l_base = 0 and l_max = max_level = numLevels-1.
    */
-  virtual void solve( Vector<T*>& a_phi, const Vector<T*>& a_rhs,
-                      int l_max, int l_base, bool a_zeroPhi=true,
-                      bool forceHomogeneous = false );
+  virtual void solve( Vector<T*>            & a_phi,
+                      const Vector<T*>      & a_rhs,
+                      int l_max, int l_base,
+                      bool a_zeroInitialPhi = true,
+                      bool forceHomogeneous = false,
+                      bool a_print          = false);
 
   ///
   /** same as "solve" except user has taken the reponsibility of having previously
       called "init" so solver can allocate temporary holders.
   */
-  virtual void solveNoInit(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
-                           int l_max, int l_base, bool a_zeroPhi=true,
-                           bool forceHomogeneous = false);
+  virtual void solveNoInit(Vector<T*>&       a_phi,
+                           const Vector<T*>& a_rhs,
+                           int l_max, int l_base,
+                           bool a_zeroInitialPhi = true,
+                           bool forceHomogeneous = false,
+                           bool a_print          = false);
 
   ///use if you want final residual
   virtual void solveNoInitResid(Vector<T*>& a_phi, Vector<T*>& a_finalResid,
@@ -894,20 +900,36 @@ void AMRMultiGrid<T>::computeAMRResidualLevel(Vector<T*>&       a_resid,
 template<class T>
 void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             int l_max, int l_base, bool a_zeroPhi,
-                            bool a_forceHomogeneous)
+                            bool a_forceHomogeneous, bool a_print)
 {
   CH_TIME("AMRMultiGrid::solve");
+  if(a_print)
+  {
+    pout() << "AMRMultiGrid::solve: calling init" << endl;
+  }
   init(a_phi, a_rhs, l_max, l_base);
-  solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
+  if(a_print)
+  {
+    pout() << "AMRMultiGrid::solve: calling solveNoInit" << endl;
+  }
+  solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous, a_print);
   //puts multigrid depth back where it started so the solver can be reused
+  if(a_print)
+  {
+    pout() << "AMRMultiGrid::solve: calling revert" << endl;
+  }
   revert(a_phi, a_rhs, l_max, l_base);
+  if(a_print)
+  {
+    pout() << "AMRMultiGrid::solve: leaving" << endl;
+  }
 }
 
 template<class T>
 void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
                                   const Vector<T*>& a_rhs,
                                   int l_max, int l_base, bool a_zeroPhi,
-                                  bool a_forceHomogeneous)
+                                  bool a_forceHomogeneous, bool a_print)
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
   Vector<T*> uberResidual(a_rhs.size());

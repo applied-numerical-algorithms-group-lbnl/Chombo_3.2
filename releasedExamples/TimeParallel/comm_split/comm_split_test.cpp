@@ -211,12 +211,18 @@ int runSolver(const DisjointBoxLayout  & a_grid,
 
   pout() << "runSolver: running amrmultigrid::solve" << endl;
   bool zeroInitialGuess = true;
-  amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
+  bool print            = true;
+  bool forceHomogeneous = false;
+  amrSolver->solve(phi, rhs, finestLevel, 0,
+                   zeroInitialGuess, forceHomogeneous, print);
 
 #ifdef CH_USE_HDF5
-  string fname = a_prefixForIO + string("chombo.hdf5");
-  pout() << "runSolver: writing solution to " << fname << endl;
-  writeLevelname(phi[0], fname.c_str());
+  string phiname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
+  string rhsname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
+  pout() << "runSolver: writing charge   (rhs) to " << rhsname << endl;
+  writeLevelname(rhs[0], rhsname.c_str());
+  pout() << "runSolver: writing solution (phi) to " << phiname << endl;
+  writeLevelname(phi[0], phiname.c_str());
 #endif 
 
   pout() << "runSolver: clean up " << endl;
