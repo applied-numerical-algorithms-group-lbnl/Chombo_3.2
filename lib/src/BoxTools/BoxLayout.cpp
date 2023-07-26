@@ -269,13 +269,13 @@ checkDefine(const Vector<Box>& a_boxes,
 void
 BoxLayout::
 define(const Vector<Box>& a_boxes,
-       const Vector<int>& a_procIDs
+       const Vector<int>& a_procs
 #ifdef CH_MPI            
        ,MPI_Comm          a_comm
 #endif            
   )
 {
-  checkDefine(a_boxes, a_procIDs);
+  checkDefine(a_boxes, a_procs);
 #ifdef CH_MPI            
   m_comm = a_comm;
 #endif    
@@ -286,14 +286,20 @@ define(const Vector<Box>& a_boxes,
   m_sorted   = RefCountedPtr<bool         >(new bool(false));
   m_indicies = RefCountedPtr< Vector<LayoutIndex> >(new Vector<LayoutIndex>());
 
-  //const int num_procs = a_procIDs.size();
+  const int num_procs = a_procs.size();
+  const int num_boxes = a_boxes.size();
+  if(num_procs != num_boxes)
+  {
+    pout() << "BoxLayout::define:box and proc sizes do not match." << endl;
+    MayDay::Error("Doh!");
+  }
   m_boxes->resize(num_boxes);
   for (unsigned int i = 0; i < num_boxes; ++i)
   {
     m_boxes->operator[](i) = a_boxes[i];
     if ( numProc() > 1 )
     {
-      m_boxes->operator[](i).m_procID = a_procIDs[i];
+      m_boxes->operator[](i).m_procID = a_procs[i];
     }
     else
     {

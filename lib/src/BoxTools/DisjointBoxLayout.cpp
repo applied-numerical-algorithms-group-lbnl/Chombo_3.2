@@ -41,14 +41,15 @@ numPointsThisProc() const
 ///
 DisjointBoxLayout::
 DisjointBoxLayout(const Vector<Box>& a_boxes,
-                  const Vector<int>& a_procIDs
+                  const Vector<int>& a_procs
 #ifdef CH_MPI            
                   ,MPI_Comm a_comm
 #endif
   )
   :BoxLayout()
 {
-  define(a_boxes, a_procID
+  define(a_boxes,
+         a_procs
 #ifdef CH_MPI            
          ,a_comm
 #endif
