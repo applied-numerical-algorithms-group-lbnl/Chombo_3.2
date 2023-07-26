@@ -187,9 +187,10 @@ int runSolver(const DisjointBoxLayout  & a_grid,
   // initialize solver
   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
-  BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-  bottomSolver.m_verbosity = 0;
-  setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
+  BiCGStabSolver<LevelData<FArrayBox> > bottomSol;
+  bottomSol.m_verbosity  = 0;
+  amrSolver->m_verbosity = 3;
+  setupSolver(amrSolver, bottomSol, amrGrids, amrDomains,
               refRatios, amrDx, finestLevel);
 
 
@@ -337,7 +338,6 @@ runColoredSolvers()
     DisjointBoxLayout dbl4586(boxes, procs);
     runSolver(        dbl4586, domain, dx, ioprefix);
   }
-#if 0  
 
   ///
   // Get the rank and size in the original communicator
@@ -361,11 +361,6 @@ runColoredSolvers()
   pout() << "runColoredSolvers: color size = " << color_size << endl;
   pout() << "runColoredSolvers: proc color = " << icolor     << endl;
   
-  IntVect ivlo =        IntVect::Zero;
-  IntVect ivhi = (nx-1)*IntVect::Unit;
-  Box domain(ivlo, ivhi);
-  Vector<Box> boxes;
-  Vector<int> procs;
   domainSplit(domain, boxes,  maxBoxSize);
   LoadBalance(procs, boxes);
   DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
@@ -386,7 +381,7 @@ runColoredSolvers()
     string ioprefix = string("color_comm_") + to_string(icolor);
     runSolver(dblColor, domain, dx, ioprefix);
   }
-#endif  
+
   return 0;
 }
 
