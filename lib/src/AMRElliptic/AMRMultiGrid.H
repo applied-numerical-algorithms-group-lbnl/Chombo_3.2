@@ -364,7 +364,8 @@ public:
   virtual void solveNoInitResid(Vector<T*>& a_phi, Vector<T*>& a_finalResid,
                                 const Vector<T*>& a_rhs,
                                 int l_max, int l_base, bool a_zeroPhi=true,
-                                bool forceHomogeneous = false);
+                                bool forceHomogeneous = false,
+                                bool a_print          = false);
 
   void relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             int l_max, int l_base);
@@ -945,7 +946,7 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
           m_op[ilev]->create(*uberResidual[ilev], *a_rhs[ilev]);
         }
     }
-  solveNoInitResid(a_phi, uberResidual, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
+  solveNoInitResid(a_phi, uberResidual, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous, a_print);
   for (int i = lowlim; i <= l_max; i++)
     {
       m_op[i]->clear(*uberResidual[i]);
@@ -957,10 +958,15 @@ template<class T>
 void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResidual,
                                        const Vector<T*>& a_rhs,
                                        int l_max, int l_base, bool a_zeroPhi,
-                                       bool a_forceHomogeneous)
+                                       bool a_forceHomogeneous, bool a_print)
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
+  int verbsave = m_verbosity;
+  if(a_print)
+  {
+    m_verbosity = 4586;
+  }
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -1143,6 +1149,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       m_op[i]->clear(*uberCorrection[i]);
       delete uberCorrection[i];
     }
+  m_verbosity = verbsave;
 }
 
 template<class T>

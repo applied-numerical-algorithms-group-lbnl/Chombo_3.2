@@ -53,37 +53,33 @@ void ParseBC(FArrayBox& a_state,
   if (!a_domain.domainBox().contains(a_state.box()))
   {
     Box valid = a_valid;
-    for (int i=0; i<CH_SPACEDIM; ++i)
+    for (int idir =0; idir <CH_SPACEDIM; idir++)
     {
-      // don't do anything if periodic
-      if (!a_domain.isPeriodic(i))
+      Box ghostBoxLo = adjCellBox(valid, idir, Side::Lo, 1);
+      Box ghostBoxHi = adjCellBox(valid, idir, Side::Hi, 1);
+      if (!a_domain.domainBox().contains(ghostBoxLo))
       {
-        Box ghostBoxLo = adjCellBox(valid, i, Side::Lo, 1);
-        Box ghostBoxHi = adjCellBox(valid, i, Side::Hi, 1);
-        if (!a_domain.domainBox().contains(ghostBoxLo))
-        {
-          DiriBC(a_state,
-                 valid,
-                 a_dx,
-                 true,
-                 ParseValue,
-                 i,
-                 Side::Lo,
-                 1);
-        }
+        DiriBC(a_state,
+               valid,
+               a_dx,
+               true,
+               ParseValue,
+               idir,
+               Side::Lo,
+               1);
+      }
 
-        if (!a_domain.domainBox().contains(ghostBoxHi))
-        {
-          DiriBC(a_state,
-                 valid,
-                 a_dx,
-                 true,
-                 ParseValue,
-                 i,
-                 Side::Hi,
-                 1);
-        }
-      } // end if is not periodic in ith direction
+      if (!a_domain.domainBox().contains(ghostBoxHi))
+      {
+        DiriBC(a_state,
+               valid,
+               a_dx,
+               true,
+               ParseValue,
+               idir,
+               Side::Hi,
+               1);
+      }
     }
   }
 }
@@ -123,7 +119,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 {
   CH_TIME("setupSolver");
 
-  ParmParse ppSolver("solver");
+  ParmParse ppSolver("setupSolver");
 
   int numLevels = a_finestLevel+1;
 
@@ -145,26 +141,20 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
                       &a_bottomSolver, numLevels);
 
   // multigrid solver parameters
-  int numSmooth, numMG, maxIter;
+  int numSmooth, numMG, maxIter, verbosity;
   Real eps, hang;
-  ppSolver.get("num_smooth", numSmooth);
-  ppSolver.get("num_mg",     numMG);
-  ppSolver.get("max_iterations", maxIter);
-  ppSolver.get("tolerance", eps);
-  ppSolver.get("hang",      hang);
+  ppSolver.get("num_smooth"    , numSmooth);
+  ppSolver.get("num_mg"        , numMG    );
+  ppSolver.get("max_iterations", maxIter  );
+  ppSolver.get("tolerance"     , eps      );
+  ppSolver.get("hang"          , hang     );
+  ppSolver.get("verbosity"     , verbosity);
 
   Real normThresh = 1.0e-30;
   a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
                                    numMG, maxIter, eps, hang, normThresh);
-  a_amrSolver->m_verbosity = 1;
-
-  // optional parameters
-  ppSolver.query("num_pre", a_amrSolver->m_pre);
-  ppSolver.query("num_post", a_amrSolver->m_post);
-  ppSolver.query("num_bottom", a_amrSolver->m_bottom);
+  a_amrSolver->m_verbosity = verbosity;
 }
-
-
   
 int runSolver(const DisjointBoxLayout  & a_grid,
               const ProblemDomain      & a_domain,
@@ -189,10 +179,8 @@ int runSolver(const DisjointBoxLayout  & a_grid,
   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
   BiCGStabSolver<LevelData<FArrayBox> > bottomSol;
   bottomSol.m_verbosity  = 0;
-  amrSolver->m_verbosity = 3;
   setupSolver(amrSolver, bottomSol, amrGrids, amrDomains,
               refRatios, amrDx, finestLevel);
-
 
   pout() << "runSolver: allocate solution and RHS" << endl;
   int numLevels = amrGrids.size();
@@ -217,12 +205,20 @@ int runSolver(const DisjointBoxLayout  & a_grid,
                    zeroInitialGuess, forceHomogeneous, print);
 
 #ifdef CH_USE_HDF5
-  string phiname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
-  string rhsname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
-  pout() << "runSolver: writing charge   (rhs) to " << rhsname << endl;
-  writeLevelname(rhs[0], rhsname.c_str());
-  pout() << "runSolver: writing solution (phi) to " << phiname << endl;
-  writeLevelname(phi[0], phiname.c_str());
+
+//  string phi_fname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
+//  string rhs_fname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
+//
+//  Vector<string> rhs_vars(1, string("rhs"));
+//  Vector<string> phi_vars(1, string("phi"));
+//  double time = 0;  double dt = 0; //just used for labeling
+//  
+//  pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
+//  Box dombox= a_domain.domainBox();
+//  WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1);
+//  pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
+//  WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1);
+
 #endif 
 
   pout() << "runSolver: clean up " << endl;
