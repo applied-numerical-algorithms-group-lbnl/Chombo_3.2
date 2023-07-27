@@ -8,7 +8,12 @@
  */
 #endif
 
-// DTGraves, Fri, Dec 3, 1999
+///wrappers  for Chombo HDF5 I/O.   
+/**
+   These functions are wrappers  for Chombo HDF5 I/O.   The safest ones to call are 
+   ReadAMRHierarchyHDF5 and WriteAMRHierarchyHDF5.   Those two are pretty rebust with 
+   respect to MPI shenanigans.   Most of the others are meant for specialized situations.
+ */
 
 #ifndef _AMRIO_H_
 #define _AMRIO_H_
