@@ -205,7 +205,7 @@ runSolver(const DisjointBoxLayout  & a_grid,
   bool forceHomogeneous = false;
   amrSolver->solve(phi, rhs, finestLevel, 0,
                    zeroInitialGuess, forceHomogeneous, print);
-
+#if 0
 #ifdef CH_USE_HDF5
 
   string phi_fname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
@@ -222,6 +222,7 @@ runSolver(const DisjointBoxLayout  & a_grid,
   WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
 
 #endif 
+#endif
 
   pout() << "runSolver: clean up " << endl;
   for (int lev=0; lev<phi.size(); lev++)
@@ -427,11 +428,11 @@ int main(int argc, char* argv[])
 #ifdef CH_MPI
   MPI_Init(&argc, &argv);
 #endif
-
+  int status = 4586;
   if (argc < 2)
   {
     cerr << " usage " << argv[0] << " <input_file_name> " << endl;
-    exit(0);
+    return status;
   }
 
   ///init parmparse using the ancient formula
@@ -439,7 +440,7 @@ int main(int argc, char* argv[])
   ParmParse  pp(argc-2,argv+2,NULL,in_file);
 
   /// call test
-  int status = spmdTest();
+  status = spmdTest();
   if(status != 0)
   {
     cerr << "spmdTest returned error code " << status << endl;
@@ -454,5 +455,5 @@ int main(int argc, char* argv[])
   MPI_Finalize();
 #endif
 
-  return(0);
+  return(status);
 }
