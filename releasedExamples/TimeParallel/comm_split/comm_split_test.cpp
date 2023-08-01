@@ -161,7 +161,8 @@ runSolver(const DisjointBoxLayout  & a_grid,
           const ProblemDomain      & a_domain,
           const Real               & a_dx,
           const string             & a_prefixForIO,
-          MPI_Comm  a_comm)
+          MPI_Comm  a_comm,
+          int       a_icolor) //for I/O -- for now, only output to hdf5 if == 0
 {
   CH_TIME("runSolver");
 
@@ -205,22 +206,26 @@ runSolver(const DisjointBoxLayout  & a_grid,
   bool forceHomogeneous = false;
   amrSolver->solve(phi, rhs, finestLevel, 0,
                    zeroInitialGuess, forceHomogeneous, print);
-#if 0
+  MPI_Barrier(a_comm);
+  MPI_Barrier(Chombo_MPI::comm);
+#if 1
 #ifdef CH_USE_HDF5
 
-  string phi_fname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
-  string rhs_fname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
+  if(a_icolor == 0)
+  {
+    string phi_fname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
+    string rhs_fname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
 
-  Vector<string> rhs_vars(1, string("rhs"));
-  Vector<string> phi_vars(1, string("phi"));
-  double time = 0;  double dt = 0; //just used for labeling
+    Vector<string> rhs_vars(1, string("rhs"));
+    Vector<string> phi_vars(1, string("phi"));
+    double time = 0;  double dt = 0; //just used for labeling
   
-  pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
-  Box dombox= a_domain.domainBox();
-  WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
-  pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
-  WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
-
+    pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
+    Box dombox= a_domain.domainBox();
+    WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+    pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
+    WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+  }
 #endif 
 #endif
 
@@ -341,7 +346,7 @@ runColoredSolvers()
     pout() << "runColoredSolvers: running on standard" << endl;
     string  ioprefix("dbl4586");
     DisjointBoxLayout dbl4586(boxes, procs);
-    runSolver(        dbl4586, domain, dx, ioprefix, Chombo_MPI::comm);
+    runSolver(        dbl4586, domain, dx, ioprefix, Chombo_MPI::comm, 4586);
   }
 
   ///
@@ -377,14 +382,14 @@ runColoredSolvers()
     {
       pout() << "isolve = " << isolve << endl;
       string ioprefix = string("world_comm_") + to_string(isolve);
-      runSolver(dblWorld, domain, dx, ioprefix, Chombo_MPI::comm);
+      runSolver(dblWorld, domain, dx, ioprefix, Chombo_MPI::comm, 0);  
     }
   }
   pout() << "runColoredSolvers: running colored solvers" << endl;
   {
     CH_TIME("colored solves");
     string ioprefix = string("color_comm_") + to_string(icolor);
-    runSolver(dblColor, domain, dx, ioprefix, color_comm);
+    runSolver(dblColor, domain, dx, ioprefix, color_comm, icolor);
   }
 
   return 0;

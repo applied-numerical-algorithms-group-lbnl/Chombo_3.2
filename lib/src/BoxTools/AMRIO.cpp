@@ -75,11 +75,11 @@ WriteAMRHierarchyHDF5(const string& filename,
 #ifdef CH_MPI
   {
     CH_TIME("Barrier");
-    MPI_Barrier(a_comm);
+    //MPI_Barrier(a_comm);
   }
 #endif
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
   CH_STOP(createFile);
 
   CH_START(writeFile);
@@ -90,7 +90,7 @@ WriteAMRHierarchyHDF5(const string& filename,
 #ifdef CH_MPI
   {
     CH_TIME("Barrier");
-    MPI_Barrier(a_comm);
+    //MPI_Barrier(a_comm);
   }
 #endif
   CH_START(closeFile);
@@ -134,7 +134,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   CH_TIMER("CloseFile",closeFile);
 
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
   CH_STOP(createFile);
 
   CH_START(writeFile);
@@ -144,7 +144,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   CH_STOP(writeFile);
 
 #ifdef CH_MPI
-  MPI_Barrier(a_comm);
+  //MPI_Barrier(a_comm);
 #endif
 
   CH_START(closeFile);
@@ -302,14 +302,14 @@ WriteAMRHierarchyHDF5(const string& filename,
   )
 {
 
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
   WriteAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
                         a_domain, a_refRatio, a_numLevels, a_comm);
 
 #ifdef CH_MPI
   { 
     CH_TIME("Barrier");
-    MPI_Barrier(a_comm);
+    //MPI_Barrier(a_comm);
   }
 #endif
   handle.close();
@@ -421,7 +421,12 @@ ReadAMRHierarchyHDF5(const string& filename,
 { CH_TIME("ReadAMRHierarchyHDF5 long with filename");
   HDF5Handle handle;
   { CH_TIME("open handle");
-    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY
+#ifdef CH_MPI            
+                          ,"Chombo_global"
+                          , a_comm
+#endif
+      );
     if ( err < 0)
     {
       return -4;
@@ -433,7 +438,7 @@ ReadAMRHierarchyHDF5(const string& filename,
 
 #ifdef CH_MPI
   { CH_TIME("barrier");
-    MPI_Barrier(a_comm);
+    //MPI_Barrier(a_comm);
   }
 #endif
   { CH_TIME("close handle");
@@ -532,7 +537,12 @@ ReadAMRHierarchyHDF5(const string& filename,
   )
 { CH_TIME("ReadAMRHierarchyHDF5 with filename");
   HDF5Handle handle;
-  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY
+#ifdef CH_MPI            
+                          ,"Chombo_global"
+                          , a_comm
+#endif
+    );
   if ( err < 0)
   {
     return -4;
@@ -543,7 +553,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                                      a_comm);
 
 #ifdef CH_MPI
-  MPI_Barrier(a_comm);
+  //MPI_Barrier(a_comm);
 #endif
   handle.close();
   return (eekflag);
@@ -643,7 +653,12 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
   )
 {
   HDF5Handle handle;
-  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY
+#ifdef CH_MPI            
+                          ,"Chombo_global"
+                          , a_comm
+#endif
+    );
   if ( err < 0)
   {
     return -4;
@@ -653,7 +668,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                                 a_time, a_refRatio, a_numLevels, a_comm);
 
 #ifdef CH_MPI
-  MPI_Barrier(a_comm);
+  //MPI_Barrier(a_comm);
 #endif
   handle.close();
 
@@ -748,7 +763,12 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
   )
 {
   HDF5Handle handle;
-  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY
+#ifdef CH_MPI            
+                          ,"Chombo_global"
+                          , a_comm
+#endif
+    );
   if ( err < 0)
   {
     return -4;
@@ -759,7 +779,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                                 a_comm);
 
 #ifdef CH_MPI
-  MPI_Barrier(a_comm);
+  //MPI_Barriera_comm);
 #endif
   handle.close();
   return (eekflag);
@@ -1263,7 +1283,7 @@ writeFABname(const FArrayBox      * a_dataPtr,
   const FArrayBox& data = *a_dataPtr;
 
 #ifdef CH_MPI
-  HDF5Handle handle(a_filename, HDF5Handle::CREATE);
+  HDF5Handle handle(a_filename, HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
 #else
   HDF5Handle handle(a_filename, HDF5Handle::CREATE_SERIAL);
 #endif
@@ -1453,7 +1473,7 @@ writeVectorLevelName(const Vector<LevelData<FArrayBox>*>* a_dataPtr,
   }
 
 #ifdef CH_MPI
-  HDF5Handle handle(a_filename, HDF5Handle::CREATE);
+  HDF5Handle handle(a_filename, HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
 #else
   HDF5Handle handle(a_filename, HDF5Handle::CREATE_SERIAL);
 #endif
@@ -1661,7 +1681,11 @@ void writeCopier(const Copier* a_copier)
     layouts[i].define(boxes[i], procs[i], ProblemDomain(domain));
     ldf[i] = new LevelData<FArrayBox>(layouts[i], 1, ghostVect);
   }
-  WriteAMRHierarchyHDF5("copier.hdf5", layouts, ldf, domain, refRatio, numLevels);
+  WriteAMRHierarchyHDF5("copier.hdf5", layouts, ldf, domain, refRatio, numLevels
+#ifdef CH_MPI                        
+                        , Chombo_MPI::comm
+#endif                        
+    );
   for (int i=0; i<numLevels; ++i)
   {
     delete ldf[i];

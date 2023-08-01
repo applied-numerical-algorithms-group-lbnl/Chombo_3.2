@@ -346,7 +346,11 @@ public:
   HDF5Handle(
         const std::string& a_filename,
         mode a_mode,
-        const char *a_globalGroupName="Chombo_global");
+        const char *a_globalGroupName
+#ifdef CH_MPI        
+        ,MPI_Comm a_comm
+#endif        
+    );
 
   // HDF5Handle(const std::string& a_filename, mode a_mode);
 
@@ -382,7 +386,16 @@ public:
   int open(
         const std::string& a_filename,
         mode a_mode,
-        const char *a_globalGroupName="Chombo_global");
+        const char *a_globalGroupName
+#ifdef CH_MPI        
+        ,MPI_Comm a_comm
+#endif
+    );
+//        const char *a_globalGroupName="Chombo_global"
+//#ifdef CH_MPI        
+//        ,MPI_Comm = Chombo_MPI::comm
+//#endif        
+        
 
   // int open(const std::string& a_filename, mode a_mode);
 
@@ -1320,31 +1333,6 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
 #endif
     }
 
-#ifdef CH_MPI
-//#define TRY_MPI_COLLECTIVES_ 1
-#endif
-#ifdef TRY_MPI_COLLECTIVES_
-  // pout() << "Turned on MPI-IO collective buffering." << endl;
-  // MPI collective buffering requires all processes call H5Dwrite collectively.
-  // In particular, the processes must issue the same number of H5Dwrite calls,
-  // or the application will hang when collective is turned on.
-  // In the case where we do a separate write for each box, gather the 
-  // maximum number of boxes assigned to any process, so we know how many 
-  // H5Dwrites to do.
-  DataIterator dit = a_data.dataIterator();
-  int maxNumBoxes = dit.size();
-  int sendBuf = maxNumBoxes;
-  int result = MPI_Allreduce(&sendBuf, &maxNumBoxes, 1, MPI_INT,MPI_MAX, Chombo_MPI::comm);
-  if (result != MPI_SUCCESS)
-    {
-      MayDay::Error("Couldn't collect maximum number of boxes!");
-    }
-  // Set dataset transfer property to collective mode. This is how we turn
-  // on MPI-IO collective in HDF5.
-  hid_t DXPL = H5Pcreate(H5P_DATASET_XFER);
-  if(!(a_handle.openMode()==HDF5Handle::CREATE_SERIAL)) // can't set MPI collective if file was created for serial IO
-    H5Pset_dxpl_mpio(DXPL, H5FD_MPIO_COLLECTIVE);
-#endif /*end TRY_MPI_COLLECTIVES_ */
 
   // Step 2.  actually a) write each of my T objects into the
   // buffer, then b) write that buffered data out to the

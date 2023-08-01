@@ -38,7 +38,11 @@ using std::istream;
 void WriteUGHDF5(const string&               a_filename,
                  const DisjointBoxLayout&    a_grids,
                  const LevelData<FArrayBox>& a_data,
-                 const Box&                  a_domain);
+                 const Box&                  a_domain
+#ifdef CH_MPI                 
+                 ,MPI_Comm a_comm=Chombo_MPI::comm
+#endif
+                 );
 
 /// Write a single level of data in HDF5 format.
 /**
@@ -81,7 +85,11 @@ void WriteUGHDF5(HDF5Handle&                 a_handle,
 int ReadUGHDF5(const string&         a_filename,
                DisjointBoxLayout&    a_grids,
                LevelData<FArrayBox>& a_data,
-               Box&                  a_domain);
+               Box&                  a_domain
+#ifdef CH_MPI                 
+               ,MPI_Comm a_comm=Chombo_MPI::comm
+#endif
+  );
 
 /// This is the handle version of ReadUGHDF5.
 /**

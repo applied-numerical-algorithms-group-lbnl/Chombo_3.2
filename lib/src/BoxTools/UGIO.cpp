@@ -25,13 +25,17 @@ using std::string;
 void WriteUGHDF5(const string&               a_filename,
                  const DisjointBoxLayout&    a_grids,
                  const LevelData<FArrayBox>& a_data,
-                 const Box&                  a_domain)
+                 const Box&                  a_domain
+#ifdef CH_MPI                 
+                 ,MPI_Comm a_comm
+#endif                 
+  )
 {
-  HDF5Handle handle(a_filename.c_str(), HDF5Handle::CREATE);
+  HDF5Handle handle(a_filename.c_str(), HDF5Handle::CREATE, "Chombo_Global", a_comm);
   WriteUGHDF5(handle, a_grids, a_data, a_domain);
 
 #ifdef CH_MPI
-  MPI_Barrier(Chombo_MPI::comm);
+//  MPI_Barrier(Chombo_MPI::comm);
 #endif
 
   handle.close();
@@ -82,7 +86,7 @@ int ReadUGHDF5(const string&         a_filename,
                Box&                  a_domain)
 {
   HDF5Handle handle;
-  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_Global", Chombo_MPI::comm);
 
   if (err < 0)
   {
@@ -92,7 +96,7 @@ int ReadUGHDF5(const string&         a_filename,
   int eekflag = ReadUGHDF5(handle, a_grids, a_data, a_domain);
 
 #ifdef CH_MPI
-  MPI_Barrier(Chombo_MPI::comm);
+  //MPI_Barrier(Chombo_MPI::comm);
 #endif
 
   handle.close();

@@ -19,7 +19,9 @@ using std::ostream;
 //using std::cout;
 using std::endl;
 using std::cerr;
-
+#ifdef CH_MPI
+#include "mpi.h"
+#endif
 //----------------------------------------------------------
 // template <class T>
 // ostream& operator<<(ostream& os, const Vector<T>& vec)
@@ -605,12 +607,16 @@ HDF5Handle::HDF5Handle(): m_isOpen(false)
 HDF5Handle::HDF5Handle(
         const std::string& a_filename,
         mode a_mode,
-        const char *a_globalGroupName)
+        const char *a_globalGroupName
+#ifdef CH_MPI        
+        ,MPI_Comm a_comm
+#endif        
+)
             :
         m_isOpen(false),
         m_level(-1)
 {
-  int err = open(a_filename, a_mode, a_globalGroupName);
+  int err = open(a_filename, a_mode, a_globalGroupName, a_comm);
   if (err < 0 )
   {
     char buf[1024];
@@ -625,19 +631,15 @@ HDF5Handle::~HDF5Handle()
   CH_assert( !m_isOpen );
 }
 
-//#ifdef CH_MPI
-//#if ( H5_VERS_MAJOR == 1 && ( H5_VERS_MINOR < 4 || ( H5_VERS_MINOR == 4 && H5_VERS_RELEASE <= 1 ) ) )
-//// there's a bug in the HDF include file 'H5FDmpio.h': no extern "C"
-//extern "C" {
-//herr_t H5Pset_fapl_mpio(hid_t fapl_id, MPI_Comm comm, MPI_Info info);
-//};
-//#endif
-//#endif
 
 int HDF5Handle::open(
         const std::string& a_filename,
         mode a_mode,
-        const char *a_globalGroupName)
+        const char *a_globalGroupName
+#ifdef CH_MPI        
+        ,MPI_Comm a_comm
+#endif        
+  )
 {
   int ret = 0;
   if (m_isOpen)
@@ -657,9 +659,9 @@ int HDF5Handle::open(
       file_access = H5Pcreate (H5P_FILE_ACCESS);
 
 #if ( H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 2 )
-      H5Pset_mpi(file_access,  Chombo_MPI::comm, MPI_INFO_NULL);
+      H5Pset_mpi(      file_access,  a_comm, MPI_INFO_NULL);
 #else
-      H5Pset_fapl_mpio(file_access,  Chombo_MPI::comm, MPI_INFO_NULL);
+      H5Pset_fapl_mpio(file_access,  a_comm, MPI_INFO_NULL);
 #endif
 #else
       file_access = H5P_DEFAULT;

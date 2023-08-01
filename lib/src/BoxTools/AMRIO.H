@@ -69,7 +69,7 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const Vector<int>& a_vectRatio,
                       const int& a_numLevels
 #ifdef CH_MPI            
-                      ,MPI_Comm a_comm = Chombo_MPI::comm
+                      ,MPI_Comm a_comm
 #endif
   );
 ///
@@ -105,7 +105,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   const Vector<IntVect>& a_vectRatios,
   const int& a_numLevels
 #ifdef CH_MPI            
-  ,MPI_Comm a_comm = Chombo_MPI::comm
+  ,MPI_Comm a_comm
 #endif
   );
 
@@ -141,7 +141,7 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
                       const Vector<int>& a_vectRatio,
                       const int& a_numLevels
 #ifdef CH_MPI            
-                      ,MPI_Comm a_comm = Chombo_MPI::comm
+                      ,MPI_Comm a_comm
 #endif
   );
 
@@ -178,7 +178,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   const Vector<IntVect>& a_vectRatios,
   const int& a_numLevels
 #ifdef CH_MPI            
-  ,MPI_Comm a_comm = Chombo_MPI::comm
+  ,MPI_Comm a_comm
 #endif
   );
 
@@ -205,7 +205,7 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const Vector<int>& a_vectRatio,
                       const int& a_numLevels
 #ifdef CH_MPI            
-                      ,MPI_Comm a_comm = Chombo_MPI::comm
+                      ,MPI_Comm a_comm
 #endif
   );
 
@@ -232,7 +232,7 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
                       const Vector<int>& a_vectRatio,
                       const int& a_numLevels
 #ifdef CH_MPI            
-                      ,MPI_Comm a_comm = Chombo_MPI::comm
+                      ,MPI_Comm a_comm
 #endif
   );
 
@@ -276,7 +276,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Vector<int>& a_refRatio,
                      int& a_numLevels
 #ifdef CH_MPI            
-                     ,MPI_Comm a_comm = Chombo_MPI::comm
+                     ,MPI_Comm a_comm
 #endif
   );
 
@@ -319,7 +319,7 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Vector<int>& a_refRatio,
                      int& a_numLevels
 #ifdef CH_MPI            
-                     ,MPI_Comm a_comm = Chombo_MPI::comm
+                     ,MPI_Comm a_comm
 #endif
   );
 
@@ -354,7 +354,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Vector<int>& a_refRatio,
                      int& a_numLevels
 #ifdef CH_MPI            
-                     ,MPI_Comm a_comm = Chombo_MPI::comm
+                     ,MPI_Comm a_comm 
 #endif
   );
 
@@ -389,7 +389,7 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Vector<int>& a_refRatio,
                      int& a_numLevels
 #ifdef CH_MPI            
-                     ,MPI_Comm a_comm = Chombo_MPI::comm
+                     ,MPI_Comm a_comm 
 #endif
   );
 
@@ -432,7 +432,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                 Vector<IntVect>& a_refRatio,
                                 int& a_numLevels
 #ifdef CH_MPI            
-                                ,MPI_Comm a_comm = Chombo_MPI::comm
+                                ,MPI_Comm a_comm
 #endif
   );
 
@@ -475,7 +475,7 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
                                 Vector<IntVect>& a_refRatio,
                                 int& a_numLevels
 #ifdef CH_MPI            
-                                ,MPI_Comm a_comm = Chombo_MPI::comm
+                                ,MPI_Comm a_comm
 #endif
   );
 
@@ -510,7 +510,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                 Vector<IntVect>& a_refRatio,
                                 int& a_numLevels
 #ifdef CH_MPI            
-                                ,MPI_Comm a_comm = Chombo_MPI::comm
+                                ,MPI_Comm a_comm
 #endif
   );
 
@@ -545,7 +545,7 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
                                 Vector<IntVect>& a_refRatio,
                                 int& a_numLevels
 #ifdef CH_MPI            
-                                ,MPI_Comm a_comm = Chombo_MPI::comm
+                                ,MPI_Comm a_comm
 #endif
   );
 
@@ -842,7 +842,7 @@ WritePartialAMRHierarchyHDF5(const string& filename,
                              const Vector<int>& a_vectRatio,
                              const Interval& a_levels
 #ifdef CH_MPI            
-                             ,MPI_Comm a_comm = Chombo_MPI::comm
+                             ,MPI_Comm a_comm
 #endif
   );
 #endif // CH_USE_HDF5
