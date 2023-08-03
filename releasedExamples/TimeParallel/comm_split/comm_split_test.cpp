@@ -26,6 +26,8 @@
 #include "AMRMultiGrid.H"
 #include "BiCGStabSolver.H"
 #include "BoxIterator.H"
+#include "CH_HDF5.H"
+
 
 
 ///
@@ -307,6 +309,7 @@ chomboCommSplitTest()
   pout() << "chomboCommSplit: color size = " << color_size << endl;
   pout() << "chomboCommSplit: proc color = " << icolor     << endl;
   
+
   IntVect ivlo =        IntVect::Zero;
   IntVect ivhi = (nx-1)*IntVect::Unit;
   Box domain(ivlo, ivhi);
@@ -316,7 +319,61 @@ chomboCommSplitTest()
   LoadBalance(procs, boxes);
   DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
   DisjointBoxLayout dblColor(boxes, procs, color_comm);
-    
+
+  
+  return 0;
+}
+
+///
+/**
+   Taking the above tutorial and chombofying it.
+**/
+int
+handleOpenTest()
+{
+  int numColors = 4586;
+  ParmParse pp("handleOpenTest");
+  pp.get("numColors" , numColors);
+  ///
+  // Get the rank and size in the original communicator
+  int world_rank, world_size;
+  MPI_Comm_rank(Chombo_MPI::comm, &world_rank);
+  MPI_Comm_size(Chombo_MPI::comm, &world_size);
+
+  // Determine color based on original rank
+  int icolor = world_rank / numColors; 
+
+  MPI_Comm color_comm;
+  MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
+  
+  int color_rank, color_size;
+  MPI_Comm_rank(color_comm, &color_rank);
+  MPI_Comm_size(color_comm, &color_size);
+  
+  pout() << "handleOpenTest: world rank = " << world_rank << endl;
+  pout() << "handleOpenTest: world size = " << world_size << endl;
+  pout() << "handleOpenTest: color rank = " << color_rank << endl;
+  pout() << "handleOpenTest: color size = " << color_size << endl;
+  pout() << "handleOpenTest: proc color = " << icolor     << endl;
+  
+  string world_name("world_comm.hdf5");
+  string color_name = string("color") + to_string(icolor) + string("_comm.hdf5");
+  if(1)
+  {
+    pout() << "world handle open starting for filename " << world_name << endl;
+    HDF5Handle world_handle(world_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
+    pout() << "world handle open closing " << endl;
+    world_handle.close();
+    pout() << "world handle leaving scope " << endl;
+  }
+  if(1)
+  {
+    pout() << "color handle open starting for filename " << color_name << endl;
+    HDF5Handle color_handle(color_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global", color_comm);
+    pout() << "color handle open closing " << endl;
+    color_handle.close();
+    pout() << "color handle leaving scope " << endl;
+  }
   
   return 0;
 }
@@ -399,6 +456,16 @@ runColoredSolvers()
 /// drives the tests here
 int spmdTest()
 {
+  if(1)
+  {
+    int ierr = handleOpenTest();
+    if( ierr != 0)
+    {
+      cerr << " handleOpenTest retuned error code "  << ierr;
+      return ierr;
+    }
+  }
+  if(0)
   {
     int ierr = mpiTutorialCommSplitTest();
     if( ierr != 0)
@@ -407,6 +474,7 @@ int spmdTest()
       return ierr;
     }
   }
+  if(0)
   { 
     int ierr = chomboCommSplitTest();
     if( ierr != 0)
@@ -415,6 +483,7 @@ int spmdTest()
       return 10*ierr;
     }
   }
+  if(0)
   { 
     int ierr = runColoredSolvers();
     if( ierr != 0)

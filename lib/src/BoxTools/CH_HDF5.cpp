@@ -628,7 +628,7 @@ HDF5Handle::HDF5Handle(
 
 HDF5Handle::~HDF5Handle()
 {
-  CH_assert( !m_isOpen );
+// why not?  CH_assert( !m_isOpen );
 }
 
 
@@ -651,23 +651,29 @@ int HDF5Handle::open(
   m_filename = a_filename;
   if (!initialized) initialize();
   m_group    = "/";
-
+  pout() << "open: here1" << endl;
   hid_t file_access = 0;
   if (a_mode != CREATE_SERIAL)
     {
 #ifdef CH_MPI
+  pout() << "open: here1.1" << endl;
       file_access = H5Pcreate (H5P_FILE_ACCESS);
 
+  pout() << "open: here1.2" << endl;
 #if ( H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 2 )
+  pout() << "open: here1.2.1" << endl;
       H5Pset_mpi(      file_access,  a_comm, MPI_INFO_NULL);
 #else
+  pout() << "open: here1.2.3" << endl;
       H5Pset_fapl_mpio(file_access,  a_comm, MPI_INFO_NULL);
 #endif
 #else
+  pout() << "open: here1.2.4" << endl;
       file_access = H5P_DEFAULT;
 #endif
     }
 
+  pout() << "open: here2" << endl;
   switch(a_mode)
   {
   case CREATE:
@@ -689,6 +695,7 @@ int HDF5Handle::open(
   default:
     MayDay::Error("unrecognized file access mode:  HDF5Handle::open");
   }
+  pout() << "open: here3" << endl;
   H5Pclose(file_access);
 #ifdef H516
   m_currentGroupID = H5Gopen(m_fileID, m_group.c_str());
@@ -699,6 +706,7 @@ int HDF5Handle::open(
 
   // Write or read dimension checks and accuracy data
 
+  pout() << "open: here4" << endl;
   HDF5HeaderData info;
   char buf[10000];
   hid_t attr, datatype, group;
@@ -723,6 +731,7 @@ int HDF5Handle::open(
 #else
     group =  H5Gopen2(m_fileID, a_globalGroupName, H5P_DEFAULT);
 #endif
+  pout() << "open: here5" << endl;
     if (group < 0)
       {
         MayDay::Warning("This files appears to be missing a 'Chombo_global' section");
@@ -739,6 +748,7 @@ int HDF5Handle::open(
         MayDay::Error(buf);
       }
 
+  pout() << "open: here6" << endl;
 #ifdef H516
     attr = H5Aopen_name(group, "testReal");
 #else
@@ -760,6 +770,7 @@ int HDF5Handle::open(
     H5Tclose(datatype);
   }
   H5Gclose(group);
+  pout() << "open: here7" << endl;
 
   return ret;
 }

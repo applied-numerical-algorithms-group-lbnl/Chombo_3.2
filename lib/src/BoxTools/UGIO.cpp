@@ -83,10 +83,14 @@ void WriteUGHDF5(HDF5Handle&                 a_handle,
 int ReadUGHDF5(const string&         a_filename,
                DisjointBoxLayout&    a_grids,
                LevelData<FArrayBox>& a_data,
-               Box&                  a_domain)
+               Box&                  a_domain
+#ifdef CH_MPI                 
+                 ,MPI_Comm a_comm
+#endif
+  )
 {
   HDF5Handle handle;
-  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_Global", Chombo_MPI::comm);
+  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_Global", a_comm);
 
   if (err < 0)
   {

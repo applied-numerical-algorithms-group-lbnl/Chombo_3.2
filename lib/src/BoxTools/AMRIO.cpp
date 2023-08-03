@@ -78,10 +78,11 @@ WriteAMRHierarchyHDF5(const string& filename,
     //MPI_Barrier(a_comm);
   }
 #endif
+  pout() << "handle about to be opened" << endl;
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", a_comm);
   CH_STOP(createFile);
-
+  pout() << "handle opened" << endl;
   CH_START(writeFile);
   WriteAMRHierarchyHDF5(handle, a_vectGrids, a_vectData, a_vectNames,
                         a_domain, a_dx, a_dt, a_time, a_refRatio, a_numLevels, a_comm);
