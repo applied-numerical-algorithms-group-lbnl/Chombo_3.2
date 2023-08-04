@@ -283,10 +283,12 @@ int
 chomboCommSplitTest()
 {
   ParmParse pp("chomboCommSplitTest");
-  int nx, maxBoxSize, numSubset;
+  int nx            = 4586;
+  int maxBoxSize    = 4586;
+  int procsPerColor = 4586;
   pp.get("nx", nx);
   pp.get("maxBoxSize", maxBoxSize);
-  pp.get("numSubset" , numSubset);
+  pp.get("procsPerColor" , procsPerColor);
   ///
   // Get the rank and size in the original communicator
   int world_rank, world_size;
@@ -294,7 +296,7 @@ chomboCommSplitTest()
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
 
   // Determine color based on original rank
-  int icolor = world_rank / numSubset; 
+  int icolor = world_rank / procsPerColor; 
 
   MPI_Comm color_comm;
   MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
@@ -331,9 +333,9 @@ chomboCommSplitTest()
 int
 handleOpenTest()
 {
-  int numColors = 4586;
+  int procsPerColor = 4586;
   ParmParse pp("handleOpenTest");
-  pp.get("numColors" , numColors);
+  pp.get("procsPerColor" , procsPerColor);
   ///
   // Get the rank and size in the original communicator
   int world_rank, world_size;
@@ -341,7 +343,7 @@ handleOpenTest()
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
 
   // Determine color based on original rank
-  int icolor = world_rank / numColors; 
+  int icolor = world_rank / procsPerColor; 
 
   MPI_Comm color_comm;
   MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
@@ -382,14 +384,14 @@ int
 runColoredSolvers()
 {
   ParmParse pp("runColoredSolvers");
-  int nx, maxBoxSize, numColors;
+  int nx, maxBoxSize, procsPerColor;
   pp.get("nx"        , nx         );
   pp.get("maxBoxSize", maxBoxSize );
-  pp.get("numColors" , numColors  );
+  pp.get("procsPerColor" , procsPerColor  );
 
   pout() << "runColoredSolvers:nx         =" << nx         << endl;
   pout() << "runColoredSolvers:maxBoxSize =" << maxBoxSize << endl;
-  pout() << "runColoredSolvers:numColors  =" << numColors  << endl;
+  pout() << "runColoredSolvers:procsPerColor  =" << procsPerColor  << endl;
   IntVect ivlo =        IntVect::Zero;
   IntVect ivhi = (nx-1)*IntVect::Unit;
   Box domain(ivlo, ivhi);
@@ -413,7 +415,7 @@ runColoredSolvers()
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
 
   // Determine color based on original rank
-  int icolor = world_rank / numColors;
+  int icolor = world_rank / procsPerColor;
 
   MPI_Comm color_comm;
   MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
@@ -432,10 +434,11 @@ runColoredSolvers()
   LoadBalance(procs, boxes);
   DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
   DisjointBoxLayout dblColor(boxes, procs, color_comm);
+  int nColor = world_size/procsPerColor;
   pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
   {
     CH_TIME("running world solver Ncolor times");
-    for(int isolve = 0; isolve < numColors; isolve++)
+    for(int isolve = 0; isolve < nColor; isolve++)
     {
       pout() << "isolve = " << isolve << endl;
       string ioprefix = string("world_comm_") + to_string(isolve);
