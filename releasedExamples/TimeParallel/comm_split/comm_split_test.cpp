@@ -162,9 +162,8 @@ int
 runSolver(const DisjointBoxLayout  & a_grid,
           const ProblemDomain      & a_domain,
           const Real               & a_dx,
-          const string             & a_prefixForIO,
           MPI_Comm  a_comm,
-          int       a_icolor) //for I/O -- for now, only output to hdf5 if == 0
+          int       a_icolor) //included in file names if positive
 {
   CH_TIME("runSolver");
 
@@ -210,26 +209,36 @@ runSolver(const DisjointBoxLayout  & a_grid,
                    zeroInitialGuess, forceHomogeneous, print);
   MPI_Barrier(a_comm);
   MPI_Barrier(Chombo_MPI::comm);
-#if 1
+
 #ifdef CH_USE_HDF5
-
-  if(a_icolor == 0)
-  {
-    string phi_fname = string("phi_") + a_prefixForIO + string("_chombo.hdf5");
-    string rhs_fname = string("rhs_") + a_prefixForIO + string("_chombo.hdf5");
-
-    Vector<string> rhs_vars(1, string("rhs"));
-    Vector<string> phi_vars(1, string("phi"));
-    double time = 0;  double dt = 0; //just used for labeling
   
-    pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
-    Box dombox= a_domain.domainBox();
-    WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
-    pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
-    WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+  string phi_fname("4586.hdf5");
+  string rhs_fname("4586.hdf5");
+
+  //negative signals world
+  if(a_icolor >= 0)
+  {
+    phi_fname = string("phi_color") + to_string(a_icolor) + string("_chombo.hdf5");
+    rhs_fname = string("rhs_color") + to_string(a_icolor) + string("_chombo.hdf5");
   }
+  else
+  {
+    phi_fname = string("phi_world") +  string("_chombo.hdf5");
+    rhs_fname = string("rhs_world") +  string("_chombo.hdf5");
+  }
+    
+
+  Vector<string> rhs_vars(1, string("rhs"));
+  Vector<string> phi_vars(1, string("phi"));
+  double time = 0;  double dt = 0; //just used for labeling
+  
+  pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
+  Box dombox= a_domain.domainBox();
+  WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+  pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
+  WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+
 #endif 
-#endif
 
   pout() << "runSolver: clean up " << endl;
   for (int lev=0; lev<phi.size(); lev++)
@@ -400,13 +409,6 @@ runColoredSolvers()
   domainSplit(domain, boxes,  maxBoxSize);
   double dx = 1./nx;
   LoadBalance(procs, boxes);
-  {
-    CH_TIME("runColoredSolvers: run4586");
-    pout() << "runColoredSolvers: running on standard" << endl;
-    string  ioprefix("dbl4586");
-    DisjointBoxLayout dbl4586(boxes, procs);
-    runSolver(        dbl4586, domain, dx, ioprefix, Chombo_MPI::comm, 4586);
-  }
 
   ///
   // Get the rank and size in the original communicator
@@ -430,26 +432,37 @@ runColoredSolvers()
   pout() << "runColoredSolvers: color size = " << color_size << endl;
   pout() << "runColoredSolvers: proc color = " << icolor     << endl;
   
-  domainSplit(domain, boxes,  maxBoxSize);
-  LoadBalance(procs, boxes);
-  DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
-  DisjointBoxLayout dblColor(boxes, procs, color_comm);
-  int nColor = world_size/procsPerColor;
-  pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
+  //meta test to see if the test works if color is fictitious
   {
-    CH_TIME("running world solver Ncolor times");
-    for(int isolve = 0; isolve < nColor; isolve++)
-    {
-      pout() << "isolve = " << isolve << endl;
-      string ioprefix = string("world_comm_") + to_string(isolve);
-      runSolver(dblWorld, domain, dx, ioprefix, Chombo_MPI::comm, 0);  
-    }
+    CH_TIME("runColoredSolvers: run4586");
+    pout() << "runColoredSolvers: running on standard" << endl;
+    string  ioprefix("dbl4586");
+    DisjointBoxLayout dbl4586(boxes, procs);
+    runSolver(        dbl4586, domain, dx, Chombo_MPI::comm, 4586);
   }
-  pout() << "runColoredSolvers: running colored solvers" << endl;
+
+  ///actual timed test
+  if(0)
   {
-    CH_TIME("colored solves");
-    string ioprefix = string("color_comm_") + to_string(icolor);
-    runSolver(dblColor, domain, dx, ioprefix, color_comm, icolor);
+    CH_TIME("runColoredSolvers: actual test");
+    DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
+    DisjointBoxLayout dblColor(boxes, procs, color_comm);
+    int nColor = world_size/procsPerColor;
+    pout() << "runColoredSolvers: running world solver Ncolor times" << endl;
+    {
+      CH_TIME("running world solver Ncolor times");
+      for(int isolve = 0; isolve < nColor; isolve++)
+      {
+        pout() << "isolve = " << isolve << endl;
+        // negative color indicates world communicator (for I/O)
+        runSolver(dblWorld, domain, dx,  Chombo_MPI::comm, -4586);  
+      }
+    }
+    pout() << "runColoredSolvers: running colored solvers" << endl;
+    {
+      CH_TIME("colored solves");
+      runSolver(dblColor, domain, dx,  color_comm, icolor);
+    }
   }
 
   return 0;
@@ -459,7 +472,7 @@ runColoredSolvers()
 /// drives the tests here
 int spmdTest()
 {
-  if(1)
+  if(0)
   {
     int ierr = handleOpenTest();
     if( ierr != 0)
@@ -486,7 +499,7 @@ int spmdTest()
       return 10*ierr;
     }
   }
-  if(0)
+  if(1)
   { 
     int ierr = runColoredSolvers();
     if( ierr != 0)
