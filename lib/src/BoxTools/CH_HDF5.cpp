@@ -19,9 +19,7 @@ using std::ostream;
 //using std::cout;
 using std::endl;
 using std::cerr;
-#ifdef CH_MPI
-#include "mpi.h"
-#endif
+
 //----------------------------------------------------------
 // template <class T>
 // ostream& operator<<(ostream& os, const Vector<T>& vec)
@@ -33,22 +31,22 @@ using std::cerr;
 void OffsetBuffer::operator=(const OffsetBuffer& rhs)
 {
   if (rhs.index.size() == 0)
-    {
-      index.resize(0);
-      offsets.resize(0);
-      return;
-    }
+  {
+    index.resize(0);
+    offsets.resize(0);
+    return;
+  }
   index.resize(rhs.index.size());
   int types = rhs.offsets[0].size();
   offsets.resize(rhs.offsets.size(), Vector<int>(types, 0));
   for (int i=0; i<rhs.index.size(); i++)
+  {
+    index[i] = rhs.index[i];
+    for (int j=0; j<types; j++)
     {
-      index[i] = rhs.index[i];
-      for (int j=0; j<types; j++)
-        {
-          offsets[i][j] = rhs.offsets[i][j];
-        }
+      offsets[i][j] = rhs.offsets[i][j];
     }
+  }
 }
 
 ostream&  operator<<(ostream& os, const OffsetBuffer& ob)
@@ -70,9 +68,9 @@ int linearSize(const OffsetBuffer& a_input)
   r += a_input.index.size();// indices for these offset entries
   //size==0 can happen when no boxes to a proc.---dtg
   if (a_input.offsets.size() > 0)
-    {
-      r += a_input.offsets[0].size()*a_input.offsets.size();  // offsets
-    }
+  {
+    r += a_input.offsets[0].size()*a_input.offsets.size();  // offsets
+  }
   return r * sizeof(int);
 }
 
@@ -88,16 +86,16 @@ void linearIn(OffsetBuffer& a_outputT, const void* const a_inBuf)
   a_outputT.offsets.resize(data[0], Vector<int>(data[1]));
   const int* off = data+2+num;
   for (int i=0; i<num; i++)
+  {
+    a_outputT.index[i] = data[i+2];
+    Vector<int>& offsets = a_outputT.offsets[i];
+    for (int j=0; j<numTypes; j++)
     {
-      a_outputT.index[i] = data[i+2];
-      Vector<int>& offsets = a_outputT.offsets[i];
-      for (int j=0; j<numTypes; j++)
-        {
-          offsets[j] = off[j];
-          //  pout() << offsets[j]<<" ";
-        }
-      off+= numTypes;
+      offsets[j] = off[j];
+      //  pout() << offsets[j]<<" ";
     }
+    off+= numTypes;
+  }
   //  pout() << endl;
 }
 
@@ -110,26 +108,26 @@ void linearOut(void* const a_outBuf, const OffsetBuffer& a_inputT)
   data[0] =  a_inputT.index.size();
   //size==0 can happen when no boxes to a proc.---dtg
   if (a_inputT.offsets.size() > 0)
-    {
-      data[1] =  a_inputT.offsets[0].size();
-    }
+  {
+    data[1] =  a_inputT.offsets[0].size();
+  }
   else
-    {
-      data[1] =  0;
-    }
+  {
+    data[1] =  0;
+  }
   data+=2;
   for (int i=0; i< a_inputT.index.size(); ++i, ++data)
     *data =  a_inputT.index[i];
 
   for (int i=0; i<a_inputT.offsets.size(); ++i)
+  {
+    const Vector<int>& offset = a_inputT.offsets[i];
+    for (int t=0; t < offset.size(); ++t, ++data)
     {
-      const Vector<int>& offset = a_inputT.offsets[i];
-      for (int t=0; t < offset.size(); ++t, ++data)
-        {
-          *data = offset[t];
-          //  pout() << *data <<" ";
-        }
+      *data = offset[t];
+      //  pout() << *data <<" ";
     }
+  }
 
   // pout() << endl;
 }
@@ -197,23 +195,23 @@ int write(HDF5Handle& a_handle, const BoxLayout& a_layout, const std::string& na
   count[0] = 1;
   hid_t memdataspace = H5Screate_simple(1, count, NULL);
   for (DataIterator it = a_layout.dataIterator(); it.ok(); ++it)
-    {
-      offset[0] = a_layout.index(it());
-      ret = H5Sselect_hyperslab (boxdataspace, H5S_SELECT_SET, offset, NULL,
-                                 count, NULL);
-      if (ret < 0) abort();
-      ret = H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
-                     H5P_DEFAULT, &(a_layout[it()]));
-      if (ret < 0) abort();
+  {
+  offset[0] = a_layout.index(it());
+  ret = H5Sselect_hyperslab (boxdataspace, H5S_SELECT_SET, offset, NULL,
+  count, NULL);
+  if (ret < 0) abort();
+  ret = H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
+  H5P_DEFAULT, &(a_layout[it()]));
+  if (ret < 0) abort();
 
-      ret = H5Sselect_hyperslab (procdataspace, H5S_SELECT_SET, offset, NULL,
-                                 count, NULL);
-      if (ret < 0) abort();
-      ret = H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
-                     H5P_DEFAULT, &proc);
-      if (ret < 0) abort();
+  ret = H5Sselect_hyperslab (procdataspace, H5S_SELECT_SET, offset, NULL,
+  count, NULL);
+  if (ret < 0) abort();
+  ret = H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
+  H5P_DEFAULT, &proc);
+  if (ret < 0) abort();
 
-    }
+  }
   */
 
   //instead, write boxes serially from proc 0
@@ -225,25 +223,25 @@ int write(HDF5Handle& a_handle, const BoxLayout& a_layout, const std::string& na
     int b=0;
     hid_t memdataspace = H5Screate_simple(1, count, NULL);
     for (LayoutIterator it = a_layout.layoutIterator(); it.ok(); ++it)
-      {
-        vbox[b]=a_layout.get(it());
-        pid[b]=a_layout.procID(it());
-        b++;
-      }
+    {
+      vbox[b]=a_layout.get(it());
+      pid[b]=a_layout.procID(it());
+      b++;
+    }
     if (vbox.size() > 0)
-      {
-        H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
-                 H5P_DEFAULT, &(vbox[0]));
-        H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
-                 H5P_DEFAULT, &(pid[0]));
-      }
+    {
+      H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
+               H5P_DEFAULT, &(vbox[0]));
+      H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
+               H5P_DEFAULT, &(pid[0]));
+    }
     else
-      {
-        H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
-                 H5P_DEFAULT, NULL);
-        H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
-                 H5P_DEFAULT, NULL);
-      }
+    {
+      H5Dwrite(boxdataset, a_handle.box_id, memdataspace, boxdataspace,
+               H5P_DEFAULT, NULL);
+      H5Dwrite(procdataset, H5T_NATIVE_INT, memdataspace, procdataspace,
+               H5P_DEFAULT, NULL);
+    }
 
     H5Sclose(memdataspace);
   }
@@ -282,10 +280,10 @@ int read(HDF5Handle& a_handle, Vector<Box>& boxes, const std::string& name)
 
   boxes.resize(dims[0]);
   for (int index = 0; index < dims[0]; ++index)
-    {
-      rawboxes[index].computeBoxLen();
-      boxes[index] = rawboxes[index];
-    }
+  {
+    rawboxes[index].computeBoxLen();
+    boxes[index] = rawboxes[index];
+  }
 
   delete[] rawboxes;
   H5Dclose(boxdataset);
@@ -312,10 +310,10 @@ int readBoxes(HDF5Handle& a_handle, Vector<Vector<Box> >& boxes)
 
   for (int i = 0; i<numLevels; i++)
   {
-        sprintf(levelName, "/level_%i",i);
-        error = a_handle.setGroup(workingGroup + levelName);
-        if (error != 0) return 1;
-        read(a_handle, boxes[i]);
+    sprintf(levelName, "/level_%i",i);
+    error = a_handle.setGroup(workingGroup + levelName);
+    if (error != 0) return 1;
+    read(a_handle, boxes[i]);
   }
 
   a_handle.setGroup(currentGroup); // put handle back to where it stated.
@@ -324,11 +322,11 @@ int readBoxes(HDF5Handle& a_handle, Vector<Vector<Box> >& boxes)
 }
 
 int readFArrayBox(HDF5Handle& a_handle,
-                                  FArrayBox&  a_fab,
-                                  int a_level,
-                                  int a_boxNumber,
-                                  const Interval& a_components,
-                                  const std::string& a_dataName)
+                  FArrayBox&  a_fab,
+                  int a_level,
+                  int a_boxNumber,
+                  const Interval& a_components,
+                  const std::string& a_dataName)
 {
   char levelName[100];
   herr_t err;
@@ -481,18 +479,18 @@ void HDF5Handle::initialize()
   groups["N"] = "Node";
 
   /*  old composite-of-composite version of box
-  intvect_id = H5Tcreate (H5T_COMPOUND, sizeof(IntVect));
-  H5Tinsert (intvect_id, "intvecti", HOFFSET(IntVect, vect[0]), H5T_NATIVE_INT);
-#if CH_SPACEDIM > 1
-  H5Tinsert (intvect_id, "intvectj", HOFFSET(IntVect, vect[1]), H5T_NATIVE_INT);
-#endif
-#if CH_SPACEDIM > 2
-  H5Tinsert (intvect_id, "intvectk", HOFFSET(IntVect, vect[2]), H5T_NATIVE_INT);
-#endif
+      intvect_id = H5Tcreate (H5T_COMPOUND, sizeof(IntVect));
+      H5Tinsert (intvect_id, "intvecti", HOFFSET(IntVect, vect[0]), H5T_NATIVE_INT);
+      #if CH_SPACEDIM > 1
+      H5Tinsert (intvect_id, "intvectj", HOFFSET(IntVect, vect[1]), H5T_NATIVE_INT);
+      #endif
+      #if CH_SPACEDIM > 2
+      H5Tinsert (intvect_id, "intvectk", HOFFSET(IntVect, vect[2]), H5T_NATIVE_INT);
+      #endif
 
-  box_id = H5Tcreate (H5T_COMPOUND, sizeof(Box));
-  H5Tinsert (box_id, "smallend", HOFFSET(Box, smallend), intvect_id);
-  H5Tinsert (box_id, "bigend",   HOFFSET(Box, bigend), intvect_id);
+      box_id = H5Tcreate (H5T_COMPOUND, sizeof(Box));
+      H5Tinsert (box_id, "smallend", HOFFSET(Box, smallend), intvect_id);
+      H5Tinsert (box_id, "bigend",   HOFFSET(Box, bigend), intvect_id);
   */
 
   IntVect d1;
@@ -596,7 +594,7 @@ void HDF5Handle::initialize()
   undefined_dimension!
 #endif
 
-  initialized = true;
+    initialized = true;
 }
 
 HDF5Handle::HDF5Handle(): m_isOpen(false)
@@ -605,18 +603,14 @@ HDF5Handle::HDF5Handle(): m_isOpen(false)
 }
 
 HDF5Handle::HDF5Handle(
-        const std::string& a_filename,
-        mode a_mode,
-        const char *a_globalGroupName
-#ifdef CH_MPI        
-        ,MPI_Comm a_comm
-#endif        
-)
-            :
-        m_isOpen(false),
-        m_level(-1)
+  const std::string& a_filename,
+  mode a_mode,
+  const char *a_globalGroupName)
+  :
+  m_isOpen(false),
+  m_level(-1)
 {
-  int err = open(a_filename, a_mode, a_globalGroupName, a_comm);
+  int err = open(a_filename, a_mode, a_globalGroupName);
   if (err < 0 )
   {
     char buf[1024];
@@ -628,49 +622,49 @@ HDF5Handle::HDF5Handle(
 
 HDF5Handle::~HDF5Handle()
 {
-// why not?  CH_assert( !m_isOpen );
+  CH_assert( !m_isOpen );
 }
 
+//#ifdef CH_MPI
+//#if ( H5_VERS_MAJOR == 1 && ( H5_VERS_MINOR < 4 || ( H5_VERS_MINOR == 4 && H5_VERS_RELEASE <= 1 ) ) )
+//// there's a bug in the HDF include file 'H5FDmpio.h': no extern "C"
+//extern "C" {
+//herr_t H5Pset_fapl_mpio(hid_t fapl_id, MPI_Comm comm, MPI_Info info);
+//};
+//#endif
+//#endif
 
 int HDF5Handle::open(
-        const std::string& a_filename,
-        mode a_mode,
-        const char *a_globalGroupName
-#ifdef CH_MPI        
-        ,MPI_Comm a_comm
-#endif        
-  )
+  const std::string& a_filename,
+  mode a_mode,
+  const char *a_globalGroupName)
 {
-  pout() << "hdf5handle::open: here1" << endl;
   int ret = 0;
   if (m_isOpen)
-    {
-      MayDay::Error("Calling 'open' on already open file.  use 'close' on finished files");
-    }
+  {
+    MayDay::Error("Calling 'open' on already open file.  use 'close' on finished files");
+  }
 
   m_mode = a_mode;
   m_filename = a_filename;
   if (!initialized) initialize();
   m_group    = "/";
+
   hid_t file_access = 0;
   if (a_mode != CREATE_SERIAL)
-    {
+  {
 #ifdef CH_MPI
-
-      file_access = H5Pcreate (H5P_FILE_ACCESS);
-
+    file_access = H5Pcreate (H5P_FILE_ACCESS);
 
 #if ( H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 2 )
-
-      H5Pset_mpi(      file_access,  a_comm, MPI_INFO_NULL);
+    H5Pset_mpi(file_access,  Chombo_MPI::comm, MPI_INFO_NULL);
 #else
-
-      H5Pset_fapl_mpio(file_access,  a_comm, MPI_INFO_NULL);
+    H5Pset_fapl_mpio(file_access,  Chombo_MPI::comm, MPI_INFO_NULL);
 #endif
 #else
-      file_access = H5P_DEFAULT;
+    file_access = H5P_DEFAULT;
 #endif
-    }
+  }
 
   switch(a_mode)
   {
@@ -728,20 +722,20 @@ int HDF5Handle::open(
     group =  H5Gopen2(m_fileID, a_globalGroupName, H5P_DEFAULT);
 #endif
     if (group < 0)
-      {
-        MayDay::Warning("This files appears to be missing a 'Chombo_global' section");
-      }
+    {
+      MayDay::Warning("This files appears to be missing a 'Chombo_global' section");
+    }
     info.readFromLocation(group);
     if (info.m_int["SpaceDim"] == 0)
-      {
-        sprintf(buf,"File '%s' appears to lack a SpaceDim definition",a_filename.c_str());
-        MayDay::Error(buf);
-      }
+    {
+      sprintf(buf,"File '%s' appears to lack a SpaceDim definition",a_filename.c_str());
+      MayDay::Error(buf);
+    }
     if (info.m_int["SpaceDim"] != SpaceDim)
-      {
-        sprintf(buf,"SpaceDim of '%s' does not match code",a_filename.c_str());
-        MayDay::Error(buf);
-      }
+    {
+      sprintf(buf,"SpaceDim of '%s' does not match code",a_filename.c_str());
+      MayDay::Error(buf);
+    }
 
 #ifdef H516
     attr = H5Aopen_name(group, "testReal");
@@ -754,17 +748,16 @@ int HDF5Handle::open(
     codeprecision = H5Tget_precision(H5T_NATIVE_REAL);
     if (fileprecision > codeprecision) ret = 2;
     if (codeprecision > fileprecision)
-      {
-        sprintf(buf, "code is compiled with Real=%i bits, file %s has Real=%i bits",
-                (unsigned int)codeprecision, a_filename.c_str(), (unsigned int)fileprecision);
-        MayDay::Warning(buf);
-        ret = 2;
-      }
+    {
+      sprintf(buf, "code is compiled with Real=%i bits, file %s has Real=%i bits",
+              (unsigned int)codeprecision, a_filename.c_str(), (unsigned int)fileprecision);
+      MayDay::Warning(buf);
+      ret = 2;
+    }
     H5Aclose(attr);
     H5Tclose(datatype);
   }
   H5Gclose(group);
-  pout() << "hdf5handle::open: leaving" << endl;
 
   return ret;
 }
@@ -784,19 +777,19 @@ void HDF5Handle::setGroupToLevel(int a_level)
 int HDF5Handle::setGroup(const std::string& group)
 {
   if (!m_isOpen)
-    {
-      MayDay::Error("cannot access group until file is successfully opened");
-    }
+  {
+    MayDay::Error("cannot access group until file is successfully opened");
+  }
   if (m_group == group) return 0;
 
   int ret = 0;
 
   ret = H5Gclose(m_currentGroupID);
   if (ret < 0)
-    {
-      MayDay::Warning(" Error closing old group");
-      return ret;
-    }
+  {
+    MayDay::Warning(" Error closing old group");
+    return ret;
+  }
 
   H5E_auto_t efunc; void* edata; // turn auto error messaging off
 #ifdef H516
@@ -805,25 +798,25 @@ int HDF5Handle::setGroup(const std::string& group)
   m_currentGroupID = H5Gopen(m_fileID, group.c_str());
   // (DFM -- 6/9/15) -- don't try to create group if file is read-only
   if ((m_mode != OPEN_RDONLY) && (m_currentGroupID < 0))
-    {
-      H5Eset_auto(efunc, edata); //turn error messaging back on.
-      //open failed, go to group creation
-      m_currentGroupID = H5Gcreate(m_fileID, group.c_str(), 0);
-    }
+  {
+    H5Eset_auto(efunc, edata); //turn error messaging back on.
+    //open failed, go to group creation
+    m_currentGroupID = H5Gcreate(m_fileID, group.c_str(), 0);
+  }
 
   H5Eset_auto(efunc, edata); //turn error messaging back on.
   // DFM (11/14/15) -- if new group is invalid, put things back the 
   // way they were and then return -1
   if (m_currentGroupID < 0)
-    {
-      // open failed, return -1 and put things back the way they were
-      m_currentGroupID = H5Gopen(m_fileID, m_group.c_str());
-      ret = -1;
-    }
+  {
+    // open failed, return -1 and put things back the way they were
+    m_currentGroupID = H5Gopen(m_fileID, m_group.c_str());
+    ret = -1;
+  }
   else
-    {
-      m_group = group;
-    }
+  {
+    m_group = group;
+  }
 
 #else
   H5Eget_auto(H5E_DEFAULT,&efunc, &edata);
@@ -831,25 +824,25 @@ int HDF5Handle::setGroup(const std::string& group)
   m_currentGroupID = H5Gopen2(m_fileID, group.c_str(), H5P_DEFAULT);
   // (DFM -- 6/9/15) -- don't try to create group if file is read-only
   if ( (m_mode != OPEN_RDONLY) && (m_currentGroupID < 0))
-    {
-      H5Eset_auto2(H5E_DEFAULT, efunc, edata); //turn error messaging back on.
-      //open failed, go to group creation
-      m_currentGroupID = H5Gcreate2(m_fileID, group.c_str(),H5P_DEFAULT, 
-                                    H5P_DEFAULT,H5P_DEFAULT);
-    }
+  {
+    H5Eset_auto2(H5E_DEFAULT, efunc, edata); //turn error messaging back on.
+    //open failed, go to group creation
+    m_currentGroupID = H5Gcreate2(m_fileID, group.c_str(),H5P_DEFAULT, 
+                                  H5P_DEFAULT,H5P_DEFAULT);
+  }
   H5Eset_auto2(H5E_DEFAULT, efunc, edata); //turn error messaging back on.
   // DFM (11/14/15) -- if new group is invalid, put things back the 
   // way they were and then return -1
   if (m_currentGroupID < 0)
-    {
-      // open failed, return -1 and put things back the way they were
-      m_currentGroupID = H5Gopen2(m_fileID, m_group.c_str(), H5P_DEFAULT);
-      ret = -1;
-    }
+  {
+    // open failed, return -1 and put things back the way they were
+    m_currentGroupID = H5Gopen2(m_fileID, m_group.c_str(), H5P_DEFAULT);
+    ret = -1;
+  }
   else
-    {
-      m_group = group;
-    }
+  {
+    m_group = group;
+  }
 #endif
 
   return ret;
@@ -921,7 +914,7 @@ const hid_t& HDF5Handle::groupID() const
 }
 
 //=====================================================================================
-  /// writes the current attribute list to the current group in 'file'
+/// writes the current attribute list to the current group in 'file'
 int HDF5HeaderData::writeToFile(HDF5Handle& file) const
 {
   return writeToLocation(file.groupID());
@@ -937,122 +930,122 @@ int HDF5HeaderData::writeToLocation(hid_t loc_id) const
 #endif
   herr_t  ret;
   char messg[1024];
-#define INSERT(Ttype, mapName, H5Ttype)                                   \
-  for (map<std::string, Ttype>::const_iterator p = mapName.begin();        \
-      p!= mapName.end(); ++p)                                             \
-    {                                                                     \
-      hid_t aid  = H5Screate(H5S_SCALAR);                                 \
-      H5Eset_auto(NULL, NULL);                                            \
-      hid_t attr = H5Acreate(loc_id, p->first.c_str(), H5Ttype,           \
-                             aid, H5P_DEFAULT);                           \
-      if (attr < 0)                                                        \
-        {                                                                 \
-          H5Adelete(loc_id, p->first.c_str());                            \
-          attr = H5Acreate(loc_id, p->first.c_str(), H5Ttype,             \
-                           aid, H5P_DEFAULT);                             \
-          if (attr < 0)                                                    \
-            {                                                             \
-              sprintf(messg," Problem writing attribute %s",p->first.c_str());  \
-              MayDay::Warning(messg);                                     \
-            }                                                             \
-        }                                                                 \
-      H5Eset_auto(efunc, edata);                                          \
-      Ttype tmp = p->second;                                              \
-      ret = H5Awrite(attr, H5Ttype, &tmp);                                \
-      if (ret < 0) return ret;                                             \
-      H5Sclose(aid);                                                      \
-      H5Aclose(attr);                                                     \
-    }                                                                     \
+#define INSERT(Ttype, mapName, H5Ttype)                                 \
+  for (map<std::string, Ttype>::const_iterator p = mapName.begin();     \
+       p!= mapName.end(); ++p)                                          \
+  {                                                                     \
+    hid_t aid  = H5Screate(H5S_SCALAR);                                 \
+    H5Eset_auto(NULL, NULL);                                            \
+    hid_t attr = H5Acreate(loc_id, p->first.c_str(), H5Ttype,           \
+                           aid, H5P_DEFAULT);                           \
+    if (attr < 0)                                                       \
+    {                                                                   \
+      H5Adelete(loc_id, p->first.c_str());                              \
+      attr = H5Acreate(loc_id, p->first.c_str(), H5Ttype,               \
+                       aid, H5P_DEFAULT);                               \
+      if (attr < 0)                                                     \
+      {                                                                 \
+        sprintf(messg," Problem writing attribute %s",p->first.c_str()); \
+        MayDay::Warning(messg);                                         \
+      }                                                                 \
+    }                                                                   \
+    H5Eset_auto(efunc, edata);                                          \
+    Ttype tmp = p->second;                                              \
+    ret = H5Awrite(attr, H5Ttype, &tmp);                                \
+    if (ret < 0) return ret;                                            \
+    H5Sclose(aid);                                                      \
+    H5Aclose(attr);                                                     \
+  }                                                                     \
 
-#define INSERT2(Ttype, mapName, H5Ttype)                                   \
-  for (map<std::string, Ttype>::const_iterator p = mapName.begin();        \
-      p!= mapName.end(); ++p)                                             \
-    {                                                                     \
-      hid_t aid  = H5Screate(H5S_SCALAR);                                 \
-      H5Eset_auto2(H5E_DEFAULT, NULL, NULL);                            \
-      hid_t attr = H5Acreate2(loc_id, p->first.c_str(), H5Ttype,           \
-                              aid, H5P_DEFAULT, H5P_DEFAULT);                   \
-      if (attr < 0)                                                        \
-        {                                                                 \
-          H5Adelete(loc_id, p->first.c_str());                            \
-          attr = H5Acreate2(loc_id, p->first.c_str(), H5Ttype,             \
-                            aid, H5P_DEFAULT, H5P_DEFAULT);                               if (attr < 0)                                                    \
-            {                                                             \
-              sprintf(messg," Problem writing attribute %s",p->first.c_str());  \
-              MayDay::Warning(messg);                                     \
-            }                                                             \
-        }                                                                 \
-      H5Eset_auto2(H5E_DEFAULT, efunc, edata);                          \
-      Ttype tmp = p->second;                                              \
-      ret = H5Awrite(attr, H5Ttype, &tmp);                                \
-      if (ret < 0) return ret;                                             \
-      H5Sclose(aid);                                                      \
-      H5Aclose(attr);                                                     \
-    }                                                                     \
+#define INSERT2(Ttype, mapName, H5Ttype)                                \
+  for (map<std::string, Ttype>::const_iterator p = mapName.begin();     \
+  p!= mapName.end(); ++p)                                               \
+  {                                                                     \
+  hid_t aid  = H5Screate(H5S_SCALAR);                                   \
+  H5Eset_auto2(H5E_DEFAULT, NULL, NULL);                                \
+  hid_t attr = H5Acreate2(loc_id, p->first.c_str(), H5Ttype,            \
+    aid, H5P_DEFAULT, H5P_DEFAULT);                                     \
+  if (attr < 0)                                                         \
+  {                                                                     \
+  H5Adelete(loc_id, p->first.c_str());                                  \
+  attr = H5Acreate2(loc_id, p->first.c_str(), H5Ttype,                  \
+    aid, H5P_DEFAULT, H5P_DEFAULT);                               if (attr < 0) \
+                                                                  {     \
+  sprintf(messg," Problem writing attribute %s",p->first.c_str());      \
+  MayDay::Warning(messg);                                               \
+}                                                                       \
+}                                                                       \
+  H5Eset_auto2(H5E_DEFAULT, efunc, edata);                              \
+  Ttype tmp = p->second;                                                \
+  ret = H5Awrite(attr, H5Ttype, &tmp);                                  \
+  if (ret < 0) return ret;                                              \
+  H5Sclose(aid);                                                        \
+  H5Aclose(attr);                                                       \
+}                                                                       \
 
 #ifdef H516
-    INSERT(Real, m_real, H5T_NATIVE_REAL);
-    INSERT(int, m_int, H5T_NATIVE_INT);
-    INSERT(IntVect, m_intvect, HDF5Handle::intvect_id);
-    INSERT(Box, m_box, HDF5Handle::box_id);
-    INSERT(RealVect, m_realvect, HDF5Handle::realvect_id);
+  INSERT(Real, m_real, H5T_NATIVE_REAL);
+  INSERT(int, m_int, H5T_NATIVE_INT);
+  INSERT(IntVect, m_intvect, HDF5Handle::intvect_id);
+  INSERT(Box, m_box, HDF5Handle::box_id);
+  INSERT(RealVect, m_realvect, HDF5Handle::realvect_id);
 #else
-    INSERT2(Real, m_real, H5T_NATIVE_REAL);
-    INSERT2(int, m_int, H5T_NATIVE_INT);
-    INSERT2(IntVect, m_intvect, HDF5Handle::intvect_id);
-    INSERT2(Box, m_box, HDF5Handle::box_id);
-    INSERT2(RealVect, m_realvect, HDF5Handle::realvect_id);
+  INSERT2(Real, m_real, H5T_NATIVE_REAL);
+  INSERT2(int, m_int, H5T_NATIVE_INT);
+  INSERT2(IntVect, m_intvect, HDF5Handle::intvect_id);
+  INSERT2(Box, m_box, HDF5Handle::box_id);
+  INSERT2(RealVect, m_realvect, HDF5Handle::realvect_id);
 #endif
-    // string is different, of course
+  // string is different, of course
 
-    for (map<std::string, std::string>::const_iterator p = m_string.begin();
-        p!= m_string.end(); ++p)
-    {
-      hid_t s_type = H5Tcopy(H5T_C_S1);
-      H5Tset_size(s_type, p->second.length()); //extra requirement for strings
-      hid_t aid  = H5Screate(H5S_SCALAR);
+  for (map<std::string, std::string>::const_iterator p = m_string.begin();
+       p!= m_string.end(); ++p)
+  {
+    hid_t s_type = H5Tcopy(H5T_C_S1);
+    H5Tset_size(s_type, p->second.length()); //extra requirement for strings
+    hid_t aid  = H5Screate(H5S_SCALAR);
 #ifdef H516
-      H5Eset_auto(NULL, NULL);
-      hid_t attr = H5Acreate(loc_id, p->first.c_str(), s_type,
-                             aid, H5P_DEFAULT);
-#else
-      H5Eset_auto2(H5E_DEFAULT,NULL, NULL);
-      hid_t attr = H5Acreate2(loc_id, p->first.c_str(), s_type,
-                              aid, H5P_DEFAULT, H5P_DEFAULT);
-#endif
-      if (attr < 0)
-        {
-          H5Adelete(loc_id, p->first.c_str());
-#ifdef H516
-          attr = H5Acreate(loc_id, p->first.c_str(), s_type,
+    H5Eset_auto(NULL, NULL);
+    hid_t attr = H5Acreate(loc_id, p->first.c_str(), s_type,
                            aid, H5P_DEFAULT);
 #else
-          attr = H5Acreate2(loc_id, p->first.c_str(), s_type,
-                            aid, H5P_DEFAULT,H5P_DEFAULT);
+    H5Eset_auto2(H5E_DEFAULT,NULL, NULL);
+    hid_t attr = H5Acreate2(loc_id, p->first.c_str(), s_type,
+                            aid, H5P_DEFAULT, H5P_DEFAULT);
 #endif
-          if (attr < 0)
-            {
-              sprintf(messg," Problem writing attribute %s",p->first.c_str());
-              MayDay::Warning(messg);
-            }
-        }
+    if (attr < 0)
+    {
+      H5Adelete(loc_id, p->first.c_str());
 #ifdef H516
-      H5Eset_auto(efunc, edata);
+      attr = H5Acreate(loc_id, p->first.c_str(), s_type,
+                       aid, H5P_DEFAULT);
 #else
-      H5Eset_auto2(H5E_DEFAULT, efunc, edata);
+      attr = H5Acreate2(loc_id, p->first.c_str(), s_type,
+                        aid, H5P_DEFAULT,H5P_DEFAULT);
 #endif
-      char* tmp = (char*)p->second.c_str();
-      ret = H5Awrite(attr, s_type, tmp);
-      if (ret < 0) return ret;
-      H5Sclose(aid);
-      H5Aclose(attr);
-      H5Tclose(s_type);
+      if (attr < 0)
+      {
+        sprintf(messg," Problem writing attribute %s",p->first.c_str());
+        MayDay::Warning(messg);
+      }
     }
+#ifdef H516
+    H5Eset_auto(efunc, edata);
+#else
+    H5Eset_auto2(H5E_DEFAULT, efunc, edata);
+#endif
+    char* tmp = (char*)p->second.c_str();
+    ret = H5Awrite(attr, s_type, tmp);
+    if (ret < 0) return ret;
+    H5Sclose(aid);
+    H5Aclose(attr);
+    H5Tclose(s_type);
+  }
 
-    return 0;
+  return 0;
 }
 
-  /// read process is add/change, does not remove key-value pairs. reads from current group.
+/// read process is add/change, does not remove key-value pairs. reads from current group.
 int HDF5HeaderData::readFromFile(HDF5Handle& file)
 {
 #ifdef H516
@@ -1067,7 +1060,7 @@ int HDF5HeaderData::readFromFile(HDF5Handle& file)
 int HDF5HeaderData::readFromLocation(hid_t loc_id)
 {
 #ifdef H516
-   return H5Aiterate(loc_id, NULL, HDF5HeaderDataattributeScan , this);
+  return H5Aiterate(loc_id, NULL, HDF5HeaderDataattributeScan , this);
 #else
   hsize_t* n=0;
   return H5Aiterate2(loc_id, H5_INDEX_CRT_ORDER, H5_ITER_NATIVE, n, HDF5HeaderDataattributeScan , this);
@@ -1079,45 +1072,45 @@ extern "C"
 #ifdef H516
   herr_t HDF5HeaderDataattributeScan(hid_t loc_id, const char *name, void *opdata)
 #else
-  herr_t HDF5HeaderDataattributeScan(hid_t loc_id, const char *name, const H5A_info_t* info, void *opdata)
+    herr_t HDF5HeaderDataattributeScan(hid_t loc_id, const char *name, const H5A_info_t* info, void *opdata)
 #endif
-{
-  herr_t ret = 0;
-  HDF5HeaderData& data = *(static_cast<HDF5HeaderData*>(opdata));
+  {
+    herr_t ret = 0;
+    HDF5HeaderData& data = *(static_cast<HDF5HeaderData*>(opdata));
 
 #ifdef H516
-  hid_t attr   = H5Aopen_name(loc_id, name);
+    hid_t attr   = H5Aopen_name(loc_id, name);
 #else
-  hid_t attr   = H5Aopen_by_name(loc_id,".", name, H5P_DEFAULT, H5P_DEFAULT );
+    hid_t attr   = H5Aopen_by_name(loc_id,".", name, H5P_DEFAULT, H5P_DEFAULT );
 #endif
-  hid_t atype  = H5Aget_type(attr);
-  hid_t aclass = H5Tget_class(atype);
-  char* buf = NULL;  size_t size = 0;
+    hid_t atype  = H5Aget_type(attr);
+    hid_t aclass = H5Tget_class(atype);
+    char* buf = NULL;  size_t size = 0;
 
-  switch(aclass)
-  {
-  case H5T_INTEGER :
-    int Ivalue;
-    ret  = H5Aread(attr, H5T_NATIVE_INT, &Ivalue);
-    if (ret < 0) break;
-    data.m_int[name] = Ivalue;
-    break;
-  case H5T_FLOAT:
-    Real Rvalue;
-    ret = H5Aread(attr, H5T_NATIVE_REAL, &Rvalue);
-    if (ret < 0) break;
-    data.m_real[name] = Rvalue;
-    break;
-  case H5T_STRING:
-    size = H5Tget_size(atype);
-    buf = new char[size+1];
-    ret = H5Aread(attr, atype, buf);
-    if (ret < 0) break;
-    buf[size] = 0; // for some reason HDF5 is not null terminating strings correctly
-    data.m_string[name] = std::string(buf);
-    break;
-  case H5T_COMPOUND:
-    if (strcmp(H5Tget_member_name(atype, 0), "lo_i") == 0)
+    switch(aclass)
+    {
+    case H5T_INTEGER :
+      int Ivalue;
+      ret  = H5Aread(attr, H5T_NATIVE_INT, &Ivalue);
+      if (ret < 0) break;
+      data.m_int[name] = Ivalue;
+      break;
+    case H5T_FLOAT:
+      Real Rvalue;
+      ret = H5Aread(attr, H5T_NATIVE_REAL, &Rvalue);
+      if (ret < 0) break;
+      data.m_real[name] = Rvalue;
+      break;
+    case H5T_STRING:
+      size = H5Tget_size(atype);
+      buf = new char[size+1];
+      ret = H5Aread(attr, atype, buf);
+      if (ret < 0) break;
+      buf[size] = 0; // for some reason HDF5 is not null terminating strings correctly
+      data.m_string[name] = std::string(buf);
+      break;
+    case H5T_COMPOUND:
+      if (strcmp(H5Tget_member_name(atype, 0), "lo_i") == 0)
       {
         Box value;
         ret = H5Aread(attr, HDF5Handle::box_id, &value);
@@ -1126,7 +1119,7 @@ extern "C"
         data.m_box[name] = value;
         break;
       }
-    else if (strcmp(H5Tget_member_name(atype, 0), "intvecti") == 0)
+      else if (strcmp(H5Tget_member_name(atype, 0), "intvecti") == 0)
       {
         IntVect value;
         ret = H5Aread(attr, HDF5Handle::intvect_id, &value);
@@ -1134,7 +1127,7 @@ extern "C"
         data.m_intvect[name] = value;
         break;
       }
-    else if (strcmp(H5Tget_member_name(atype, 0), "x") == 0)
+      else if (strcmp(H5Tget_member_name(atype, 0), "x") == 0)
       {
         RealVect value;
         ret = H5Aread(attr, HDF5Handle::realvect_id, &value);
@@ -1142,16 +1135,16 @@ extern "C"
         data.m_realvect[name] = value;
         break;
       }
-  default:
-    // heel if I know what to do about attributes I don't recognize
-    MayDay::Warning("HDF5HeaderData::readFromFile encountered unrecognized attribute");
+    default:
+      // heel if I know what to do about attributes I don't recognize
+      MayDay::Warning("HDF5HeaderData::readFromFile encountered unrecognized attribute");
+    }
+    delete[] buf;
+    H5Tclose(atype);
+    H5Aclose(attr);
+    return ret;
   }
-  delete[] buf;
-  H5Tclose(atype);
-  H5Aclose(attr);
-  return ret;
 }
-          }
 void HDF5HeaderData::clear()
 {
   m_real.clear();
@@ -1235,7 +1228,7 @@ void readDataset(hid_t a_dataset,
   H5Sselect_hyperslab (a_dataspace, H5S_SELECT_SET, offset, NULL,
                        flatdims, NULL);
   H5Dread(a_dataset, H5Dget_type(a_dataset), memdataspace, a_dataspace,
-           H5P_DEFAULT, start);
+          H5P_DEFAULT, start);
   H5Sclose(memdataspace);
 }
 
@@ -1273,10 +1266,10 @@ void createData(hid_t& a_dataset,
 ostream& operator<<(ostream& os, const HDF5HeaderData& data)
 {
 
-#define PRINT(Ttype, mapName) \
-  for (map<std::string, Ttype>::const_iterator p = data.mapName.begin();        \
-      p!= data.mapName.end(); ++p)                   \
-  os<<p->first<<" :"<<p->second<<"\n";
+#define PRINT(Ttype, mapName)                                           \
+  for (map<std::string, Ttype>::const_iterator p = data.mapName.begin(); \
+       p!= data.mapName.end(); ++p)                                     \
+    os<<p->first<<" :"<<p->second<<"\n";
 
   PRINT(Real, m_real);
   PRINT(int, m_int);

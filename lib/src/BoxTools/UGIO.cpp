@@ -25,17 +25,13 @@ using std::string;
 void WriteUGHDF5(const string&               a_filename,
                  const DisjointBoxLayout&    a_grids,
                  const LevelData<FArrayBox>& a_data,
-                 const Box&                  a_domain
-#ifdef CH_MPI                 
-                 ,MPI_Comm a_comm
-#endif                 
-  )
+                 const Box&                  a_domain)
 {
-  HDF5Handle handle(a_filename.c_str(), HDF5Handle::CREATE, "Chombo_Global", a_comm);
+  HDF5Handle handle(a_filename.c_str(), HDF5Handle::CREATE);
   WriteUGHDF5(handle, a_grids, a_data, a_domain);
 
 #ifdef CH_MPI
-//  MPI_Barrier(Chombo_MPI::comm);
+  MPI_Barrier(Chombo_MPI::comm);
 #endif
 
   handle.close();
@@ -83,14 +79,10 @@ void WriteUGHDF5(HDF5Handle&                 a_handle,
 int ReadUGHDF5(const string&         a_filename,
                DisjointBoxLayout&    a_grids,
                LevelData<FArrayBox>& a_data,
-               Box&                  a_domain
-#ifdef CH_MPI                 
-                 ,MPI_Comm a_comm
-#endif
-  )
+               Box&                  a_domain)
 {
   HDF5Handle handle;
-  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_Global", a_comm);
+  int err = handle.open(a_filename.c_str(),  HDF5Handle::OPEN_RDONLY);
 
   if (err < 0)
   {
@@ -100,7 +92,7 @@ int ReadUGHDF5(const string&         a_filename,
   int eekflag = ReadUGHDF5(handle, a_grids, a_data, a_domain);
 
 #ifdef CH_MPI
-  //MPI_Barrier(Chombo_MPI::comm);
+  MPI_Barrier(Chombo_MPI::comm);
 #endif
 
   handle.close();

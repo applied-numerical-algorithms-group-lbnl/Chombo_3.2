@@ -8,12 +8,7 @@
  */
 #endif
 
-///wrappers  for Chombo HDF5 I/O.   
-/**
-   These functions are wrappers  for Chombo HDF5 I/O.   The safest ones to call are 
-   ReadAMRHierarchyHDF5 and WriteAMRHierarchyHDF5.   Those two are pretty rebust with 
-   respect to MPI shenanigans.   Most of the others are meant for specialized situations.
-**/
+// DTGraves, Fri, Dec 3, 1999
 
 #ifndef _AMRIO_H_
 #define _AMRIO_H_
@@ -67,11 +62,8 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const Real& a_dt,
                       const Real& a_time,
                       const Vector<int>& a_vectRatio,
-                      const int& a_numLevels
-#ifdef CH_MPI            
-                      ,MPI_Comm a_comm
-#endif
-  );
+                      const int& a_numLevels);
+
 ///
 /**
    Writes hierarchy of levels in HDF5 format.  Only available if the
@@ -103,11 +95,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   const Real& a_dt,
   const Real& a_time,
   const Vector<IntVect>& a_vectRatios,
-  const int& a_numLevels
-#ifdef CH_MPI            
-  ,MPI_Comm a_comm
-#endif
-  );
+  const int& a_numLevels);
 
 ///
 /**
@@ -139,11 +127,7 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
                       const Real& a_dt,
                       const Real& a_time,
                       const Vector<int>& a_vectRatio,
-                      const int& a_numLevels
-#ifdef CH_MPI            
-                      ,MPI_Comm a_comm
-#endif
-  );
+                      const int& a_numLevels);
 
 //
 /**
@@ -176,11 +160,7 @@ WriteAnisotropicAMRHierarchyHDF5(
   const Real& a_dt,
   const Real& a_time,
   const Vector<IntVect>& a_vectRatios,
-  const int& a_numLevels
-#ifdef CH_MPI            
-  ,MPI_Comm a_comm
-#endif
-  );
+  const int& a_numLevels);
 
 ///
 /**
@@ -203,11 +183,7 @@ WriteAMRHierarchyHDF5(const string& filename,
                       const Vector<LevelData<FArrayBox>* > & a_vectData,
                       const Box& a_domain,
                       const Vector<int>& a_vectRatio,
-                      const int& a_numLevels
-#ifdef CH_MPI            
-                      ,MPI_Comm a_comm
-#endif
-  );
+                      const int& a_numLevels);
 
 ///
 /**
@@ -230,11 +206,7 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
                       const Vector<LevelData<FArrayBox>* > & a_vectData,
                       const Box& a_domain,
                       const Vector<int>& a_vectRatio,
-                      const int& a_numLevels
-#ifdef CH_MPI            
-                      ,MPI_Comm a_comm
-#endif
-  );
+                      const int& a_numLevels);
 
 #ifndef WRAPPER
 ///
@@ -274,11 +246,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Real& a_dt,
                      Real& a_time,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels
-#ifdef CH_MPI            
-                     ,MPI_Comm a_comm
-#endif
-  );
+                     int& a_numLevels);
 
 ///
 /**
@@ -317,11 +285,7 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Real& a_dt,
                      Real& a_time,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels
-#ifdef CH_MPI            
-                     ,MPI_Comm a_comm
-#endif
-  );
+                     int& a_numLevels);
 
 ///
 /**
@@ -352,11 +316,7 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Vector<LevelData<FArrayBox>* > & a_vectData,
                      Box& a_domain,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels
-#ifdef CH_MPI            
-                     ,MPI_Comm a_comm 
-#endif
-  );
+                     int& a_numLevels);
 
 ///
 /**
@@ -387,11 +347,7 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
                      Vector<LevelData<FArrayBox>* > & a_vectData,
                      Box& a_domain,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels
-#ifdef CH_MPI            
-                     ,MPI_Comm a_comm 
-#endif
-  );
+                     int& a_numLevels);
 
 ///
 /**
@@ -430,11 +386,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                 Real& a_dt,
                                 Real& a_time,
                                 Vector<IntVect>& a_refRatio,
-                                int& a_numLevels
-#ifdef CH_MPI            
-                                ,MPI_Comm a_comm
-#endif
-  );
+                                int& a_numLevels);
 
 ///
 /**
@@ -473,11 +425,7 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
                                 Real& a_dt,
                                 Real& a_time,
                                 Vector<IntVect>& a_refRatio,
-                                int& a_numLevels
-#ifdef CH_MPI            
-                                ,MPI_Comm a_comm
-#endif
-  );
+                                int& a_numLevels);
 
 ///
 /**
@@ -508,11 +456,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
                                 Vector<LevelData<FArrayBox>* > & a_vectData,
                                 Box& a_domain,
                                 Vector<IntVect>& a_refRatio,
-                                int& a_numLevels
-#ifdef CH_MPI            
-                                ,MPI_Comm a_comm
-#endif
-  );
+                                int& a_numLevels);
 
 ///
 /**
@@ -543,11 +487,7 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
                                 Vector<LevelData<FArrayBox>* > & a_vectData,
                                 Box& a_domain,
                                 Vector<IntVect>& a_refRatio,
-                                int& a_numLevels
-#ifdef CH_MPI            
-                                ,MPI_Comm a_comm
-#endif
-  );
+                                int& a_numLevels);
 
 #endif
 
@@ -840,11 +780,8 @@ WritePartialAMRHierarchyHDF5(const string& filename,
                              const Real& a_dt,
                              const Real& a_time,
                              const Vector<int>& a_vectRatio,
-                             const Interval& a_levels
-#ifdef CH_MPI            
-                             ,MPI_Comm a_comm
-#endif
-  );
+                             const Interval& a_levels);
+
 #endif // CH_USE_HDF5
 
 #include "NamespaceFooter.H"
