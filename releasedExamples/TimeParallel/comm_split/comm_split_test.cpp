@@ -234,9 +234,9 @@ runSolver(const DisjointBoxLayout  & a_grid,
   
   pout() << "runSolver: writing charge   (rhs) to " << rhs_fname << endl;
   Box dombox= a_domain.domainBox();
-  WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+  WriteAMRHierarchyHDF5(rhs_fname, amrGrids, rhs, rhs_vars, dombox, a_dx, dt, time, refRatios, 1);
   pout() << "runSolver: writing solution (phi) to " << phi_fname << endl;
-  WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1, a_comm);
+  WriteAMRHierarchyHDF5(phi_fname, amrGrids, phi, phi_vars, dombox, a_dx, dt, time, refRatios, 1);
 
 #endif 
 
@@ -372,7 +372,7 @@ handleOpenTest()
   if(1)
   {
     pout() << "world handle open starting for filename " << world_name << endl;
-    HDF5Handle world_handle(world_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global", Chombo_MPI::comm);
+    HDF5Handle world_handle(world_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global");
     pout() << "world handle open closing " << endl;
     world_handle.close();
     pout() << "world handle leaving scope " << endl;
@@ -380,7 +380,7 @@ handleOpenTest()
   if(1)
   {
     pout() << "color handle open starting for filename " << color_name << endl;
-    HDF5Handle color_handle(color_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global", color_comm);
+    HDF5Handle color_handle(color_name.c_str(),  HDF5Handle::CREATE, "Chombo_Global");
     pout() << "color handle open closing " << endl;
     color_handle.close();
     pout() << "color handle leaving scope " << endl;
@@ -416,22 +416,6 @@ runColoredSolvers()
   MPI_Comm_rank(Chombo_MPI::comm, &world_rank);
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
 
-  // Determine color based on original rank
-  int icolor = world_rank / procsPerColor;
-
-  MPI_Comm color_comm;
-  MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
-  
-  int color_rank, color_size;
-  MPI_Comm_rank(color_comm, &color_rank);
-  MPI_Comm_size(color_comm, &color_size);
-  
-  pout() << "runColoredSolvers: world rank = " << world_rank << endl;
-  pout() << "runColoredSolvers: world size = " << world_size << endl;
-  pout() << "runColoredSolvers: color rank = " << color_rank << endl;
-  pout() << "runColoredSolvers: color size = " << color_size << endl;
-  pout() << "runColoredSolvers: proc color = " << icolor     << endl;
-  
   //meta test to see if the test works if color is fictitious
   {
     CH_TIME("runColoredSolvers: run4586");
@@ -440,11 +424,27 @@ runColoredSolvers()
     DisjointBoxLayout dbl4586(boxes, procs);
     runSolver(        dbl4586, domain, dx, Chombo_MPI::comm, 4586);
   }
-
   ///actual timed test
   if(0)
   {
     CH_TIME("runColoredSolvers: actual test");
+    // Determine color based on original rank
+    int icolor = world_rank / procsPerColor;
+
+    MPI_Comm color_comm;
+    MPI_Comm_split(Chombo_MPI::comm, icolor, world_rank, &color_comm);
+  
+    int color_rank, color_size;
+    MPI_Comm_rank(color_comm, &color_rank);
+    MPI_Comm_size(color_comm, &color_size);
+  
+    pout() << "runColoredSolvers: world rank = " << world_rank << endl;
+    pout() << "runColoredSolvers: world size = " << world_size << endl;
+    pout() << "runColoredSolvers: color rank = " << color_rank << endl;
+    pout() << "runColoredSolvers: color size = " << color_size << endl;
+    pout() << "runColoredSolvers: proc color = " << icolor     << endl;
+  
+
     DisjointBoxLayout dblWorld(boxes, procs, Chombo_MPI::comm);
     DisjointBoxLayout dblColor(boxes, procs, color_comm);
     int nColor = world_size/procsPerColor;

@@ -346,7 +346,11 @@ public:
   HDF5Handle(
     const std::string& a_filename,
     mode a_mode,
-    const char *a_globalGroupName="Chombo_global");
+    const char *a_globalGroupName="Chombo_global"
+#ifdef CH_MPI    
+    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif    
+    );
 
   // HDF5Handle(const std::string& a_filename, mode a_mode);
 
@@ -382,7 +386,12 @@ public:
   int open(
     const std::string& a_filename,
     mode a_mode,
-    const char *a_globalGroupName="Chombo_global");
+    const char *a_globalGroupName="Chombo_global"
+#ifdef CH_MPI    
+    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif    
+    );
+
 
   // int open(const std::string& a_filename, mode a_mode);
 

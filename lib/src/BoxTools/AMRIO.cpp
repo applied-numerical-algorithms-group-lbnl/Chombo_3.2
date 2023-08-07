@@ -69,13 +69,14 @@ WriteAMRHierarchyHDF5(const string& filename,
   CH_TIMER("CloseFile",closeFile);
 
 #ifdef CH_MPI
+  auto comm = a_vectGrids[0].communicator();
   {
     CH_TIME("Barrier");
-    MPI_Barrier(Chombo_MPI::comm);
+    MPI_Barrier(comm);
   }
 #endif
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", comm);
   CH_STOP(createFile);
 
   CH_START(writeFile);
@@ -86,7 +87,7 @@ WriteAMRHierarchyHDF5(const string& filename,
 #ifdef CH_MPI
   {
     CH_TIME("Barrier");
-    MPI_Barrier(Chombo_MPI::comm);
+    MPI_Barrier(comm);
   }
 #endif
   CH_START(closeFile);
@@ -162,6 +163,7 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
 
   HDF5HeaderData header;
   int nComp = a_vectNames.size();
+
 
   string filedescriptor("VanillaAMRFileType");
   header.m_string ["filetype"]      = filedescriptor;

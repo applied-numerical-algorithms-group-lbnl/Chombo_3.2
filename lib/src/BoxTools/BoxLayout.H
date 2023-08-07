@@ -656,6 +656,12 @@ public:
   {
     return m_boxes;
   }
+#ifdef CH_MPI
+  MPI_Comm communicator() const
+  {
+    return m_comm;
+  }
+#endif  
 protected:
 
   void buildDataIndex();
