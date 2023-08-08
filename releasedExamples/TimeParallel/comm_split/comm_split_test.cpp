@@ -416,16 +416,8 @@ runColoredSolvers()
   MPI_Comm_rank(Chombo_MPI::comm, &world_rank);
   MPI_Comm_size(Chombo_MPI::comm, &world_size);
 
-  //meta test to see if the test works if color is fictitious
-  {
-    CH_TIME("runColoredSolvers: run4586");
-    pout() << "runColoredSolvers: running on standard" << endl;
-    string  ioprefix("dbl4586");
-    DisjointBoxLayout dbl4586(boxes, procs);
-    runSolver(        dbl4586, domain, dx, Chombo_MPI::comm, 4586);
-  }
   ///actual timed test
-  if(0)
+  if(1)
   {
     CH_TIME("runColoredSolvers: actual test");
     // Determine color based on original rank

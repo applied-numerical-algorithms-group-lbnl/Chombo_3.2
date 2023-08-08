@@ -76,7 +76,7 @@ WriteAMRHierarchyHDF5(const string& filename,
   }
 #endif
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_Global", comm);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global", comm);
   CH_STOP(createFile);
 
   CH_START(writeFile);
