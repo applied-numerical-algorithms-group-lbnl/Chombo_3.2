@@ -2,7 +2,7 @@ MPI = TRUE
 HDF5 = TRUE
 USE_PETSC=FALSE
 
-ebase = comm_split_test
+ebase = colored_solves
 
 CHOMBO_HOME = ../../../lib
 
