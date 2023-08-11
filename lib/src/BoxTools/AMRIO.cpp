@@ -393,9 +393,16 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Vector<int>& a_refRatio,
                      int& a_numLevels)
 { CH_TIME("ReadAMRHierarchyHDF5 long with filename");
+#ifdef CH_MPI
+  auto comm = a_vectGrids[0].communicator();
+  {
+    CH_TIME("Barrier");
+    MPI_Barrier(comm);
+  }
+#endif
   HDF5Handle handle;
   { CH_TIME("open handle");
-    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
+    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global", comm);
     if ( err < 0)
     {
       return -4;
