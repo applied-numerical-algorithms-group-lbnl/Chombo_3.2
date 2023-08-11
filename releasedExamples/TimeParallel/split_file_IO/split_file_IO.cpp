@@ -75,7 +75,7 @@ int
 readColorFileIntoWorld(int       a_icolor) 
 {
   string phi_fname("4586.hdf5");
-  //negative signals world
+
   if(a_icolor >= 0)
   {
     phi_fname = string("phi_color") + to_string(a_icolor) + string("_chombo.hdf5");
@@ -83,6 +83,38 @@ readColorFileIntoWorld(int       a_icolor)
   else
   {
     pout() << "readColorIntoWorld: invalid color" << endl;
+    return -4586;
+  }
+  pout() << "readColorIntoWorld: reading" << endl;
+
+  Vector<DisjointBoxLayout>       grids;
+  Vector<LevelData<FArrayBox>* >  phi;
+  Vector<string>                  var_names;
+  Box                             domain;
+  Real                            dx, dt, time;
+  Vector<int>                     refRatio;
+  int                             numLevels;
+
+  ReadAMRHierarchyHDF5( phi_fname,
+                        grids,    phi, var_names, domain,   
+                        dx, dt, time, refRatio,  numLevels);
+                     
+  return 0;
+}
+
+////
+int
+readColorFileIntoColor(int       a_icolor, MPI_Comm a_comm) 
+{
+  string phi_fname("4586.hdf5");
+
+  if(a_icolor >= 0)
+  {
+    phi_fname = string("phi_color") + to_string(a_icolor) + string("_chombo.hdf5");
+  }
+  else
+  {
+    pout() << "readColorIntoColor: invalid color" << endl;
     return -4586;
   }
   pout() << "readColorIntoWorld: reading" << endl;
@@ -157,6 +189,12 @@ writeAndReadData()
   {
     //read makes its own dbl
     int eekread  = readColorFileIntoWorld(icolor);
+    if(!eekread) return eekread;
+  }
+
+  {
+    //read makes its own dbl
+    int eekread  = readColorFileIntoColor(icolor, color_comm);
     if(!eekread) return eekread;
   }
   return 0;

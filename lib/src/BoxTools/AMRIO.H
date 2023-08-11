@@ -246,7 +246,11 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Real& a_dt,
                      Real& a_time,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels);
+                     int& a_numLevels
+#ifdef CH_MPI            
+                     ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif            
+  );
 
 ///
 /**

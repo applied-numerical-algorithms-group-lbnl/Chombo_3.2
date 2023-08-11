@@ -75,9 +75,11 @@ WriteAMRHierarchyHDF5(const string& filename,
     MPI_Barrier(comm);
   }
 #endif
+  pout() <<"WriteAMRHierarchy:  about to hopen handle for file " << filename << endl;
   CH_START(createFile);
   HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global", comm);
   CH_STOP(createFile);
+  pout() <<"WriteAMRHierarchy:  finished opening file " << filename << endl;
 
   CH_START(writeFile);
   WriteAMRHierarchyHDF5(handle, a_vectGrids, a_vectData, a_vectNames,
@@ -391,21 +393,26 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Real& a_dt,
                      Real& a_time,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels)
-{ CH_TIME("ReadAMRHierarchyHDF5 long with filename");
+                     int& a_numLevels
+#ifdef CH_MPI                     
+                     ,MPI_Comm a_comm
+#endif                     
+  )
+{
+  CH_TIME("ReadAMRHierarchyHDF5 long with filename");
 #ifdef CH_MPI
-  auto comm = a_vectGrids[0].communicator();
   {
     CH_TIME("Barrier");
-    MPI_Barrier(comm);
+    MPI_Barrier(a_comm);
   }
 #endif
   HDF5Handle handle;
-  { CH_TIME("open handle");
-    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global", comm);
+  {
+    CH_TIME("open handle");
+    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global", a_comm);
     if ( err < 0)
     {
-      return -4;
+      return -4586;
     }
   }
   int eekflag = ReadAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
@@ -413,11 +420,13 @@ ReadAMRHierarchyHDF5(const string& filename,
                                      a_time, a_refRatio, a_numLevels);
 
 #ifdef CH_MPI
-  { CH_TIME("barrier");
-    MPI_Barrier(Chombo_MPI::comm);
+  {
+    CH_TIME("barrier");
+    MPI_Barrier(a_comm);
   }
 #endif
-  { CH_TIME("close handle");
+  {
+    CH_TIME("close handle");
     handle.close();
   }
 
