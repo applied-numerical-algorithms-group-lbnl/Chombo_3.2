@@ -1,0 +1,29 @@
+USE_HDF=TRUE
+
+DEPXX=gcc
+CXX=g++
+MPICXX=g++
+FC=gfortran
+#OMPI_CXX=gcc
+
+XTRACPPFLAGS+= -std=c++11
+XTRALIBFLAGS:= -lgfortran -lm -llapack -lblas
+
+#mpich
+#MPICH_DIR=/opt/cray/pe/mpich/8.1.17/ofi/gnu/9.1
+XTRACPPFLAGS +=-I$(MPICH_DIR)/include
+XTRALIBFLAGS +=-L$(MPICH_DIR)/lib -lmpi
+XTRALIBFLAGS +=-L/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/math_libs/11.5/lib64
+XTRALIBFLAGS +=-L/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/cuda/11.5/lib64
+XTRALIBFLAGS +=-L$(MPICH_DIR)/lib/
+
+
+HDFINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
+HDFLIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
+
+HDFMPIINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
+HDFMPILIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
+
+# Hopefully defined externally
+#PETSC_DIR=/global/cfs/projectdirs/m3904/petsc/current/perlmutter-opt-gcc11_2_0-cuda11_5
+#PETSC_ARCH=""
