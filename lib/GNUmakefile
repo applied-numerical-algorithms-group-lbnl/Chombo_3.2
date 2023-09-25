@@ -33,6 +33,7 @@
 ###   USE_MF     = {TRUE,FALSE} if TRUE, compile MultiFluid code (default: FALSE)
 ###   USE_MT     = {TRUE,FALSE} if TRUE, compile Chombo memory tracking code (default: TRUE)
 ###                                     (defines 'CH_USE_MEMORY_TRACKING' cpp macro)
+###   USE_SUNDIALS  = {TRUE,FALSE} if TRUE, compile with the Sundials library enabled (default: FALSE)
 ###   USE_TIMER  = {TRUE,FALSE} if TRUE, compile with Chombo Timers enabled (default: TRUE)
 ###   USE_PYTHON = {TRUE,FALSE} if TRUE, compile PyParse code (default: FALSE)
 ###   DIST_EB    = {TRUE,FALSE} if TRUE, put EBChombo code in tar file (default: FALSE)
@@ -136,6 +137,7 @@ lib_eb_targets := EBTools EBAMRTools Workshop EBAMRElliptic EBAMRTimeDependent
 lib_new_eb_targets := NewEBTools NewEBAMRTools NewWorkshop NewEBAMRElliptic NewEBAMRTimeDependent
 lib_mf_targets := MFElliptic MFTools
 lib_ccse_targets := CCSE
+lib_sundials_targets := Sundials AMRTools BoxTools
 
 lib_targets := $(lib_ch_targets)
 ifeq ($(USE_EB),TRUE)
@@ -149,6 +151,9 @@ ifeq ($(USE_CCSE),TRUE)
 endif
 ifeq ($(USE_PYTHON),TRUE)
   lib_targets += PyParse
+endif
+ifeq ($(USE_SUNDIALS),TRUE)
+  lib_targets += $(lib_sundials_targets)
 endif
 
 lib_targets := $(shell \echo $(lib_targets) `\ls src` | \tr ' ' '\n' | \sort | \uniq -d)
@@ -432,6 +437,7 @@ mftools:              MFTools
 molamrtimedependent:  MOLAMRTimeDependent
 particletools:        ParticleTools
 pic:                  PIC
+sundials:             Sundials
 workshop:             Workshop
 homappedgeometry:     HOMappedGeometry
 homappedconservation: HOMappedConservation

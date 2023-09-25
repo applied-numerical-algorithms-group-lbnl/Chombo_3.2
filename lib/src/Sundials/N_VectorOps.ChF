@@ -1,0 +1,160 @@
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+
+C    Fortran routines for all the functions needed for nvector
+
+c      N_VDotProd
+      subroutine maskdotprod(
+     &     CHF_CONST_FRA[x],
+     &     CHF_CONST_FRA[y],
+     &     CHF_CONST_FRA[mask],
+     &     CHF_BOX[reg],
+     &     CHF_REAL[dotProd])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[x]
+      if (ncomp .ne. CHF_NCOMP[y]) then
+      CHF_CALL MAYDAY_ERROR()
+      endif
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      dotProd = dotProd + x(CHF_AUTOIX[i],nv) * y(CHF_AUTOIX[i],nv) *
+     &          mask(CHF_AUTOIX[i],0)
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+c      N_VPNorm
+      subroutine masksumxp(
+     &     CHF_CONST_FRA[x],
+     &     CHF_CONST_FRA[mask],
+     &     CHF_BOX[reg],
+     &     CHF_REAL[sumxp],
+     &     CHF_INT[p])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+      REAL_T xpmask
+
+      ncomp = CHF_NCOMP[x]
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      xpmask = mask(CHF_AUTOIX[i],0)*abs(x(CHF_AUTOIX[i],nv))**p
+      sumxp = sumxp+xpmask
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+c      N_VMaxNorm
+      subroutine maskmaxnorm(
+     &     CHF_CONST_FRA[x],
+     &     CHF_CONST_FRA[mask],
+     &     CHF_BOX[reg],
+     &     CHF_REAL[m])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+      REAL_T absxmask
+
+      ncomp = CHF_NCOMP[x]
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      absxmask = abs(x(CHF_AUTOIX[i],nv))*mask(CHF_AUTOIX[i],0)
+      m = max(abs(m), absxmask)
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+c      N_VMin
+      subroutine maskmin(
+     &     CHF_CONST_FRA[x],
+     &     CHF_CONST_FRA[mask],
+     &     CHF_BOX[reg],
+     &     CHF_REAL[m])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[x]
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      if (mask(CHF_AUTOIX[i],0) .ne. 1) then
+        m = min(m, x(CHF_AUTOIX[i],nv))
+      endif
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+      subroutine maskwtdsq(
+     &     CHF_CONST_FRA[x],
+     &     CHF_CONST_FRA[w],
+     &     CHF_CONST_FRA[mask],
+     &     CHF_BOX[reg],
+     &     CHF_REAL[norm])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[x]
+      if(ncomp .ne. CHF_NCOMP[w]) then
+      CHF_CALL MAYDAY_ERROR()
+      endif
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      norm = norm + 
+     &       (x(CHF_AUTOIX[i],nv)*w(CHF_AUTOIX[i],nv)) * 
+     &       (x(CHF_AUTOIX[i],nv)*w(CHF_AUTOIX[i],nv)) *
+     &       mask(CHF_AUTOIX[i],0)
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+c      N_VInvTest
+      subroutine invwchk(
+     &     CHF_CONST_FRA[x],
+     &     CHF_FRA[z],
+     &     CHF_BOX[reg],
+     &     CHF_INT[nonzero])
+
+      integer CHF_AUTODECL[i]
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[z]
+      if(ncomp .ne. CHF_NCOMP[x]) then
+      CHF_CALL MAYDAY_ERROR()
+      endif
+
+      do nv = 0, ncomp-1
+      CHF_AUTOMULTIDO[reg;i]
+      if (x(CHF_AUTOIX[i],nv) .ne. 0.0) then
+      z(CHF_AUTOIX[i],nv) = 1./x(CHF_AUTOIX[i],nv)
+      else
+      nonzero = 0
+      end if
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
