@@ -23,35 +23,55 @@
 #ifdef USE_PROTO
 
 
-using Proto::Point;
-using Proto::BoxData;
-using Proto::Var;
-///these functions are meant to interface with the Proto language.
+///
+/**
+   These functions are meant to interface with the Proto language.
+*/
 namespace ProtoCh
 {
+  typedef Proto::Point    pr_pt;
+  typedef Chombo::IntVect ch_iv;
+  typedef Chombo::Box     ch_box;
+  typedef Proto::Box      pr_box;
 
-
-///get point from intvect
-  extern Point      getPoint( const IntVect& a_iv);
-
-/// gets proto box from chombo box
-  extern Proto::Box  getProtoBox( const Box& a_box);
-
-///get intvect from point
-  extern IntVect getIntVect(const  Point  & a_pt);
-
-///get chombo box from proto box
-  extern Box getBox(const Proto::Box & a_bx);
-
-///
-  template <typename T, int ncomp>
-   void  aliasBoxData(BoxData<T, ncomp> & a_boxdata, const BaseFab<T>& a_bfr, const int a_startcomp = 0)
+  ///get point from intvect
+  extern pr_pt  getPoint( const ch_iv& a_iv)
+  {
+    pr_pt retval;
+    for(int idir = 0; idir < SpaceDim; idir++)
     {
-      CH_assert( a_bfr.nComp() == (ncomp + a_startcomp));
-      Proto::Box region = getProtoBox(a_bfr.box());
-      a_boxdata.define(a_bfr.dataPtr(a_startcomp), region, ncomp);
+      retval[idir] = a_iv[idir];
     }
+    return retval;
 
+  }
+
+  /// gets proto box from chombo box
+  inline pr_box getProtoBox(const ch_box& a_box);
+  {
+    pr_pt ptlo = getPoint(a_box.smallEnd());
+    pr_pt pthi = getPoint(a_box.bigEnd());
+    return pr_box(ptlo, pthi);
+  }
+
+  ///get intvect from point
+  inline ch_iv  getIntVect(const  pr_pt  & a_pt);
+  {
+    ch_iv retval;
+    for(int idir = 0; idir < SpaceDim; idir++)
+    {
+      retval[idir] = a_pt[idir];
+    }
+    return retval;
+  }
+
+  ///get chombo box from proto box
+  inline Box getBox(const pr_ & a_bx);
+  {
+    IntVect ivlo = getIntVect(a_bx.low());
+    IntVect ivhi = getIntVect(a_bx.high());
+    return Box(ivlo, ivhi);
+  }
 
 } 
 

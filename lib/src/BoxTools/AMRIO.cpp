@@ -77,7 +77,7 @@ WriteAMRHierarchyHDF5(const string& filename,
 #endif
   pout() <<"WriteAMRHierarchy:  about to hopen handle for file " << filename << endl;
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global", comm);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global");
   CH_STOP(createFile);
   pout() <<"WriteAMRHierarchy:  finished opening file " << filename << endl;
 
@@ -409,7 +409,7 @@ ReadAMRHierarchyHDF5(const string& filename,
   HDF5Handle handle;
   {
     CH_TIME("open handle");
-    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global", a_comm);
+    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global");
     if ( err < 0)
     {
       return -4586;

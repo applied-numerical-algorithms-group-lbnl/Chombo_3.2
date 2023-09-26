@@ -45,31 +45,31 @@ template <class T> int BaseFab<T>::testBoxAndComp()
 
   if (blerg.nComp() != 1)
     {
-      pout() << "ncomp busted" << endl;
+      //pout() << "ncomp busted" << endl;
       return -2;
     }
   if (blerg.box() != b)
     {
-      pout() << "box return busted" << endl;
+      //pout() << "box return busted" << endl;
       return -2;
     }
   for (int idir = 0; idir < SpaceDim; idir++)
     {
       if (blerg.size()[idir] != 2)
         {
-          pout() << "size busted" <<endl;
+          //pout() << "size busted" <<endl;
           return -3;
         }
     }
 
   if (blerg.smallEnd() != IntVect::Zero)
     {
-      pout() << "smallend busted" <<endl;
+      //pout() << "smallend busted" <<endl;
       return -4;
     }
   if (blerg.bigEnd() != IntVect::Unit)
     {
-      pout() << "bigend busted" <<endl;
+      //pout() << "bigend busted" <<endl;
       return -5;
     }
   return 0;
@@ -230,24 +230,6 @@ template <class T> inline void BaseFab<T>::define(const Interval& a_comps,
   //        a_original.dataPtr(a_comps.begin()));
 }
 
-#ifdef USE_PROTO
-template < class T>
-template<unsigned int C>
-void BaseFab<T>::define(Proto::BoxData<T,C,1,1>&   a_original)
-{
-    undefine();
-    m_domain = getBox(a_original.box());
-    m_numpts = a_original.box().size();
-    m_truesize = a_original.size();
-    m_nvar = C;
-    m_dptr = &a_original(a_original.box().low());
-    m_aliased = true;
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
-}
-#endif
 
 template <class T> inline void BaseFab<T>::clear()
 {
@@ -589,7 +571,7 @@ template <class T> inline void BaseFab<T>::linearIn(void*           a_buf,
                                                     const Box&      a_R,
                                                     const Interval& a_comps)
 {
-  //  pout() << "basefab::linearin box = " <<  a_R << "comps = (" << a_comps.begin() << "," << a_comps.end() << ")" << endl;
+  //  //poutNo() << "basefab::linearin box = " <<  a_R << "comps = (" << a_comps.begin() << "," << a_comps.end() << ")" << endl;
   linearIn2(a_buf, a_R, a_comps);
 }
 

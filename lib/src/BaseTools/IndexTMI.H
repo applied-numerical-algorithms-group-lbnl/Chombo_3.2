@@ -108,7 +108,7 @@ template<typename T, int N> void IndexTM<T,N>::printOn (ostream & a_os) const
 
 template<typename T, int N> void IndexTM<T,N>::p() const
 {
-    pout() << *this << "\n";
+  //proto::pout() << *this << "\n";
 }
 
 template<typename T, int N> void IndexTM<T,N>::dumpOn (ostream & a_os) const

@@ -615,7 +615,7 @@ HDF5Handle(
   m_isOpen(false),
   m_level(-1)
 {
-  int err = open(a_filename, a_mode, a_globalGroupName, a_comm);
+  int err = open(a_filename, a_mode, a_globalGroupName);
   if (err < 0 )
   {
     char buf[1024];
