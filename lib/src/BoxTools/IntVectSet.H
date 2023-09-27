@@ -589,7 +589,7 @@ public:
   void
   p() const
   {
-    printBoxes(pout());
+    //printBoxes(pout());
   }
 
   /// Writes a text representation of an IntVectSet to an output stream
@@ -597,8 +597,14 @@ public:
   std::ostream&
   operator<<(std::ostream& os, const IntVectSet& ivs);
 
-  void convert() const; // turn dense rep into Tree rep.  very costly.
-                        // it is 'logically' const, but does modify data structures;
+  /// turn dense rep into Tree rep.  very costly.
+  /** 
+     This changes the underlying representation of the set from 
+     a DenseIntVectSet to a TreeIntVectSet.   This operation is 
+     The semantic of the set remains constant  but this 
+     does modify data structures and performance.
+  */
+  void convert() const; 
 
   // not for public consumption.  used in memory tracking.
   static long int count;

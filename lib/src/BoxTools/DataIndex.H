@@ -83,7 +83,7 @@ public:
   */
   virtual void output() const
   {
-    pout() << "(" << m_index << "," << m_datInd << ")" << endl;
+    //pout() << "(" << m_index << "," << m_datInd << ")" << endl;
   }
 
 private:

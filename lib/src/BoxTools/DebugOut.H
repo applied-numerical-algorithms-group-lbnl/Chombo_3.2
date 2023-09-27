@@ -80,11 +80,11 @@
      </ul>
   */
   void dumpFAB2DSlicePretty(const FArrayBox *const a_fabPtr,
-                            const int              a_comp = 0,
-                            IntVect                a_ivSml = IntVect::Zero,
-                            IntVect                a_ivBig = IntVect::Zero,
-                            const int              a_prec = 2,
-                            std::ostream&          a_out = pout());
+                            const int              a_comp ,
+                            IntVect                a_ivSml,
+                            IntVect                a_ivBig,
+                            const int              a_prec,
+                            std::ostream&          a_out );
 
   ///
   /**

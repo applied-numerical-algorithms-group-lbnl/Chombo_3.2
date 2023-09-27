@@ -18,13 +18,13 @@
 
 
 DirichletPoissonDomainBC::DirichletPoissonDomainBC()
- : m_onlyHomogeneous(true),
-   m_isFunctional(false),
-   m_dataBased(false),
-   m_value(12345.6789),
-   m_func(RefCountedPtr<BaseBCValue>()),
-   m_ebOrder(2)
 {
+  m_onlyHomogeneous = true;
+  m_isFunctional    = false;
+  m_dataBased       = false;
+  m_value           = 4586.4586;
+  m_func            = RefCountedPtr<BaseBCValue>();
+  m_ebOrder         = 2;
 }
 
 DirichletPoissonDomainBC::~DirichletPoissonDomainBC()
@@ -977,13 +977,13 @@ void DirichletPoissonDomainBC::getSecondOrderFluxStencil(      VoFStencil&      
 }
 
 DirichletPoissonDomainBCFactory::DirichletPoissonDomainBCFactory()
-: m_onlyHomogeneous(true),
-  m_isFunctional(false),
-  m_dataBased(false),
-  m_value(12345.6789),
-  m_func(RefCountedPtr<BaseBCValue>()),
-  m_ebOrder(2)
 {
+  m_onlyHomogeneous = true;
+  m_isFunctional    = false;
+  m_dataBased       = false;
+  m_value           = 4586.4586;
+  m_func            = (RefCountedPtr<BaseBCValue>());
+  m_ebOrder         = 2;
 }
 
 DirichletPoissonDomainBCFactory::~DirichletPoissonDomainBCFactory()

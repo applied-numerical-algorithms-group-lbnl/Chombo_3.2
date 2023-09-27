@@ -45,7 +45,12 @@ using std::cerr;
 #include "CH_Timer.H"
 #include "memusage.H"
 #include "memtrack.H"
+#include "DebugFunctions.H"
 
+void namespacing()
+{
+  func_to_get_functions_into_namespace();
+}
 /********/
 void solve(const PoissonParameters&  a_params)
 {

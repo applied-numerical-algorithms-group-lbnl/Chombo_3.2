@@ -405,12 +405,12 @@ void IVSFAB<T>::linearOut(void* a_buf,
       cptr += m_dataPtr[iloc].linearSize();
     }
   }
-if( cptr - ((char*)a_buf) != size(a_region,a_comps) ) {
-  pout() << "    region " << a_region << endl;
-  pout() << "    comps " << a_comps.begin() << " to " << a_comps.end() << endl;
-  pout() << "    size " << size(a_region,a_comps) << endl;
-  pout() << "    ptrdiff  " << (cptr - ((char*)a_buf)) << endl;
-}
+//if( cptr - ((char*)a_buf) != size(a_region,a_comps) ) {
+//  pout() << "    region " << a_region << endl;
+//  pout() << "    comps " << a_comps.begin() << " to " << a_comps.end() << endl;
+//  pout() << "    size " << size(a_region,a_comps) << endl;
+//  pout() << "    ptrdiff  " << (cptr - ((char*)a_buf)) << endl;
+//}
   CH_assert( cptr - ((char*)a_buf) == size(a_region,a_comps) );
 }
 
