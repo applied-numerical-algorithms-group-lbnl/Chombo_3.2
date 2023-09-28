@@ -66,6 +66,7 @@
 #include   "NeumannConductivityDomainBC.H"
 #include "DirichletConductivityEBBC.H"
 #include   "NeumannConductivityEBBC.H"
+#include   "WrappedGShop.H"
 
 #include "ArteryIF.H"
 
@@ -2835,9 +2836,12 @@ void definePoissonGeometry(const PoissonParameters&  a_params)
           PlaneIF ramp(rampNormal,rampPoint,inside);
 
           GeometryShop workshop(ramp,verbosity,fineDx);
+          RefCountedPtr<BaseIF> ramp_ptr(new PlaneIF(rampNormal,rampPoint,inside));
 
+          WrappedGShop wrappedshop(ramp_ptr, origin, fineDx[0], finestDomain, 0, 0);
           //this generates the new EBIS
-          ebisPtr->define(finestDomain, origin, fineDx[0], workshop, ebMaxSize, ebMaxCoarsen);
+          //ebisPtr->define(finestDomain, origin, fineDx[0], workshop , ebMaxSize, ebMaxCoarsen);
+          ebisPtr->define(finestDomain, origin, fineDx[0], wrappedshop, ebMaxSize, ebMaxCoarsen);
         }
       else if (whichgeom == 2)
         {
@@ -2932,10 +2936,15 @@ void definePoissonGeometry(const PoissonParameters&  a_params)
           pp.query("inside",insideRegular);
 
           SphereIF implicit(sphereRadius,sphereCenter,insideRegular);
+          RefCountedPtr<BaseIF> sphere_ptr(new SphereIF(sphereRadius,sphereCenter,insideRegular));
 
-          GeometryShop workshop(implicit,verbosity,fineDx);
+
           //this generates the new EBIS
-          ebisPtr->define(finestDomain, origin, fineDx[0], workshop, ebMaxSize, ebMaxCoarsen);
+          //GeometryShop workshop(implicit,verbosity,fineDx);
+          //ebisPtr->define(finestDomain, origin, fineDx[0], workshop, ebMaxSize, ebMaxCoarsen);
+          pout() << "using WrappedGShop here instead of GeometryShop" << endl;
+          WrappedGShop wrappedgshop(sphere_ptr, origin, fineDx[0], finestDomain, 0, 0);
+          ebisPtr->define(finestDomain, origin, fineDx[0], wrappedgshop, ebMaxSize, ebMaxCoarsen);
         }
       else if (whichgeom == 6)
         {

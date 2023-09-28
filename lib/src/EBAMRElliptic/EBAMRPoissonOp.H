@@ -739,7 +739,8 @@ EBAMRPoissonOp(const EBLevelGrid &                  a_eblgFine,
 
   //for debugging other operators
   void levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
-                      const LevelData<EBCellFAB>& a_rhs);
+                      const LevelData<EBCellFAB>& a_rhs,
+                      int a_iterations);
 
   void levelJacobi(LevelData<EBCellFAB>&       a_phi,
                    const LevelData<EBCellFAB>& a_rhs,

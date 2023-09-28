@@ -6,7 +6,7 @@
 //for area functions
 //cell centered box
 IntVect areaLo( 0, 0);
-IntVect areaHi( 3, 3);
+IntVect areaHi( 3, 7);
 //which side of cell gets printed in face dumps
 Side::LoHiSide faceSideX = Side::Lo;
 Side::LoHiSide faceSideY = Side::Hi;
@@ -56,7 +56,12 @@ dumpFaceArea(EBFaceFAB* dataPtr)
               }
               else
               {
-                cout  << data(faces[0], icomp) << "  ";
+                Real val = data(faces[0], icomp);
+                if (val >= 0.)
+                {
+                  cout << " ";
+                }
+                cout  << val << "  ";
               }
             }
             else
@@ -128,7 +133,12 @@ fullDumpFace(EBFaceFAB* dataPtr)
             }
             else
             {
-              cout  << data(faces[0], 0) << "  ";
+              Real val = data(faces[0], 0);
+              if (val >= 0.)
+              {
+                cout << " ";
+              }
+              cout  << val  << "  ";
             }
           }
           else
@@ -177,11 +187,11 @@ fullDumpCell(EBCellFAB* dataPtr)
             cout << pt << ":";
             if(vofs.size() >  0)
             {
-              cout  << data(vofs[ivar], 0) << "  ";
               if(data(vofs[0], ivar)  >= 0)
               {
                 cout << " ";
               }
+              cout  << data(vofs[ivar], 0) << "  ";
             }
             else
             {
@@ -224,11 +234,11 @@ dumpCellArea(EBCellFAB* dataPtr)
           cout << pt << ":";
           if(vofs.size() >  0)
           {
-            cout  << data(vofs[0], ivar) << "  ";
             if(data(vofs[0], ivar)  >= 0)
             {
               cout << " ";
             }// 
+            cout  << data(vofs[0], ivar) << "  ";
           } //end  if there is data
           else
           {

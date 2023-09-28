@@ -2248,10 +2248,7 @@ relax(LevelData<EBCellFAB>&       a_e,
     }
   else  if (m_relaxType == 3)
     {
-      for (int i = 0; i < a_iterations; i++)
-        {
-          levelSlowRelax(a_e,a_residual);
-        }
+      levelSlowRelax(a_e,a_residual, a_iterations);
     }
   else if (m_relaxType == 4)
     {
@@ -2293,49 +2290,6 @@ restrictResidual(LevelData<EBCellFAB>&       a_resCoar,
   Interval variables(0, 0);
   m_ebAverageMG.average(a_resCoar, resThisLevel, variables);
 
-#ifdef DO_EB_RHS_CORRECTION
-  // Apply error-correction modification to restricted RHS
-  // Right now this only works with Dirichlet BC's, and only makes sense for the EB
-
-  int correctionType = 0;    // Change this to activate RHS correction
-
-  if (correctionType != 0)
-    {
-      DataIterator dit = a_resCoar.disjointBoxLayout().dataIterator();
-      int nbox=dit.size();
-#pragma omp parallel for
-      for (int mybox=0;mybox<nbox; mybox++)
-        {
-          EBCellFAB&       resFAB = a_resCoar[dit[mybox]];                      // Extract the FAB for this box
-          const EBISBox&   ebis   = resFAB.getEBISBox();                   // Get the set of all IntVect indices
-
-          // Iterate over the parts of the RHS corresponding to the irregular cells,
-          // correcting the RHS in each cell
-          VoFIterator ebvofit(ebis.getIrregIVS(ebis.getRegion()), ebis.getEBGraph());
-          for (ebvofit.reset(); ebvofit.ok(); ++ebvofit)
-            {
-              for (int icomp = 0; icomp < resFAB.nComp(); ++icomp)    // For each component of the residual on this VoF
-                {
-                  if (correctionType == 1)
-                    {
-                      // Setting the residual to zero on the irregular cells gives convergence,
-                      // though the rate isn't as good as the full correction
-                      resFAB(ebvofit(), icomp) = 0.0;
-                    }
-                  else if (correctionType == 2)
-                    {
-                      // Kludge valid only for pseudo-1D test case.  May not work for you.
-                      Real kappa = ebis.volFrac(ebvofit());
-                      kappa = (kappa > 0.5 ? kappa : 0.5);    // Floor on kappa to prevent dividing by a tiny number
-                      Real rhoCoeff = (kappa + 0.5)/(2.0*kappa);
-                      resFAB(ebvofit(), icomp) *= (1.0 - rhoCoeff);
-                    }
-                  // else silently do nothing
-                }
-            }
-        }//dit
-    }
-#endif
 }
 
 /****/
@@ -3734,6 +3688,7 @@ levelGSRB(LevelData<EBCellFAB>&       a_phi,
             }
           ideb++;
         }//dit
+      ideb++;
     }//red-black
 }
 
@@ -4084,7 +4039,8 @@ levelMultiColorGS(LevelData<EBCellFAB>&       a_phi,
 
 void EBAMRPoissonOp::
 levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
-               const LevelData<EBCellFAB>& a_rhs)
+               const LevelData<EBCellFAB>& a_rhs,
+               int a_iterations)
 {
   CH_TIME("EBConductivityOp::levelSlowRelax");
 
@@ -4096,16 +4052,19 @@ levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
 
   LevelData<EBCellFAB> resid;
   create(resid, a_rhs);
-  for(int iredblack = 0; iredblack <= 1; iredblack++)
+  for(int iiter = 0; iiter < a_iterations; iiter++)
   {
-    if (m_hasCoar)
+    for(int iredblack = 0; iredblack <= 1; iredblack++)
     {
-      applyHomogeneousCFBCs(a_phi);
+      if (m_hasCoar)
+      {
+        applyHomogeneousCFBCs(a_phi);
+      }
+
+      residual(resid, a_phi, a_rhs, true);
+
+      slowGSRBColor(a_phi, resid, iredblack);
     }
-
-    residual(resid, a_phi, a_rhs, true);
-
-    slowGSRBColor(a_phi, resid, iredblack);
   }
 }
 //for debugging---this runs pretty slowly

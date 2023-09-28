@@ -80,8 +80,8 @@ void solve(const PoissonParameters&  a_params)
       rhs[ilev] = new LevelData<EBCellFAB>(grids[ilev],nvar, a_params.ghostRHS, factory);
 
       //for now just set phi to zero and rhs to -1.
-      EBLevelDataOps::setVal(*phi[ilev], 1.0);
-      EBLevelDataOps::setVal(*rhs[ilev], 0.0);
+      EBLevelDataOps::setVal(*phi[ilev], 0.0);
+      EBLevelDataOps::setVal(*rhs[ilev], 1.0);
     }
   CH_STOP(t2);
 

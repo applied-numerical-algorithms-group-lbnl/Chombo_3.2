@@ -26,6 +26,7 @@ int DirichletPoissonEBBC::s_leastSquaresRad = 2;
 bool DirichletPoissonEBBC::s_areaFracWeighted = false;
 bool DirichletPoissonEBBC::s_useQuadrantBasedStencil = false;
 
+
 DirichletPoissonEBBC::DirichletPoissonEBBC()
 {
   m_dataBased = false;
@@ -52,7 +53,7 @@ DirichletPoissonEBBC::construct(const ProblemDomain& a_domain,
 
   CH_assert( bool(a_ghostCellsPhi) == bool(a_ghostCellsRhs) ); // !xor
 
-  m_value = 12345.6789;
+  m_value = 4586.4586;
   m_func = RefCountedPtr<BaseBCValue>();
 
   m_order = 1;
@@ -85,55 +86,55 @@ void DirichletPoissonEBBC::define(const LayoutData<IntVectSet>& a_cfivs,
 
   //make the Dirichlet stencils
   for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
+  {
+    const Box& curBox = dbl[dit()];
+    const EBISBox& curEBISBox = m_layout[dit()];
+    const EBGraph& curEBGraph = curEBISBox.getEBGraph();
+    const IntVectSet& cfivsThisBox = a_cfivs[dit()];
+
+    IntVectSet notRegular;
+    int nComps = 1;
+
+    notRegular |= curEBISBox.getIrregIVS  (curBox);
+    notRegular |= curEBISBox.getMultiCells(curBox);
+
+    vofItIrreg[dit()].define(notRegular,curEBISBox.getEBGraph());
+
+    BaseIVFAB<VoFStencil>& curStencilBaseIVFAB = m_fluxStencil[dit()];
+    BaseIVFAB<Real>&       curWeightBaseIVFAB  = m_fluxWeight[dit()];
+
+    curStencilBaseIVFAB.define(notRegular,curEBGraph,nComps);
+    curWeightBaseIVFAB.define(notRegular,curEBGraph,nComps);
+
+    for (VoFIterator vofit(notRegular,curEBGraph); vofit.ok(); ++vofit)
     {
-      const Box& curBox = dbl[dit()];
-      const EBISBox& curEBISBox = m_layout[dit()];
-      const EBGraph& curEBGraph = curEBISBox.getEBGraph();
-      const IntVectSet& cfivsThisBox = a_cfivs[dit()];
+      const VolIndex& vof = vofit();
 
-      IntVectSet notRegular;
-      int nComps = 1;
+      VoFStencil& curStencil = curStencilBaseIVFAB(vof,0);
+      Real areaFrac = curEBISBox.bndryArea(vof);
+      Real&       curWeight  = curWeightBaseIVFAB(vof,0);
 
-      notRegular |= curEBISBox.getIrregIVS  (curBox);
-      notRegular |= curEBISBox.getMultiCells(curBox);
-
-      vofItIrreg[dit()].define(notRegular,curEBISBox.getEBGraph());
-
-      BaseIVFAB<VoFStencil>& curStencilBaseIVFAB = m_fluxStencil[dit()];
-      BaseIVFAB<Real>&       curWeightBaseIVFAB  = m_fluxWeight[dit()];
-
-      curStencilBaseIVFAB.define(notRegular,curEBGraph,nComps);
-      curWeightBaseIVFAB.define(notRegular,curEBGraph,nComps);
-
-      for (VoFIterator vofit(notRegular,curEBGraph); vofit.ok(); ++vofit)
-        {
-          const VolIndex& vof = vofit();
-
-          VoFStencil& curStencil = curStencilBaseIVFAB(vof,0);
-          Real areaFrac = curEBISBox.bndryArea(vof);
-          Real&       curWeight  = curWeightBaseIVFAB(vof,0);
-
-          if (m_order == 1)
-            {
-              getFirstOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx);
-            }
-          else if (m_order == 2)
-            {
-              getSecondOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx,cfivsThisBox);
-            }
-          else
-            {
-              MayDay::Error("DirichletPoissonEBBC::define stencil order not 1 or 2");
-            }
-          //Need to magnify weight in fluxStencil with areafrac*factor, factor = 1/dx;
-          //Pass the factor in because m_dx[0] in here may not be same as in EBAMRPoissonOp
-          curStencil *= areaFrac*a_factor;
-          if (s_areaFracWeighted)
-            {
-              curStencil *= curEBISBox.areaFracScaling(vof);
-            }
-        }
+      if (m_order == 1)
+      {
+        getFirstOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx);
+      }
+      else if (m_order == 2)
+      {
+        getSecondOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx,cfivsThisBox);
+      }
+      else
+      {
+        MayDay::Error("DirichletPoissonEBBC::define stencil order not 1 or 2");
+      }
+      //Need to magnify weight in fluxStencil with areafrac*factor, factor = 1/dx;
+      //Pass the factor in because m_dx[0] in here may not be same as in EBAMRPoissonOp
+      curStencil *= areaFrac*a_factor;
+      if (s_areaFracWeighted)
+      {
+        curStencil *= curEBISBox.areaFracScaling(vof);
+      }
     }
+  }
 
   m_isDefined = true;
 }
@@ -143,9 +144,9 @@ void DirichletPoissonEBBC::setOrder(int a_order)
   CH_assert(a_order >= 1 && a_order <= 2);
 
   if (m_order != a_order)
-    {
-      m_isDefined = false;
-    }
+  {
+    m_isDefined = false;
+  }
 
   m_order = a_order;
 }
@@ -161,7 +162,7 @@ void DirichletPoissonEBBC::setValue(Real a_value)
 
 void DirichletPoissonEBBC::setFunction(RefCountedPtr<BaseBCValue> a_func)
 {
-  m_value = 12345.6789;
+  m_value = 4586.4586;
   m_func = a_func;
 
   m_onlyHomogeneous = false;
@@ -186,32 +187,32 @@ void DirichletPoissonEBBC::applyEBFluxPoint(const VolIndex&               a_vof,
   Real value;
   const VolIndex& vof = a_vof;
   if (m_dataBased)
-    {
-      value = (*m_data)[a_dit](vof, s_velComp);
-    }
+  {
+    value = (*m_data)[a_dit](vof, s_velComp);
+  }
   else if (m_isFunction)
-    {
-      // Compute the bndryCentroid location in physical coordinates
-      RealVect point = RealVect::Unit;
-      const IntVect& iv = vof.gridIndex();
-      point *= 0.5;
-      point += iv;
-      point += ebisBox.bndryCentroid(vof);
-      point *= m_dx;
-      point += a_probLo;
+  {
+    // Compute the bndryCentroid location in physical coordinates
+    RealVect point = RealVect::Unit;
+    const IntVect& iv = vof.gridIndex();
+    point *= 0.5;
+    point += iv;
+    point += ebisBox.bndryCentroid(vof);
+    point *= m_dx;
+    point += a_probLo;
 
-      RealVect normal = ebisBox.normal(vof);
-      value = m_func->value(point, normal, a_time, s_velComp);
-    }
+    RealVect normal = ebisBox.normal(vof);
+    value = m_func->value(point, normal, a_time, s_velComp);
+  }
   else
+  {
+    if (m_onlyHomogeneous)
     {
-      if (m_onlyHomogeneous)
-        {
-          MayDay::Error("DirichletPoissonEBBC::applyEBFlux called with undefined inhomogeneous BC");
-        }
-
-      value = m_value;
+      MayDay::Error("DirichletPoissonEBBC::applyEBFlux called with undefined inhomogeneous BC");
     }
+
+    value = m_value;
+  }
 
   const BaseIVFAB<Real>& curWeightBaseIVFAB = m_fluxWeight[a_dit];
   const Real& curWeight = curWeightBaseIVFAB(vof,comp);
@@ -227,28 +228,28 @@ void DirichletPoissonEBBC::applyEBFluxPoint(const VolIndex&               a_vof,
   Box boxLph = a_lphi.getSingleValuedFAB().box();
   //check to see if multi-valued cell or not
   if (ebisBox.numVoFs(vof.gridIndex()) > 1)
-    {
-      const IntVectSet& ivsLph = ebisBox.getMultiCells(boxLph);
-      const EBGraph& ebgraph = ebisBox.getEBGraph();
-      BaseIVFAB<Real> baseivfabLph(ivsLph, ebgraph, 1);
+  {
+    const IntVectSet& ivsLph = ebisBox.getMultiCells(boxLph);
+    const EBGraph& ebgraph = ebisBox.getEBGraph();
+    BaseIVFAB<Real> baseivfabLph(ivsLph, ebgraph, 1);
 
-      offset = baseivfabLph.getIndex(vof, 0) - baseivfabLph.dataPtr(0);
-      Real* multiValuedPtrLph = a_lphi.getMultiValuedFAB().dataPtr(0);
-      lphiPtr  = multiValuedPtrLph + offset;
-    }
+    offset = baseivfabLph.getIndex(vof, 0) - baseivfabLph.dataPtr(0);
+    Real* multiValuedPtrLph = a_lphi.getMultiValuedFAB().dataPtr(0);
+    lphiPtr  = multiValuedPtrLph + offset;
+  }
   else
-    {
-      const IntVect& smallendLph = boxLph.smallEnd();
-      IntVect ivLph = vof.gridIndex()  - smallendLph;
-      IntVect ncellsLph = boxLph.size();
+  {
+    const IntVect& smallendLph = boxLph.smallEnd();
+    IntVect ivLph = vof.gridIndex()  - smallendLph;
+    IntVect ncellsLph = boxLph.size();
 
-      offset = ivLph[0] + ivLph[1]*ncellsLph[0] ;
+    offset = ivLph[0] + ivLph[1]*ncellsLph[0] ;
 #if CH_SPACEDIM==3
-      offset +=  ivLph[2]*ncellsLph[0]*ncellsLph[1];
+    offset +=  ivLph[2]*ncellsLph[0]*ncellsLph[1];
 #endif
-      Real* singleValuedPtrLph = a_lphi.getSingleValuedFAB().dataPtr();
-      lphiPtr  = singleValuedPtrLph + offset;
-    }
+    Real* singleValuedPtrLph = a_lphi.getSingleValuedFAB().dataPtr();
+    lphiPtr  = singleValuedPtrLph + offset;
+  }
   Real& lphi = *lphiPtr;
   lphi += flux * a_factor;
 }  
@@ -268,22 +269,22 @@ void DirichletPoissonEBBC::applyEBFlux(EBCellFAB&                    a_lphi,
   CH_assert(a_lphi.nComp() == 1 );
   CH_assert(a_phi.nComp() == 1);
   for (a_vofit.reset(); a_vofit.ok(); ++a_vofit)
-    {
-      const VolIndex& vof = a_vofit();
-      applyEBFluxPoint(vof, 
-                       a_lphi,            
-                       a_phi,             
-                       a_vofit,           
-                       a_cfivs,           
-                       a_dit,             
-                       a_probLo,          
-                       a_dx,              
-                       a_factor,          
-                       a_useHomogeneous,  
-                       a_time)            ;
+  {
+    const VolIndex& vof = a_vofit();
+    applyEBFluxPoint(vof, 
+                     a_lphi,            
+                     a_phi,             
+                     a_vofit,           
+                     a_cfivs,           
+                     a_dit,             
+                     a_probLo,          
+                     a_dx,              
+                     a_factor,          
+                     a_useHomogeneous,  
+                     a_time)            ;
 
 
-    }
+  }
 }
 bool
 DirichletPoissonEBBC::
@@ -302,9 +303,9 @@ getSecondOrderStencil(VoFStencil&          a_stencil,
   EBArith::johanStencil(dropOrder, a_pointStencils, a_distanceAlongLine,
                         a_vof, a_ebisBox, a_dx, a_cfivs);
   if (dropOrder)
-    {
-      return true;
-    }
+  {
+    return true;
+  }
 
   //if we got this far, sizes should be at least 2
   CH_assert(a_distanceAlongLine.size() >= 2);
@@ -337,13 +338,13 @@ void DirichletPoissonEBBC::getFirstOrderStencil(VoFStencil&     a_stencil,
   RealVect normal   = a_ebisBox.normal(  a_vof);
   RealVect centroid = a_ebisBox.bndryCentroid(a_vof);
   if (s_useQuadrantBasedStencil)
-    {
-      EBArith::getLeastSquaresGradSten(a_stencil, a_weight, a_vof, a_ebisBox, a_dx, m_domain, 0);
-    }
+  {
+    EBArith::getLeastSquaresGradSten(a_stencil, a_weight, a_vof, a_ebisBox, a_dx, m_domain, 0);
+  }
   else
-    {
-      EBArith::getLeastSquaresGradStenAllVoFsRad(a_stencil, a_weight, normal, centroid,  a_vof, a_ebisBox, a_dx, m_domain, 0, s_leastSquaresRad);
-    }
+  {
+    EBArith::getLeastSquaresGradStenAllVoFsRad(a_stencil, a_weight, normal, centroid,  a_vof, a_ebisBox, a_dx, m_domain, 0, s_leastSquaresRad);
+  }
 }
 
 void DirichletPoissonEBBC::getSecondOrderStencil(VoFStencil&       a_stencil,
@@ -359,9 +360,9 @@ void DirichletPoissonEBBC::getSecondOrderStencil(VoFStencil&       a_stencil,
                                                pointStencils, distanceAlongLine,
                                                a_vof, a_ebisBox, a_dx, a_cfivs);
   if (needToDropOrder)
-    {
-      getFirstOrderStencil(a_stencil,a_weight,a_vof,a_ebisBox,a_dx);
-    }
+  {
+    getFirstOrderStencil(a_stencil,a_weight,a_vof,a_ebisBox,a_dx);
+  }
 }
 
 
@@ -417,16 +418,16 @@ DirichletPoissonEBBC* DirichletPoissonEBBCFactory::create(const ProblemDomain& a
   fresh->setOrder(m_order);
 
   if (!m_onlyHomogeneous)
+  {
+    if (!m_isFunction)
     {
-      if (!m_isFunction)
-        {
-          fresh->setValue(m_value);
-        }
-      else
-        {
-          fresh->setFunction(m_func);
-        }
+      fresh->setValue(m_value);
     }
+    else
+    {
+      fresh->setFunction(m_func);
+    }
+  }
 
   return fresh;
 }
@@ -442,45 +443,45 @@ void DirichletPoissonEBBC::define(const LayoutData<IntVectSet>& a_cfivs)
 
   //make the Dirichlet stencils
   for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
+  {
+    const Box& curBox = dbl[dit()];
+    const EBISBox& curEBISBox = m_layout[dit()];
+    const EBGraph& curEBGraph = curEBISBox.getEBGraph();
+    const IntVectSet& cfivsThisBox = a_cfivs[dit()];
+
+    IntVectSet notRegular;
+    int nComps = 1;
+
+    notRegular |= curEBISBox.getIrregIVS  (curBox);
+    notRegular |= curEBISBox.getMultiCells(curBox);
+
+    BaseIVFAB<VoFStencil>& curStencilBaseIVFAB = m_fluxStencil[dit()];
+    BaseIVFAB<Real>&       curWeightBaseIVFAB  = m_fluxWeight[dit()];
+
+    curStencilBaseIVFAB.define(notRegular,curEBGraph,nComps);
+    curWeightBaseIVFAB.define(notRegular,curEBGraph,nComps);
+
+    for (VoFIterator vofit(notRegular,curEBGraph); vofit.ok(); ++vofit)
     {
-      const Box& curBox = dbl[dit()];
-      const EBISBox& curEBISBox = m_layout[dit()];
-      const EBGraph& curEBGraph = curEBISBox.getEBGraph();
-      const IntVectSet& cfivsThisBox = a_cfivs[dit()];
+      const VolIndex& vof = vofit();
 
-      IntVectSet notRegular;
-      int nComps = 1;
+      VoFStencil& curStencil = curStencilBaseIVFAB(vof,0);
+      Real&       curWeight  = curWeightBaseIVFAB(vof,0);
 
-      notRegular |= curEBISBox.getIrregIVS  (curBox);
-      notRegular |= curEBISBox.getMultiCells(curBox);
-
-      BaseIVFAB<VoFStencil>& curStencilBaseIVFAB = m_fluxStencil[dit()];
-      BaseIVFAB<Real>&       curWeightBaseIVFAB  = m_fluxWeight[dit()];
-
-      curStencilBaseIVFAB.define(notRegular,curEBGraph,nComps);
-      curWeightBaseIVFAB.define(notRegular,curEBGraph,nComps);
-
-      for (VoFIterator vofit(notRegular,curEBGraph); vofit.ok(); ++vofit)
-        {
-          const VolIndex& vof = vofit();
-
-          VoFStencil& curStencil = curStencilBaseIVFAB(vof,0);
-          Real&       curWeight  = curWeightBaseIVFAB(vof,0);
-
-          if (m_order == 1)
-            {
-              getFirstOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx);
-            }
-          else if (m_order == 2)
-            {
-              getSecondOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx,cfivsThisBox);
-            }
-          else
-            {
-              MayDay::Error("DirichletPoissonEBBC::define stencil order not 1 or 2");
-            }
-        }
+      if (m_order == 1)
+      {
+        getFirstOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx);
+      }
+      else if (m_order == 2)
+      {
+        getSecondOrderStencil(curStencil,curWeight,vof,curEBISBox,m_dx,cfivsThisBox);
+      }
+      else
+      {
+        MayDay::Error("DirichletPoissonEBBC::define stencil order not 1 or 2");
+      }
     }
+  }
   m_isDefined = true;
 }
 //deprecated stuff to get EBAMRPoissonOp working again
@@ -504,9 +505,9 @@ void DirichletPoissonEBBC::getEBFlux(Real&                         a_flux,
   int comp = 0;
 
   if (!m_isDefined)
-    {
-      define(a_cfivs);
-    }
+  {
+    define(a_cfivs);
+  }
 
   // Compute the bndryCentroid location in physical coordinates
   RealVect point = RealVect::Unit;
@@ -520,41 +521,41 @@ void DirichletPoissonEBBC::getEBFlux(Real&                         a_flux,
   Real value;
 
   if (a_useHomogeneous)
-    {
-      value = 0.0;
-    }
+  {
+    value = 0.0;
+  }
   else
+  {
+    if (m_dataBased)
     {
-      if (m_dataBased)
-        {
-          value = (*m_data)[a_dit](a_vof, 0);
-        }
-      else if (m_isFunction)
-        {
-          RealVect normal = curEBISBox.normal(a_vof);
-          value = m_func->value(point, normal, a_time,s_velComp);
-        }
-      else
-        {
-          if (m_onlyHomogeneous)
-            {
-              MayDay::Error("DirichletPoissonEBBC::getFaceFlux called with undefined inhomogeneous BC");
-            }
-
-          value = m_value;
-        }
+      value = (*m_data)[a_dit](a_vof, 0);
     }
+    else if (m_isFunction)
+    {
+      RealVect normal = curEBISBox.normal(a_vof);
+      value = m_func->value(point, normal, a_time,s_velComp);
+    }
+    else
+    {
+      if (m_onlyHomogeneous)
+      {
+        MayDay::Error("DirichletPoissonEBBC::getFaceFlux called with undefined inhomogeneous BC");
+      }
+
+      value = m_value;
+    }
+  }
 
   a_flux = 0.0;
   const BaseIVFAB<VoFStencil>& curStencilBaseIVFAB = m_fluxStencil[a_dit];
   const VoFStencil& curStencil = curStencilBaseIVFAB(a_vof,comp);
   for (int i = 0; i < curStencil.size(); i++)
-    {
-      const VolIndex& curVoF = curStencil.vof(i);
-      Real weight = curStencil.weight(i);
-      Real phiVal = curPhi(curVoF,comp);
-      a_flux += weight * phiVal;
-    }
+  {
+    const VolIndex& curVoF = curStencil.vof(i);
+    Real weight = curStencil.weight(i);
+    Real phiVal = curPhi(curVoF,comp);
+    a_flux += weight * phiVal;
+  }
 
   const BaseIVFAB<Real>& curWeightBaseIVFAB = m_fluxWeight[a_dit];
   const Real& curWeight = curWeightBaseIVFAB(a_vof,comp);
