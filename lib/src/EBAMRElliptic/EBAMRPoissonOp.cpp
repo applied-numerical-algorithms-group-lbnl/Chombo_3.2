@@ -713,7 +713,7 @@ defineStencils()
           const VolIndex& VoF = vofit();
           IntVect iv = VoF.gridIndex();
           int ideb = 0;
-          if((iv[0]==55) && (iv[1]==14))
+          if((iv[0]==0) && (iv[1]==4))
           {
             ideb = 1;
           }
@@ -744,6 +744,11 @@ defineStencils()
 
           curBetaWeight = EBArith::getDiagWeight(relStencil, VoF);
 
+          if(ideb == 1)
+          {
+            pout() << "before domain bc stuff beta weight = "  << curBetaWeight << endl;
+          }
+          Real domBndryBetaChanges = 0;
           for (int idir = 0; idir < SpaceDim; idir++)
             {
               Box loSide = bdryLo(m_eblg.getDomain(),idir);
@@ -756,7 +761,8 @@ defineStencils()
                     {
                       faceAreaFrac += curEBISBox.areaFrac(faces[i]);
                     }
-                  curBetaWeight += -faceAreaFrac * m_invDx2[idir];
+                  curBetaWeight         += -faceAreaFrac * m_invDx2[idir];
+                  domBndryBetaChanges  += -faceAreaFrac * m_invDx2[idir];
                 }
 
               Box hiSide = bdryHi(m_eblg.getDomain(),idir);
@@ -769,13 +775,19 @@ defineStencils()
                     {
                       faceAreaFrac += curEBISBox.areaFrac(faces[i]);
                     }
-                  curBetaWeight += -faceAreaFrac * m_invDx2[idir];
+                  curBetaWeight         += -faceAreaFrac * m_invDx2[idir];
+                  domBndryBetaChanges   += -faceAreaFrac * m_invDx2[idir];
                 }
             }
 
           //debug take out ebstencil for diagnostic
           //ebFluxStencil = NULL;
           //end debug
+          if(ideb == 1)
+          {
+            pout() << "after domain bc stuff beta weight = "  << curBetaWeight       << endl;
+            pout() << "domBndryBetaChanges               = "  << domBndryBetaChanges << endl;
+          }
           if (ebFluxStencil != NULL)
             {
               BaseIVFAB<VoFStencil>& ebFluxStencilBaseIVFAB = (*ebFluxStencil)[dit[mybox]];
@@ -1208,7 +1220,13 @@ getDivFStencil(VoFStencil&       a_vofStencil,
   CH_TIMER("getFluxStencil",t1);
   CH_TIMER("compute_vofStencil",t2);
   CH_TIMER("scale_vofStencil",t3);
-
+  auto  iv =  a_vof.gridIndex();
+  int ideb = 0;
+  if((iv[0] == 0) && iv[1] == 4)
+  {
+    ideb = 1;
+  }
+  
   a_vofStencil.clear();
   for (int idir = 0; idir < SpaceDim; idir++)
     {
@@ -4096,12 +4114,11 @@ slowGSRBColor(LevelData<EBCellFAB>&       a_phi,
       int sumiv = iv.sum();
       if(abs(sumiv) %2 == a_iredblack)
       {
-//        int ideb = 0;
-//        if((iv[0]== 55)&&(iv[1]== 14))
-//        if((iv[0]== 31)&&(iv[1]== 31))
-//        {
-//          ideb = 1;
-//        }
+        int ideb = 0;
+        if((iv[0]== 0)&&(iv[1]== 4))
+        {
+          ideb = 1;
+        }
         Real resid    = a_res[dit[ibox]](vof, 0);
 
         bool useIrreg = ebgraph.isIrregular(iv);

@@ -22,7 +22,7 @@
 Real g_simulationTime = 0.0;
 
 int DirichletPoissonEBBC::s_velComp = 0;
-int DirichletPoissonEBBC::s_leastSquaresRad = 1;
+int DirichletPoissonEBBC::s_leastSquaresRad = 2;
 bool DirichletPoissonEBBC::s_areaFracWeighted = false;
 bool DirichletPoissonEBBC::s_useQuadrantBasedStencil = false;
 
