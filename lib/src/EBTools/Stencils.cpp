@@ -167,11 +167,10 @@ void
 VoFStencil::
 outputToPout() const
 {
-  pout() << "num vof \t  weight \t variable = " << endl;
   for(int ivof = 0; ivof < this->size(); ivof++)
-    {
-      pout() << "(" << ivof << "):" << vofs[ivof]  << "\t" << weights[ivof]<< "\t" << variables[ivof] << endl;
-    }
+  {
+    pout() << ivof << ": ( " << vofs[ivof]  << ", " << weights[ivof]<< " , " << variables[ivof] << " )"<< endl;
+  }
 }
 ///
 void 

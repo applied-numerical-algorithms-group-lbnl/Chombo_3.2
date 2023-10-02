@@ -724,6 +724,11 @@ defineStencils()
           invDiagStencil.clear();
 
           getDivFStencil(curStencil,VoF, dit[mybox], true);
+          if(ideb == 1)
+          {
+            pout() << "curstencil after getDivFStencil:" << endl;
+            curStencil.outputToPout();
+          }
           getDivFStencil(relStencil,VoF, dit[mybox], !s_doInconsistentRelax);
 
           Real& curAlphaWeight  = alphaWeight(VoF,0);
@@ -4135,6 +4140,13 @@ slowGSRBColor(LevelData<EBCellFAB>&       a_phi,
         if(std::abs(denom) > 1.0e-12)
         {
           lambda = safety/denom;
+        }
+        Real reg_beta = -2*SpaceDim/(dx*dx);
+        Real reg_denom = m_alpha + m_beta*reg_beta;
+        Real reg_lambda = safety/reg_denom;
+        if(std::abs(lambda) > std::abs(reg_lambda))
+        {
+          lambda = reg_lambda;
         }
         Real phiold = a_phi[dit[ibox]](vof, 0);
         Real phinew = phiold +  lambda*resid;
