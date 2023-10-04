@@ -2251,6 +2251,7 @@ relax(LevelData<EBCellFAB>&       a_e,
   CH_assert(a_e.nComp() == 1);
   CH_assert(a_residual.nComp() == 1);
 
+
   if (m_relaxType == 0)
     {
       levelJacobi(a_e,a_residual,a_iterations);
@@ -4073,6 +4074,7 @@ levelSlowRelax(LevelData<EBCellFAB>&       a_phi,
   CH_assert(a_phi.nComp() == 1);
   CH_assert(a_rhs.nComp() == 1);
 
+  pout() << "levelSlowRelax domain = " << m_eblg.getDomain().domainBox() << endl;
   LevelData<EBCellFAB> resid;
   create(resid, a_rhs);
   for(int iiter = 0; iiter < a_iterations; iiter++)

@@ -6,11 +6,13 @@
 //for area functions
 //cell centered box
 IntVect areaLo( 0, 0);
-IntVect areaHi( 3, 7);
+IntVect areaHi( 7, 7);
 //which side of cell gets printed in face dumps
 Side::LoHiSide faceSideX = Side::Lo;
 Side::LoHiSide faceSideY = Side::Hi;
 Box areaBox(areaLo, areaHi);
+//this one is for the newer functions (dumplolo dumphihi)
+static IntVect s_areaSize = 7*IntVect::Unit;
 
 void 
 dumpFaceArea(EBFaceFAB* dataPtr)
@@ -205,6 +207,116 @@ fullDumpCell(EBCellFAB* dataPtr)
   }
 }
 void 
+dumpCellLoLo(EBCellFAB* dataPtr)
+{
+  if(dataPtr != NULL)
+  {
+    cout    << setprecision(8)
+            << setiosflags(ios::showpoint)
+            << setiosflags(ios::scientific);
+
+    
+    Box dataBox = dataPtr->box();
+    EBGraph graph = dataPtr->getEBISBox().getEBGraph();
+    Box domainBox = graph.getDomain().domainBox();
+    IntVect ivlo = domainBox.smallEnd();
+    IntVect ivhi = ivlo + s_areaSize;
+    Box area(ivlo, ivhi);
+    area &= dataBox;
+    if(!area.isEmpty())
+    {
+
+      EBCellFAB & data = *dataPtr;
+
+      Box printBox = dataBox & area;
+      IntVect hideb = printBox.bigEnd();
+      IntVect lodeb = printBox.smallEnd();
+      for(int ivar = 0; ivar < data.nComp(); ivar++)
+      {
+        cout << "data region contains, for variable "<< ivar << endl;
+        for(int j = hideb[1]; j >= lodeb[1]; j--)
+        {
+          for(int i = lodeb[0]; i <= hideb[0]; i++)
+          {
+            IntVect pt(i,j);
+            Vector<VolIndex > vofs = graph.getVoFs(pt);
+            cout << pt << ":";
+            if(vofs.size() >  0)
+            {
+              if(data(vofs[0], ivar)  >= 0)
+              {
+                cout << " ";
+              }// 
+              cout  << data(vofs[0], ivar) << "  ";
+            } //end  if there is data
+            else
+            {
+              cout  << "---------------" << "  ";
+            }
+          }
+          cout << endl;
+        }
+      }
+    }
+  }
+}
+
+void 
+dumpCellHiHi(EBCellFAB* dataPtr)
+{
+  if(dataPtr != NULL)
+  {
+    cout    << setprecision(8)
+            << setiosflags(ios::showpoint)
+            << setiosflags(ios::scientific);
+
+    
+    Box dataBox = dataPtr->box();
+    EBGraph graph = dataPtr->getEBISBox().getEBGraph();
+    Box domainBox = graph.getDomain().domainBox();
+    IntVect ivhi = domainBox.bigEnd();
+    IntVect ivlo = ivhi - s_areaSize;
+    Box area(ivlo, ivhi);
+    area &= dataBox;
+    if(!area.isEmpty())
+    {
+
+      EBCellFAB & data = *dataPtr;
+
+      Box printBox = dataBox & area;
+      IntVect hideb = printBox.bigEnd();
+      IntVect lodeb = printBox.smallEnd();
+      for(int ivar = 0; ivar < data.nComp(); ivar++)
+      {
+        cout << "data region contains, for variable "<< ivar << endl;
+        for(int j = hideb[1]; j >= lodeb[1]; j--)
+        {
+          for(int i = lodeb[0]; i <= hideb[0]; i++)
+          {
+            IntVect pt(i,j);
+            Vector<VolIndex > vofs = graph.getVoFs(pt);
+            cout << pt << ":";
+            if(vofs.size() >  0)
+            {
+              if(data(vofs[0], ivar)  >= 0)
+              {
+                cout << " ";
+              }// 
+              cout  << data(vofs[0], ivar) << "  ";
+            } //end  if there is data
+            else
+            {
+              cout  << "---------------" << "  ";
+            }
+          }
+          cout << endl;
+        }
+      }
+    }
+  }
+}
+
+void 
 dumpCellArea(EBCellFAB* dataPtr)
 {
   if(dataPtr != NULL)
@@ -264,6 +376,35 @@ dumpLDCellArea(LevelData<EBCellFAB>* dataPtr)
     }
   }
 }
+
+void 
+dumpLDCellLoLo(LevelData<EBCellFAB>* dataPtr)
+{
+  if(dataPtr != NULL)
+  {
+    LevelData<EBCellFAB>& data = *dataPtr;
+    DataIterator dit = data.dataIterator();
+    for(int ibox = 0; ibox < dit.size(); ibox++)
+    {
+      cout << "ibox = " << ibox << ":" << endl;
+      dumpCellLoLo(&data[dit[ibox]]);
+    }
+  }
+}
+void 
+dumpLDCellHiHi(LevelData<EBCellFAB>* dataPtr)
+{
+  if(dataPtr != NULL)
+  {
+    LevelData<EBCellFAB>& data = *dataPtr;
+    DataIterator dit = data.dataIterator();
+    for(int ibox = 0; ibox < dit.size(); ibox++)
+    {
+      cout << "ibox = " << ibox << ":" << endl;
+      dumpCellHiHi(&data[dit[ibox]]);
+    }
+  }
+}
 void 
 dumpLDFaceArea(LevelData<EBFaceFAB>* dataPtr)
 {
@@ -298,6 +439,8 @@ inline void func_to_get_functions_into_namespace()
   fullDumpCell(NULL);
   fullDumpFace(NULL);
   dumpCellArea(NULL);
+  dumpCellLoLo(NULL);
+  dumpCellHiHi(NULL);
   dumpFaceArea(NULL);
   dumpFluxArea(NULL);
   dumpLDCellArea(NULL);
