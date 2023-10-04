@@ -959,7 +959,7 @@ EBAMRNoSubcycle::defineGrids(Vector<Vector<Box> >& a_vectBoxes)
           EBEllipticLoadBalance(procAssign,  a_vectBoxes[ilev], m_domain[ilev],
             false, m_ebisPtr );
           m_grids[ilev] = DisjointBoxLayout();
-          m_grids[ilev].define(a_vectBoxes[ilev], procAssign);
+          m_grids[ilev].define(a_vectBoxes[ilev], procAssign, m_domain[ilev]);
         }
     }
 }
