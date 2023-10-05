@@ -12,7 +12,7 @@ Side::LoHiSide faceSideX = Side::Lo;
 Side::LoHiSide faceSideY = Side::Hi;
 Box areaBox(areaLo, areaHi);
 //this one is for the newer functions (dumplolo dumphihi)
-static IntVect s_areaSize = 7*IntVect::Unit;
+static IntVect s_areaSize(D_DECL(4, 7, 1));
 
 void 
 dumpFaceArea(EBFaceFAB* dataPtr)
