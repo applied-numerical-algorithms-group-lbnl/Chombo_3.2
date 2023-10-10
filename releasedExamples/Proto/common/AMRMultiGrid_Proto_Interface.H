@@ -436,77 +436,96 @@ namespace PrCh_AMR_Elliptic
 
   ///
   /**
-     level_data_typehis layer deals with proto<---->chombo conversions  and will deal only with
-     the purely virtual functions of Base_Simplified_AMRLevelOp.
-     This layer does heavily use the proto interface.   Only operator-dependent stuff
-     is left out.   I think this means that we can have the application operator only 
-     have to make a flux or apply the operator.
+     This layer deals with proto<---->chombo conversions and will deal
+     only with the purely virtual functions of
+     Base_Simplified_AMRLevelOp.  This layer leans heavily upon the
+     proto interface.  Only operator-dependent stuff is left out.
+
+     The operator class has to implement the following:
+     (1) applyOperator
+     (2) relax 
+     (3) refluxFineCorrection
+     (4) prolongIncrement 
+     (5) restriction
+     (6) fillGhostCellsOutsideDomain
+     (7) refToCoarser.
+
+     Some of these could be reasonably hardwired (force gsrb, first
+     order prolongation, etc.), If this gets reused enough, we can
+     do that. But for now, 7 shall be the number (and 7 << 83).
+
+     An important design point here is that both base classes have no
+     data.  I prefer base classes to just be base classes with all
+     data living in the derived classs.  There are many default
+     funcion implementations here.  All will have timers.  If, for a
+     particular operator, one of these functions become odious, that operator
+     can supercede it because all these functions are virtual,
   **/
   template<int ncomp>
   class Base_Proto_AMRLevelOp: public Base_Simplified_AMRLevelOp<Proto::LevelBoxData<ncomp> >
   {
   public:
-    typedef Proto::LevelBoxData<ncomp> level_data_type;
+    typedef Proto::LevelBoxData<double, ncomp> pr_lbd;
     
     ///this holds data that is common to all of these things.
     typedef Chombo::Box           ch_box;
     typedef Chombo::ProblemDomain ch_dom;
 
     ///This class has no data.  
-    Base_Simplified_AMRLevelOp():AMRLevelOp<>() {}
+    Base_Proto_AMRLevelOp():AMRLevelOp<>() {}
 
     ///This class has no data
-    virtual ~Base_Simplified_AMRLevelOp(){}
-
-    ///functions that all this will funnel into.
-    virtual void
-    relax(level_data_type       & a_correction,
-          const level_data_type & a_residual, int a_iterations) = 0 ;
+    virtual ~Base_Proto_AMRLevelOp(){}
 
     ///
     virtual ch_dom
-    getDomainFromData(const level_data_type & a_data) = 0;
+    getDomainFromData(const pr_lbd & a_data)
+    {
+      auto   dbl_pr = a_data.layout();
+      pr_dom dom_pr = dbl.domain();
+      ch_dom retval = ProtoCh::getProblemDomain(dom_pr);
+    }      
     
-    /// 
-    virtual void
-    fillGhostDataOutsideDomain(level_data_type & a_phi,
-                               const ch_dom    & a_domain) = 0;
-
     ///
     virtual void
-    fillGhostDataOverCoarseFineInterface(level_data_type       &  a_phiFine, 
-                                         const level_data_type &  a_phiCoar) = 0;
-    ///
-    virtual void
-    refluxFineCorrection(level_data_type       &  a_lphCoar,
-                         const level_data_type &  a_phiFine, 
-                         const level_data_type &  a_phiCoar,
-                         Base_Proto_AMRLevelOp<level_data_type>*  a_finerOp) = 0;
+    fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_phiFine, 
+                                         const pr_lbd &  a_phiCoar)
+    {
+      ch_mayday::Error("I think we can leave this until we are doing AMR");
+    }
     
     ///exchange
     virtual void
-    fillGhostDataOverFineFineInterface(level_data_type       &  a_phiFine) = 0;
+    fillGhostDataOverFineFineInterface(pr_lbd       &  a_phiFine)
+    {
+      a_phiFine.exchange();
+    }
 
     ///these two can be on different layouts
     virtual void
-    copyTo(level_data_type       &  a_dst,
-           const level_data_type &  a_src) = 0;
-    
-    
-    ///
-    /**
-       Create a coarsened  (by two) version of the input data.  This does not include averaging
-       the data.   So if a_fine is over a Box of (0, 0, 0) (63, 63, 63), a_fine should
-       be over a Box (0, 0, 0) (31, 31, 31).
-    */
-    virtual void createCoarser(T& a_coarse, const T& a_fine, bool ghosted) = 0;
+    copyTo(pr_lbd       &  a_dst,
+           const pr_lbd &  a_src)
+    {
+      a_src.copyTo(a_dst);
+    }
     
     ///
-    /**
-       Return the norm of  a_rhs.
-       a_ord == 0  max norm, a_ord == 1 sum(abs(a_rhs)), else, L(a_ord) norm.
-    */
-    virtual Real norm(const T& a_rhs, int a_ord) = 0;
+    virtual
+    void createCoarser(pr_lbd                   & a_coar,
+                       const pr_lbd             & a_fine,
+                       bool ghosted)
+    {
+      auto   dbl_fine = a_data.layout();
+      auto   dbl_coar = dbl_fine.coarsen(2);
+      pr_pt ghost = a_fine.ghost();
+      a_coar.define(dbl_coar, ghost);
+    }
+    
+    /// Cheers.
+    virtual double  norm(const pr_lbd & a_rhs, int a_ord)
+    {
+      return a_rhs.absMax();
+    }
     
     ///
     /**
@@ -514,8 +533,8 @@ namespace PrCh_AMR_Elliptic
        means return the sum over all data points of a_1*a_2.
     */
     virtual double
-    dotProduct(const level_data_type & a_fir,
-               const level_data_type & a_sec)  = 0;
+    dotProduct(const pr_lbd & a_fir,
+               const pr_lbd & a_sec)  = 0;
     
 
 
@@ -525,16 +544,16 @@ namespace PrCh_AMR_Elliptic
        (just  make a holder the same size).
     **/
     virtual void
-    create(level_data_type       & a_lhs,
-           const level_data_type & a_rhs) = 0;
+    create(pr_lbd       & a_lhs,
+           const pr_lbd & a_rhs) = 0;
     
     ///
     /**
-       This is another one where you just have to create the data (call level_data_type::define, for example)
+       This is another one where you just have to create the data (call pr_lbd::define, for example)
        And every box of Coar is a coarsening of the same box on fine by refrat.
     */
-    virtual void createCoarsened(level_data_type&       a_phiCoar,
-                                 const level_data_type& a_phiFine,
+    virtual void createCoarsened(pr_lbd&       a_phiCoar,
+                                 const pr_lbd& a_phiFine,
                                  const int&     a_refRat) = 0;
     
     ///
@@ -544,39 +563,8 @@ namespace PrCh_AMR_Elliptic
     */
     virtual void restrictResidual(T& a_resCoarse, T& a_phiFine, const T& a_rhsFine) = 0;
 
-    ///
-    /**
-       correct the fine solution based on coarse correction
-       a_phiThisLevel += I[2h->h](a_correctCoarse)
-    */
-    virtual void prolongIncrement(T& a_phiThisLevel, const T& a_correctCoarse) = 0;
-    
-    ///a_resCoarse = average(a_resfine) (cannot call this restrict)
-    virtual void restriction(T& a_resCoarse, T& a_resFine) = 0;
-    
-    ///
-    /**
-       return the refinement ratio to next coarser level.
-       return 1 when there are no coarser Base_Proto_AMRLevelOp objects.
-    */
-    virtual int refToCoarser() = 0;
 
   };
-
-  /// our friend mr. 7 pt laplacian
-  class Proto_Helmholtz_Op: public   Base_Simplified_AMRLevelOp<1>
-  {
-  public:
-    typedef Proto::LevelBoxData<1> level_data_type;
-    typedef Chombo::MayDay         ch_mayday;
-    ///For this one, the derived class may assume all ghost cells have been set correctly
-    virtual void 
-    applyOperator(level_data_type         & a_lph,
-                  const level_data_type   & a_phi)
-    {
-      ch_mayday::Error("Doh! not implemented");
-    }
-  }
-
+} //end namespace PrCh_AMR_Elliptic
 
 #endif

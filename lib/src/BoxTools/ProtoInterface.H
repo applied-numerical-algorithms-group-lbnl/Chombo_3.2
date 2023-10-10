@@ -17,6 +17,7 @@
 #include "IntVect.H"
 #include "Box.H"
 #include "BaseFab.H"
+#include "ProblemDomain.H"
 
 
 
@@ -29,11 +30,12 @@
 */
 namespace ProtoCh
 {
-  typedef Proto::Point    pr_pt;
-  typedef Chombo::IntVect ch_iv;
-  typedef Chombo::Box     ch_box;
-  typedef Proto::Box      pr_box;
-
+  typedef Proto::Point           pr_pt;
+  typedef Chombo::IntVect        ch_iv;
+  typedef Chombo::Box            ch_box;
+  typedef Proto::Box             pr_box;
+  typedef Proto::ProblemDomain   pr_dom;
+  typedef Chombo::ProblemDomain  ch_dom;
   ///get point from intvect
   extern pr_pt  getPoint( const ch_iv& a_iv)
   {
@@ -46,6 +48,34 @@ namespace ProtoCh
 
   }
 
+  /// gets proto problem domain from Chombo problem domain
+  inline pr_box getProtoDomain(const ch_dom& a_dom);
+  {
+    ch_box                box_ch = a_dom.domainBox();
+    pr_box                box_pr = getProtoBox(box_ch);
+    const bool*           per_ch = a_dom.isPeriodicVect(); //bool[DIM]
+    std::array<bool, DIM> per_pr;
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      per_pr[idir] = per_ch[idir];
+    }
+    return pr_dom(box_pr, per_pr);
+  }
+
+  /// gets chombo problem domain from proto problem domain
+  inline pr_box getProtoDomain(const pr_dom& a_dom);
+  {
+    pr_box                box_pr = a_dom.domain();
+    std::array<bool, DIM> per_pr = a_dom.periodicity();
+    ch_box                box_ch = getBox(box_pr);
+    bool                  per_ch[DIM];
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      per_ch[idir] = per_pr[idir];
+    }
+    return ch_dom(box_ch, per_ch);
+  }
+  
   /// gets proto box from chombo box
   inline pr_box getProtoBox(const ch_box& a_box);
   {
@@ -72,6 +102,7 @@ namespace ProtoCh
     IntVect ivhi = getIntVect(a_bx.high());
     return Box(ivlo, ivhi);
   }
+
 
 } 
 
