@@ -1,10 +1,13 @@
 #include "AMRMultiGrid.H"
 #include "Proto.H"
 
-#ifndef AMRMultigrid_Proto_Interface
+#ifndef ___AMRMultiGrid_Proto_Interface___
+#define ___AMRMultiGrid_Proto_Interface___
 
 ///
 /**
+   Namespace PrCh_AMR_Elliptic
+
    Infrastructurue for using AMRMultiGrid as a solver front end and a
    proto back end.  I intend to rewrite in this fashion all of the
    some of the non-EB elliptic operators in Chombo3.2, including
@@ -15,17 +18,22 @@
    conditions, slip them into the RHS.  Your data holder needs to be
    able to give its domain.  
 
-   Basic Inheritance Structure will look like this:
-   OperatorClass: Base_Proto_AMRLevelOp: Base_Simplified_AMRLevelOp
+     Brian van Straalen's wildly successful original templated
+     elliptic solver to do the Martin-Cartwright algorithm has become
+     a very large interface.  The base class hierarchy
+     LevelOp/MGLevelOp/AMRLevelOp has (as of October 2023) 83 virtual
+     functions.  Production codes can get large as more and more
+     aggressive steps are taken to improve performance.  The
+     AMRMultiGrid_Proto_Interface classes are meant to
 
-   Base_Simplified_AMRLevelOp funnels down the  AMRLevelOp interface 
-   to a more managable number of functions.
+     (1) Simplify using AMRMultiGrid.  
+     (2) Provide the Proto backend for people who want to run on the device.
 
-   Base_Proto_AMRLevelOp uses proto functions to narrow that number of functions down further.
-
-   OperatorClass should only have to apply its operator, fill in ghost cell boundary 
-   conditions outside the domain, and 
-   to a more managable number of functions.
+     The class structure reflects those priorities. 
+     (1) Base_Simplified_AMRLevelOp provides reasonable defaults for many of these functions (independent of the proto interface).
+     (2) Base_Proto_AMRLevelOp uses the proto interface to further winnow away at 83.
+     
+     In the end, all operators have to implement 7 functions.
 **/
 namespace PrCh_AMR_Elliptic
 {
@@ -33,6 +41,8 @@ namespace PrCh_AMR_Elliptic
 
   ///
   /**
+     class  Base_Simplified_AMRLevelOp
+
      This class includes all the virtual functions that AMRLevelOp, MGLevelOp and LevelOp require.
      I funnel them all down into a few pure virtual functions that each separate operator implements.
      Everything is implemented in the simplest way I can figure out so lots of niggling optimizations
@@ -42,9 +52,9 @@ namespace PrCh_AMR_Elliptic
      The number of purely virtual functions here is still large but this has no references to proto. 
      The next layer deals with proto<---->chombo conversions  and will deal only with the functions here
      which are purely virtual in this class.    It will use proto tools to reduce further the number of 
-     functions required by operator.
+     functions required by the operator.
   
-     
+     Dad joke: 
      A purely virtual function's = 0 means that the function has not been sullied with an implementation.
      A purely virtuous function is a completely different thing.  
    **/
@@ -62,61 +72,44 @@ namespace PrCh_AMR_Elliptic
     ///This class has no data
     virtual ~Base_Simplified_AMRLevelOp(){}
 
-    ///functions that all this will funnel into.
+    ///functions that all this will funnel into.  
+    /**
     virtual void
     relax(level_data_type       & a_correction,
           const level_data_type & a_residual, int a_iterations) = 0 ;
-
-    ///
     virtual ch_dom
     getDomainFromData(const level_data_type & a_data) = 0;
-    
-    /// 
     virtual void
     fillGhostDataOutsideDomain(level_data_type & a_phi,
                                const ch_dom    & a_domain) = 0;
 
-    ///
     virtual void
     fillGhostDataOverCoarseFineInterface(level_data_type       &  a_phiFine, 
                                          const level_data_type &  a_phiCoar) = 0;
-    ///
     virtual void
     refluxFineCorrection(level_data_type       &  a_lphCoar,
                          const level_data_type &  a_phiFine, 
                          const level_data_type &  a_phiCoar,
                          Base_Proto_AMRLevelOp<level_data_type>*  a_finerOp) = 0;
     
-    ///exchange
     virtual void
-    fillGhostDataOverFineFineInterface(level_data_type       &  a_phiFine) = 0;
+    fillGhostDataOverFineFineInterface(level_data_type & a_phiFine) = 0;
 
-    ///these two can be on different layouts
     virtual void
     copyTo(level_data_type       &  a_dst,
            const level_data_type &  a_src) = 0;
     
     
-    ///
-    /**
-       Create a coarsened  (by two) version of the input data.  This does not include averaging
-       the data.   So if a_fine is over a Box of (0, 0, 0) (63, 63, 63), a_fine should
-       be over a Box (0, 0, 0) (31, 31, 31).
-    */
-    virtual void createCoarser(T& a_coarse, const T& a_fine, bool ghosted) = 0;
+    /// This non-amr coarsening assumes on processor and factor of 2. 
+    virtual void
+    createCoarser(level_data_type       & a_coarse,
+                  const level_data_type & a_fine,
+                  bool ghosted) = 0;
     
-    ///
-    /**
-       Return the norm of  a_rhs.
-       a_ord == 0  max norm, a_ord == 1 sum(abs(a_rhs)), else, L(a_ord) norm.
-    */
+    /// The default here is max norm,  the only norm anyone should care about.
     virtual Real norm(const T& a_rhs, int a_ord) = 0;
     
     ///
-    /**
-       Compute and return the dot product of a_1 and a_2.   In most contexts, this
-       means return the sum over all data points of a_1*a_2.
-    */
     virtual double
     dotProduct(const level_data_type & a_fir,
                const level_data_type & a_sec)  = 0;
@@ -128,52 +121,35 @@ namespace PrCh_AMR_Elliptic
 
 
     ///
-    /**
-       Create data holder a_lhs that mirrors a_rhs.   You do not need to copy the data of a_rhs,
-       (just  make a holder the same size).
-    **/
     virtual void
     create(level_data_type       & a_lhs,
            const level_data_type & a_rhs) = 0;
     
     ///
-    /**
-       This is another one where you just have to create the data (call level_data_type::define, for example)
-       And every box of Coar is a coarsening of the same box on fine by refrat.
-    */
-    virtual void createCoarsened(level_data_type&       a_phiCoar,
-                                 const level_data_type& a_phiFine,
-                                 const int&     a_refRat) = 0;
+    virtual void createCoarsened(level_data_type       & a_phiCoar,
+                                 const level_data_type & a_phiFine,
+                                 const int             & a_refRat) = 0;
     
-    ///
-    /**
-       calculate restricted residual
-       a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
-    */
-    virtual void restrictResidual(T& a_resCoarse, T& a_phiFine, const T& a_rhsFine) = 0;
+    /// a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
+    virtual void restrictResidual(level_data_type& a_resCoarse, T& a_phiFine, const T& a_rhsFine) = 0;
 
-    ///
-    /**
-       correct the fine solution based on coarse correction
-       a_phiThisLevel += I[2h->h](a_correctCoarse)
-    */
+    ///a_phiThisLevel += I[2h->h](a_correctCoarse)
     virtual void prolongIncrement(T& a_phiThisLevel, const T& a_correctCoarse) = 0;
     
     ///a_resCoarse = average(a_resfine) (cannot call this restrict)
     virtual void restriction(T& a_resCoarse, T& a_resFine) = 0;
     
     ///
-    /**
-       return the refinement ratio to next coarser level.
-       return 1 when there are no coarser Base_Proto_AMRLevelOp objects.
-    */
     virtual int refToCoarser() = 0;
     
-    ///to make arithmetic sane
-    /**
-       a_output = a_aco*a_xval + a_bco*a_yval.
-       This is not fortran so different arguments can point to the same data.
+    /// output = aco*xval + bco*yval
     **/
+
+    ///
+    /**
+       Standard function that I use for all arithmetic.  Because this is not fortran,
+       it does not matter if any of the arguments point to overlapping things.
+     **/
     virtual void 
     axby(level_data_type         & a_output,
          const level_data_type   & a_xval,
@@ -184,21 +160,13 @@ namespace PrCh_AMR_Elliptic
     ///
     virtual void setToZero(level_data_type & a_lhs) = 0;
 
-    ///
-    /**
-       correct the fine solution based on coarse correction
-       a_phiThisLevel += I[2h->h](a_correctCoarse)
-    */
+    ///a_phiThisLevel += I[2h->h](a_correctCoarse)
     virtual void prolongIncrement(T& a_phiThisLevel, const T& a_correctCoarse) = 0;
-  
-    /// The stuff below here should reduce to the stuff above
-    /// LinearOp  functions
 
-    ///
-    /**
-       calculate restricted residual
-       a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
-    */
+
+    ///Default implementations independent of Proto go here.
+    
+    ///       a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
     virtual void restrictResidual(level_data_type      & a_resCoar,
                                   level_data_type      & a_phiMedi,
                                   const level_data_type& a_rhsMedi)
@@ -436,6 +404,10 @@ namespace PrCh_AMR_Elliptic
 
   ///
   /**
+     Base_Proto_AMRLevelOp
+     All the proto-dependent default implementations go here.
+     The distinction is probably academic but it does make for  smaller classes.
+
      This layer deals with proto<---->chombo conversions and will deal
      only with the purely virtual functions of
      Base_Simplified_AMRLevelOp.  This layer leans heavily upon the
@@ -452,7 +424,7 @@ namespace PrCh_AMR_Elliptic
 
      Some of these could be reasonably hardwired (force gsrb, first
      order prolongation, etc.), If this gets reused enough, we can
-     do that. But for now, 7 shall be the number (and 7 << 83).
+     do that. But for now, seven shall be the number (and 7 << 83).
 
      An important design point here is that both base classes have no
      data.  I prefer base classes to just be base classes with all
@@ -481,6 +453,7 @@ namespace PrCh_AMR_Elliptic
     virtual ch_dom
     getDomainFromData(const pr_lbd & a_data)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::getDomainFromData");
       auto   dbl_pr = a_data.layout();
       pr_dom dom_pr = dbl.domain();
       ch_dom retval = ProtoCh::getProblemDomain(dom_pr);
@@ -491,6 +464,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_phiFine, 
                                          const pr_lbd &  a_phiCoar)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::fillGhostDataOverCoarseFineInterface");
       ch_mayday::Error("I think we can leave this until we are doing AMR");
     }
     
@@ -498,6 +472,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     fillGhostDataOverFineFineInterface(pr_lbd       &  a_phiFine)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface");
       a_phiFine.exchange();
     }
 
@@ -506,6 +481,7 @@ namespace PrCh_AMR_Elliptic
     copyTo(pr_lbd       &  a_dst,
            const pr_lbd &  a_src)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::copyTo");
       a_src.copyTo(a_dst);
     }
     
@@ -515,6 +491,7 @@ namespace PrCh_AMR_Elliptic
                        const pr_lbd             & a_fine,
                        bool ghosted)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::createCoarser");
       auto   dbl_fine = a_data.layout();
       auto   dbl_coar = dbl_fine.coarsen(2);
       pr_pt ghost = a_fine.ghost();
@@ -527,41 +504,72 @@ namespace PrCh_AMR_Elliptic
       return a_rhs.absMax();
     }
     
+    ///From EBLevelDataOps (credit to NASA's Mike Barad)
+    double parallelSum(const double& a_value)
+    {
+      CH_TIME("Base_Proto_AMRLevelOp::createCoarser");
+      // Find the sum of all a_value's
+      Real sum = a_value;
+#ifdef CH_MPI
+      Real sendBuf = a_value;
+      int result = MPI_Allreduce(&sendBuf, &sum, 1, MPI_CH_REAL,MPI_SUM, Chombo_MPI::comm);
+
+      if (result != MPI_SUCCESS)
+      {
+        MayDay::Error("Base_Proto_AMRLevelOp::parallelSum communication error");
+      }
+#endif
+      return sum;
+    }
+
     ///
     /**
-       Compute and return the dot product of a_1 and a_2.   In most contexts, this
-       means return the sum over all data points of a_1*a_2.
-    */
+       These two have to on the same layout for this to work.
+       Fortunately, I think that is forced by the calling function.
+    **/
     virtual double
     dotProduct(const pr_lbd & a_fir,
-               const pr_lbd & a_sec)  = 0;
+               const pr_lbd & a_sec)
+    {
+      CH_TIME("Base_Proto_AMRLevelOp::createCoarser");
+      auto dbl = a_fir.layout();
+      auto dit = a_fir.begin();
+      double localSum = 0.;
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        const auto& firfab = a_fir[dit[ibox]];
+        const auto& secfab = a_sec[dit[ibox]];
+        auto multfab = firfab*secfab;
+        localSum += multfab.sum();
+      }
+      double mpisum = parallelSum(localSum);
+      return mpisum;
+    }
     
-
-
     ///
-    /**
-       Create data holder a_lhs that mirrors a_rhs.   You do not need to copy the data of a_rhs,
-       (just  make a holder the same size).
-    **/
     virtual void
     create(pr_lbd       & a_lhs,
-           const pr_lbd & a_rhs) = 0;
+           const pr_lbd & a_rhs)
+    {
+      CH_TIME("Base_Proto_AMRLevelOp::create");
+      auto grids = a_rhs.layout();
+      auto ghost = a_rhs.ghost();
+      a_lhs.define(grids, ghost);
+    }
     
     ///
-    /**
-       This is another one where you just have to create the data (call pr_lbd::define, for example)
-       And every box of Coar is a coarsening of the same box on fine by refrat.
-    */
-    virtual void createCoarsened(pr_lbd&       a_phiCoar,
-                                 const pr_lbd& a_phiFine,
-                                 const int&     a_refRat) = 0;
+    virtual void createCoarsened(pr_lbd       & a_phiCoar,
+                                 const pr_lbd & a_phiFine,
+                                 const int    & a_refRat)
+    {
+      CH_TIME("Base_Proto_AMRLevelOp::createCoarsened (the AMR one)");
+      auto gridsFine = a_phiFine.layout();
+      auto ghostFine = a_gridsFine.ghost();
+      CH_assert(       gridsFine.coarsenable(Point::Ones(a_refRat));
+      auto gridsCoar = gridsFine.coarsen(    Point::Ones(a_refRat));
+      a_phiCoar.define(gridsCoar, ghostFine);
+    }
     
-    ///
-    /**
-       calculate restricted residual
-       a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
-    */
-    virtual void restrictResidual(T& a_resCoarse, T& a_phiFine, const T& a_rhsFine) = 0;
 
 
   };
