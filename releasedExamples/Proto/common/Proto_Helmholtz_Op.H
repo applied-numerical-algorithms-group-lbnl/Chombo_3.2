@@ -36,15 +36,20 @@ unsigned int  gsrbResidF(int              a_pt[DIM],
 
 }
 PROTO_KERNEL_END(setRHSF, setRHS) 
-/// The namespace everyone wants in on
+/// The new cool namespace that everyone wants in on.   
 namespace PrCh_AMR_Elliptic
 {
   typedef Proto::LevelBoxData<double, 1>    pr_lbd;
   typedef Proto::Stencil<double>            pr_sten;
+  typedef Proto::InterpStencil<double>      pr_interp_sten;
+  
   typedef Chombo::Box                       ch_box;
   typedef Chombo::ProblemDomain             ch_dom;
   typedef Chombo::MayDay                    ch_mayday;
-  typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_base_factory;
+  typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
+  typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
+  typedef Chombo::MGLevelOp<pr_lbd>  ch_mglevelop;
+  
   /// 
   /**
      (2*DIM+1)-point Helmholtz operator with constant coefficients.
@@ -68,12 +73,12 @@ namespace PrCh_AMR_Elliptic
     double    m_beta;
     // grid spacing
     double    m_dx;
-
-    ///amr thing
-    int m_refToFine;
-    int m_refToCoar;
     //we can hide whatever complicated bc we have behind a unique string.    
-    string    m_domBC;  
+    string    m_domBC;
+    ///amr hooks that do not need valid values when they do not apply
+    int       m_refToFine;   
+    int       m_refToCoar;
+
     Stencil<double>  m_sten;
     
     ///L(phi) = alpha*phi + beta*div(grad(phi));
@@ -89,7 +94,7 @@ namespace PrCh_AMR_Elliptic
       m_beta      = a_beta;
       m_dx        = a_dx;
       m_refToFine = a_refToFine;
-      m_refToCoar = a_refToFine;
+      m_refToCoar = a_refToCoar;
       m_domBC     = a_domBC;
       
       
@@ -149,29 +154,35 @@ namespace PrCh_AMR_Elliptic
       }
     }
 
-    ///a_phiThisLevel += I[2h->h](a_correctCoarse)
-    virtual void prolongIncrement(T& a_phiThisLevel, const T& a_correctCoarse)
-    {
-      ch_mayday::Error("Doh! not implemented");
-    }
-    /**
-       correct the fine solution based on coarse correction
-       
-    */
     
-    ///a_resCoarse = average(a_resfine) (cannot call this restrict)
-    virtual void restriction(T& a_resCoarse, T& a_resFine) = 0;
-    {
-      ch_mayday::Error("Doh! not implemented");
-    }
-    
-    /// boundary conditions.   We shall restrict ourselves to the big two: Neumann and Dirichlet.
+    /// domain boundary conditions.
+    /** 
+        For now we shall restrict ourselves to the big two: Neumann and Dirichlet.
+        Of course, anything can be hidden in a string so the interface is general enough.
+     **/
     virtual void
     fillGhostDataOutsideDomain(pr_lbd          & a_phi,
                                const ch_dom    & a_domain)
     {
-      ch_mayday::Error("Doh! not implemented");
-      return 4586;
+      pr_dom domain = PrCh::getProtoDomain(a_domain);
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        for(int hilo = 0; hilo < 2; hilo++)
+        {
+          if(m_domBC == string("Dirichlet"))
+          {
+            Proto_Transition::domainGhostReflectOdd( a_phi, a_domain, idir, hilo);
+          }
+          else if(m_domBC == string("Neumann"))
+          {
+            Proto_Transition::domainGhostReflectEven(a_phi, a_domain, idir, hilo);
+          }
+          else
+          {
+            ch_mayday::Error("Proto_Helmholtz_Op::fillGhostDataOutsideDomain: unrecognized bc string");
+          }
+        }
+      }
     }
 
     /// amr thing 
@@ -187,32 +198,71 @@ namespace PrCh_AMR_Elliptic
     ///amr thing
     virtual int refToCoarser()
     {
-      ch_mayday::Error("Doh! not implemented");
-      return 4586;
+      return m_refToCoar;
     }
   };
 
   class Proto_Helmholtz_Op_Factory: public ch_base_factory
   {
-    Proto_Helmholtz_Op_Factory()
+    
+  private:
+    /// Strong construction, emacs and gdb are  a winning formula for life.
+    Proto_Helmholtz_Op_Factory();
+    
+  public:
+
+    /// no dynamic memory used here
+    virtual ~Proto_Helmholtz_Op_Factory() { }
+
+    pr_dom          m_coarsest_dom;
+    vector<ch_dbl>  m_grids;
+    vector<int>     m_refRatios;
+    double          m_coarsest_dx;
+    string          m_domBC;
+    double          m_alpha;
+    double          m_beta;
+    
+    ///the only constructor
+    Proto_Helmholtz_Op_Factory(
+      const pr_dom        &        a_coarsest_dom,
+      const vector<ch_dbl>&        a_grids,
+      const vector<int>   &        a_refRatios,
+      const double        &        a_coarsest_dx,
+      const string        &        a_domBC,
+      const double        &        a_alpha,
+      const double        &        a_beta)           
+      : Chombo::AMRLevelOp<pr_lbd>()
     {
-      ch_mayday::Error("not implemented");
+      m_coarsest_dom  =  a_coarsest_dom;
+      m_grids         =  a_grids;
+      m_refRatios     =  a_refRatios   ;   
+      m_coarsest_dx   =  a_coarsest_dx ;   
+      m_domBC         =  a_domBC       ;         
+      m_alpha         =  a_alpha       ;   
+      m_beta          =  a_beta        ;      
     }
-    virtual ~Proto_Helmholtz_Op_Factory()
+
+      HERE---remember to read the comment below
+    /// remember that this has the interface which returns NULL if not coarsenable
+    virtual ch_mglevelop*
+    MGnewOp(const ch_dom         & a_FineindexSpace,
+            int                    a_depth,
+            bool                   a_homoOnly = true)
     {
+
+      Proto_Helmholtz_Op* derivedOp = 
+        new Proto_Helmholtz_Op(m_alpha,
+                               m_beta,
+                               loc_dx,
+                               loc_refToFine,
+                               loc_refToCoar,
+                               m_domBC);
+
+      return static_cast< ch_mglevelop* >(derivedOp);
     }
 
     ///
-    virtual MGLevelOp<T>* MGnewOp(const ch_dom         & a_FineindexSpace,
-                                  int                    a_depth,
-                                  bool                   a_homoOnly = true)
-    {
-      ch_mayday::Error("Doh! not implemented");
-      return NULL;
-    }
-
-    ///
-    virtual AMRLevelOp<T>* AMRnewOp(const ch_dom & a_indexSpace)
+    virtual ch_amrlevelop* AMRnewOp(const ch_dom & a_indexSpace)
     {
       ch_mayday::Error("Doh! not implemented");
       return NULL;

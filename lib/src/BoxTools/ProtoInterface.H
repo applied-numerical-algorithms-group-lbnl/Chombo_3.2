@@ -49,7 +49,7 @@ namespace ProtoCh
   }
 
   /// gets proto problem domain from Chombo problem domain
-  inline pr_box getProtoDomain(const ch_dom& a_dom);
+  inline pr_dom getProtoDomain(const ch_dom& a_dom);
   {
     ch_box                box_ch = a_dom.domainBox();
     pr_box                box_pr = getProtoBox(box_ch);
