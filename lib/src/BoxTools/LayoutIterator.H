@@ -90,6 +90,13 @@ public:
     return (*this->m_indicies)[ivec];
   }
 
+
+  /// number of boxes in the layout
+  inline int size() const
+  {
+    return m_indicies->size();
+  }
+  
 protected:
   friend class BoxLayout;
   friend class DisjointBoxLayout;
