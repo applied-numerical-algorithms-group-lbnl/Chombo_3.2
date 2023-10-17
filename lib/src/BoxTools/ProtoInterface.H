@@ -40,16 +40,57 @@ namespace ProtoCh
   extern pr_pt  getPoint( const ch_iv& a_iv)
   {
     pr_pt retval;
-    for(int idir = 0; idir < SpaceDim; idir++)
+    for(int idir = 0; idir < DIM; idir++)
     {
       retval[idir] = a_iv[idir];
     }
     return retval;
-
+  }
+  
+  ///get intvect from point
+  inline ch_iv  getIntVect(const  pr_pt  & a_pt)
+  {
+    ch_iv retval;
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      retval[idir] = a_pt[idir];
+    }
+    return retval;
   }
 
+
+  ///get chombo box from proto box
+  inline ch_box getBox(const pr_box & a_bx)
+  {
+    ch_iv ivlo = getIntVect(a_bx.low());
+    ch_iv ivhi = getIntVect(a_bx.high());
+    return ch_box(ivlo, ivhi);
+  }
+  
+  /// gets chombo problem domain from proto problem domain
+  inline ch_dom getChomboDomain(const pr_dom& a_dom)
+  {
+    pr_box                box_pr = a_dom.box();
+    std::array<bool, DIM> per_pr = a_dom.periodicity();
+    ch_box                box_ch = getBox(box_pr);
+    bool                  per_ch[DIM];
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      per_ch[idir] = per_pr[idir];
+    }
+    return ch_dom(box_ch, per_ch);
+  }
+  
+  /// gets proto box from chombo box
+  inline pr_box getProtoBox(const ch_box& a_box)
+  {
+    pr_pt ptlo = getPoint(a_box.smallEnd());
+    pr_pt pthi = getPoint(a_box.bigEnd());
+    return pr_box(ptlo, pthi);
+  }
+  
   /// gets proto problem domain from Chombo problem domain
-  inline pr_dom getProtoDomain(const ch_dom& a_dom);
+  inline pr_dom getProtoDomain(const ch_dom& a_dom)
   {
     ch_box                box_ch = a_dom.domainBox();
     pr_box                box_pr = getProtoBox(box_ch);
@@ -62,46 +103,7 @@ namespace ProtoCh
     return pr_dom(box_pr, per_pr);
   }
 
-  /// gets chombo problem domain from proto problem domain
-  inline pr_box getProtoDomain(const pr_dom& a_dom);
-  {
-    pr_box                box_pr = a_dom.domain();
-    std::array<bool, DIM> per_pr = a_dom.periodicity();
-    ch_box                box_ch = getBox(box_pr);
-    bool                  per_ch[DIM];
-    for(int idir = 0; idir < DIM; idir++)
-    {
-      per_ch[idir] = per_pr[idir];
-    }
-    return ch_dom(box_ch, per_ch);
-  }
-  
-  /// gets proto box from chombo box
-  inline pr_box getProtoBox(const ch_box& a_box);
-  {
-    pr_pt ptlo = getPoint(a_box.smallEnd());
-    pr_pt pthi = getPoint(a_box.bigEnd());
-    return pr_box(ptlo, pthi);
-  }
 
-  ///get intvect from point
-  inline ch_iv  getIntVect(const  pr_pt  & a_pt);
-  {
-    ch_iv retval;
-    for(int idir = 0; idir < SpaceDim; idir++)
-    {
-      retval[idir] = a_pt[idir];
-    }
-    return retval;
-  }
-
-  ///get chombo box from proto box
-  inline Box getBox(const pr_ & a_bx);
-  {
-    IntVect ivlo = getIntVect(a_bx.low());
-    IntVect ivhi = getIntVect(a_bx.high());
-    return Box(ivlo, ivhi);
-  }
 
 
 } 
