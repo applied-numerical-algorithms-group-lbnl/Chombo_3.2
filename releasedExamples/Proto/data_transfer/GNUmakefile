@@ -22,6 +22,9 @@ include $(CHOMBO_HOME)/mk/Make.example
 XTRACPPFLAGS += -I$(PROTO_HOME)/include/transition
 XTRACXXFLAGS += -I$(PROTO_HOME)/include/transition
 
+pristine:
+	make realclean
+	cd $(CHOMBO_HOME); make realclean
 # application-specific variables
 
 # application-specific targets
