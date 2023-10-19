@@ -16,8 +16,9 @@ base_dir = .
 src_dirs = ../common
 
 # input file for 'run' target
-INPUT = regression.inputs
-# shared code for building example programs
+INPUT = _inputs/standard.inputs
+
+
 include $(CHOMBO_HOME)/mk/Make.example
 XTRACPPFLAGS += -I$(PROTO_HOME)/include/transition
 XTRACXXFLAGS += -I$(PROTO_HOME)/include/transition
@@ -25,6 +26,4 @@ XTRACXXFLAGS += -I$(PROTO_HOME)/include/transition
 pristine:
 	make realclean
 	cd $(CHOMBO_HOME); make realclean
-# application-specific variables
 
-# application-specific targets
