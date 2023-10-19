@@ -139,7 +139,11 @@ buildDataIndex()
   std::list<DataIndex> dlist;
   unsigned int index = 0;
   unsigned int datIn = 0;
+#ifdef CH_NAMESPACE
+  unsigned int p = Chombo::procID(Chombo_MPI::comm);
+#else  
   unsigned int p = ::procID(Chombo_MPI::comm);
+#endif  
   int count=0;
   const Entry* box;
 
@@ -350,12 +354,19 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
   // but we have to do it one Vector<Box> at a time.
   Vector< Vector<Box> > allNewBoxes;
   allNewBoxes.resize(numProc());
-  if (::procID(Chombo_MPI::comm) == iprocdest)
+  {
+#ifdef CH_NAMESPACE
+  unsigned int proc = Chombo::procID(Chombo_MPI::comm);
+#else  
+  unsigned int proc = ::procID(Chombo_MPI::comm);
+#endif  
+  if (proc == iprocdest)
   {
     for (int iproc = 0; iproc < numProc(); iproc++)
     {
       allNewBoxes[iproc] = Vector<Box>(gatheredNewBoxes[iproc]);
     }
+  }
   }
   // Processor iprocdest knows Vector< Vector<Box> > allNewBoxes.
   // Now broadcast it.
