@@ -211,68 +211,156 @@ namespace PrCh_AMR_Elliptic
     
   public:
 
-    /// no dynamic memory used here
+    /// no dynamic memory used here.   
     virtual ~Proto_Helmholtz_Op_Factory() { }
 
     pr_dom          m_coarsest_dom;
-    vector<ch_dbl>  m_grids;
-    vector<int>     m_refRatios;
+    vector<int>     m_ref_ratios;
     double          m_coarsest_dx;
     string          m_domBC;
     double          m_alpha;
     double          m_beta;
+    double          m_max_coarse;
+
+    ///
+    /**
+       I have found no good way to do this stuff.  
+       This is the way amrpoissonopfactory does it.  
+    **/
+    vector< pair<ch_dom, double> >  m_domain_dx;
     
     ///the only constructor
     Proto_Helmholtz_Op_Factory(
-      const pr_dom        &        a_coarsest_dom,
-      const vector<ch_dbl>&        a_grids,
-      const vector<int>   &        a_refRatios,
-      const double        &        a_coarsest_dx,
-      const string        &        a_domBC,
-      const double        &        a_alpha,
-      const double        &        a_beta)           
+      const pr_dom         &        a_coarsest_dom,
+      const vector<ch_dbl> &        a_grids,
+      const vector<int>    &        a_ref_ratios,
+      const double         &        a_coarsest_dx,
+      const string         &        a_domBC,
+      const double         &        a_alpha,
+      const double         &        a_beta)           
       : Chombo::AMRLevelOp<pr_lbd>()
     {
+      m_max_coarse = 2;
       m_coarsest_dom  =  a_coarsest_dom;
-      m_grids         =  a_grids;
-      m_refRatios     =  a_refRatios   ;   
+      m_ref_ratios    =  a_ref_ratios  ;   
       m_coarsest_dx   =  a_coarsest_dx ;   
       m_domBC         =  a_domBC       ;         
       m_alpha         =  a_alpha       ;   
-      m_beta          =  a_beta        ;      
+      m_beta          =  a_beta        ;
+      
+      //m_domains controls when mg v cycle ends 
+      m_domain_dx.resize(a_grids.size());
+      m_domain_dx[0] = a_coarsest_dom;
+      double fine_dx = a_coarsest_dx;
+      for(int ilev = 1; ilev < a_grids.size(); ilev++)
+      {
+        ch_dom fine_dom =   m_domain[ilev-1];
+        fine_dom.refine(a_ref_ratios[ilev-1]);
+        fine_dx /= a_ref_ratios[ilev-1];
+
+        m_domain_dx[ilev].first  = fine_dom;
+        m_domain_dx[ilev].second = fine_dx;
+      }
     }
 
-      HERE---remember to read the comment below
-    /// remember that this has the interface which returns NULL if not coarsenable
-    virtual ch_mglevelop*
-    MGnewOp(const ch_dom         & a_FineindexSpace,
-            int                    a_depth,
-            bool                   a_homoOnly = true)
+    ///
+    inline int
+    get_ref_index(ch_dom a_dom_fine) const
     {
+      int iref  = 4586; bool found = false;
+      for(int ilev = 0; ilev < m_domains.size(); ilev++)
+      {
+        if(m_domains[ilev] == a_dom_fine)
+        {
+          found = true;
+          iref  = ilev;
+        }
+      }
+      if(!found)
+      {
+        ch_mayday::Error("HelmholtzFactory::mgnewop: bogus domain");
+      }
+      return iref;
+    }
+
+    inline void
+    get_local_ref_ratios(int    & a_ref_fine,
+                         int    & a_ref_coar,
+                         const int & a_iref) const
+    {
+      a_ref_fine = 4586;
+      a_ref_coar = 4586;
+      if(a_iref > 0)
+      {
+        a_ref_coar = m_ref_ratios[a_iref];
+      }
+      //somes folks are picky that the last one does not have to be there.
+      if(a_iref < (m_ref_ratios.size()-1))
+      {
+        a_ref_fine = m_ref_ratios[a_iref+1];
+      }
+    }
+      
+    virtual inline ch_mglevelop*
+    MGnewOp(const ch_dom         & a_dom_fine,
+            int                    a_depth,
+            bool                   a_homo_only = true)
+    {
+      int iref = get_ref_index(a_dom_fine);
+
+      int loc_ref_fine, loc_ref_coar;
+      get_local_ref_ratios(loc_ref_fine, loc_ref_coar, iref);
+      
+      int factor = 1;
+      for(int idep = 0; idep < a_depth; idep++)
+      {
+        factor*= 2;
+      }
+      ch_mglevelop* retval  = NULL;
+      if((a_depth > 0) && (!a_dom_fine..coarsenable(2*factor)))
+      {
+        retval = NULL;
+      }
+      else
+      {
+
+        double loc_dx = m_dx[ref]*factor;
+        Proto_Helmholtz_Op* derivedOp = 
+          new Proto_Helmholtz_Op(m_alpha,
+                                 m_beta,
+                                 loc_dx,
+                                 loc_ref_fine,
+                                 loc_ref_coar,
+                                 m_domBC);
+        retval = static_cast< ch_mglevelop* >(derivedOp);
+      }
+      return retval;
+    }
+
+    ///
+    virtual inline ch_amrlevelop* AMRnewOp(const ch_dom & a_indexSpace)
+    {
+      int iref = get_ref_index(a_indexSpace);
+      int loc_ref_fine, loc_ref_coar;
+      get_local_ref_ratios(loc_ref_fine, loc_ref_coar, iref);
+      double loc_dx = m_domains_dx[iref].second;
 
       Proto_Helmholtz_Op* derivedOp = 
         new Proto_Helmholtz_Op(m_alpha,
                                m_beta,
                                loc_dx,
-                               loc_refToFine,
-                               loc_refToCoar,
+                               loc_ref_fine,
+                               loc_ref_coar,
                                m_domBC);
-
-      return static_cast< ch_mglevelop* >(derivedOp);
+      return  static_cast< ch_amrlevelop* >(derivedOp);
     }
 
     ///
-    virtual ch_amrlevelop* AMRnewOp(const ch_dom & a_indexSpace)
+    virtual inline int refToFiner(const ch_dom & a_indexSpace) const
     {
-      ch_mayday::Error("Doh! not implemented");
-      return NULL;
-    }
-
-    ///
-    virtual int refToFiner(const ch_dom & a_indexSpace) const
-    {
-      ch_mayday::Error("Doh! not implemented");
-      return 4586;
+      int iref = get_ref_index(a_indexSpace);
+      int ref_rat = m_ref_ratios[iref];
+      return iref;
     }
   };
 }
