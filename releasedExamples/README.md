@@ -1,8 +1,13 @@
-# Chombo3.2/releasedExamples/Proto
-* A set of examples to show how to use Chombo with proto for performance portability.
+# Chombo3.2/releasedExamples/
+* These examples show how to use Chombo.
 
 # Directories
-* Poisson is a Chombo port of a proto example (single grid Poisson solver using multigrid).
-* common holds code used by several examples
-* data_transfer tests moving data between proto and Chombo data types.
-* amr_helmoltz uses AMRMultiGrid and proto to solve the constant-coefficient Helmholtz equation.
+* EBAMRPoisson has several elliptic solvers with adaptive meshes and complex geometries.
+* EBAMRINS solves the incompressible Navier Stokes  equations with adaptive meshes complex geometries.
+* EBAMRCNS solves the compressible Navier Stokes  equations with adaptive meshes complex geometries.
+* EBAMRGodunov solves the compressible Euler equations with adaptive meshes complex geometries.
+* EBMenagerie shows how to create many complex geometries.
+* AMRGodunov solves the compressible Euler equations with adaptive mesh refinement.
+* AMRINS solves the incompressible Navier Stokes  equations with adaptive mesh refinement using the Martin Colella algorithm.
+* AMRPoisson has several elliptic solvers with adaptive meshes.
+* TimeParallel shows how to use Chombo with split MPI communicators (used for parallel-in-time schemes).
