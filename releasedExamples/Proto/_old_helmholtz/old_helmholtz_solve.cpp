@@ -387,39 +387,14 @@ int runSolver()
   if (writePlots)
   {
     int numLevels = finestLevel +1;
-    Vector<LevelData<FArrayBox>* > plotData(numLevels, NULL);
-       
-    pout() << "Write Plots. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
-       
-    for (int lev=0; lev<numLevels; lev++)
-    {
-      plotData[lev] = new LevelData<FArrayBox>(amrGrids[lev],
-                                               3, IntVect::Zero);
+    string fname("phi.hdf5");
+    Vector<string> varNames(1, string("phi"));
 
-      Interval phiInterval(0,0);
-      phi[lev]->copyTo(phiInterval, *plotData[lev], phiInterval);
-      Interval rhsInterval(1,1);
-      rhs[lev]->copyTo(phiInterval, *plotData[lev], rhsInterval);
-      Interval resInterval(2,2);
-      resid[lev]->copyTo(phiInterval, *plotData[lev], resInterval);
-    }
-
-    string fname = "poissonOut.";
-
-    char suffix[30];
-    sprintf(suffix, "%dd.hdf5",SpaceDim);
-    fname += suffix;
-
-    Vector<string> varNames(3);
-    varNames[0] = "phi";
-    varNames[1] = "rhs";
-    varNames[2] = "res";
-
-    Real bogusVal = 1.0;
+    Real bogusVal = 4586.0;
 
     WriteAMRHierarchyHDF5(fname,
                           amrGrids,
-                          plotData,
+                          phi,
                           varNames,
                           amrDomains[0].domainBox(),
                           amrDx[0],
@@ -428,11 +403,6 @@ int runSolver()
                           refRatios,
                           numLevels);
 
-    // clean up
-    for (int lev=0; lev<plotData.size(); lev++)
-    {
-      delete plotData[lev];
-    }
   } // end if writing plots
 #endif // end if HDF5
 
