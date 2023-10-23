@@ -145,7 +145,7 @@ setupLLCornerGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   CH_TIME("setupGrids");
 
   a_finestLevel = 0;
-  ParmParse ppGrids("grids");
+  ParmParse ppGrids("setupGrids");
 
   // get grid generation parameters
   int maxLevel, maxBoxSize, blockFactor;
@@ -158,10 +158,10 @@ setupLLCornerGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   ppGrids.get("block_factor", blockFactor);
 
   ppGrids.get("fillRatio", fillRatio);
+  int maxNumLevels = maxLevel +1;
 
-  // note that there only need to be numLevels-1 refinement ratios
-  a_refRatios.resize(maxLevel);
-  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel);
+  a_refRatios.resize(maxNumLevels);
+  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxNumLevels);
 
   Vector<int>  is_periodic_int;
   bool is_periodic[SpaceDim];
@@ -187,7 +187,6 @@ setupLLCornerGrids(Vector<DisjointBoxLayout>& a_amrGrids,
   }
 
   // resize dataholders
-  int maxNumLevels = maxLevel +1;
   a_amrGrids.resize(maxNumLevels);
   a_amrDomains.resize(maxNumLevels);
   a_amrDx.resize(maxNumLevels,-1);
@@ -210,36 +209,58 @@ setupLLCornerGrids(Vector<DisjointBoxLayout>& a_amrGrids,
     a_amrDx[lev] = a_amrDx[lev-1]/a_refRatios[lev-1];
   }
 
-  int bufferSize = 0;
-  BRMeshRefine meshGen(a_amrDomains[0],
-                       a_refRatios,
-                       fillRatio,
-                       blockFactor,
-                       bufferSize,
-                       maxBoxSize);
-      
-  // to be used by MeshRefine...
-  Vector<Vector<Box> > old_meshes(maxLevel+1);
-  for (int lev=0; lev< old_meshes.size(); lev++)
+  
+  Vector<Vector<Box> > vectBoxes(maxLevel+1);
   {
-    Box whole_dom = a_amrDomains[lev].domainBox();
-    old_meshes[lev] = Vector<Box>(1, whole_dom);
+    CH_TIME("setupGrids: BaseGridCreation");
+    // generate base level grids
+
+    domainSplit(baseDomain, vectBoxes[0], maxBoxSize, blockFactor);
+
+    Vector<int> procAssign(vectBoxes[0].size(), 0);
+
+    LoadBalance(procAssign, vectBoxes[0]);
+
+    DisjointBoxLayout baseGrids(vectBoxes[0], procAssign, baseDomain);
+
+    a_amrGrids[0] = baseGrids;
   }
 
-          
-  //just always tag IntVect::Zero;
-  IntVectSet taglev(IntVect::Zero);
-  Vector<IntVectSet> tags(a_finestLevel+1, taglev);
-  Vector<Vector<Box> > new_meshes;
 
-  meshGen.regrid(new_meshes, tags,  0, a_finestLevel,  old_meshes);
-
-  for (int ilev=0; ilev < a_finestLevel; ilev++)
+  if (maxLevel > 0)
   {
-    const auto& boxes = new_meshes[ilev];
-    Vector<int> procs;
-    LoadBalance(procs, boxes);
-    a_amrGrids[ilev] = DisjointBoxLayout(boxes, procs);
+    CH_TIME("setupGrids: meshRefine and all that");
+    int bufferSize = 0;
+    BRMeshRefine meshGen(a_amrDomains[0],
+                         a_refRatios,
+                         fillRatio,
+                         blockFactor,
+                         bufferSize,
+                         maxBoxSize);
+      
+    // to be used by MeshRefine...
+    Vector<Vector<Box> > old_meshes(maxLevel+1);
+    old_meshes[0] = vectBoxes[0];
+    for (int lev=1; lev< old_meshes.size(); lev++)
+    {
+      Box whole_dom = a_amrDomains[lev].domainBox();
+      old_meshes[lev] = Vector<Box>(1, whole_dom);
+    }
+
+    //just always tag IntVect::Zero;
+    IntVectSet taglev(IntVect::Zero);
+    Vector<IntVectSet> tags(a_finestLevel+1, taglev);
+    Vector<Vector<Box> > new_meshes;
+
+    meshGen.regrid(new_meshes, tags,  0, a_finestLevel,  old_meshes);
+
+    for (int ilev=0; ilev < a_finestLevel; ilev++)
+    {
+      const auto& boxes = new_meshes[ilev];
+      Vector<int> procs;
+      LoadBalance(procs, boxes);
+      a_amrGrids[ilev] = DisjointBoxLayout(boxes, procs);
+    }
   }
 } //end setupLLCornerGrids
 
@@ -313,7 +334,11 @@ int runSolver()
   int finestLevel;
 
   setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
-
+  for(int ilev = 0; ilev < amrGrids.size(); ilev++)
+  {
+    pout() << "ilev = " << ilev << ", grids = " << endl;
+    amrGrids[ilev].print();
+  }
   // initialize solver
   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
