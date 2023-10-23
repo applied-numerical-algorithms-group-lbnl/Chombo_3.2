@@ -202,7 +202,7 @@ namespace PrCh_AMR_Elliptic
     }
   };
 
-  class Proto_Helmholtz_Op_Factory: public ch_base_factory
+  class Proto_Helmholtz_Op_Factory: public ch_amrlevelop_factory
   {
     
   private:
@@ -214,7 +214,7 @@ namespace PrCh_AMR_Elliptic
     /// no dynamic memory used here.   
     virtual ~Proto_Helmholtz_Op_Factory() { }
 
-    pr_dom          m_coarsest_dom;
+    ch_dom          m_coarsest_dom;
     vector<int>     m_ref_ratios;
     double          m_coarsest_dx;
     string          m_domBC;
@@ -231,7 +231,7 @@ namespace PrCh_AMR_Elliptic
     
     ///the only constructor
     Proto_Helmholtz_Op_Factory(
-      const pr_dom         &        a_coarsest_dom,
+      const ch_dom         &        a_coarsest_dom,
       const vector<ch_dbl> &        a_grids,
       const vector<int>    &        a_ref_ratios,
       const double         &        a_coarsest_dx,
