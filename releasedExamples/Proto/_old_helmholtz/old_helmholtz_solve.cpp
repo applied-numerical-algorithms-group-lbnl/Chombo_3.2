@@ -27,7 +27,7 @@
 #include "memusage.H"
 #include "AMRPoissonOp.H"
 #include "AMRPoissonOp.H"
-//#include "Proto_Helmholtz_Op.H"
+#include "PrChUtilities.H"
 #include "UsingNamespace.H"
 
 
@@ -132,138 +132,6 @@ void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
     }
   }
 }
-
-
-///
-void
-setupLLCornerGrids(Vector<DisjointBoxLayout>& a_amrGrids,
-                   Vector<ProblemDomain>& a_amrDomains,
-                   Vector<int>& a_refRatios,
-                   Vector<Real>& a_amrDx,
-                   int& a_finestLevel)
-{
-  CH_TIME("setupGrids");
-
-  a_finestLevel = 0;
-  ParmParse ppGrids("setupGrids");
-
-  // get grid generation parameters
-  int maxLevel, maxBoxSize, blockFactor;
-  Real fillRatio;
-
-  ppGrids.get("max_level", maxLevel);
-
-  ppGrids.get("max_box_size",maxBoxSize);
-
-  ppGrids.get("block_factor", blockFactor);
-
-  ppGrids.get("fillRatio", fillRatio);
-  int maxNumLevels = maxLevel +1;
-
-  a_refRatios.resize(maxNumLevels);
-  ppGrids.getarr("ref_ratio", a_refRatios, 0, maxNumLevels);
-
-  Vector<int>  is_periodic_int;
-  bool is_periodic[SpaceDim];
-  ppGrids.getarr("is_periodic", is_periodic_int, 0, SpaceDim);
-  for (int dir=0; dir<SpaceDim; dir++)
-  {
-    is_periodic[dir] = (is_periodic_int[dir] == 1);
-  }
-
-  IntVect numCells;
-  Vector<int> incells(SpaceDim);
-  ppGrids.getarr("num_cells", incells, 0, SpaceDim);
-  numCells = IntVect(D_DECL6(incells[0],incells[1],incells[2],
-                             incells[3],incells[4],incells[5]) );
-
-  RealVect domainSize = RealVect::Unit;
-  if (ppGrids.contains("domain_size"))
-  {
-    Vector<Real> insize(SpaceDim);
-    ppGrids.getarr("domain_size", insize, 0, SpaceDim);
-    domainSize = RealVect(D_DECL6(insize[0],insize[1],insize[2],
-                                  insize[3],insize[4],insize[5]) );
-  }
-
-  // resize dataholders
-  a_amrGrids.resize(maxNumLevels);
-  a_amrDomains.resize(maxNumLevels);
-  a_amrDx.resize(maxNumLevels,-1);
-  a_finestLevel = 0;
-
-  // assumes dx=dy=dz
-  a_amrDx[0] = domainSize[0]/numCells[0];
-
-  IntVect domLo = IntVect::Zero;
-  IntVect domHi  = numCells - IntVect::Unit;
-
-  ProblemDomain baseDomain(domLo, domHi, is_periodic);
-  a_amrDomains[0] = baseDomain;
-
-  // set up refined domains, etc
-  for (int lev=1; lev<= maxLevel; lev++)
-  {
-    a_amrDomains[lev] = a_amrDomains[lev-1];
-    a_amrDomains[lev].refine(a_refRatios[lev-1]);
-    a_amrDx[lev] = a_amrDx[lev-1]/a_refRatios[lev-1];
-  }
-
-  
-  Vector<Vector<Box> > vectBoxes(maxLevel+1);
-  {
-    CH_TIME("setupGrids: BaseGridCreation");
-    // generate base level grids
-
-    domainSplit(baseDomain, vectBoxes[0], maxBoxSize, blockFactor);
-
-    Vector<int> procAssign(vectBoxes[0].size(), 0);
-
-    LoadBalance(procAssign, vectBoxes[0]);
-
-    DisjointBoxLayout baseGrids(vectBoxes[0], procAssign, baseDomain);
-
-    a_amrGrids[0] = baseGrids;
-  }
-
-
-  if (maxLevel > 0)
-  {
-    CH_TIME("setupGrids: meshRefine and all that");
-    int bufferSize = 0;
-    BRMeshRefine meshGen(a_amrDomains[0],
-                         a_refRatios,
-                         fillRatio,
-                         blockFactor,
-                         bufferSize,
-                         maxBoxSize);
-      
-    // to be used by MeshRefine...
-    Vector<Vector<Box> > old_meshes(maxLevel+1);
-    old_meshes[0] = vectBoxes[0];
-    for (int lev=1; lev< old_meshes.size(); lev++)
-    {
-      Box whole_dom = a_amrDomains[lev].domainBox();
-      old_meshes[lev] = Vector<Box>(1, whole_dom);
-    }
-
-    //just always tag IntVect::Zero;
-    IntVectSet taglev(IntVect::Zero);
-    Vector<IntVectSet> tags(a_finestLevel+1, taglev);
-    Vector<Vector<Box> > new_meshes;
-
-    meshGen.regrid(new_meshes, tags,  0, a_finestLevel,  old_meshes);
-
-    for (int ilev=0; ilev < a_finestLevel; ilev++)
-    {
-      const auto& boxes = new_meshes[ilev];
-      Vector<int> procs;
-      LoadBalance(procs, boxes);
-      a_amrGrids[ilev] = DisjointBoxLayout(boxes, procs);
-    }
-  }
-} //end setupLLCornerGrids
-
   
 void
 setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
@@ -282,10 +150,10 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   AMRPoissonOpFactory opFactory;
 
-  // solving poisson problem here
-  Real alpha =0.0;
-  Real beta = 1.0;
-
+  Real alpha =4586.;
+  Real beta = 4586.;
+  ppSolver.get("alpha", alpha);
+  ppSolver.get("beta" , beta) ;
   opFactory.define(a_amrDomains[0],
                    a_amrGrids,
                    a_refRatios,
@@ -333,13 +201,13 @@ int runSolver()
   Vector<Real> amrDx;
   int finestLevel;
 
-  setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
+  PrChUtilities::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
   for(int ilev = 0; ilev < amrGrids.size(); ilev++)
   {
     pout() << "ilev = " << ilev << ", grids = " << endl;
     amrGrids[ilev].print();
   }
-  // initialize solver
+
   AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
   amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
   BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
@@ -347,63 +215,38 @@ int runSolver()
   setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
               refRatios, amrDx, finestLevel);
 
-
-  // allocate solution and RHS, initialize RHS
   int numLevels = amrGrids.size();
   Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
   Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
-  // this is for convenience
-  Vector<LevelData<FArrayBox>* > resid(numLevels, NULL);
 
   for (int lev=0; lev<=finestLevel; lev++)
   {
     const DisjointBoxLayout& levelGrids = amrGrids[lev];
     phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-    resid[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
 
   setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
-
-  // do solve
-  int iterations = 1;
-  ppMain.get("iterations", iterations);
-
-  for (int iiter = 0; iiter < iterations; iiter++)
-  {
-    bool zeroInitialGuess = true;
-    pout() << "about to go into solve" << endl;
-    amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
-    pout() << "done solve" << endl;
-  }
-
-  // write results to file
-
-  bool writePlots = true;
-  ppMain.query("writePlotFiles", writePlots);
+  amrSolver->solve(phi, rhs, finestLevel, 0, true); //bool zeroInitialGuess = true;
 
 #ifdef CH_USE_HDF5
+  string fname("phi.hdf5");
+  Vector<string> varNames(1, string("phi"));
 
-  if (writePlots)
-  {
-    int numLevels = finestLevel +1;
-    string fname("phi.hdf5");
-    Vector<string> varNames(1, string("phi"));
+  Real bogusVal = 4586.0;
 
-    Real bogusVal = 4586.0;
+  WriteAMRHierarchyHDF5(fname,
+                        amrGrids,
+                        phi,
+                        varNames,
+                        amrDomains[0].domainBox(),
+                        amrDx[0],
+                        bogusVal,
+                        bogusVal,
+                        refRatios,
+                        numLevels);
 
-    WriteAMRHierarchyHDF5(fname,
-                          amrGrids,
-                          phi,
-                          varNames,
-                          amrDomains[0].domainBox(),
-                          amrDx[0],
-                          bogusVal,
-                          bogusVal,
-                          refRatios,
-                          numLevels);
 
-  } // end if writing plots
 #endif // end if HDF5
 
   // clean up
@@ -411,7 +254,6 @@ int runSolver()
   {
     delete phi[lev];
     delete rhs[lev];
-    delete resid[lev];
   }
 
   delete amrSolver;
