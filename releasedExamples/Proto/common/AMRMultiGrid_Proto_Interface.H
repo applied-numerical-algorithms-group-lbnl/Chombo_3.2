@@ -74,9 +74,6 @@ namespace PrCh_AMR_Elliptic
 
     
     /// output = aco*xval + bco*yval
-    **/
-
-    ///
     /**
        Standard function that I use for all arithmetic.  Because this is not fortran,
        it does not matter if any of the arguments point to overlapping things.

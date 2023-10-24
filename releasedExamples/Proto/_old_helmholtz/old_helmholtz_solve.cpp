@@ -201,7 +201,7 @@ int runSolver()
   Vector<Real> amrDx;
   int finestLevel;
 
-  PrChUtilities::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
+  PrChUtilities<1>::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
   for(int ilev = 0; ilev < amrGrids.size(); ilev++)
   {
     pout() << "ilev = " << ilev << ", grids = " << endl;

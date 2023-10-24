@@ -3,8 +3,8 @@
 
 # Expectations for developers:
 * These codes are written with NAMESPACE=TRUE.
-* The interaction proto is mediated through a plain old data (POD) interface.
 * Proto knows nothing about Chombo.
+* The interaction proto is mediated through a plain old data  interface.
 
 # AMRMultiGrid with Proto
 * This is one of the easiest way to effectively migrate to  proto.
