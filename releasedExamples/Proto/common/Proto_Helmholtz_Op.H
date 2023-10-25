@@ -1,5 +1,7 @@
 
 #include "AMRMultiGrid_Proto_Interface.H"
+#include "PrChUtilities.H"
+#include "ProtoInterface.H"
 
 #ifndef __Proto_Helmholtz_Op_H
 #define __Proto_Helmholtz_Op_H
@@ -7,8 +9,8 @@
 /****************/
 PROTO_KERNEL_START 
 unsigned int  gsrbResidF(int              a_pt[DIM],
-                         Var<Real, 1>     a_phi,
-                         Var<Real, 1>     a_res,
+                         Proto::Var<Real, 1>     a_phi,
+                         Proto::Var<Real, 1>     a_res,
                          Real             a_alpha,
                          Real             a_beta,
                          Real             a_dx,
@@ -35,7 +37,7 @@ unsigned int  gsrbResidF(int              a_pt[DIM],
   return 0;
 
 }
-PROTO_KERNEL_END(setRHSF, setRHS) 
+PROTO_KERNEL_END(gsrbResidF, gsrbResid) 
 /// The new cool namespace that everyone wants in on.   
 namespace PrCh_AMR_Elliptic
 {
@@ -44,6 +46,7 @@ namespace PrCh_AMR_Elliptic
   typedef Proto::InterpStencil<double>      pr_interp_sten;
   
   typedef Chombo::Box                       ch_box;
+  typedef  Proto::Box                       pr_box;
   typedef Chombo::ProblemDomain             ch_dom;
   typedef Chombo::MayDay                    ch_mayday;
   typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
@@ -62,7 +65,7 @@ namespace PrCh_AMR_Elliptic
     Proto_Helmholtz_Op();
 
   public:
-    
+    typedef Proto::Stencil<double> pr_sten;
     virtual ~Proto_Helmholtz_Op()
     {
     }
@@ -78,8 +81,7 @@ namespace PrCh_AMR_Elliptic
     ///amr hooks that do not need valid values when they do not apply
     int       m_refToFine;   
     int       m_refToCoar;
-
-    Stencil<double>  m_sten;
+    pr_sten   m_sten;
     
     ///L(phi) = alpha*phi + beta*div(grad(phi));
     Proto_Helmholtz_Op(const double& a_alpha,
@@ -98,13 +100,13 @@ namespace PrCh_AMR_Elliptic
       m_domBC     = a_domBC;
       
       
-      ///in EB, this bit  would be called defineStencil or some such.
+      // (1/h^2) factor missing  in proto stencil for lapl.
       double hsqinv = 1./(m_dx*m_dx);
-      // (1/h^2) factor missing 
-      Stencil<double>  sten_lapl = Stencil<double>::Laplacian;
-      //scaling by (1/h^2) factor    
-      sten_lapl *= hsqinv; 
-      Stencil<double>  sten_iden = (1.0)*Shift(Point::Zeros());
+      pr_sten  sten_lapl = pr_sten::Laplacian();
+      // scaling by (1/h^2) factor    
+      sten_lapl *= hsqinv;
+      
+      pr_sten  sten_iden = (1.0)*Proto::Shift(pr_pt::Zeros());
       m_sten *= m_alpha*sten_iden + m_beta*sten_lapl;
     }
     
@@ -120,9 +122,10 @@ namespace PrCh_AMR_Elliptic
       {
         auto        & dst = a_lph[dit[ibox]];
         const auto  & src = a_phi[dit[ibox]];
-
+        auto valid        = grids[dit[ibox]];
+        bool initToZero = true; double scale = 1;
         ///Note: arguments' order is the opposite of usual (we usually do dst, src).
-        m_sten.apply(src, dst, bx, initToZero, scale); 
+        m_sten.apply(src, dst, valid, initToZero, scale); 
       }
     }
     
@@ -143,12 +146,14 @@ namespace PrCh_AMR_Elliptic
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
           residual(resid, a_phi, a_rhs);
-          int print = 0; //debugging hook
+          int iprint = 0; //debugging hook
           for(int ibox = 0; ibox < dit.size(); ibox++)
           {
             const auto & resfab =  resid[dit[ibox]];
             const auto & phifab =  a_phi[dit[ibox]];
-            forAllInPlace_i(gsrbResid, patch, phifab, resfab, m_alpha, m_beta, m_dx, iredBlack, iprint);
+            auto valid          =  grids[dit[ibox]];
+            Proto::forallInPlace_i(gsrbResid, valid, phifab, resfab,
+                                   m_alpha, m_beta, m_dx, iredblack, iprint);
           }
         }
       }
@@ -159,23 +164,25 @@ namespace PrCh_AMR_Elliptic
     /** 
         For now we shall restrict ourselves to the big two: Neumann and Dirichlet.
         Of course, anything can be hidden in a string so the interface is general enough.
-     **/
+    **/
     virtual void
     fillGhostDataOutsideDomain(pr_lbd          & a_phi,
                                const ch_dom    & a_domain)
     {
-      pr_dom domain = PrCh::getProtoDomain(a_domain);
+      typedef Proto_Transition::DataUtilities<1> pr_trans_data;
+      pr_dom domain = ProtoCh::getProtoDomain(a_domain);
+      pr_box dombox = domain.box();
       for(int idir = 0; idir < DIM; idir++)
       {
         for(int hilo = 0; hilo < 2; hilo++)
         {
           if(m_domBC == string("Dirichlet"))
           {
-            Proto_Transition::domainGhostReflectOdd( a_phi, a_domain, idir, hilo);
+            pr_trans_data::domainGhostReflectOdd( a_phi, dombox, idir, hilo);
           }
           else if(m_domBC == string("Neumann"))
           {
-            Proto_Transition::domainGhostReflectEven(a_phi, a_domain, idir, hilo);
+            pr_trans_data::domainGhostReflectEven(a_phi, dombox, idir, hilo);
           }
           else
           {
@@ -185,15 +192,6 @@ namespace PrCh_AMR_Elliptic
       }
     }
 
-    /// amr thing 
-    virtual void
-    refluxFineCorrection(pr_lbd       &  a_lphCoar,
-                         const pr_lbd &  a_phiFine, 
-                         const pr_lbd &  a_phiCoar,
-                         Base_Proto_AMRLevelOp<pr_lbd>*  a_finerOp)
-    {
-      ch_mayday::Error("Doh! not implemented");
-    }
 
     ///amr thing
     virtual int refToCoarser()
@@ -220,7 +218,7 @@ namespace PrCh_AMR_Elliptic
     string          m_domBC;
     double          m_alpha;
     double          m_beta;
-    double          m_max_coarse;
+    int             m_max_coarse;
 
     ///
     /**
@@ -232,13 +230,12 @@ namespace PrCh_AMR_Elliptic
     ///the only constructor
     Proto_Helmholtz_Op_Factory(
       const ch_dom         &        a_coarsest_dom,
-      const vector<ch_dbl> &        a_grids,
       const vector<int>    &        a_ref_ratios,
       const double         &        a_coarsest_dx,
       const string         &        a_domBC,
       const double         &        a_alpha,
       const double         &        a_beta)           
-      : Chombo::AMRLevelOp<pr_lbd>()
+      : ch_amrlevelop_factory()
     {
       m_max_coarse = 2;
       m_coarsest_dom  =  a_coarsest_dom;
@@ -249,14 +246,15 @@ namespace PrCh_AMR_Elliptic
       m_beta          =  a_beta        ;
       
       //m_domains controls when mg v cycle ends 
-      m_domain_dx.resize(a_grids.size());
-      m_domain_dx[0] = a_coarsest_dom;
+      m_domain_dx.resize(a_ref_ratios.size());
+      m_domain_dx[0].first  = a_coarsest_dom;
+      m_domain_dx[0].second = a_coarsest_dx;
       double fine_dx = a_coarsest_dx;
-      for(int ilev = 1; ilev < a_grids.size(); ilev++)
+      for(int ilev = 1; ilev < a_ref_ratios.size(); ilev++)
       {
-        ch_dom fine_dom =   m_domain[ilev-1];
-        fine_dom.refine(a_ref_ratios[ilev-1]);
-        fine_dx /= a_ref_ratios[ilev-1];
+        ch_dom fine_dom =   m_domain_dx[ilev-1].first;
+        fine_dom.refine(   a_ref_ratios[ilev-1]);
+        fine_dx      /=    a_ref_ratios[ilev-1];
 
         m_domain_dx[ilev].first  = fine_dom;
         m_domain_dx[ilev].second = fine_dx;
@@ -268,9 +266,9 @@ namespace PrCh_AMR_Elliptic
     get_ref_index(ch_dom a_dom_fine) const
     {
       int iref  = 4586; bool found = false;
-      for(int ilev = 0; ilev < m_domains.size(); ilev++)
+      for(int ilev = 0; ilev < m_domain_dx.size(); ilev++)
       {
-        if(m_domains[ilev] == a_dom_fine)
+        if(m_domain_dx[ilev].first == a_dom_fine)
         {
           found = true;
           iref  = ilev;
@@ -317,14 +315,15 @@ namespace PrCh_AMR_Elliptic
         factor*= 2;
       }
       ch_mglevelop* retval  = NULL;
-      if((a_depth > 0) && (!a_dom_fine..coarsenable(2*factor)))
+      if((a_depth > 0) && (!a_dom_fine.domainBox().coarsenable(2*factor)))
       {
         retval = NULL;
       }
       else
       {
 
-        double loc_dx = m_dx[ref]*factor;
+        double loc_dx = m_domain_dx[iref].second; 
+        loc_dx *= factor;
         Proto_Helmholtz_Op* derivedOp = 
           new Proto_Helmholtz_Op(m_alpha,
                                  m_beta,
@@ -343,7 +342,7 @@ namespace PrCh_AMR_Elliptic
       int iref = get_ref_index(a_indexSpace);
       int loc_ref_fine, loc_ref_coar;
       get_local_ref_ratios(loc_ref_fine, loc_ref_coar, iref);
-      double loc_dx = m_domains_dx[iref].second;
+      double loc_dx = m_domain_dx[iref].second;
 
       Proto_Helmholtz_Op* derivedOp = 
         new Proto_Helmholtz_Op(m_alpha,
@@ -360,7 +359,7 @@ namespace PrCh_AMR_Elliptic
     {
       int iref = get_ref_index(a_indexSpace);
       int ref_rat = m_ref_ratios[iref];
-      return iref;
+      return ref_rat;
     }
   };
 }

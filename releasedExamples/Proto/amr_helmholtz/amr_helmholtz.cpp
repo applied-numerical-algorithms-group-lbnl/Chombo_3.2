@@ -30,7 +30,7 @@ namespace Chombo
     typedef        ProblemDomain             ch_dom;
     typedef Proto::ProblemDomain             pr_dom;
     typedef Proto::LevelBoxData<double, 1>   pr_lbd;
-    
+    typedef        AMRLevelOpFactory<pr_lbd> ch_op_fact_pr;   
     static void
     setRHS(Vector<ch_ldf* >   a_rhs,
            Vector<ch_dom  >&  a_amrDomains,
@@ -57,60 +57,41 @@ namespace Chombo
       }
     }
 
-
-  
     static void
-    setupSolver(AMRMultiGrid<ch_ldf > *a_amrSolver,
-                LinearSolver<ch_ldf >& a_bottomSolver,
-                const Vector<ch_dbl>& a_amrGrids,
-                const Vector<ch_dom>& a_amrDomains,
-                const Vector<int>& a_refRatios,
-                const Vector<Real>& a_amrDx,
+    solveForPhi(Vector<ch_ldf* >   a_rhs_ch,
+                Vector<ch_ldf* >   a_phi_ch,
+                Vector<ch_dom  >&  a_amrDomains,
+                Vector<int     >&  a_refRatios,
+                Vector<Real    >&  a_amrDx,
                 int a_finestLevel)
     {
-      CH_TIME("setupSolver");
-
+      CH_TIME("solveForPhi");
+      ///the solver declaration has to change 
+      shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
+      shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
+      bottomSolver.m_verbosity = 0;
       ParmParse ppSolver("solver");
-
-
-      AMRPoissonOpFactory opFactory;
-
-      Real alpha =4586.;
-      Real beta = 4586.;
+      Real alpha = 4586.;
+      Real beta  = 4586.;
       ppSolver.get("alpha", alpha);
       ppSolver.get("beta" , beta) ;
 
-//  int numLevels = a_finestLevel+1;
-//  opFactory.define(a_amrDomains[0],
-//                   a_amrGrids,
-//                   a_refRatios,
-//                   a_amrDx[0],
-//                   &ParseBC, alpha, beta);
-//
-//  AMRLevelOpFactory<ch_ldf >& castFact = (AMRLevelOpFactory<ch_ldf >& ) opFactory;
-//
-//  a_amrSolver->define(a_amrDomains[0], castFact,
-//                      &a_bottomSolver, numLevels);
+      shared_ptr<ch_op_fact_pr> solver_factory_ptr =
+        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amrDomains[0], a_refRatios, a_amrDx[0], domainBC, alpha, beta);
 
-      // multigrid solver parameters
-      int numSmooth, numMG, maxIter;
-      Real eps, hang;
-      ppSolver.get("num_smooth", numSmooth);
-      ppSolver.get("num_mg",     numMG);
-      ppSolver.get("max_iterations", maxIter);
-      ppSolver.get("tolerance", eps);
-      ppSolver.get("hang",      hang);
+      PrChUtilities<1>::setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
+                                    refRatios, amrDx, finestLevel, solver_factory_ptr);
 
-      Real normThresh = 1.0e-30;
-      a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                                       numMG, maxIter, eps, hang, normThresh);
-      a_amrSolver->m_verbosity = 3;
+      int numLevels = amrGrids.size();
 
-      // optional parameters
-      ppSolver.query("num_pre", a_amrSolver->m_pre);
-      ppSolver.query("num_post", a_amrSolver->m_post);
-      ppSolver.query("num_bottom", a_amrSolver->m_bottom);
+      PrChUtilities<1>::copyToDevice(rhs_pr, a_rhs_ch);
+      
+      amrSolver->solve(phi_pr, rhs_pr, finestLevel, 0, true); //bool zeroInitialGuess = true;
+      
+      PrChUtilities<1>::copyToHost  (a_phi_ch, phi_pr);
     }
+
+  
 
     static int runSolver()
     {
@@ -132,27 +113,20 @@ namespace Chombo
         pout() << "ilev = " << ilev << ", grids = " << endl;
         amrGrids[ilev].print();
       }
-      AMRMultiGrid<ch_ldf > *amrSolver;
-      amrSolver = new AMRMultiGrid<ch_ldf >();
-      BiCGStabSolver<ch_ldf > bottomSolver;
-      bottomSolver.m_verbosity = 0;
-      setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-                  refRatios, amrDx, finestLevel);
 
-      int numLevels = amrGrids.size();
       Vector<ch_ldf* > phi_ch(numLevels, NULL);
-      Vector<ch_ldf* > rhs(numLevels, NULL);
+      Vector<ch_ldf* > rhs_ch(numLevels, NULL);
 
       for (int lev=0; lev<=finestLevel; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
         phi_ch[lev] = new ch_ldf(levelGrids, 1, IntVect::Unit);
-        rhs[lev] = new ch_ldf(levelGrids, 1, IntVect::Zero);
+        rhs_ch[lev] = new ch_ldf(levelGrids, 1, IntVect::Zero);
       }
 
-      setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
+      setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
 
-      amrSolver->solve(phi_ch, rhs, finestLevel, 0, true); //bool zeroInitialGuess = true;
+      solveForPhi(phi_ch, rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
 
 #ifdef CH_USE_HDF5
 

@@ -1,9 +1,28 @@
 #include "AMRMultiGrid.H"
 #include "Proto.H"
+#include "ProtoInterface.H"
 
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
 
+/****************/
+PROTO_KERNEL_START 
+unsigned int axbyPointwiseF(int              a_pt[DIM],
+                            Proto::Var<Real, 1>     a_lph,
+                            Proto::Var<Real, 1>     a_x,
+                            Proto::Var<Real, 1>     a_y,
+                            Real             a_a,
+                            Real             a_b,
+                            int              a_iprint)
+{
+  double xval = a_x(0);
+  double yval = a_y(0);
+  double lph  = a_a*xval + a_b*yval;
+  a_lph(0) = lph;
+  return 0;
+
+}
+PROTO_KERNEL_END(axbyPointwiseF, axbyPointwise) 
 ///
 /**
    Namespace PrCh_AMR_Elliptic
@@ -37,8 +56,6 @@
 **/
 namespace PrCh_AMR_Elliptic
 {
-  typedef Chombo::Box  ch_box;
-
   ///
   /**
      class  Base_Simplified_AMRLevelOp
@@ -63,30 +80,22 @@ namespace PrCh_AMR_Elliptic
   {
   public:
 
-    typedef Chombo::Box           ch_box;
-    typedef Chombo::ProblemDomain ch_dom;
-
+    typedef Chombo::Box                            ch_box;
+    typedef Chombo::MayDay                         ch_mayday;
+    typedef Chombo::ProblemDomain                  ch_dom;
+    typedef Chombo::AMRLevelOp<level_data_type>    ch_amrlevelop;
     ///This class has no data.  
-    Base_Simplified_AMRLevelOp():AMRLevelOp<>() {}
+    Base_Simplified_AMRLevelOp():ch_amrlevelop()
+    {}
 
-    ///This class has no data
+    ///This class has no data 
     virtual ~Base_Simplified_AMRLevelOp(){}
 
     
-    /// output = aco*xval + bco*yval
-    /**
-       Standard function that I use for all arithmetic.  Because this is not fortran,
-       it does not matter if any of the arguments point to overlapping things.
-     **/
-    virtual void 
-    axby(level_data_type         & a_output,
-         const level_data_type   & a_xval,
-         const level_data_type   & a_yval,
-         const double            & a_bco,
-         const double            & a_aco) = 0;
          
     ///a_phiThisLevel += I[2h->h](a_correctCoarse)
-    virtual void prolongIncrement(T& a_phiThisLevel, const T& a_correctCoarse) = 0;
+    virtual void prolongIncrement(level_data_type      & a_phiThisLevel,
+                                  const level_data_type& a_correctCoarse) = 0;
 
 
     ///Default implementations independent of Proto go here.
@@ -99,9 +108,9 @@ namespace PrCh_AMR_Elliptic
       CH_TIME("Base_Simplified_AMRLevelOp::restrictResidual");
       ///this makes a fine version of the residual
       level_data_type resMedi;
-      create(resMedi, a_rhsMedi);
+      this->create(resMedi, a_rhsMedi);
       residual(resMedi, a_phiMedi, a_rhsMedi);
-      restriction(resCoar, resMedi);
+      restriction(a_resCoar, resMedi);
     }
 
   
@@ -115,9 +124,9 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::residual");
       ///here lhs = lphi
-      applyOperator(a_lhs, a_phi);
+      applyOp(a_lhs, a_phi, a_homogeneous);
       ///lhs = rhs - lphi
-      axby(a_lhs, a_rhs, a_lhs, 1.0, -1.0);
+      this->axby(a_lhs, a_rhs, a_lhs, 1.0, -1.0);
     }
 
 
@@ -135,7 +144,7 @@ namespace PrCh_AMR_Elliptic
       **/
       int num_relax = 27;
 
-      relax(a_cor, a_res, num_relax);
+      this->relax(a_cor, a_res, num_relax);
     }
 
     ///
@@ -145,11 +154,11 @@ namespace PrCh_AMR_Elliptic
             bool a_homogeneous = false)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::applyOp");
-      ch_dom domain = getDomainFromData(a_phi);
+      ch_dom domain = this->getDomainFromData(a_phi);
       level_data_type& castphi = (level_data_type&)(a_phi);
       fillGhostDataOutsideDomain(castphi, domain);
       fillGhostDataOverFineFineInterface(castphi);
-      applyOperator(a_lhs, a_phi);
+      this->applyOperator(a_lhs, a_phi);
     }
 
 
@@ -158,7 +167,7 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::assign");
       //a_lhs = 0. * a_lhs + 1.* a_rhs
-      axby(a_lhs, a_lhs, a_rhs, 0.0, 1.0, );
+      this->axby(a_lhs, a_lhs, a_rhs, 0.0, 1.0);
     }
 
     ///
@@ -169,7 +178,7 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::incr");
       ///a_lhs = 1. a_lhs + a_scale*a_x + a_lhs
-      axby(a_lhs, a_lhs , a_x, 1.0,  a_scale);
+      this->axby(a_lhs, a_lhs , a_x, 1.0,  a_scale);
     }
 
     ///
@@ -179,7 +188,7 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::scale");
       ///a_lhs = 0. *a_lhs + a_scale*a_lhs
-      axby(a_lhs, a_lhs , a_lhs, 0.0,  a_scale);
+      this->axby(a_lhs, a_lhs , a_lhs, 0.0,  a_scale);
     }
 
 
@@ -190,33 +199,34 @@ namespace PrCh_AMR_Elliptic
                 const level_data_type& a_phiMedi,
                 const level_data_type& a_phiCoar,
                 bool a_homogeneousDomBC,
-                Base_Proto_AMRLevelOp<level_data_type>*  a_finerOp)
+                ch_amrlevelop*  a_finerOp)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMROperator");
       ch_dom domain = getDomainFromData(a_phiMedi);
       level_data_type& castphi = (level_data_type&)(a_phiMedi);
-      fillGhostDataOutsideDomain(castphi, domain);
-      fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
-      fillGhostDataOverFineFineInterface(castphi);
+      this->fillGhostDataOutsideDomain(castphi, domain);
+      this->fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
+      this->fillGhostDataOverFineFineInterface(castphi);
       applyOperator(a_lphMedi, a_phiMedi);
-      refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
+      this->refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
     }
     
     ///
     virtual void
-    AMRResidual(level_data_type      & a_residual,
+    AMRResidual(level_data_type      & a_resMedi,
                 const level_data_type& a_phiFine,
                 const level_data_type& a_phiMedi,
                 const level_data_type& a_phiCoar,
                 const level_data_type& a_rhsMedi,
                 bool a_homogeneousDomBC,
-                Base_Proto_AMRLevelOp<level_data_type>*  a_finerOp)
+                ch_amrlevelop*  a_finerOp)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMRResidual");
       /// residual here holds lph
-      AMROperator(a_residual, a_phiFine, a_phiMedi, a_phiCoar, a_finerOp);
+      this->AMROperator(a_resMedi, a_phiFine, a_phiMedi, a_phiCoar,
+                        a_homogeneousDomBC, a_finerOp);
       /// residual = a_rhs - lphi
-      axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
+      this->axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
       
     }
 
@@ -232,7 +242,7 @@ namespace PrCh_AMR_Elliptic
       /// here resMedi = L(phiMedi)
       AMROperatorNF(a_resMedi, a_phiMedi, a_phiCoar, a_homogeneousBC);
       /// residual = a_rhs - lphi
-      axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
+      this->axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
     }
 
     ///assume no coarser AMR level
@@ -241,13 +251,13 @@ namespace PrCh_AMR_Elliptic
                                const level_data_type& a_phiMedi,
                                const level_data_type& a_rhsMedi,
                                bool a_homogeneousBC,
-                               Base_Proto_AMRLevelOp<level_data_type>* a_finerOp)
+                               ch_amrlevelop* a_finerOp)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMRResidualNC");
       /// after this, a_resMedi holds lphi
       AMROperatorNC(a_resMedi, a_phiFine, a_phiMedi, a_homogeneousBC, a_finerOp);
       /// residual = a_rhs - lphi
-      axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
+      this->axby(a_resMedi, a_rhsMedi, a_resMedi, 1.0, -1.0);
 
     }
 
@@ -259,7 +269,7 @@ namespace PrCh_AMR_Elliptic
                                bool a_homogeneousBC)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNF");
-      ch_dom domain = getDomainFromData(a_phiMedi);
+      ch_dom domain = this->getDomainFromData(a_phiMedi);
       level_data_type& castphi = (level_data_type&)(a_phiMedi);
       fillGhostDataOutsideDomain(castphi, domain);
       fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
@@ -273,7 +283,7 @@ namespace PrCh_AMR_Elliptic
                   const level_data_type& a_phiFine,
                   const level_data_type& a_phiMedi,
                   bool a_homogeneousBC,
-                  Base_Proto_AMRLevelOp<level_data_type>* a_finerOp)
+                  ch_amrlevelop* a_finerOp)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNC");
       ch_dom domain = getDomainFromData(a_phiMedi);
@@ -289,14 +299,14 @@ namespace PrCh_AMR_Elliptic
     AMRRestrict(level_data_type      & a_resCoar,
                 const level_data_type& a_rhsMedi,
                 const level_data_type& a_phiMedi,
-                const level_data_type& a_phiCoar
+                const level_data_type& a_phiCoar,
                 bool a_skip_res)
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMRRestrict");
       level_data_type resMedi;
-      create(resMedi, a_rhsMedi);
-      AMROperatorNF(resMedi, a_phiMedi. a_phiCoar);
-      restricton(a_resCoar, resMedi);
+      this->create(resMedi, a_rhsMedi);
+      this->AMROperatorNF(resMedi, a_phiMedi, a_phiCoar, false);
+      this->restriction(a_resCoar, resMedi);
     }
 
     ///a_phiFine += I[2h->h](a_phiCoar) 
@@ -306,7 +316,7 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMRProlong");
       level_data_type phiCoFi;
-      createCoarsened(phiCoFi, a_phiFine);
+      this->createCoarsened(phiCoFi, a_phiFine, 2);
       copyTo(phiCoFi, a_phiCoar);
       prolongIncrement(a_phiFine, phiCoFi);
     }
@@ -320,11 +330,42 @@ namespace PrCh_AMR_Elliptic
       CH_TIME("Base_Simplified_AMRLevelOp::AMRUpdateResidual");
       level_data_type lphMedi;
       create(lphMedi, a_resMedi);
-      AMROperatorNF(lphMedi, a_phiMedi, a_phiCoar);
-      axby(a_resMedi, a_resMedi, lphMedi, 1.0, -1);
+      AMROperatorNF(lphMedi, a_phiMedi, a_phiCoar, false);
+      this->axby(a_resMedi, a_resMedi, lphMedi, 1.0, -1);
     }
+    ///
+    virtual ch_dom
+    getDomainFromData(const level_data_type & a_data) = 0;
 
+    ///
+    virtual void
+    fillGhostDataOutsideDomain(level_data_type & a_phi,
+                               const ch_dom    & a_domain) = 0;
 
+    ///
+    virtual void
+    fillGhostDataOverFineFineInterface(level_data_type &  a_phiFine) = 0;
+
+    ///For this one, the derived class may assume all ghost cells have been set correctly
+    virtual void 
+    applyOperator(level_data_type        & a_lph,
+                  const level_data_type  & a_phi) = 0;
+    virtual void
+    restriction(level_data_type & a_resCoar,
+                level_data_type & a_resFine) = 0;
+    /// amr thing
+    virtual void
+    fillGhostDataOverCoarseFineInterface(level_data_type       &  a_phiFine, 
+                                         const level_data_type &  a_phiCoar) = 0;
+    /// amr thing
+    virtual void
+    refluxFineCorrection(level_data_type       &  a_lphCoar,
+                         const level_data_type &  a_phiFine, 
+                         const level_data_type &  a_phiCoar,
+                         ch_amrlevelop*   a_finerOp)
+    {
+      ch_mayday::Error("Doh! not implemented");
+    }
   };
 
 
@@ -353,23 +394,25 @@ namespace PrCh_AMR_Elliptic
 
      An important design point here is that both base classes have no
      data.  I prefer base classes to just be base classes with all
-     data living in the derived classs.  There are many default
-     funcion implementations here.  All will have timers.  If, for a
-     particular operator, one of these functions become odious, that operator
-     can supercede it because all these functions are virtual,
+     data living in the derived class.  There are many default function
+     implementations here.  All will have timers.  If, for a
+     particular operator, one of these functions become odious, that
+     operator can supercede it (all these functions are virtual),
   **/
   template<int ncomp>
-  class Base_Proto_AMRLevelOp: public Base_Simplified_AMRLevelOp<Proto::LevelBoxData<ncomp> >
+  class Base_Proto_AMRLevelOp: public Base_Simplified_AMRLevelOp<Proto::LevelBoxData<double, ncomp> >
   {
   public:
-    typedef Proto::LevelBoxData<double, ncomp> pr_lbd;
+    typedef                             Proto::LevelBoxData<double, ncomp>      pr_lbd;
+    typedef Base_Simplified_AMRLevelOp< Proto::LevelBoxData<double, ncomp> >    ch_amrlevelop;
+    typedef                            Chombo::Box                              ch_box;
+    typedef                            Chombo::MayDay                           ch_mayday;
+    typedef                            Chombo::ProblemDomain                    ch_dom;
+    typedef                             Proto::ProblemDomain                    pr_dom;
+    typedef                             Proto::Point                            pr_pt;
     
-    ///this holds data that is common to all of these things.
-    typedef Chombo::Box           ch_box;
-    typedef Chombo::ProblemDomain ch_dom;
-
     ///This class has no data.  
-    Base_Proto_AMRLevelOp():AMRLevelOp<>() {}
+    Base_Proto_AMRLevelOp():ch_amrlevelop() {}
 
     ///This class has no data
     virtual ~Base_Proto_AMRLevelOp(){}
@@ -380,8 +423,9 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Proto_AMRLevelOp::getDomainFromData");
       auto   dbl_pr = a_data.layout();
-      pr_dom dom_pr = dbl.domain();
-      ch_dom retval = ProtoCh::getProblemDomain(dom_pr);
+      pr_dom dom_pr = dbl_pr.domain();
+      ch_dom retval = ProtoCh::getChomboDomain(dom_pr);
+      return retval;
     }      
     
     ///exchange
@@ -408,8 +452,10 @@ namespace PrCh_AMR_Elliptic
                        bool ghosted)
     {
       CH_TIME("Base_Proto_AMRLevelOp::createCoarser");
-      auto   dbl_fine = a_data.layout();
-      auto   dbl_coar = dbl_fine.coarsen(2);
+      auto   dbl_fine = a_fine.layout();
+      //in proto, dbl_fine.coarsen(pt) is a const function that returns the coarse layout.
+      //in chombo, the equivalent changes dbl_fine and would be a bug here.
+      auto   dbl_coar = dbl_fine.coarsen(2*pr_pt::Ones());
       pr_pt ghost = a_fine.ghost();
       a_coar.define(dbl_coar, ghost);
     }
@@ -439,6 +485,31 @@ namespace PrCh_AMR_Elliptic
       return sum;
     }
 
+    /// output = aco*xval + bco*yval
+    /**
+       Standard function that I use for all arithmetic.  Because this is not fortran,
+       it does not matter if any of the arguments point to overlapping things.
+     **/
+    virtual void 
+    axby(pr_lbd         & a_lphi,
+         const pr_lbd   & a_xval,
+         const pr_lbd   & a_yval,
+         double    a_bco,
+         double    a_aco)
+    {
+      auto grids =  a_lphi.layout();
+      auto dit   =  a_lphi.begin();
+      int iprint = 0; //debugging hook
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        auto       & lphfab =  a_lphi[dit[ibox]];
+        const auto &   xfab =  a_xval[dit[ibox]];
+        const auto &   yfab =  a_yval[dit[ibox]];
+        auto valid          =   grids[dit[ibox]];
+        Proto::forallInPlace_i(axbyPointwise, valid, lphfab, xfab, yfab,
+                               a_aco, a_bco, iprint);
+      }
+    }
     ///
     /**
        These two have to on the same layout for this to work.
@@ -480,9 +551,11 @@ namespace PrCh_AMR_Elliptic
                                  const int    & a_refRat)
     {
       CH_TIME("Base_Proto_AMRLevelOp::createCoarsened (the AMR one)");
-      auto gridsFine = a_phiFine.layout();
-      auto ghostFine = a_gridsFine.ghost();
-      auto gridsCoar = gridsFine.coarsen(    Point::Ones(a_refRat));
+      const auto& gridsFine = a_phiFine.layout();
+      auto        ghostFine = gridsFine.ghost();
+      //in proto, gridsFine.coarsen(pt) is a const function that returns the coarse layout.
+      //in chombo, the equivalent changes gridsFine and would be a bug here.
+      auto gridsCoar = gridsFine.coarsen( pr_pt::Ones(a_refRat));
       a_phiCoar.define(gridsCoar, ghostFine);
     }
     
@@ -492,18 +565,21 @@ namespace PrCh_AMR_Elliptic
                      const pr_lbd        & a_corCoar)
     {
       //borrowed from Phil's levelmultigrid example in proto/example
+      typedef Proto::BoxData<double> pr_bd;
       pr_lbd localCor;
-      createCoarser(   localCor, a_phiMedi);
-      a_corCoar.copyTo(localCoar);
-      pr_interp_sten interp_stencil = pr_interp_sten::Constant(Point::Ones(2));
+      this->createCoarser(   localCor, a_phiMedi, true);
+      a_corCoar.copyTo(localCor);
+      typedef Proto::InterpStencil<double> pr_interp_sten;
+      pr_interp_sten interp_stencil = pr_interp_sten::Constant(pr_pt::Ones(2));
       auto grids =  a_phiMedi.layout();
       auto dit   =  a_phiMedi.begin();
       for(int ibox = 0; ibox < dit.size(); ibox++)
       {
-        const auto & corfab =   localCor[dit[ibox]];
-        const auto & phifab =  a_phiMedi[dit[ibox]];
-      
-        phifab += interp_stencil(corfab);
+        const pr_bd & corfab =   localCor[dit[ibox]];
+        pr_bd       & phifab =  a_phiMedi[dit[ibox]];
+
+        pr_bd fineCorr = interp_stencil(corfab);
+        phifab += fineCorr;
       }
     }
 
@@ -514,9 +590,10 @@ namespace PrCh_AMR_Elliptic
                 pr_lbd & a_resFine)
     {
       ///taken from Phil's levelmultigrid example
-      auto A = Stencil<double>::AvgDown(2);
-      auto grids =  a_phiMedi.layout();
-      auto dit   =  a_phiMedi.begin();
+      typedef Proto::Stencil<double> pr_sten;
+      auto A = pr_sten::AvgDown(2);
+      auto grids =  a_resCoar.layout();
+      auto dit   =  a_resCoar.begin();
       for(int ibox = 0; ibox < dit.size(); ibox++)
       {
         auto & finefab =   a_resFine[dit[ibox]];
@@ -527,7 +604,7 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///
-    virtual void setToZero(level_data_type & a_lhs)
+    virtual void setToZero(pr_lbd & a_lhs)
     {
       a_lhs.setToZero();
     }

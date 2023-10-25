@@ -1,4 +1,4 @@
-# Chombo3.2/releasedExamples/Proto
+# Chombo_3.2/releasedExamples/Proto
 * A set of examples to show how to use Chombo with proto for performance portability.
 
 # Expectations for developers:
@@ -22,6 +22,6 @@
 
 # We plan on also porting in 2023:
 * Variable coefficient Helmholtz (VCAMRPoissonOp), 
-* The viscous tensor equation (ViscousTensorOp), 
+am         * The viscous tensor equation (ViscousTensorOp), 
 * The magnetic resistivity  equation (ResitivityOp), 
 

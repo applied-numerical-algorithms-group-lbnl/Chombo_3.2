@@ -14,6 +14,7 @@
 #include "BoxIterator.H"
 #include "CONSTANTS.H"
 #include "Proto.H"
+#include "Proto_Helmholtz_Op.H"
 #include "memusage.H"
 
 namespace Chombo
@@ -25,7 +26,7 @@ namespace Chombo
      PTU on this side of the fence is a plain-old-data interface.   
      This class prettifies that somewhat and provides some code reuse for the test codes.
    **/
-  temmplate <int ncomp>
+  template <int ncomp>
   class PrChUtilities
   {
   public:
@@ -37,7 +38,75 @@ namespace Chombo
     typedef Proto::ProblemDomain                 pr_dom;
     typedef        DisjointBoxLayout             ch_dbl;
     typedef Proto::DisjointBoxLayout             pr_dbl;
+    typedef Proto::LevelBoxData<double,1>        pr_lbd;
+    typedef        AMRLevelOp<pr_lbd>            ch_amrlevelop;
+    typedef        AMRLevelOpFactory<pr_lbd>     ch_factory;
     
+    static void
+    setupSolver(shared_ptr< AMRMultiGrid< pr_lbd > >   a_amrSolver,
+                shared_ptr< LinearSolver< pr_lbd > >   a_bottomSolver,
+                const Vector<ch_dbl>& a_amrGrids,
+                const Vector<ch_dom>& a_amrDomains,
+                const Vector<int>& a_refRatios,
+                const Vector<Real>& a_amrDx,
+                int a_finestLevel,
+                shared_ptr<ch_factory> a_solver_factory_ptr)
+    {
+      CH_TIME("PrChUtilities::setupSolver");
+
+      ParmParse ppSolver("PrChUtilities_setupSolver");
+
+      a_amrSolver->define(a_amrDomains[0], *a_solver_factory_ptr,
+                          &(*a_bottomSolver), a_amrGrids.size());
+
+      // multigrid solver parameters
+      int numSmooth, numMG, maxIter;
+      Real eps, hang;
+      ppSolver.get("num_smooth", numSmooth);
+      ppSolver.get("num_mg",     numMG);
+      ppSolver.get("max_iterations", maxIter);
+      ppSolver.get("tolerance", eps);
+      ppSolver.get("hang",      hang);
+
+      Real normThresh = 1.0e-30;
+      a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
+                                       numMG, maxIter, eps, hang, normThresh);
+      a_amrSolver->m_verbosity = 3;
+
+      // optional parameters
+      ppSolver.query("num_pre", a_amrSolver->m_pre);
+      ppSolver.query("num_post", a_amrSolver->m_post);
+      ppSolver.query("num_bottom", a_amrSolver->m_bottom);
+    }
+
+    ///
+    shared_ptr<ch_factory>
+    getProtoHelmholtzOpFactory(const ch_dom         &        a_coarsest_dom,
+                               const Vector<int>    &        a_ref_ratios,
+                               const double         &        a_coarsest_dx,
+                               const string         &        a_domBC,
+                               const double         &        a_alpha,
+                               const double         &        a_beta)               
+    {
+      vector<int> std_vec_rat(a_ref_ratios.size(), 4586);
+      for(int ivec  = 0; ivec < a_ref_ratios.size(); ivec++)
+      {
+        std_vec_rat[ivec] = a_ref_ratios[ivec];
+      }
+
+      typedef PrCh_AMR_Elliptic::Proto_Helmholtz_Op_Factory prch_helm_fact;
+      
+      prch_helm_fact* derived_ptr =
+        new prch_helm_fact(a_coarsest_dom,       
+                           std_vec_rat,
+                           a_coarsest_dx,        
+                           a_domBC,              
+                           a_alpha,              
+                           a_beta);
+      
+      ch_factory* base_ptr =  static_cast<ch_factory*>(derived_ptr);
+      return shared_ptr<ch_factory>(base_ptr);
+    }
     ///just always tag IntVect::Zero;
     static void
     setupLLCornerGrids(Vector<ch_dbl>& a_amrGrids,
