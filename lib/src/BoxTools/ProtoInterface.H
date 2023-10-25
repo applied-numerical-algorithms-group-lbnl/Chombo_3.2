@@ -81,6 +81,12 @@ namespace ProtoCh
     return ch_dom(box_ch, per_ch);
   }
   
+  /// more consistent with other names here
+  inline ch_dom getDomain(const pr_dom& a_dom)
+  {
+    return getChomboDomain(a_dom);
+  }
+  
   /// gets proto box from chombo box
   inline pr_box getProtoBox(const ch_box& a_box)
   {
