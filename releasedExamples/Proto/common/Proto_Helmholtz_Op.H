@@ -163,7 +163,7 @@ namespace PrCh_AMR_Elliptic
     /// domain boundary conditions.
     /** 
         Anything can be hidden in a string, so the interface is general enough.
-        For now we shall restrict ourselves to the big two: Neumann and Dirichlet.
+        For now, we shall restrict ourselves to the big two: Neumann and Dirichlet.
     **/
     virtual void
     fillGhostDataOutsideDomain(pr_lbd          & a_phi,

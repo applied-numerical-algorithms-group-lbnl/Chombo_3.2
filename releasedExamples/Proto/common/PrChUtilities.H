@@ -41,7 +41,25 @@ namespace Chombo
     typedef Proto::LevelBoxData<double,1>        pr_lbd;
     typedef        AMRLevelOp<pr_lbd>            ch_amrlevelop;
     typedef        AMRLevelOpFactory<pr_lbd>     ch_factory;
-    
+    typedef        MayDay                        ch_mayday;
+    ///
+    static void
+    copyToHost(ch_ldf       & a_host_data,
+               const pr_lbd & a_devi_data)
+    {
+      CH_TIME(  "PrChUtilities::copyToHost");
+      ch_mayday::Error("PrChUtilities::copyToHost not implemented");
+    }
+    ///
+    static void
+    copyToDevice(pr_lbd             & a_devi_data,
+                 const ch_ldf       & a_host_data)
+    {
+      CH_TIME(  "PrChUtilities::copyToDevice");
+      ch_mayday::Error("PrChUtilities::copyToDevice not implemented");
+    }
+
+    ///
     static void
     setupSolver(shared_ptr< AMRMultiGrid< pr_lbd > >   a_amrSolver,
                 shared_ptr< LinearSolver< pr_lbd > >   a_bottomSolver,
@@ -49,7 +67,6 @@ namespace Chombo
                 const Vector<ch_dom>& a_amrDomains,
                 const Vector<int>& a_refRatios,
                 const Vector<Real>& a_amrDx,
-                int a_finestLevel,
                 shared_ptr<ch_factory> a_solver_factory_ptr)
     {
       CH_TIME("PrChUtilities::setupSolver");
@@ -80,7 +97,7 @@ namespace Chombo
     }
 
     ///
-    shared_ptr<ch_factory>
+    static shared_ptr<ch_factory>
     getProtoHelmholtzOpFactory(const ch_dom         &        a_coarsest_dom,
                                const Vector<int>    &        a_ref_ratios,
                                const double         &        a_coarsest_dx,

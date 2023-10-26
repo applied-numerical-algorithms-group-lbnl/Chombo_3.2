@@ -30,7 +30,8 @@ namespace Chombo
     typedef        ProblemDomain             ch_dom;
     typedef Proto::ProblemDomain             pr_dom;
     typedef Proto::LevelBoxData<double, 1>   pr_lbd;
-    typedef        AMRLevelOpFactory<pr_lbd> ch_op_fact_pr;   
+    typedef        AMRLevelOpFactory<pr_lbd> ch_op_fact_pr;
+    typedef        DisjointBoxLayout         ch_dbl;
     static void
     setRHS(Vector<ch_ldf* >   a_rhs,
            Vector<ch_dom  >&  a_amrDomains,
@@ -57,9 +58,11 @@ namespace Chombo
       }
     }
 
+    ///
     static void
     solveForPhi(Vector<ch_ldf* >   a_rhs_ch,
                 Vector<ch_ldf* >   a_phi_ch,
+                Vector<ch_dbl  >&  a_amrGrids,
                 Vector<ch_dom  >&  a_amrDomains,
                 Vector<int     >&  a_refRatios,
                 Vector<Real    >&  a_amrDx,
@@ -69,30 +72,31 @@ namespace Chombo
       ///the solver declaration has to change 
       shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
       shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
-      bottomSolver.m_verbosity = 0;
+
       ParmParse ppSolver("solver");
       Real alpha = 4586.;
       Real beta  = 4586.;
       ppSolver.get("alpha", alpha);
       ppSolver.get("beta" , beta) ;
-
+      string domain_bc;
+      ppSolver.get("domain_bc", domain_bc);
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amrDomains[0], a_refRatios, a_amrDx[0], domainBC, alpha, beta);
+        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amrDomains[0], a_refRatios, a_amrDx[0], domain_bc, alpha, beta);
 
-      PrChUtilities<1>::setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-                                    refRatios, amrDx, finestLevel, solver_factory_ptr);
+      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amrGrids, a_amrDomains,
+                                    a_refRatios, a_amrDx, solver_factory_ptr);
 
-      int numLevels = amrGrids.size();
-
+      pr_lbd rhs_pr; ///HERE have to get the proto_dbl
       PrChUtilities<1>::copyToDevice(rhs_pr, a_rhs_ch);
       
-      amrSolver->solve(phi_pr, rhs_pr, finestLevel, 0, true); //bool zeroInitialGuess = true;
+      amr_solver_ptr->solve(phi_pr, rhs_pr, a_finestLevel, 0, true); //bool zeroInitialGuess = true;
       
       PrChUtilities<1>::copyToHost  (a_phi_ch, phi_pr);
     }
 
   
 
+    ///
     static int runSolver()
     {
       CH_TIME("runSolver");
@@ -126,7 +130,7 @@ namespace Chombo
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
 
-      solveForPhi(phi_ch, rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
+      solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx, finestLevel );
 
 #ifdef CH_USE_HDF5
 
