@@ -329,10 +329,13 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::AMRUpdateResidual");
       level_data_type lphMedi;
-      create(lphMedi, a_resMedi);
+      this->create(lphMedi, a_resMedi);
       AMROperatorNF(lphMedi, a_phiMedi, a_phiCoar, false);
       this->axby(a_resMedi, a_resMedi, lphMedi, 1.0, -1);
     }
+
+    ///The following functions are new (not from AMRLevelOp).
+    
     ///
     virtual ch_dom
     getDomainFromData(const level_data_type & a_data) = 0;
@@ -346,6 +349,11 @@ namespace PrCh_AMR_Elliptic
     virtual void
     fillGhostDataOverFineFineInterface(level_data_type &  a_phiFine) = 0;
 
+    ///
+    virtual void
+    copyTo(level_data_type       &  a_dst,
+           const level_data_type &  a_src) = 0;
+    
     ///For this one, the derived class may assume all ghost cells have been set correctly
     virtual void 
     applyOperator(level_data_type        & a_lph,
@@ -366,6 +374,7 @@ namespace PrCh_AMR_Elliptic
     {
       ch_mayday::Error("Doh! not implemented");
     }
+
   };
 
 
@@ -552,7 +561,7 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Proto_AMRLevelOp::createCoarsened (the AMR one)");
       const auto& gridsFine = a_phiFine.layout();
-      auto        ghostFine = gridsFine.ghost();
+      auto        ghostFine = a_phiFine.ghost();
       //in proto, gridsFine.coarsen(pt) is a const function that returns the coarse layout.
       //in chombo, the equivalent changes gridsFine and would be a bug here.
       auto gridsCoar = gridsFine.coarsen( pr_pt::Ones(a_refRat));
