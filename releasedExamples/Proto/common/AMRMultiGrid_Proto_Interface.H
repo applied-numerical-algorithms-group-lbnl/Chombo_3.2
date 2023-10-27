@@ -358,9 +358,17 @@ namespace PrCh_AMR_Elliptic
     virtual void 
     applyOperator(level_data_type        & a_lph,
                   const level_data_type  & a_phi) = 0;
+
+    /// Restrict fine data to coarse data using volume-weighted averaging.   
+    /**
+       Dad joke:
+       Restrict is a c++ keyword, so we are restricted from naming a function restrict.
+       To avoid this restriction, I named the function restriction instead of restrict.
+    **/
     virtual void
     restriction(level_data_type & a_resCoar,
                 level_data_type & a_resFine) = 0;
+
     /// amr thing
     virtual void
     fillGhostDataOverCoarseFineInterface(level_data_type       &  a_phiFine, 

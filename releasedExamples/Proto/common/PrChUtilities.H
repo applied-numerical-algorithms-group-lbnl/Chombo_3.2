@@ -38,25 +38,46 @@ namespace Chombo
     typedef Proto::ProblemDomain                 pr_dom;
     typedef        DisjointBoxLayout             ch_dbl;
     typedef Proto::DisjointBoxLayout             pr_dbl;
-    typedef Proto::LevelBoxData<double,1>        pr_lbd;
+    typedef Proto::LevelBoxData<double,ncomp>    pr_lbd;
     typedef        AMRLevelOp<pr_lbd>            ch_amrlevelop;
     typedef        AMRLevelOpFactory<pr_lbd>     ch_factory;
     typedef        MayDay                        ch_mayday;
-    ///
+
+    ///gets the data pointers from fabs
+    static vector<double*>
+    getRawHostData(const ch_ldf     & a_host_data) 
+    {
+      auto grids =  a_host_data.disjointBoxLayout();
+      auto dit   =  grids.dataIterator();
+      vector<double*> rawHostData(dit.size());
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        const auto  & fab  =  a_host_data[dit[ibox]];
+        rawHostData[ibox] =  (double*)(fab.dataPtr(0)); 
+      }
+      return rawHostData;
+    }
+    
+    /// Copy the contents of a proto data holder into a Chombo data holder.
     static void
     copyToHost(ch_ldf       & a_host_data,
                const pr_lbd & a_devi_data)
     {
       CH_TIME(  "PrChUtilities::copyToHost");
-      ch_mayday::Error("PrChUtilities::copyToHost not implemented");
+      std::vector<double*> rawHostData  = getRawHostData(a_host_data);
+      Proto_Transition::DataUtilities<ncomp>::copyToHost(a_host_data,
+                                                         a_devi_data);
     }
-    ///
+
+    /// Copy the contents of a Chombo data holder into a proto data holder.
     static void
     copyToDevice(pr_lbd             & a_devi_data,
                  const ch_ldf       & a_host_data)
     {
       CH_TIME(  "PrChUtilities::copyToDevice");
-      ch_mayday::Error("PrChUtilities::copyToDevice not implemented");
+      std::vector<double*> rawHostData    = getRawHostData(a_host_data);
+      Proto_Transition::DataUtilities<ncomp>::copyToDevice(a_devi_data,
+                                                           a_host_data);
     }
 
     ///
