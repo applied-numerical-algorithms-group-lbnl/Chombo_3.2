@@ -32,6 +32,10 @@ namespace Chombo
     typedef Proto::LevelBoxData<double, 1>   pr_lbd;
     typedef        AMRLevelOpFactory<pr_lbd> ch_op_fact_pr;
     typedef        DisjointBoxLayout         ch_dbl;
+    typedef Proto::DisjointBoxLayout         pr_dbl;
+    typedef Proto::Point                     pr_pt;
+
+    ///
     static void
     setRHS(Vector<ch_ldf* >   a_rhs,
            Vector<ch_dom  >&  a_amrDomains,
@@ -62,8 +66,8 @@ namespace Chombo
     static void
     solveForPhi(Vector<ch_ldf* >   a_rhs_ch,
                 Vector<ch_ldf* >   a_phi_ch,
-                Vector<ch_dbl  >&  a_amrGrids,
-                Vector<ch_dom  >&  a_amrDomains,
+                Vector<ch_dbl  >&  a_amr_grids,
+                Vector<ch_dom  >&  a_amr_domains,
                 Vector<int     >&  a_refRatios,
                 Vector<Real    >&  a_amrDx,
                 int a_finestLevel)
@@ -81,17 +85,46 @@ namespace Chombo
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amrDomains[0], a_refRatios, a_amrDx[0], domain_bc, alpha, beta);
+        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amr_domains[0], a_refRatios, a_amrDx[0], domain_bc, alpha, beta);
 
-      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amrGrids, a_amrDomains,
+      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids, a_amr_domains,
                                     a_refRatios, a_amrDx, solver_factory_ptr);
 
-      pr_lbd rhs_pr; ///HERE have to get the proto_dbl
-      PrChUtilities<1>::copyToDevice(rhs_pr, a_rhs_ch);
-      
-      amr_solver_ptr->solve(phi_pr, rhs_pr, a_finestLevel, 0, true); //bool zeroInitialGuess = true;
-      
-      PrChUtilities<1>::copyToHost  (a_phi_ch, phi_pr);
+      ///define the proto versions of the data
+      Vector<pr_lbd*>  phi_pr(a_amr_grids.size(), NULL);
+      Vector<pr_lbd*>  rhs_pr(a_amr_grids.size(), NULL);
+      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      {
+        shared_ptr<pr_dbl> layout_ptr =
+          PrChUtilities<1>::getProtoLayout(a_amr_grids[ilev]);
+        pr_pt ghost_phi = ProtoCh::getPoint(a_phi_ch[ilev]->ghostVect());
+        pr_pt ghost_rhs = ProtoCh::getPoint(a_rhs_ch[ilev]->ghostVect());
+        phi_pr[ilev] = new pr_lbd(*layout_ptr, ghost_phi);
+        rhs_pr[ilev] = new pr_lbd(*layout_ptr, ghost_rhs);
+      }
+
+      //get the rhs onto the device
+      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      {
+        PrChUtilities<1>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
+      }
+
+      //solve for phi on the device
+      bool zeroInitialGuess = true;
+      amr_solver_ptr->solve(phi_pr, rhs_pr, a_finestLevel, 0, zeroInitialGuess); 
+
+      //get phi back onto the host
+      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      {
+        PrChUtilities<1>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
+      }
+
+      //clean up device data
+      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      {
+        delete(phi_pr[ilev]);
+        delete(rhs_pr[ilev]);
+      }
     }
 
   
@@ -101,27 +134,33 @@ namespace Chombo
     {
       CH_TIME("runSolver");
 
-      int status = 0;
       ParmParse ppMain("main");
-
+      int max_level = 4586;
+      ppMain.get("max_level", max_level);
       // set up grids&
       Vector<ch_dbl> amrGrids;
       Vector<ch_dom> amrDomains;
       Vector<int> refRatios;
       Vector<Real> amrDx;
-      int finestLevel;
 
+      int finestLevel;
       PrChUtilities<1>::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
-      for(int ilev = 0; ilev < amrGrids.size(); ilev++)
+      int numLevels = amrGrids.size();
+      if(numLevels != finestLevel+1)
+      {
+        Chombo::MayDay::Error("runSolver: logic error");
+      }
+      
+      for(int ilev = 0; ilev < numLevels; ilev++)
       {
         pout() << "ilev = " << ilev << ", grids = " << endl;
         amrGrids[ilev].print();
       }
-
+      
       Vector<ch_ldf* > phi_ch(numLevels, NULL);
       Vector<ch_ldf* > rhs_ch(numLevels, NULL);
 
-      for (int lev=0; lev<=finestLevel; lev++)
+      for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
         phi_ch[lev] = new ch_ldf(levelGrids, 1, IntVect::Unit);
@@ -129,11 +168,10 @@ namespace Chombo
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
-
       solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx, finestLevel );
 
 #ifdef CH_USE_HDF5
-
+      //write the answer to file
       string fname("phi.hdf5");
       Vector<string> varNames(1, string("phi"));
 
@@ -141,7 +179,7 @@ namespace Chombo
 
       WriteAMRHierarchyHDF5(fname,
                             amrGrids,
-                            phi,
+                            phi_ch,
                             varNames,
                             amrDomains[0].domainBox(),
                             amrDx[0],
@@ -153,15 +191,14 @@ namespace Chombo
 #endif // end if HDF5
 
       // clean up
-      for (int lev=0; lev<phi.size(); lev++)
+      for (int lev=0; lev< phi_ch.size(); lev++)
       {
-        delete phi[lev];
-        delete rhs[lev];
+        delete phi_ch[lev];
+        delete rhs_ch[lev];
       }
 
-      delete amrSolver;
 
-      return status;
+      return 0;
     }
   };
 }
