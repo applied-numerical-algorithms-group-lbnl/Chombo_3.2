@@ -134,9 +134,7 @@ namespace Chombo
     {
       CH_TIME("runSolver");
 
-      ParmParse ppMain("main");
-      int max_level = 4586;
-      ppMain.get("max_level", max_level);
+
       // set up grids&
       Vector<ch_dbl> amrGrids;
       Vector<ch_dom> amrDomains;

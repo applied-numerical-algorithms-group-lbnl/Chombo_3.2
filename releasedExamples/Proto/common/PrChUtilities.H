@@ -160,7 +160,7 @@ namespace Chombo
     {
       CH_TIME("PrChUtilities::setupSolver");
 
-      ParmParse ppSolver("PrChUtilities_setupSolver");
+      ParmParse ppSolver("PrChUtil_setupSolver");
 
       a_amrSolver->define(a_amrDomains[0], *a_solver_factory_ptr,
                           &(*a_bottomSolver), a_amrGrids.size());
