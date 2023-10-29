@@ -124,9 +124,13 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Base_Simplified_AMRLevelOp::residual");
       ///here lhs = lphi
-      applyOp(a_lhs, a_phi, a_homogeneous);
+      a_lhs.setVal(0.);
+      level_data_type lphi;
+      this->create(lphi, a_rhs);
+      
+      applyOp(lphi, a_phi, a_homogeneous);
       ///lhs = rhs - lphi
-      this->axby(a_lhs, a_rhs, a_lhs, 1.0, -1.0);
+      this->axby(a_lhs, a_rhs, lphi, 1.0, -1.0);
     }
 
 
@@ -511,8 +515,8 @@ namespace PrCh_AMR_Elliptic
     axby(pr_lbd         & a_lphi,
          const pr_lbd   & a_xval,
          const pr_lbd   & a_yval,
-         double    a_bco,
-         double    a_aco)
+         double    a_aco,
+         double    a_bco)
     {
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();

@@ -155,6 +155,7 @@ namespace PrCh_AMR_Elliptic
             Proto::forallInPlace_i(gsrbResid, valid, phifab, resfab,
                                    m_alpha, m_beta, m_dx, iredblack, iprint);
           }
+          iprint++;
         }
       }
     }
