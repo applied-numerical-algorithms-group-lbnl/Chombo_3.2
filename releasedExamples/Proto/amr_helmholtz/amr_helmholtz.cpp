@@ -13,6 +13,7 @@
 
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
 #include "Proto_Helmholtz_Op.H"
+#include "DebuggingTools.H"
 
 namespace Chombo
 {
@@ -64,8 +65,8 @@ namespace Chombo
 
     ///
     static void
-    solveForPhi(Vector<ch_ldf* >   a_rhs_ch,
-                Vector<ch_ldf* >   a_phi_ch,
+    solveForPhi(Vector<ch_ldf* >   a_phi_ch,
+                Vector<ch_ldf* >   a_rhs_ch,
                 Vector<ch_dbl  >&  a_amr_grids,
                 Vector<ch_dom  >&  a_amr_domains,
                 Vector<int     >&  a_refRatios,

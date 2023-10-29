@@ -28,6 +28,7 @@
 #include "AMRPoissonOp.H"
 #include "AMRPoissonOp.H"
 #include "PrChUtilities.H"
+#include "DebuggingTools.H"
 #include "UsingNamespace.H"
 
 
