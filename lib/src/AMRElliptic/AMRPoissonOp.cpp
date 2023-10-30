@@ -257,6 +257,7 @@ void AMRPoissonOp::residualNF(LevelData<FArrayBox>& a_lhs,
 
 
 // ---------------------------------------------------------
+  //very efficient but impossible to read
 void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
                              const LevelData<FArrayBox>& a_phi,
                              const LevelData<FArrayBox>& a_rhs,
@@ -296,6 +297,37 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
                           CHF_CONST_REAL(m_alpha),
                           CHF_CONST_REAL(m_beta));
     }
+}
+void AMRPoissonOp::residualSlowly(LevelData<FArrayBox>&       a_res,
+                                  const LevelData<FArrayBox>& a_phi,
+                                  const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("AMRPoissonOp::residualSlowly");
+
+  LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
+  phi.exchange();
+
+  const DisjointBoxLayout& dbl = a_res.disjointBoxLayout();
+  DataIterator dit = phi.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+  {
+        m_bc(phi[dit], dbl[dit], m_domain, m_dx, true);
+  }
+  LevelData<FArrayBox> lphi;
+  create(lphi, a_rhs);
+  for (dit.begin(); dit.ok(); ++dit)
+  {
+    const Box& region = dbl[dit];
+    FORT_OPERATORLAP(CHF_FRA(lphi[dit]),
+                     CHF_CONST_FRA(phi[dit]),
+                     CHF_BOX(region),
+                     CHF_CONST_REAL(m_dx),
+                     CHF_CONST_REAL(m_alpha),
+                     CHF_CONST_REAL(m_beta));
+  }
+
+  //res = rhs - lphi
+  axby(a_res, a_rhs, lphi, 1 ,-1);
 }
 
 // ---------------------------------------------------------
@@ -1318,7 +1350,7 @@ slowGSRB(  LevelData<FArrayBox>      &  a_phi,
   for (int iredblack = 0; iredblack <= 1; iredblack++)
   {
 
-    residual(resid, a_phi, a_rhs);
+    residualSlowly(resid, a_phi, a_rhs);
 
     for(int ibox = 0; ibox < nbox; ibox++)
     {

@@ -131,6 +131,11 @@ public:
                         const LevelData<FArrayBox>& a_rhs,
                         bool                        a_homogeneous = false);
 
+  ///more debugging stuff
+  virtual void residualSlowly(LevelData<FArrayBox>&       a_lhs,
+                              const LevelData<FArrayBox>& a_phi,
+                              const LevelData<FArrayBox>& a_rhs);
+  
   /// Residual which uses coarse-level boundary conditions, but ignores finer levels
   /** useful for full-multigrid types of schemes
    */
