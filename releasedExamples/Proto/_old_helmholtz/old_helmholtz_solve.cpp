@@ -181,9 +181,14 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters
-  ppSolver.query("num_pre", a_amrSolver->m_pre);
-  ppSolver.query("num_post", a_amrSolver->m_post);
-  ppSolver.query("num_bottom", a_amrSolver->m_bottom);
+  ppSolver.get("num_pre", a_amrSolver->m_pre);
+  ppSolver.get("num_post", a_amrSolver->m_post);
+  ppSolver.get("num_bottom", a_amrSolver->m_bottom);
+
+  ///sets a static variable in AMRPoissonOp
+  int relaxMode = 1;
+  ppSolver.get("relax_mode", relaxMode);
+  AMRPoissonOp::s_relaxMode =  relaxMode;
 }
 
 int runSolver()

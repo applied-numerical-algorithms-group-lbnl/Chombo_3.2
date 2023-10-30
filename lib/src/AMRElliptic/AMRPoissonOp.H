@@ -466,6 +466,11 @@ protected:
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
                          const LevelData<FArrayBox>& a_rhs);
+// ---------------------------------------------------------
+// --routine used for debugging other codes
+// ---------------------------------------------------------
+  virtual void  slowGSRB(LevelData<FArrayBox>&       a_phi,
+                         const LevelData<FArrayBox>& a_rhs);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);

@@ -6,6 +6,45 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
 
 #include "CONSTANTS.H"
 
+      subroutine gsrbslowly(
+     &     CHF_FRA1[phi],
+     &     CHF_CONST_FRA1[resid],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_INT[redBlack])
+
+      REAL_T lambda, dxinv, sum_b, phiold, resval, phinew
+      integer CHF_DDECL[i;j;k]
+      integer sumind, idir, parity
+
+      dxinv = one/(dx*dx)
+
+      sum_b = 0.0
+      do idir = 0, CH_SPACEDIM-1
+         sum_b = sum_b + two*dxinv
+      enddo
+
+      lambda = one/(alpha - beta*sum_b)
+      
+      chf_multido[region; i; j; k]
+
+      sumind = CHF_DTERM[i ; + j; + k]
+      parity = mod(sumind,2)
+      if (parity .eq. redBlack) then
+         
+         phiold             =   phi(chf_ix[i;j;k])
+         resval             = resid(chf_ix[i;j;k])
+         phinew             = phiold + lambda*resval
+         phi(chf_ix[i;j;k]) = phinew
+         
+      endif
+      
+      chf_enddo   
+
+      return
+      end
 C     --------------------------------------------------------------
       subroutine gsmcamrpop(
      &     chf_fra1[phi],
@@ -59,7 +98,7 @@ C     --------------------------------------------------------------
      &     CHF_CONST_REAL[beta],
      &     CHF_CONST_INT[redBlack])
 
-      REAL_T lambda, dxinv, sum_b, lphi, helmop
+      REAL_T lambda, dxinv, sum_b, lphi, helmop, resval
       integer CHF_DDECL[i;j;k]
       integer n,ncomp,idir,indtot,imin,imax
 
@@ -70,7 +109,7 @@ C     --------------------------------------------------------------
          sum_b = sum_b + two*dxinv
       enddo
 
-      lambda = -one/(alpha - beta*sum_b)
+      lambda = one/(alpha - beta*sum_b)
 
       ncomp = CHF_NCOMP[phi]
       if (ncomp .ne. CHF_NCOMP[rhs]) then
@@ -103,9 +142,10 @@ C     petermc, 26 april 2001
      &             -two*CH_SPACEDIM*phi(CHF_IX[i;j;k],n))*dxinv
 
               helmop = alpha*phi(CHF_IX[i;j;k],n) + beta*lphi
+              resval =       rhs(CHF_IX[i;j;k],n) - helmop
 
               phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n) +
-     &             lambda*(helmop - rhs(CHF_IX[i;j;k],n))
+     &             lambda*(resval)
 
             enddo
 #if CH_SPACEDIM > 1

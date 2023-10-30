@@ -28,7 +28,7 @@
 
 int AMRPoissonOp::s_exchangeMode = 1; // 1: no overlap (default); 0: ...
 //int AMRPoissonOp::s_relaxMode = 0;
-int AMRPoissonOp::s_relaxMode = 1; // 1: GSRB; 4: Jacobi
+int AMRPoissonOp::s_relaxMode = 4586; // 1: GSRB (the right one); 4: Jacobi; 4586 = slowGSRB
 int AMRPoissonOp::s_maxCoarse = 2;
 
 // ---------------------------------------------------------
@@ -627,6 +627,9 @@ void AMRPoissonOp::relax(LevelData<FArrayBox>&       a_e,
           break;
         case 5:
           levelMultiColor(a_e, a_residual);
+          break;
+        case 4586:
+          slowGSRB(a_e, a_residual);
           break;
         default:
           MayDay::Abort("unrecognized relaxation mode");
@@ -1231,6 +1234,7 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
+  int ibreak = 0;
   // do first red, then black passes
   for (int whichPass = 0; whichPass <= 1; whichPass++)
     {
@@ -1282,7 +1286,56 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 	      }
           } // end loop through grids
       }//end pragma
+      ibreak = 1;
     } // end loop through red-black
+  
+}
+
+
+// ---------------------------------------------------------
+// --routine used for debugging other codes
+// ---------------------------------------------------------
+void
+AMRPoissonOp::
+slowGSRB(  LevelData<FArrayBox>      &  a_phi,
+           const LevelData<FArrayBox>&  a_rhs )
+{
+  CH_TIME("AMRPoissonOp::levelGSRB");
+
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  const DisjointBoxLayout& grids = a_rhs.disjointBoxLayout();
+
+  DataIterator dit = a_phi.dataIterator();
+  int nbox=dit.size();
+  int ibreak = 0;
+  // do first red, then black passes
+  LevelData<FArrayBox> resid;
+  create(resid, a_phi);
+  for (int iredblack = 0; iredblack <= 1; iredblack++)
+  {
+
+    residual(resid, a_phi, a_rhs);
+
+    for(int ibox = 0; ibox < nbox; ibox++)
+    {
+      FArrayBox& phiFab = a_phi[dit[ibox]];
+      FArrayBox& resFab = resid[dit[ibox]];
+      Box valid         = grids[dit[ibox]];
+      FORT_GSRBSLOWLY(CHF_FRA1(phiFab, 0),
+                      CHF_FRA1(resFab, 0),
+                      CHF_BOX(valid),
+                      CHF_CONST_REAL(m_dx),
+                      CHF_CONST_REAL(m_alpha),
+                      CHF_CONST_REAL(m_beta),
+                      CHF_CONST_INT(iredblack));
+    } // end loop through ibox
+    ibreak = 1;
+  } // end loop through red-black
+  
 }
 
 // ---------------------------------------------------------
