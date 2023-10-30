@@ -107,7 +107,7 @@ namespace PrCh_AMR_Elliptic
       sten_lapl *= hsqinv;
       
       pr_sten  sten_iden = (1.0)*Proto::Shift(pr_pt::Zeros());
-      m_sten *= m_alpha*sten_iden + m_beta*sten_lapl;
+      m_sten = m_alpha*sten_iden + m_beta*sten_lapl;
     }
     
     ///For this one, the derived class may assume all ghost cells have been set correctly
@@ -116,6 +116,7 @@ namespace PrCh_AMR_Elliptic
                   const pr_lbd   & a_phi)
     {
       CH_TIME("Proto_Helmholtz_Op::applyOperator");
+      m_sten.print();
       auto grids = a_lph.layout();
       auto dit   = a_lph.begin();
       for(int ibox = 0; ibox <  dit.size(); ibox++)
