@@ -36,18 +36,28 @@ const size_t  IntVect::IntVectSize = SpaceDim*sizeof(int);
 //
 
 ostream&
-operator<< (ostream&       os,
-            const IntVect& p)
+operator<< (ostream&       a_os,
+            const IntVect& a_pt)
 {
-  os << D_TERM6( '(' << p[0] , <<
-                 ',' << p[1] , <<
-                 ',' << p[2] , <<
-                 ',' << p[3] , <<
-                 ',' << p[4] , <<
-                 ',' << p[5])  << ')';
-    if (os.fail())
-        MayDay::Error("operator<<(ostream&,IntVect&) failed");
-    return os;
+  
+  a_os <<  "(";
+  
+  for(int idir = 0; idir < SpaceDim; idir++)
+  {
+    int ptval = a_pt[idir];
+    //keeps positive and negative stuff lined up --dtg
+    if(ptval >= 0)
+    {
+      a_os << " ";
+    }
+    a_os << ptval;
+    if(idir < SpaceDim-1)
+    {
+      a_os << ",";
+    }
+  }
+  a_os <<  ")";
+  return a_os;
 }
 
 //

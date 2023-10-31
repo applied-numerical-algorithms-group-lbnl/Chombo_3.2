@@ -315,6 +315,7 @@ void AMRPoissonOp::residualSlowly(LevelData<FArrayBox>&       a_res,
   }
   LevelData<FArrayBox> lphi;
   create(lphi, a_rhs);
+  setToZero(lphi);
   for (dit.begin(); dit.ok(); ++dit)
   {
     const Box& region = dbl[dit];
@@ -1346,7 +1347,7 @@ slowGSRB(  LevelData<FArrayBox>      &  a_phi,
   int ibreak = 0;
   // do first red, then black passes
   LevelData<FArrayBox> resid;
-  create(resid, a_phi);
+  create(resid, a_rhs);
   for (int iredblack = 0; iredblack <= 1; iredblack++)
   {
 

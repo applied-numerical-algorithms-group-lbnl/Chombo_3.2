@@ -189,22 +189,19 @@ namespace Chombo
     static shared_ptr<ch_factory>
     getProtoHelmholtzOpFactory(const ch_dom         &        a_coarsest_dom,
                                const Vector<int>    &        a_ref_ratios,
+                               const Vector<ch_dbl> &        a_grids,
                                const double         &        a_coarsest_dx,
                                const string         &        a_domBC,
                                const double         &        a_alpha,
                                const double         &        a_beta)               
     {
-      vector<int> std_vec_rat(a_ref_ratios.size(), 4586);
-      for(int ivec  = 0; ivec < a_ref_ratios.size(); ivec++)
-      {
-        std_vec_rat[ivec] = a_ref_ratios[ivec];
-      }
 
       typedef PrCh_AMR_Elliptic::Proto_Helmholtz_Op_Factory prch_helm_fact;
       
       prch_helm_fact* derived_ptr =
-        new prch_helm_fact(a_coarsest_dom,       
-                           std_vec_rat,
+        new prch_helm_fact(a_coarsest_dom,
+                           a_grids,
+                           a_ref_ratios,
                            a_coarsest_dx,        
                            a_domBC,              
                            a_alpha,              

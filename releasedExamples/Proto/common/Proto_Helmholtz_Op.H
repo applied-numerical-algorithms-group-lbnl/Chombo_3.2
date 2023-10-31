@@ -2,6 +2,7 @@
 #include "AMRMultiGrid_Proto_Interface.H"
 #include "PrChUtilities.H"
 #include "ProtoInterface.H"
+#include "Vector.H"
 
 #ifndef __Proto_Helmholtz_Op_H
 #define __Proto_Helmholtz_Op_H
@@ -48,6 +49,7 @@ namespace PrCh_AMR_Elliptic
   typedef Chombo::Box                       ch_box;
   typedef  Proto::Box                       pr_box;
   typedef Chombo::ProblemDomain             ch_dom;
+  typedef Chombo::DisjointBoxLayout         ch_dbl;
   typedef Chombo::MayDay                    ch_mayday;
   typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
   typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
@@ -108,6 +110,13 @@ namespace PrCh_AMR_Elliptic
       
       pr_sten  sten_iden = (1.0)*Proto::Shift(pr_pt::Zeros());
       m_sten = m_alpha*sten_iden + m_beta*sten_lapl;
+      static bool printedOnce = false;
+      if(!printedOnce)
+      {
+        Chombo::pout() << "operator stencil:" << std::endl;
+        m_sten.print();
+        printedOnce = true;
+      }
     }
     
     ///For this one, the derived class may assume all ghost cells have been set correctly
@@ -116,7 +125,6 @@ namespace PrCh_AMR_Elliptic
                   const pr_lbd   & a_phi)
     {
       CH_TIME("Proto_Helmholtz_Op::applyOperator");
-      m_sten.print();
       auto grids = a_lph.layout();
       auto dit   = a_lph.begin();
       for(int ibox = 0; ibox <  dit.size(); ibox++)
@@ -216,41 +224,36 @@ namespace PrCh_AMR_Elliptic
     /// no dynamic memory used here.   
     virtual ~Proto_Helmholtz_Op_Factory() { }
 
-    ch_dom          m_coarsest_dom;
-    vector<int>     m_ref_ratios;
-    double          m_coarsest_dx;
-    string          m_domBC;
-    double          m_alpha;
-    double          m_beta;
-    int             m_max_coarse;
+    Chombo::Vector<int>                    m_ref_ratios;
+    Chombo::Vector<ch_dbl>                 m_grids;
+    Chombo::Vector<pair<ch_dom, double> >  m_domain_dx;
+    double                                 m_coarsest_dx;
+    string                                 m_domBC;
+    double                                 m_alpha;
+    double                                 m_beta;
+    int                                    m_max_coarse;
 
-    ///
-    /**
-       I have found no good way to do this stuff.  
-       This is the way amrpoissonopfactory does it.  
-    **/
-    vector< pair<ch_dom, double> >  m_domain_dx;
     
     ///the only constructor
     Proto_Helmholtz_Op_Factory(
-      const ch_dom         &        a_coarsest_dom,
-      const vector<int>    &        a_ref_ratios,
-      const double         &        a_coarsest_dx,
-      const string         &        a_domBC,
-      const double         &        a_alpha,
-      const double         &        a_beta)           
+      const ch_dom                 &        a_coarsest_dom,
+      const Chombo::Vector<ch_dbl> &        a_grids,
+      const Chombo::Vector<int>    &        a_ref_ratios,
+      const double                 &        a_coarsest_dx,
+      const string                 &        a_domBC,
+      const double                 &        a_alpha,
+      const double                 &        a_beta)           
       : ch_amrlevelop_factory()
     {
       m_max_coarse = 2;
-      m_coarsest_dom  =  a_coarsest_dom;
-      m_ref_ratios    =  a_ref_ratios  ;   
+      m_ref_ratios    =  a_ref_ratios  ;
+      m_grids         =  a_grids;
       m_coarsest_dx   =  a_coarsest_dx ;   
       m_domBC         =  a_domBC       ;         
       m_alpha         =  a_alpha       ;   
       m_beta          =  a_beta        ;
-      
-      //m_domains controls when mg v cycle ends 
-      m_domain_dx.resize(a_ref_ratios.size());
+
+      m_domain_dx.resize(a_grids.size());
       m_domain_dx[0].first  = a_coarsest_dom;
       m_domain_dx[0].second = a_coarsest_dx;
       double fine_dx = a_coarsest_dx;
@@ -319,7 +322,8 @@ namespace PrCh_AMR_Elliptic
         factor*= 2;
       }
       ch_mglevelop* retval  = NULL;
-      if((a_depth > 0) && (!a_dom_fine.domainBox().coarsenable(2*factor)))
+      bool grids_coarsenable = m_grids[iref].coarsenable(2*factor);
+      if((a_depth > 0) && (!grids_coarsenable))
       {
         retval = NULL;
       }
