@@ -6,6 +6,40 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
 
 #include "CONSTANTS.H"
 
+      subroutine restrictonly(
+     &     chf_fra1[resCoar],
+     &     chf_const_fra1[resMedi],
+     &     chf_box[regionCoar])
+
+
+      integer chf_ddecl[icoar;jcoar;kcoar], numMediPerCoar, idir
+      real_t denom, sum_medi
+      
+      denom = 1
+      do idir = 0, CH_SPACEDIM-1
+         denom = denom/two
+      enddo
+      chf_multido[regionCoar; icoar; jcoar; kcoar]
+
+      sum_medi =  resMedi(chf_ix[2*icoar  ;2*jcoar  ;2*kcoar  ])
+     &     +      resMedi(chf_ix[2*icoar+1;2*jcoar  ;2*kcoar  ])
+     &     +      resMedi(chf_ix[2*icoar  ;2*jcoar+1;2*kcoar  ])
+     &     +      resMedi(chf_ix[2*icoar+1;2*jcoar+1;2*kcoar  ])
+#if CH_SPACEDIM==3       
+     &     +      resMedi(chf_ix[2*icoar  ;2*jcoar  ;2*kcoar+1])
+     &     +      resMedi(chf_ix[2*icoar+1;2*jcoar  ;2*kcoar+1])
+     &     +      resMedi(chf_ix[2*icoar  ;2*jcoar+1;2*kcoar+1])
+     &     +      resMedi(chf_ix[2*icoar+1;2*jcoar+1;2*kcoar+1])
+#endif
+
+      resCoar(chf_ix[icoar;jcoar;kcoar]) = sum_medi/denom
+      
+      chf_enddo
+
+      return
+      end
+
+      
       subroutine gsrbslowly(
      &     CHF_FRA1[phi],
      &     CHF_CONST_FRA1[resid],

@@ -23,6 +23,7 @@
 #include "AMRPoissonOpF_F.H"
 #include "CCProjectorF_F.H"
 #include "MACProjectorF_F.H"
+#include "ParmParse.H"
 
 #include "NamespaceHeader.H"
 
@@ -686,6 +687,35 @@ void AMRPoissonOp::createCoarser(LevelData<FArrayBox>&       a_coarse,
   a_coarse.define(m_coarsenedMGrids, a_fine.nComp(), ghost);
 }
 
+/**
+   For debugging other stuff.
+ **/
+void AMRPoissonOp::restrictSlowly(LevelData<FArrayBox>&       a_resCoar,
+                                  LevelData<FArrayBox>&       a_phiMedi,
+                                  const LevelData<FArrayBox>& a_rhsMedi)
+{
+  //const DisjointBoxLayout& dblMedi = a_phiMedi.disjointBoxLayout();
+  const DisjointBoxLayout& dblCoar = a_resCoar.disjointBoxLayout();
+  DataIterator dit = dblCoar.dataIterator();
+  int nbox=dit.size();
+  
+  LevelData<FArrayBox> resMedi;
+  this->create(resMedi, a_rhsMedi);
+  residual(    resMedi, a_phiMedi, a_rhsMedi);
+  //the residual function and restrictres disagree about the sign.  
+  this->scale(resMedi, -1.0); 
+
+  for(int ibox = 0; ibox < nbox; ibox++)
+  {
+    const FArrayBox& medi =   resMedi[dit[ibox]];
+    FArrayBox&       coar = a_resCoar[dit[ibox]];
+        
+    Box coarRegion = dblCoar[dit[ibox]];
+    FORT_RESTRICTONLY(CHF_FRA1(      coar, 0),
+                      CHF_CONST_FRA1(medi, 0),
+                      CHF_BOX(coarRegion));
+  }
+}
 // ---------------------------------------------------------
 void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                                     LevelData<FArrayBox>&       a_phiFine,
@@ -693,33 +723,37 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
 {
   CH_TIME("AMRPoissonOp::restrictResidual");
 
-  homogeneousCFInterp(a_phiFine);
-
-//  if (s_exchangeMode == 0)
-//    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
-//  else if (s_exchangeMode == 1)
-//    a_phiFine.exchangeNoOverlap(m_exchangeCopier);
-//  else
-//    MayDay::Abort("exchangeMode");
-
-  a_phiFine.exchange();
-  const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
-  DataIterator dit = a_phiFine.dataIterator();
-  int nbox=dit.size();
-#pragma omp parallel 
+  ParmParse pp("AMRPoissonOp");
+  bool      use_slow_restriction = false;
+  pp.query("use_slow_restriction", use_slow_restriction);
+  if(       use_slow_restriction   )
   {
+    restrictSlowly(a_resCoarse, a_phiFine, a_rhsFine);
+  }
+  else
+  {
+//  here is where the standard restrict function starts  
+    homogeneousCFInterp(a_phiFine);
+
+
+    a_phiFine.exchange();
+    const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
+    DataIterator dit = a_phiFine.dataIterator();
+    int nbox=dit.size();
+#pragma omp parallel 
+    {
 #pragma omp for 
-    for(int ibox = 0; ibox < nbox; ibox++)
+      for(int ibox = 0; ibox < nbox; ibox++)
       {
         FArrayBox& phi = a_phiFine[dit[ibox]];
         m_bc(phi, dblFine[dit[ibox]], m_domain, m_dx, true);
       }
-  }//end pragma
+    }//end pragma
 
 #pragma omp parallel 
-  {
+    {
 #pragma omp for 
-    for(int ibox = 0; ibox < nbox; ibox++)
+      for(int ibox = 0; ibox < nbox; ibox++)
       {
         FArrayBox&       phi = a_phiFine[dit[ibox]];
         const FArrayBox& rhs = a_rhsFine[dit[ibox]];
@@ -739,8 +773,10 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                          CHF_BOX_SHIFT(region, iv),
                          CHF_CONST_REAL(m_dx));
       }
-  }//end pragma
-}
+    }//end pragma
+
+  } //end not using slow restriction
+} //end ebamrpoissonop::restrict
 
 // ---------------------------------------------------------
 void AMRPoissonOp::prolongIncrement(LevelData<FArrayBox>&       a_phiThisLevel,

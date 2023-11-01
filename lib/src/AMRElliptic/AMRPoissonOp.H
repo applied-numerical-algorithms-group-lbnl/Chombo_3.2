@@ -247,6 +247,11 @@ public:
                                 LevelData<FArrayBox>&       a_phiFine,
                                 const LevelData<FArrayBox>& a_rhsFine);
 
+  ///for debugging other stuff
+  virtual void  restrictSlowly(LevelData<FArrayBox>&       a_resCoarse,
+                               LevelData<FArrayBox>&       a_phiFine,
+                               const LevelData<FArrayBox>& a_rhsFine);
+  
   /**
      correct the fine solution based on coarse correction
      a_phiThisLevel += I[2h->h](a_correctCoarse)

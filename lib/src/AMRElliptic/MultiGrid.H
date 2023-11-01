@@ -631,7 +631,7 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
 {
   CH_TIME("Multigrid::cycle");
 
-  // currently I can't drop a timer in this function because it is recursive.  doh
+  // 
   if (depth == m_depth-1)
     {
       CH_TIME("Multigrid::cycle:bottom-solve");
