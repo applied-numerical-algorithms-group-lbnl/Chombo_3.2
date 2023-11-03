@@ -13,11 +13,11 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
 
 
       integer chf_ddecl[icoar;jcoar;kcoar], numMediPerCoar, idir
-      real_t denom, sum_medi
+      real_t factor, sum_medi
       
-      denom = 1
+      factor = 1
       do idir = 0, CH_SPACEDIM-1
-         denom = denom/two
+         factor = factor/two
       enddo
       chf_multido[regionCoar; icoar; jcoar; kcoar]
 
@@ -32,7 +32,7 @@ C    Please refer to Copyright.txt, in Chombo's root directory.
      &     +      resMedi(chf_ix[2*icoar+1;2*jcoar+1;2*kcoar+1])
 #endif
 
-      resCoar(chf_ix[icoar;jcoar;kcoar]) = sum_medi/denom
+      resCoar(chf_ix[icoar;jcoar;kcoar]) = sum_medi*factor
       
       chf_enddo
 

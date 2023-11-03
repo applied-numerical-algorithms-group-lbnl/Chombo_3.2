@@ -110,8 +110,6 @@ namespace PrCh_AMR_Elliptic
       level_data_type resMedi;
       this->create(resMedi, a_rhsMedi);
       residual(resMedi, a_phiMedi, a_rhsMedi);
-      // we need to restrict to the opposite sign to match AMRPoissonOp.
-      this->scale(resMedi, -1.0);
       restriction(a_resCoar, resMedi);
     }
 

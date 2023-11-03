@@ -150,7 +150,7 @@ namespace PrCh_AMR_Elliptic
       auto grids =  a_rhs.layout();
       auto dit   =  a_rhs.begin();
       
-      int idebug = 0; //debugging hook
+      int idebug = 0; // gdb debugging hook
       for(int iiter = 0; iiter < a_iterations;  iiter++)
       {
         for(int iredblack = 0; iredblack < 2; iredblack++)
@@ -161,7 +161,7 @@ namespace PrCh_AMR_Elliptic
             const auto & resfab =  resid[dit[ibox]];
             const auto & phifab =  a_phi[dit[ibox]];
             auto valid          =  grids[dit[ibox]];
-            int iprint = 0; //for special cases to get printed out
+            int iprint = 0; // I left in a debugging hook.
             Proto::forallInPlace_i(gsrbResid, valid, phifab, resfab,
                                    m_alpha, m_beta, m_dx, iredblack, iprint);
           }

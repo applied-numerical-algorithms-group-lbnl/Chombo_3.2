@@ -5,8 +5,8 @@
 #define DBG_LOX -1
 #define DBG_LOY -1
 #define DBG_LOZ -1
-#define DBG_HIX 4
-#define DBG_HIY 7
+#define DBG_HIX 2
+#define DBG_HIY 32
 #define DBG_HIZ 0
 
 #include "FArrayBox.H"
@@ -60,7 +60,8 @@ namespace PrChDebug
       
       for(int ivar = 0; ivar < data.nComp(); ivar++)
       {
-        cout << "data region contains, for variable "<< ivar << endl;
+        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
+        cout << "data for variable "<< ivar << ":" << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
         {
@@ -116,7 +117,8 @@ namespace PrChDebug
       
       int ivar = 0;
       {
-        cout << "data region contains, for variable "<< ivar << endl;
+        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
+        cout << "data for variable "<< ivar << ":" << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
         {
@@ -143,7 +145,7 @@ namespace PrChDebug
 #endif
       }// end loop over components
     } //end if not null
-  } //end function dumpAreaCh
+  } //end function dumpAreaPr
   
   /// print to screen (very neatly) data from the area whereever it is found in chombo data
   void 

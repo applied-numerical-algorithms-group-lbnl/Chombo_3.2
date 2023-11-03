@@ -702,8 +702,6 @@ void AMRPoissonOp::restrictSlowly(LevelData<FArrayBox>&       a_resCoar,
   LevelData<FArrayBox> resMedi;
   this->create(resMedi, a_rhsMedi);
   residual(    resMedi, a_phiMedi, a_rhsMedi);
-  //the residual function and restrictres disagree about the sign.  
-  this->scale(resMedi, -1.0); 
 
   for(int ibox = 0; ibox < nbox; ibox++)
   {
