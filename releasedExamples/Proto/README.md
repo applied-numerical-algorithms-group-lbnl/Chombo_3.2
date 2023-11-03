@@ -23,14 +23,15 @@
 * Use the tools provided to switch to the new solver for your own code.
 
 # Directories
-* Poisson is a Chombo port of a proto example (single grid Poisson solver using multigrid).
 * common holds code used by several examples
 * data_transfer tests moving data between proto and Chombo data types.
 * amr_helmoltz uses AMRMultiGrid and proto to solve the constant-coefficient Helmholtz equation.
 * _old_helmoltz does the same thing with AMRPoissonOp so the two can be easily compared.
+* amr_conductivity uses AMRMultiGrid and proto to solve the variable-coefficient Helmholtz equation.
+* _old_conductivity  does the same thing with VCAMRPoissonOp so the two can be easily compared.
+* _proto_sg_poisson is a Chombo port of a proto example to demonstrate Proto syntax.
 
 # We plan on also porting in 2023:
-* Variable coefficient Helmholtz (VCAMRPoissonOp). 
 * The viscous tensor equation (ViscousTensorOp). 
-* The magnetic resistivity  equation (ResitivityOp). 
+* The magnetic resistivity equation (ResitivityOp). 
 
