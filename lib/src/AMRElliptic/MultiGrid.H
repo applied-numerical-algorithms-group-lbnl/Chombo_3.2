@@ -35,7 +35,7 @@ class MGLevelOp;
 template <typename T>
 class MGLevelOpObserver
 {
-  public:
+public:
 
   //! Base level Constructor. Called by all subclasses.
   MGLevelOpObserver()
@@ -70,7 +70,7 @@ class MGLevelOpObserver
     m_op = NULL;
   }
 
-  private:
+private:
 
   // A pointer to the observed operator.
   MGLevelOp<T>* m_op;
@@ -88,14 +88,14 @@ class MGLevelOpObserver
 template <typename T>
 class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
 {
-  public:
+public:
 
   //! Constructor.
   MGLevelOp()
     :LinearOp<T>(),
-     MGLevelOpObserver<T>(),
-     m_observers(),
-     m_coarseningFactors()
+    MGLevelOpObserver<T>(),
+    m_observers(),
+    m_coarseningFactors()
   {
   }
 
@@ -112,7 +112,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
      Create a coarsened  (by two) version of the input data.  This does not include averaging
      the data.   So if a_fine is over a Box of (0, 0, 0) (63, 63, 63), a_fine should
      be over a Box (0, 0, 0) (31, 31, 31).
-   */
+  */
   virtual void createCoarser(T& a_coarse, const T& a_fine, bool ghosted) = 0;
 
   ///
@@ -121,7 +121,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
      the correction so that it may be averaged to a coarser refinement.
      A point relaxtion scheme, for example takes the form
      a_correction -= lambda*(L(a_correction) - a_residual).
-   */
+  */
   virtual void relax(T& a_correction, const T& a_residual, int a_iterations) = 0 ;
 
   /// specialized no-fine relax function, useful for full-multigrid schemes, defaults to regular relax
@@ -130,7 +130,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   */
   virtual void relaxNF(T& a_phi, const T* a_phiCoarse, const T& a_rhs, int a_iterations)
   {
-          this->relax(a_phi, a_rhs, a_iterations);
+    this->relax(a_phi, a_rhs, a_iterations);
   }
 
   ///
@@ -143,7 +143,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   /// full-multigrid version of restrictResidual, useful for FAS-type schemes. Defaults to standard restriction 
   virtual void restrictResidual(T& a_resCoarse, T& a_phiFine, const T* a_phiCoarse, const T& a_rhsFine, bool homogeneous)
   {
-          restrictResidual(a_resCoarse, a_phiFine, a_rhsFine);
+    restrictResidual(a_resCoarse, a_phiFine, a_rhsFine);
   }
 
   /// simple restriction function
@@ -186,7 +186,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   // For use by full-multigrid schemes if we have a coarser level. Just do standard residual by default.
   virtual void residualNF(T& a_lhs, T& a_phi, const T* a_phiCoarse, const T& a_rhs, bool a_homogeneous = false)
   {
-          this->residual(a_lhs, a_phi, a_rhs, a_homogeneous);
+    this->residual(a_lhs, a_phi, a_rhs, a_homogeneous);
   }
 
   //! Removes the given observer from the operator's list of observers. This
@@ -273,7 +273,7 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
     return m_observers.size();
   }
 
-  private:
+private:
 
   //! List of observers for the operator.
   std::vector<MGLevelOpObserver<T>*> m_observers;
@@ -289,11 +289,11 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
 ///
 /**
    Factory class for generating MGLevelOps
- */
+*/
 template <class T>
 class MGLevelOpFactory
 {
-  public:
+public:
 
   //! Base class constructor.
   MGLevelOpFactory()
@@ -314,7 +314,7 @@ class MGLevelOpFactory
                                 int                  a_depth,
                                 bool                 a_homoOnly = true) = 0;
 
-  private:
+private:
 
   // Forbidden operations.
   MGLevelOpFactory(const MGLevelOpFactory&);
@@ -326,7 +326,7 @@ class MGLevelOpFactory
    Class to execute geometric multigrid.   This class is not meant to be particularly
    user-friendly and a good option for people who want something a tad less raw is to
    use AMRMultiGrid instead.
- */
+*/
 template <class T>
 class MultiGrid
 {
@@ -342,7 +342,7 @@ public:
      maxDepth defines the location of the bottom of the v-cycle.
      The vycle will terminate (hit bottom) when the factory returns NULL for a paticular
      depth if maxdepth = -1.  Otherwise the vycle terminates at maxdepth.
-   */
+  */
   virtual void define(MGLevelOpFactory<T>& a_factory,
                       LinearSolver<T>* a_bottomSolver,
                       const ProblemDomain& a_domain,
@@ -355,16 +355,16 @@ public:
      verbosity is how chatty you want the function to be.   maxIterations is the maximum number
      of v-cycles.   This does the whole residual correction switcharoo and calls oneCycle up to
      maxIterations times, evaluating the residual as it goes.
-   */
+  */
   virtual void solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_maxIterations, int verbosity= 0);
 
   /// Execute ONE v-cycle of multigrid.
   /**
-      If you want the solution to converge, you need to iterate this.
-      See solve() or AMRMultiGrid::solve for a more automatic solve() function.
-      This operates residual-correction form of solution
-      so all boundary conditions are assumed to be homogeneous.
-      L(a_e) = a_res
+     If you want the solution to converge, you need to iterate this.
+     See solve() or AMRMultiGrid::solve for a more automatic solve() function.
+     This operates residual-correction form of solution
+     so all boundary conditions are assumed to be homogeneous.
+     L(a_e) = a_res
   */
   virtual void oneCycle(T& a_e, const T& a_res);
 
@@ -535,16 +535,16 @@ void MultiGrid<T>::init(const T& a_e, const T& a_residual)
 {
   CH_TIME("MutliGrid::init");
   if (m_depth > 1)
-    {
-      m_op[0]->createCoarser(*(m_residual[1]), a_residual, false);
-      m_op[0]->createCoarser(*(m_correction[1]), a_e, true);
-    }
+  {
+    m_op[0]->createCoarser(*(m_residual[1]), a_residual, false);
+    m_op[0]->createCoarser(*(m_correction[1]), a_e, true);
+  }
 
   for (int i = 2; i < m_depth; i++)
-    {
-      m_op[i-1]->createCoarser(*(m_residual[i]), *(m_residual[i-1]), false);
-      m_op[i-1]->createCoarser(*(m_correction[i]), *(m_correction[i-1]), true);
-    }
+  {
+    m_op[i-1]->createCoarser(*(m_residual[i]), *(m_residual[i-1]), false);
+    m_op[i-1]->createCoarser(*(m_correction[i]), *(m_correction[i-1]), true);
+  }
 }
 //-----------------------------------------------------------------------
 
@@ -563,33 +563,33 @@ void MultiGrid<T>::solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_maxIt
 
   Real errorno = m_op[0]->norm(residual, 0);
   if (verbosity > 2)
-    {
-      pout() << "multigrid::solve initial residual = " << errorno << std::endl;
-    }
+  {
+    pout() << "multigrid::solve initial residual = " << errorno << std::endl;
+  }
   Real compval = a_tolerance*errorno;
   Real epsilon = 1.0e-16;
   compval = Max(compval, epsilon);
   Real error = errorno;
   int iter = 0;
   while ((error > compval) && (error > a_tolerance*errorno) && (iter < a_maxIterations))
+  {
+    m_op[0]->setToZero(correction);
+    m_op[0]->residual(residual, a_phi, a_rhs, false);
+    error = m_op[0]->norm(residual, 0);
+    if (verbosity > 3)
     {
-      m_op[0]->setToZero(correction);
-      m_op[0]->residual(residual, a_phi, a_rhs, false);
-      error = m_op[0]->norm(residual, 0);
-      if (verbosity > 3)
-        {
-          pout() << "multigrid::solve iter = " << iter <<  ",  residual = " << error << std::endl;
-        }
-
-      this->cycle(0, correction, residual);
-      m_op[0]->incr(a_phi, correction, 1.0);
-
-      iter++;
+      pout() << "multigrid::solve iter = " << iter <<  ",  residual = " << error << std::endl;
     }
+
+    this->cycle(0, correction, residual);
+    m_op[0]->incr(a_phi, correction, 1.0);
+
+    iter++;
+  }
   if (verbosity > 2)
-    {
-      pout() << "multigrid::solve final residual = " << error << std::endl;
-    }
+  {
+    pout() << "multigrid::solve final residual = " << error << std::endl;
+  }
 
   m_op[0]->clear(correction);
   m_op[0]->clear(residual);
@@ -604,24 +604,24 @@ void MultiGrid<T>::oneCycle(T& a_e, const T& a_residual)
 
   //this->init(a_e, a_residual); oneCycle is only used by AMRMultigrid
   if (m_homogeneous)
-    {
-      cycle(0, a_e, a_residual);
-    }
+  {
+    cycle(0, a_e, a_residual);
+  }
   else
-    {
-      T correction, residual;
-      m_op[0]->create(correction, a_e);
-      m_op[0]->create(residual, a_residual);
+  {
+    T correction, residual;
+    m_op[0]->create(correction, a_e);
+    m_op[0]->create(residual, a_residual);
 
-      m_op[0]->residual(residual, a_e, a_residual);
+    m_op[0]->residual(residual, a_e, a_residual);
 
-      m_op[0]->setToZero(correction);
-      this->cycle(0, correction, residual);
+    m_op[0]->setToZero(correction);
+    this->cycle(0, correction, residual);
 
-      m_op[0]->incr(a_e, correction, 1.0);
-      m_op[0]->clear(correction);
-      m_op[0]->clear(residual);
-    }
+    m_op[0]->incr(a_e, correction, 1.0);
+    m_op[0]->clear(correction);
+    m_op[0]->clear(residual);
+  }
 }
 //-----------------------------------------------------------------------
 
@@ -633,66 +633,69 @@ void MultiGrid<T>::cycle(int depth, T& correction, const T& residual)
 
   // 
   if (depth == m_depth-1)
+  {
+    CH_TIME("Multigrid::cycle:bottom-solve");
+    if (m_bottomCells == 1)
     {
-      CH_TIME("Multigrid::cycle:bottom-solve");
-      if (m_bottomCells == 1)
-        {
-          m_op[depth  ]->relax(correction, residual, 1);
-        }
-      else
-        {
-          m_op[depth  ]->relax(correction, residual, m_bottom);
-          m_bottomSolver->solve(correction, residual);
-        }
-      //m_op[depth  ]->relax(correction, residual, 1);
+      m_op[depth  ]->relax(correction, residual, 1);
     }
+    else
+    {
+      m_op[depth  ]->relax(correction, residual, m_bottom);
+      m_bottomSolver->solve(correction, residual);
+    }
+    //m_op[depth  ]->relax(correction, residual, 1);
+  }
   else
+  {
+    int cycles = m_cycle;
+    if ( cycles < 0 )
     {
-      int cycles = m_cycle;
-      if ( cycles < 0 )
-        {
-          cycles = -cycles;
-          // F cycle multigrid
-          m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
-          m_op[depth  ]->setToZero(*(m_correction[depth+1]));
+      // F cycle multigrid 
+      cycles = -cycles;
+      m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
+      m_op[depth  ]->setToZero(*(m_correction[depth+1]));
 
-          // recursive call
-          cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
+      // recursive call
+      cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
 
-          m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
+      m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
 
-          m_op[depth  ]->relax(correction, residual, m_pre);
+      m_op[depth  ]->relax(correction, residual, m_pre);
 
-          for (int img = 0; img < cycles; img++)
-            {
-              m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
-              m_op[depth  ]->setToZero(*(m_correction[depth+1]));
+      for (int img = 0; img < cycles; img++)
+      {
+        m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
+        m_op[depth  ]->setToZero(*(m_correction[depth+1]));
 
-              m_cycle = 1;          // hack to get a V-cycle
-              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
-              m_cycle = -cycles;
-              //
-              m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
-            }
+        m_cycle = 1;          // hack to get a V-cycle
+        cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
+        m_cycle = -cycles;
+        //
+        m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
+      }
 
-          m_op[depth  ]->relax(correction, residual, m_post);
-        }
-      else
-        {
-          m_op[depth  ]->relax( correction, residual, m_pre );
-
-          m_op[depth  ]->restrictResidual(*(m_residual[depth+1]), correction, residual);
-          m_op[depth  ]->setToZero(*(m_correction[depth+1]));
-
-          for (int img = 0; img < cycles; img++)
-            {
-              cycle(depth+1, *(m_correction[depth+1]), *(m_residual[depth+1]));
-            }
-          m_op[depth  ]->prolongIncrement(correction, *(m_correction[depth+1]));
-
-          m_op[depth  ]->relax(correction, residual, m_post);
-        }
+      m_op[depth  ]->relax(correction, residual, m_post);
     }
+    else
+    {
+      //normal multigrid
+      m_op[depth  ]->relax( correction, residual, m_pre );
+
+      T& coarResidual = *(m_residual[  depth+1]);
+      T& coarCorrect  = *(m_correction[depth+1]);
+      m_op[depth  ]->restrictResidual(coarResidual, correction, residual);
+      m_op[depth  ]->setToZero(coarCorrect);
+
+      for (int img = 0; img < cycles; img++)
+      {
+        cycle(depth+1, coarCorrect, coarResidual);
+      }
+      m_op[depth  ]->prolongIncrement(correction, coarCorrect);
+
+      m_op[depth  ]->relax(correction, residual, m_post);
+    }
+  }
 }
 //-----------------------------------------------------------------------
 
