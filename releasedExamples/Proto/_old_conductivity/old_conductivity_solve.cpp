@@ -9,292 +9,177 @@
 #endif
 
 #include <iostream>
-#include <fstream>
-
+#include "ParmParse.H"
+#include "LoadBalance.H"
 #include "LevelData.H"
 #include "FArrayBox.H"
-#include "ParmParse.H"
-#include "Vector.H"
-#include "AMRIO.H"
 #include "BRMeshRefine.H"
-#include "LoadBalance.H"
-#include "ProblemDomain.H"
-#include "BCFunc.H"
-#include "AMRMultiGrid.H"
+#include "FABView.H"
+#include "DebugDump.H"
+#include "VCLocalFunctions.H"
+#include "MultilevelLinearOp.H"
 #include "BiCGStabSolver.H"
-#include "BoxIterator.H"
-#include "CONSTANTS.H"
-#include "memusage.H"
-#include "AMRPoissonOp.H"
-#include "AMRPoissonOp.H"
-#include "PrChUtilities.H"
-#include "DebuggingTools.H"
-#include "UsingNamespace.H"
+#include "AMRIO.H"
 
 
-///
 
-//everything public and static
-static int s_verbosity;
-
-
-class GlobalBCRS
-{
-public:
-  static std::vector<bool> s_printedThatLo, s_printedThatHi;
-  static std::vector<int> s_bcLo, s_bcHi;
-  static RealVect s_trigvec;
-  static bool s_areBCsParsed, s_valueParsed, s_trigParsed;
-};
-
-std::vector<bool> GlobalBCRS::s_printedThatLo = std::vector<bool>(SpaceDim, false);
-std::vector<bool> GlobalBCRS::s_printedThatHi = std::vector<bool>(SpaceDim, false);
-std::vector<int>  GlobalBCRS::s_bcLo = std::vector<int>();
-std::vector<int>  GlobalBCRS::s_bcHi = std::vector<int>();
-RealVect          GlobalBCRS::s_trigvec = RealVect::Zero;
-bool              GlobalBCRS::s_areBCsParsed= false;
-bool              GlobalBCRS::s_valueParsed= false;
-bool              GlobalBCRS::s_trigParsed= false;
-
-void ParseValue(Real* pos,
-                int* dir,
-                Side::LoHiSide* side,
-                Real* a_values)
-{
-  a_values[0]=0.;
-}
-
-void ParseBC(FArrayBox& a_state,
-             const Box& a_valid,
-             const ProblemDomain& a_domain,
-             Real a_dx,
-             bool a_homogeneous)
+namespace Chombo
 {
 
-  if (!a_domain.domainBox().contains(a_state.box()))
+/******/
+  int
+  poissonSolve(Vector<       LevelData< FArrayBox >* >& a_phi,
+               const Vector< LevelData< FArrayBox >* >& a_rhs,
+               const Vector<RefCountedPtr<LevelData<FArrayBox> > > aCoef(nlevels);
+               const Vector<RefCountedPtr<LevelData<FluxBox> > > bCoef(nlevels);
+               const Vector< DisjointBoxLayout >      & a_grids,
+               const VCPoissonParameters              & a_params)
   {
-    Box valid = a_valid;
-    for (int i=0; i<CH_SPACEDIM; ++i)
+    int nlevels = a_params.numLevels;
+
+    // set up solver
+    RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > > opFactory
+      = RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > >
+      (defineOperatorFactory(a_grids, vectDomains, aCoef, bCoef, a_params));
+
+    int lBase = 0;
+
+    BiCGStabSolver<Vector<LevelData<FArrayBox>* > > solver;
+
+    bool homogeneousBC = false;
+    solver.define(&mlOp, homogeneousBC);
+    solver.m_verbosity = a_params.verbosity;
+    solver.m_normType = 0;
+    solver.m_eps = tolerance;
+    solver.m_imax = max_iter;
+
+    solver.solve(a_phi, a_rhs);
+
+    int exitStatus = solver.m_exitStatus;
+    // note that for AMRMultiGrid, success = 1.
+    exitStatus -= 1;
+    return exitStatus;
+
+  }
+  int 
+  defineData(Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_phi,
+             Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_rhs,
+             Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_aCoef,
+             Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_bCoef;
+             const Vector< DisjointBoxLayout >                & a_grids,
+             const VCPoissonParameters                        & a_params)
+  {
+    a_phi  .resize(a_grids.size());
+    a_rhs  .resize(a_grids.size());
+    a_aCoef.resize(a_grids.size());
+    a_bCoef.resize(a_grids.size());
+    
+    for(int ilev = 0; ilev < a_grids.size(); ilev++)
     {
-      // don't do anything if periodic
-      if (!a_domain.isPeriodic(i))
-      {
-        Box ghostBoxLo = adjCellBox(valid, i, Side::Lo, 1);
-        Box ghostBoxHi = adjCellBox(valid, i, Side::Hi, 1);
-        if (!a_domain.domainBox().contains(ghostBoxLo))
-        {
-          DiriBC(a_state,
-                 valid,
-                 a_dx,
-                 true,
-                 ParseValue,
-                 i,
-                 Side::Lo,
-                 1);
-        }
+      a_phi  [ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Unit));
+      a_rhs  [ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Zero));
+      a_aCoef[ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Zero));
+      a_bCoef[ilev] = RefCountedPtr< LevelData<   FluxBox > > >( new   LevelData<   FluxBox > > (grids[ilev], 1, IntVect::Zero));
+    }  ///end loop voer levels
+  }    //end function defineData
 
-        if (!a_domain.domainBox().contains(ghostBoxHi))
-        {
-          DiriBC(a_state,
-                 valid,
-                 a_dx,
-                 true,
-                 ParseValue,
-                 i,
-                 Side::Hi,
-                 1);
-        }
-      } // end if is not periodic in ith direction
-    }
-  }
-}
-
-void setRHS(Vector<LevelData<FArrayBox>* > a_rhs,
-            Vector<ProblemDomain>& a_amrDomains,
-            Vector<int>& a_refRatios,
-            Vector<Real>& a_amrDx,
-            int a_finestLevel)
-{
-  CH_TIME("setRHS");
-
-  for (int lev=0; lev<=a_finestLevel; lev++)
+  /***************/
+  void outputData(const Vector< LevelData< FArrayBox >* >&   a_phi,
+                  const Vector< LevelData< FArrayBox >* >&   a_rhs,
+                  const Vector< DisjointBoxLayout       >&   a_grids,
+                  const VCPoissonParameters              &   a_params)
   {
-    LevelData<FArrayBox>& levelRhs = *(a_rhs[lev]);
-    const DisjointBoxLayout& levelGrids = levelRhs.getBoxes();
-
-    // rhs is cell-centered...
-    RealVect ccOffset = 0.5*a_amrDx[lev]*RealVect::Unit;
-
-    DataIterator levelDit = levelGrids.dataIterator();
-    for (levelDit.begin(); levelDit.ok(); ++levelDit)
-    {
-      FArrayBox& thisRhs = levelRhs[levelDit];
-      thisRhs.setVal(1.);
-    }
-  }
-}
-  
-void
-setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
-            LinearSolver<LevelData<FArrayBox> >& a_bottomSolver,
-            const Vector<DisjointBoxLayout>& a_amrGrids,
-            const Vector<ProblemDomain>& a_amrDomains,
-            const Vector<int>& a_refRatios,
-            const Vector<Real>& a_amrDx,
-            int a_finestLevel)
-{
-  CH_TIME("setupSolver");
-
-  ParmParse ppSolver("solver");
-
-  int numLevels = a_finestLevel+1;
-
-  AMRPoissonOpFactory opFactory;
-
-  Real alpha =4586.;
-  Real beta = 4586.;
-  ppSolver.get("alpha", alpha);
-  ppSolver.get("beta" , beta) ;
-  opFactory.define(a_amrDomains[0],
-                   a_amrGrids,
-                   a_refRatios,
-                   a_amrDx[0],
-                   &ParseBC, alpha, beta);
-
-  AMRLevelOpFactory<LevelData<FArrayBox> >& castFact = (AMRLevelOpFactory<LevelData<FArrayBox> >& ) opFactory;
-
-  a_amrSolver->define(a_amrDomains[0], castFact,
-                      &a_bottomSolver, numLevels);
-
-  // multigrid solver parameters
-  int numSmooth, numMG, maxIter;
-  Real eps, hang;
-  ppSolver.get("num_smooth", numSmooth);
-  ppSolver.get("num_mg",     numMG);
-  ppSolver.get("max_iterations", maxIter);
-  ppSolver.get("tolerance", eps);
-  ppSolver.get("hang",      hang);
-
-  Real normThresh = 1.0e-30;
-  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                                   numMG, maxIter, eps, hang, normThresh);
-  a_amrSolver->m_verbosity = s_verbosity-1;
-
-  // optional parameters
-  ppSolver.get("num_pre", a_amrSolver->m_pre);
-  ppSolver.get("num_post", a_amrSolver->m_post);
-  ppSolver.get("num_bottom", a_amrSolver->m_bottom);
-
-  ///sets a static variable in AMRPoissonOp
-  int relaxMode = 1;
-  ppSolver.get("relax_mode", relaxMode);
-  AMRPoissonOp::s_relaxMode =  relaxMode;
-}
-
-int runSolver()
-{
-  CH_TIME("runSolver");
-
-  int status = 0;
-  ParmParse ppMain("main");
-
-  ppMain.query("verbosity", s_verbosity);
-
-  // set up grids&
-  Vector<DisjointBoxLayout> amrGrids;
-  Vector<ProblemDomain> amrDomains;
-  Vector<int> refRatios;
-  Vector<Real> amrDx;
-  int finestLevel;
-
-  PrChUtilities<1>::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
-  for(int ilev = 0; ilev < amrGrids.size(); ilev++)
-  {
-    pout() << "ilev = " << ilev << ", grids = " << endl;
-    amrGrids[ilev].print();
-  }
-
-  AMRMultiGrid<LevelData<FArrayBox> > *amrSolver;
-  amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
-  BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-  bottomSolver.m_verbosity = s_verbosity-2;
-  setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
-              refRatios, amrDx, finestLevel);
-
-  int numLevels = amrGrids.size();
-  Vector<LevelData<FArrayBox>* > phi(numLevels, NULL);
-  Vector<LevelData<FArrayBox>* > rhs(numLevels, NULL);
-
-  for (int lev=0; lev<=finestLevel; lev++)
-  {
-    const DisjointBoxLayout& levelGrids = amrGrids[lev];
-    phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
-    rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
-  }
-
-  setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
-  amrSolver->solve(phi, rhs, finestLevel, 0, true); //bool zeroInitialGuess = true;
-
 #ifdef CH_USE_HDF5
-  string fname("phi.hdf5");
-  Vector<string> varNames(1, string("phi"));
 
-  Real bogusVal = 4586.0;
+    string         phiFileName(          "phi.hdf5");
+    Vector<string> phiVarNames(1, string("phi"));
+    string         rhsFileName(          "rhs.hdf5");
+    Vector<string> rhsVarNames(1, string("rhs"));
 
-  WriteAMRHierarchyHDF5(fname,
-                        amrGrids,
-                        phi,
-                        varNames,
-                        amrDomains[0].domainBox(),
-                        amrDx[0],
-                        bogusVal,
-                        bogusVal,
-                        refRatios,
-                        numLevels);
+    Real fakeTime = 1.0;
+    Real fakeDt = 1.0;
+    WriteAMRHierarchyHDF5(phiFileName,  a_grids,
+                          a_phi, phiVarNames,
+                          a_params.coarsestDomain.domainBox(),
+                          a_params.coarsestDx,
+                          fakeDt, fakeTime,
+                          a_params.refRatio,
+                          a_params.numLevels);
+    WriteAMRHierarchyHDF5(rhsFileName,  a_grids,
+                          a_phi, rhsVarNames,
+                          a_params.coarsestDomain.domainBox(),
+                          a_params.coarsestDx,
+                          fakeDt, fakeTime,
+                          a_params.refRatio,
+                          a_params.numLevels);
 
+#endif
 
-#endif // end if HDF5
-
-  // clean up
-  for (int lev=0; lev<phi.size(); lev++)
-  {
-    delete phi[lev];
-    delete rhs[lev];
   }
 
-  delete amrSolver;
 
-  return status;
-}
+  int local_test_harness()
+  {
+    VCPoissonParameters param;
+    Vector<DisjointBoxLayout> grids;
 
-/*****/
+    //read params from file
+    getPoissonParameters(param);
+    int nlevels = param.numLevels;
+    Vector<RefCountedPtr<LevelData< FArrayBox > > > phi;
+    Vector<RefCountedPtr<LevelData< FArrayBox > > > rhs;
+    Vector<RefCountedPtr<LevelData< FArrayBox > > > aCoef;
+    Vector<RefCountedPtr<LevelData<   FluxBox > > > bCoef;
+
+    setGrids(grids,  param);
+
+    defineData(phi, rhs, aCoef, bCoef,  nlevels, grids, param);
+    poissonSolve(phi, rhs, grids,  param);
+    outputData(  phi, rhs, grids, param);
+
+    // clear memory
+    for (int level = 0; level<phi.size(); level++)
+    {
+      if (phi[level] != NULL)
+      {
+        delete phi[level];
+        phi[level] = NULL;
+      }
+      if (rhs[level] != NULL)
+      {
+        delete rhs[level];
+        rhs[level] = NULL;
+      }
+    }
+
+    return 0;
+  }
+} //end namespace Chombo
+
+
+
 int main(int argc, char* argv[])
 {
+  int status = 0;
 #ifdef CH_MPI
   MPI_Init(&argc, &argv);
 #endif
-  int status = 0;
-
-  // scoping...
+  // Scoping trick
   {
     if (argc < 2)
-    {
-      cerr<< " usage " << argv[0] << " <input_file_name> " << endl;
-      exit(0);
-    }
-    char* in_file = argv[1];
-    ParmParse  pp(argc-2,argv+2,NULL,in_file);
+      {
+        cerr << " usage " << argv[0] << " <input_file_name> " << endl;
+        exit(0);
+      }
 
-    int solverStatus = runSolver();
-    status += solverStatus;
-  }
-  //end scoping trick
-  
+    char* inFile = argv[1];
+    ParmParse pp(argc-2,argv+2,NULL,inFile);
+
+    status = Chombo::local_test_harness();
+  }// End scoping trick
+
 #ifdef CH_MPI
-  dumpmemoryatexit();
-  CH_TIMER_REPORT();
   MPI_Finalize();
 #endif
-
-  return(status);
+  return status;
 }
