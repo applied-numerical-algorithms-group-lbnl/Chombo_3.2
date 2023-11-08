@@ -353,6 +353,53 @@ void DiriBC(FArrayBox&      a_state,
   delete[] value;
 }
 
+
+void HomogeneousDirichletBC(FArrayBox&      a_state,
+                            const Box&      a_valid,
+                            int             a_dir,
+                            Side::LoHiSide  a_side)
+{
+  int isign = sign(a_side);
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+  {
+    const IntVect   & ivTo = bit();
+    IntVect ivClose = ivTo -   isign*BASISV(a_dir);
+    for (int icomp = 0; icomp <= a_state.nComp() ; icomp++)
+    {
+      Real nearVal = a_state(ivClose, icomp);
+      Real ghostVal = -nearVal;
+      a_state(ivTo, icomp) = ghostVal;
+    }
+  }
+}
+
+void HomogeneousNeumannBC(FArrayBox&      a_state,
+                          const Box&      a_valid,
+                          int             a_dir,
+                          Side::LoHiSide  a_side)
+{
+  int isign = sign(a_side);
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+  {
+    const IntVect   & ivTo = bit();
+    IntVect ivClose = ivTo -   isign*BASISV(a_dir);
+    for (int icomp = 0; icomp <= a_state.nComp() ; icomp++)
+    {
+      Real nearVal = a_state(ivClose, icomp);
+      Real ghostVal = nearVal;
+      a_state(ivTo, icomp) = ghostVal;
+    }
+  }
+}
+
 void NoSlipVectorBC(FArrayBox&     a_state,
                     const Box&     a_valid,
                     Real           a_dx,

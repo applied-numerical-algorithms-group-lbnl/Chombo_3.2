@@ -100,6 +100,8 @@ namespace PrCh_AMR_Elliptic
 
     ///Default implementations independent of Proto go here.
     
+    ///I find myself having to do this way too much
+    static Vector<level_data_type*> getRawVector(Vector<RefCountedPtr<level_data_type> > a_vec_shared)
     /// a_resCoarse[2h] = I[h->2h] (rhsFine[h] - L[h](phiFine[h])
     virtual void restrictResidual(level_data_type      & a_resCoar,
                                   level_data_type      & a_phiMedi,

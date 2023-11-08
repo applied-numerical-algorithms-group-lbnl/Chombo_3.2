@@ -46,6 +46,28 @@ namespace Chombo
     typedef        AMRLevelOpFactory<pr_lbd>     ch_factory;
     typedef        MayDay                        ch_mayday;
 
+
+    ///AMRMultigrid's interface requires raw pointers
+    static Vector<ch_ldf*> getRawVectorCh(const Vector<RefCountedPtr<ch_ldf> > a_rhs_shared)
+    {
+      Vector<ch_ldf *>  raw_rhs(a_rhs_shared.size(), NULL);
+      for(int ilev = 0; ilev < a_params,m_numLevels ; ilev++)
+      {
+        raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
+      }
+      return raw_rhs;
+    }
+    
+    ///AMRMultigrid's interface requires raw pointers
+    static Vector<pr_lbd*> getRawVectorPr(const vector<shared_ptr<pr_lbd> > a_rhs_shared)
+    {
+      Vector<pr_lbd *>  raw_rhs(a_rhs_shared.size(), NULL);
+      for(int ilev = 0; ilev < a_params,m_numLevels ; ilev++)
+      {
+        raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
+      }
+      return raw_rhs;
+    }
     ///
     /**
        For performance reasons, proto requires fixed-size boxes.   

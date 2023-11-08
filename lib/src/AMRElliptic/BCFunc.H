@@ -385,6 +385,26 @@ void NeumBC(FArrayBox&      a_state,
 
 ///
 /**
+   Neumann bc for a particular side, all components
+   For use in AMRPoissonOp.
+ */
+void HomogeneousNeumannBC(FArrayBox&      a_state,
+                          const Box&      a_valid,
+                          int             a_dir,
+                          Side::LoHiSide  a_side);
+
+///
+/**
+   Neumann bc for a particular side, all components
+   For use in AMRPoissonOp.
+ */
+void HomogeneousDirichletBC(FArrayBox&      a_state,
+                            const Box&      a_valid,
+                            int             a_dir,
+                            Side::LoHiSide  a_side);
+
+///
+/**
    Neumann bcs for all sides
    For use in AMRPoissonOp.
  */
