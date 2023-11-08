@@ -263,6 +263,8 @@ public:
 
   ///
   /**
+     L(phi) = alpha*acoef(x)*phi + beta*div(bcoef(x) grad(phi))
+
      a_coarseDomain is the domain at the coarsest level.
      a_grids is the AMR  hierarchy.
      a_refRatios are the refinement ratios between levels.  The ratio lives
@@ -272,8 +274,8 @@ public:
      a_bc holds the boundary conditions.
      a_alpha is the identity constant coefficient
      a_beta is the laplacian constant coefficient.
-     a_aCoef is the identity spatially varying coefficient
-     a_bCoef is the laplacian spatially varying coefficient.
+     a_aCoef(x) is the coefficient of the identity term
+     a_bCoef(x) is the coefficient of grad(phi) in the flux.
   */
   void define(const ProblemDomain&                           a_coarseDomain,
               const Vector<DisjointBoxLayout>&               a_grids,
