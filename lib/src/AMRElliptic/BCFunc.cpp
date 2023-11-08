@@ -368,7 +368,7 @@ void HomogeneousDirichletBC(FArrayBox&      a_state,
   {
     const IntVect   & ivTo = bit();
     IntVect ivClose = ivTo -   isign*BASISV(a_dir);
-    for (int icomp = 0; icomp <= a_state.nComp() ; icomp++)
+    for (int icomp = 0; icomp < a_state.nComp() ; icomp++)
     {
       Real nearVal = a_state(ivClose, icomp);
       Real ghostVal = -nearVal;
