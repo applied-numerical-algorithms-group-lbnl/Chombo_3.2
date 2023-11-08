@@ -16,6 +16,7 @@
 #include "Proto.H"
 #include "Proto_Helmholtz_Op.H"
 #include "memusage.H"
+#include "Vector.H"
 
 namespace Chombo
 {
@@ -51,7 +52,7 @@ namespace Chombo
     static Vector<ch_ldf*> getRawVectorCh(const Vector<RefCountedPtr<ch_ldf> > a_rhs_shared)
     {
       Vector<ch_ldf *>  raw_rhs(a_rhs_shared.size(), NULL);
-      for(int ilev = 0; ilev < a_params,m_numLevels ; ilev++)
+      for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
         raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
       }
@@ -62,7 +63,7 @@ namespace Chombo
     static Vector<pr_lbd*> getRawVectorPr(const vector<shared_ptr<pr_lbd> > a_rhs_shared)
     {
       Vector<pr_lbd *>  raw_rhs(a_rhs_shared.size(), NULL);
-      for(int ilev = 0; ilev < a_params,m_numLevels ; ilev++)
+      for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
         raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
       }

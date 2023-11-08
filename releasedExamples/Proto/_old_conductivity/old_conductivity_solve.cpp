@@ -61,13 +61,15 @@ namespace Chombo
     Vector<LevelData<FArrayBox>*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
     Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
 
-    amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_finestLevel, 0, true);
+    amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_maxLevel, 0, true);
   }
-  int 
+
+  ///call define but do not fill data
+  void
   defineData(Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_phi,
              Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_rhs,
              Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_aCoef,
-             Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_bCoef;
+             Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_bCoef,
              const Vector< DisjointBoxLayout >                & a_grids)
   {
     a_phi  .resize(a_grids.size());
@@ -77,11 +79,11 @@ namespace Chombo
     
     for(int ilev = 0; ilev < a_grids.size(); ilev++)
     {
-      a_phi  [ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Unit));
-      a_rhs  [ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Zero));
-      a_aCoef[ilev] = RefCountedPtr< LevelData< FArrayBox > > >( new   LevelData< FArrayBox > > (grids[ilev], 1, IntVect::Zero));
-      a_bCoef[ilev] = RefCountedPtr< LevelData<   FluxBox > > >( new   LevelData<   FluxBox > > (grids[ilev], 1, IntVect::Zero));
-    }  ///end loop voer levels
+      a_phi  [ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1, IntVect::Unit));
+      a_rhs  [ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1, IntVect::Zero));
+      a_aCoef[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1, IntVect::Zero));
+      a_bCoef[ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1, IntVect::Zero));
+    }  ///end loop over levels
   }    //end function defineData
 
   /***************/
@@ -105,18 +107,18 @@ namespace Chombo
     Real fakeDt = 1.0;
     WriteAMRHierarchyHDF5(phiFileName,  a_grids,
                           raw_phi, phiVarNames,
-                          a_params.coarsestDomain.domainBox(),
-                          a_params.coarsestDx,
+                          a_params.m_coarsestDomain.domainBox(),
+                          a_params.m_coarsestDx,
                           fakeDt, fakeTime,
-                          a_params.refRatio,
-                          a_params.numLevels);
+                          a_params.m_refRatio,
+                          a_params.m_numLevels);
     WriteAMRHierarchyHDF5(rhsFileName,  a_grids,
                           raw_rhs, rhsVarNames,
-                          a_params.coarsestDomain.domainBox(),
-                          a_params.coarsestDx,
+                          a_params.m_coarsestDomain.domainBox(),
+                          a_params.m_coarsestDx,
                           fakeDt, fakeTime,
-                          a_params.refRatio,
-                          a_params.numLevels);
+                          a_params.m_refRatio,
+                          a_params.m_numLevels);
 
 #endif
   } //end function ouputData
@@ -127,10 +129,10 @@ namespace Chombo
            const VCPoissonParameters                       & a_params)
   {
 
-    for(int ilev = 0; ilev < a_params.numLevels; ilev++)
+    for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
     {
-      RealVect dx = a_param,coarsestDx;
-      DataIterator dit = a_aCoef[ilev]->dataIterator();
+      Real dx = a_params.m_coarsestDx;
+      DataIterator dit = a_aCoefVec[ilev]->dataIterator();
       for (dit.begin(); dit.ok(); ++dit)
       {
         FArrayBox& aCoef = (*a_aCoefVec[ilev])[dit];
@@ -141,9 +143,9 @@ namespace Chombo
           aCoef(iv, 0) = pos[0];
         } // end loop over cells
       }   // end loop over grids
-      if(ilev < a_params.maxLevel)
+      if(ilev < a_params.m_maxLevel)
       {
-        dx /= a_params.refRatio[ilev];
+        dx /= a_params.m_refRatio[ilev];
       }   // end if on a coarse level
     }     // end loop over levels
   }       //end function setACoef
@@ -155,36 +157,36 @@ namespace Chombo
   {
     for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
     {
-      RealVect dx = a_params,m_coarsestDx;
+      Real  dx = a_params.m_coarsestDx;
       DataIterator dit = a_bCoef[ilev]->dataIterator();
       for (dit.begin(); dit.ok(); ++dit)
       {
         FluxBox& thisBCoef = (*a_bCoef[ilev])[dit];
         for (int face_dir=0; face_dir < SpaceDim; face_dir++)
         {
-          FArrayBox& bcofab = thisBCoef[dir];
-          const Box& dirBox = dirFlux.box();
+          FArrayBox& bcofab = thisBCoef[face_dir];
+          const Box& dirBox = bcofab.box();
           RealVect pos;
           for(BoxIterator boxit(dirBox); boxit.ok(); ++boxit)
           {
             IntVect   iv  = boxit();
-            RealVect  pos = VCLocalFunctions::faceLocation(iv, a_dx, face_dir);
+            RealVect  pos = VCLocalFunctions::faceLocation(iv, dx, face_dir);
             //bcoef = x + y + z in the amrpoissonop example
             Real sum = pos.sum();
             bcofab(iv,  0) = sum;
-          } //end loop over cells
-        }   //end loop over face direction
-      }     //end loop over boxes
+          } // end loop over cells
+        }   // end loop over face direction
+      }     // end loop over boxes
       if(ilev < a_params.m_maxLevel)
       {
         dx /= a_params.m_refRatio[ilev];
-      }   // end if on a coarse level
-    }     // end loop over levels
-  }       //end function setBCoef
+      }     // end if on a coarse level
+    }       // end loop over levels
+  }//.end function setBCoef
 
   /********/
-  void setRHSConst(Vector< RefCountedPtr<LevelData<FArrayBox> >    a_rhs,
-                   Real                                            a_value)
+  void setRHSConst(Vector< RefCountedPtr<LevelData<FArrayBox> > >   a_rhs,
+                   Real                                             a_value)
   {
     for(int ilev = 0; ilev < a_rhs.size(); ilev++)
     {
@@ -195,7 +197,7 @@ namespace Chombo
         thisRHS.setVal(a_value);
       }
     }
-  }///end function setRHS 
+  }///end function setRHSConst
 
   int local_test_harness()
   {
@@ -218,19 +220,19 @@ namespace Chombo
     }
 
     VCPoissonParameters param = 
-      getVCParameters(finestLevel, amrDx[0], amrDomains[0], refRatio);
+      getVCParameters(finestLevel, amrDx[0], amrDomains[0], refRatios);
     
 
     defineData(phi, rhs, aCoef, bCoef,   amrGrids);
     setRHSConst(rhs, 1.0);
-    setACoef(aCoef, params);
-    setBCoef(bCoef, params);
+    setACoef(aCoef, param);
+    setBCoef(bCoef, param);
 
     RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> >  >  
-      op_factory = getConductivityFactory(aCoef, bCoef, grids, param);
+      op_factory = VCLocalFunctions::getConductivityFactory(aCoef, bCoef, amrGrids, param);
 
-    poissonSolve(phi, rhs, op_factory, grids, param);
-    outputData(  phi, rhs,             grids, param);
+    poissonSolve(phi, rhs, op_factory, amrGrids, param);
+    outputData(  phi, rhs,             amrGrids, param);
 
     return 0;
   }
@@ -253,7 +255,7 @@ int main(int argc, char* argv[])
   }
 
   char* inFile = argv[1];
-  ParmParse pp(argc-2,argv+2,NULL,inFile);
+  Chombo::ParmParse pp(argc-2,argv+2,NULL,inFile);
 
   int status = Chombo::local_test_harness();
 

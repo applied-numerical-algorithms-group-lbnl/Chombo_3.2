@@ -107,12 +107,12 @@ namespace Chombo
     ///
     static  RealVect
     cellLocation(const IntVect & a_iv,
-                 const RealVect& a_dx )
+                 const Real    & a_dx )
     {
       RealVect retval;
       for(int idir = 0; idir < SpaceDim; idir++)
       {
-        retval[idir] = (Real(a_iv[idir]) + 0.5)*a_dx[idir];
+        retval[idir] = (Real(a_iv[idir]) + 0.5)*a_dx;
       }
       return retval;
     }
@@ -120,7 +120,7 @@ namespace Chombo
     ///
     static   RealVect
     faceLocation(const IntVect&  a_iv,
-                 const RealVect& a_dx ,
+                 const Real   &  a_dx ,
                  int             a_faceDir)
     {
       RealVect retval;
@@ -128,21 +128,21 @@ namespace Chombo
       {
         if(a_faceDir == idir)
         {
-          retval[idir] = (Real(a_iv[idir]))*a_dx[idir];
+          retval[idir] = (Real(a_iv[idir]))*a_dx;
         }
         else
         {
-          retval[idir] = (Real(a_iv[idir]) + 0.5)*a_dx[idir];
+          retval[idir] = (Real(a_iv[idir]) + 0.5)*a_dx;
         }
       }
       return retval;
     }
     static 
     RefCountedPtr< AMRLevelOpFactory<LevelData<FArrayBox> > >
-    getCondutivityFactory( Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_aCoef,
-                           Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_bCoef,
-                           Vector<DisjointBoxLayout>                    &   a_grids,
-                           VCPoissonParameters                          &   a_params)
+    getConductivityFactory( Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_aCoef,
+                            Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_bCoef,
+                            Vector<DisjointBoxLayout>                    &   a_grids,
+                            VCPoissonParameters                          &   a_params)
     {
       VCAMRPoissonOp2Factory* derived_ptr = (new VCAMRPoissonOp2Factory());
 
