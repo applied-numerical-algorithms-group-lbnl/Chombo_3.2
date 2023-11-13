@@ -9,7 +9,12 @@
 #define DBG_HIY 32
 #define DBG_HIZ 0
 
+#include "Proto.H"
 #include "FArrayBox.H"
+#include "LevelData.H"
+#include "DisjointBoxLayout.H"
+
+
 
 /// Old school Debugging utilities 
 /**

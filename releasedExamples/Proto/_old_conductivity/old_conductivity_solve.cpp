@@ -103,7 +103,7 @@ namespace Chombo
 
       bool homogeneousBC = false;
       solver.define(&mlOp, homogeneousBC);
-      solver.m_verbosity = 3;
+      solver.m_verbosity = 5;///bicgstab does not print much if you use lower
       solver.m_normType = 0;
       solver.m_eps = eps;
       solver.m_imax = maxIter;

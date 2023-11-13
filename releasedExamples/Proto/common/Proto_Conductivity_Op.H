@@ -7,14 +7,78 @@
 #ifndef __Proto_Conductivity_Op_H
 #define __Proto_Conductivity_Op_H
 
-/****************/
+///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
 PROTO_KERNEL_START 
-unsigned int  gsrbResidF(int              a_pt[DIM],
+unsigned int  operaConduF(int              a_pt[DIM],
+                          Proto::Var<Real, 1>     a_lph,
+                          Proto::Var<Real, 1>     a_phi,
+                          Proto::Var<Real, 1>     a_acoef,
+                          Proto::Var<Real, 1>     a_xincr,
+                          Proto::Var<Real, 1>     a_yincr,
+                          Proto::Var<Real, 1>     a_zincr,
+                          Real                    a_alpha,
+                          Real                    a_beta)
+{
+  //z is set to zero in 2d
+  Real divergence = a_xincr(0) + a_yincr(0) + a_zincr(0);
+  Real lphval = a_alpha*a_acoef(0)*a_phi(0) + a_beta*divergence;
+  a_lph(0) = lphval;
+  return 0;
+}
+PROTO_KERNEL_END(operaConduF, operaCondu)
+
+///lamdbda = safety/approximate_diagonal
+/**
+   
+   The true diagonal here is 
+   diag_true = alpha*acoef 
+   - (beta/h^2)*(bcoef_x i+1/2 + bcoef_x(i-1/2 )
+   - (beta/h^2)*(bcoef_y j+1/2 + bcoef_y(j-1/2 )
+   - (beta/h^2)*(bcoef_z k+1/2 + bcoef_z(k-1/2 )
+ 
+   That is a lot of shifting just for a relaxation coefficient.
+   For now, we will use 
+   diag_approx = alpha*acoef 
+   - (2*beta/h^2)*(bcoef_x(i-1/2 )
+   - (2*beta/h^2)*(bcoef_y(j-1/2 )
+   - (2*beta/h^2)*(bcoef_z(k-1/2 )
+**/
+PROTO_KERNEL_START 
+unsigned int  lambdaConduF(int              a_pt[DIM],
+                           Proto::Var<Real, 1>     a_lambda,
+                           Proto::Var<Real, 1>     a_acoef,
+                           Proto::Var<Real, 1>     a_bco_x,
+                           Proto::Var<Real, 1>     a_bco_y,
+                           Proto::Var<Real, 1>     a_bco_z,
+                           Real                    a_alpha,
+                           Real                    a_beta,
+                           Real                    a_dx)
+{
+  Real safety = 0.9;
+  Real factor = -2.*a_beta/(a_dx*a_dx);
+  Real diagon = a_alpha*a_acoef(0);
+  diagon += factor*a_bco_x(0);
+  diagon += factor*a_bco_y(0);
+#if DIM==3
+  diagon += factor*a_bco_z(0);
+#endif
+  a_lambda(0) = safety/diag;
+  return 0;
+}
+PROTO_KERNEL_END(lambdaConduF, lambdaCondu)
+
+
+///
+/**
+  phi = phi + lambda*(lphi - rho) 
+  but only where 
+  sum(i+j+k)%2== iredblack
+**/
+PROTO_KERNEL_START 
+unsigned int  gsrbConduF(int              a_pt[DIM],
                          Proto::Var<Real, 1>     a_phi,
                          Proto::Var<Real, 1>     a_res,
-                         Real             a_alpha,
-                         Real             a_beta,
-                         Real             a_dx,
+                         Proto::Var<Real, 1>     a_lam,
                          int              a_iredBlack,
                          int              a_iprint)
 {
@@ -25,24 +89,19 @@ unsigned int  gsrbResidF(int              a_pt[DIM],
   }
   if(sumpt%2 == a_iredBlack)
   {
-    static const Real safety = 1.0;
-    Real reg_diag_val = -2*DIM/a_dx/a_dx;
-    Real reg_realdiag = a_alpha  + a_beta*reg_diag_val;
-    Real reg_lambda   = safety/reg_realdiag;
-    
+    Real lambda = a_lam(0);
     Real phival = a_phi(0);
     Real resval = a_res(0);
 
-    a_phi(0) = phival + reg_lambda*resval;
+    a_phi(0) = phival + lambda*resval;
   }
   return 0;
 
 }
-PROTO_KERNEL_END(gsrbResidF, gsrbResid) 
+PROTO_KERNEL_END(gsrbConduF, gsrbCondu) 
 /// The new cool namespace that everyone wants in on.   
 namespace PrCh_AMR_Elliptic
 {
-  typedef Proto::LevelBoxData<double, 1>    pr_lbd;
   typedef Proto::Stencil<double>            pr_sten;
   typedef Proto::InterpStencil<double>      pr_interp_sten;
   
@@ -54,10 +113,18 @@ namespace PrCh_AMR_Elliptic
   typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
   typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
   typedef Chombo::MGLevelOp<pr_lbd>  ch_mglevelop;
+  typedef Proto::Stencil<double>           pr_sten;
   
-  /// 
+  typedef Proto::LevelBoxData<double, 1, Proto::CELL   >   pr_cell_data;
+  typedef Proto::LevelBoxData<double, 1, Proto::FACE_0 >   pr_xfac_data;
+  typedef Proto::LevelBoxData<double, 1, Proto::FACE_1 >   pr_yfac_data;
+  typedef Proto::LevelBoxData<double, 1, Proto::FACE_2 >   pr_zfac_data;
+  
+  /// Helmholtz operator with spatially varying coefficients
   /**
-     (2*DIM+1)-point Conductivity operator with constant coefficients.
+     L(phi) = alpha*(a(x) phi) + beta*(Div b(x) Grad(phi))A 
+     alpha, beta are constants.
+     a(x) and b(x) are functions of space only.
   **/
   class Proto_Conductivity_Op: public   Base_Proto_AMRLevelOp<1>
   {
@@ -67,71 +134,136 @@ namespace PrCh_AMR_Elliptic
     Proto_Conductivity_Op();
 
   public:
-    typedef Proto::Stencil<double> pr_sten;
     virtual ~Proto_Conductivity_Op()
     {
     }
-    
-    // identity weight
+
+    shared_ptr<pr_cell_data>  m_acoef;
+    shared_ptr<pr_xfac_data>  m_bco_x;
+    shared_ptr<pr_yfac_data>  m_bco_y;
+    shared_ptr<pr_zfac_data>  m_bco_z;
+    shared_ptr<pr_cell_data>  m_lambda;
     double    m_alpha;
-    // laplacian weight
     double    m_beta;
-    // grid spacing
     double    m_dx;
-    //we can hide whatever complicated bc we have behind a unique string.    
     string    m_domBC;
     ///amr hooks that do not need valid values when they do not apply
     int       m_refToFine;   
     int       m_refToCoar;
-    pr_sten   m_sten;
+    pr_dbl    m_grids;
     
-    ///L(phi) = alpha*phi + beta*div(grad(phi));
-    Proto_Conductivity_Op(const double& a_alpha,
-                       const double& a_beta,
-                       const double& a_dx,
-                       const int   & a_refToFine,
-                       const int   & a_refToCoar,
-                       const string& a_domBC)
+    /// L(phi) = alpha*(a(x) phi) + beta*(Div b(x) Grad(phi))A 
+    Proto_Conductivity_Op(
+      shared_ptr<pr_cell_data>  a_acoef,
+      shared_ptr<pr_xfac_data>  a_bco_x,
+      shared_ptr<pr_yfac_data>  a_bco_y,
+      shared_ptr<pr_zfac_data>  a_bco_z,
+      const pr_dbl&             a_grids,
+      const double&             a_alpha,
+      const double&             a_beta,
+      const double&             a_dx,
+      const int   &             a_refToFine,
+      const int   &             a_refToCoar,
+      const string&             a_domBC)
     {
       CH_TIME("Proto_Conductivity_Op::Proto_Conductivity_Op");
+      m_acoef     = a_acoef;
+      m_bco_x     = a_bco_x;
+      m_bco_y     = a_bco_y;
+      m_bco_z     = a_bco_z;
+      m_grids     = a_grids;
       m_alpha     = a_alpha;
       m_beta      = a_beta;
       m_dx        = a_dx;
       m_refToFine = a_refToFine;
       m_refToCoar = a_refToCoar;
       m_domBC     = a_domBC;
-      
-      
-      // (1/h^2) factor missing  in proto stencil for lapl.
-      double hsqinv = 1./(m_dx*m_dx);
-      pr_sten  sten_lapl = pr_sten::Laplacian();
-      // scaling by (1/h^2) factor    
-      sten_lapl *= hsqinv;
-      
-      pr_sten  sten_iden = (1.0)*Proto::Shift(pr_pt::Zeros());
-      m_sten = m_alpha*sten_iden + m_beta*sten_lapl;
-      static bool printedOnce = false;
-      if(!printedOnce)
+      defineAndSetRelaxationCoefficient();
+    }
+
+    ///
+    void defineAndSetRelaxationCoefficient()
+    {
+      m_lambda = shared_ptr<pr_cell_data>(new pr_cell_data(m_grids, pr_pt::Zero));
+      auto dit   = m_lambda.begin();
+      ///fill a_lph with div( b(x) grad (phi))
+      for(int ibox = 0; ibox <  dit.size(); ibox++)
       {
-        Chombo::pout() << "operator stencil:" << std::endl;
-        m_sten.print();
-        printedOnce = true;
+        const auto  & lamfab = (*m_lambda)[dit[ibox]];
+        const auto  & acofab =  (*m_acoef)[dit[ibox]];
+        auto valid           =     m_grids[dit[ibox]];
+        const auto& bco_x    =  (*m_bco_x)[dit[ibox]];
+        const auto& bco_y    =  (*m_bco_x)[dit[ibox]];
+#if DIM==3                      
+        const auto& bco_z    =  (*m_bco_x)[dit[ibox]];
+#else
+        //something fake to send
+        const auto& bco_z    = (*m_bco_y)[dit[ibox]];
+#endif
+        ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
+        Proto::forallInPlace_i(lambdaCondu, valid, lamfab,
+                               acofab, bco_x, bco_y, bco_z,
+                               m_alpha, m_beta, m_dx);
       }
+
+    }
+
+    ///gets (b_i+1/2*grad_phi_i+1/2 - b_i+1/2*grad_phi_i+1/2)/m_dx
+    template<Centering cent>
+    void
+    getDivergenceIncrement()
+    {
     }
     
+    ///this makes a_lph = div(b(grad phi))
+    virtual void
+    computeDivBGradPhi(pr_lbd       & a_lph,
+                       const pr_lbd & a_phi)
+    {
+      auto dit   = a_lph.begin();
+
+      ///fill a_lph with div( b(x) grad (phi))
+      for(int ibox = 0; ibox <  dit.size(); ibox++)
+      {
+        auto        & lphfab =      a_lph[dit[ibox]];
+        const auto  & phifab =      a_phi[dit[ibox]];
+        const auto  & acofab = (*m_acoef)[dit[ibox]];
+        auto valid           =    m_grids[dit[ibox]];
+        const auto& bco_x    = (*m_bco_x)[dit[ibox]];
+        const auto& bco_y    = (*m_bco_x)[dit[ibox]];
+#if DIM==3             
+        const auto& bco_z    = (*m_bco_x)[dit[ibox]];
+#endif        
+        BoxData<double, 1> xincr(valid); xincr.setVal(0.);
+        BoxData<double, 1> yincr(valid); yincr.setVal(0.);
+        BoxData<double, 1> zincr(valid); zincr.setVal(0.);
+        
+        getDivergenceIncrement<PR_FACE_0>(xincr, phifab, bco_x, valid);
+        getDivergenceIncrement<PR_FACE_1>(yincr, phifab, bco_y, valid);
+#if DIM==3                                                  
+        getDivergenceIncrement<PR_FACE_2>(zincr, phifab, bco_z, valid);
+#endif
+        ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
+        Proto::forallInPlace_i(operaCondu, valid,
+                               lphfab, phifab, acofab,
+                               xincr, yincr, zincr,
+                               m_alpha, m_beta);
+      }
+    }
     ///For this one, the derived class may assume all ghost cells have been set correctly
     virtual void 
     applyOperator(pr_lbd         & a_lph,
                   const pr_lbd   & a_phi)
     {
       CH_TIME("Proto_Conductivity_Op::applyOperator");
-      auto grids = a_lph.layout();
       auto dit   = a_lph.begin();
       for(int ibox = 0; ibox <  dit.size(); ibox++)
       {
-        auto        & dst = a_lph[dit[ibox]];
-        const auto  & src = a_phi[dit[ibox]];
-        auto valid        = grids[dit[ibox]];
+        auto        & dst =   a_lph[dit[ibox]];
+        const auto  & src =   a_phi[dit[ibox]];
+        auto valid        = m_grids[dit[ibox]];
+        //this makes a_lph = div(b(grad phi))
+        computeDivBGradPhi(a_lph, a_phi);
         bool initToZero = true; double scale = 1;
         ///Note: arguments' order is the opposite of usual (we usually do dst, src).
         m_sten.apply(src, dst, valid, initToZero, scale); 
@@ -147,7 +279,6 @@ namespace PrCh_AMR_Elliptic
       
       pr_lbd resid;
       create(resid, a_rhs);
-      auto grids =  a_rhs.layout();
       auto dit   =  a_rhs.begin();
       
       int idebug = 0; // gdb debugging hook
@@ -158,11 +289,11 @@ namespace PrCh_AMR_Elliptic
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.size(); ibox++)
           {
-            const auto & resfab =  resid[dit[ibox]];
-            const auto & phifab =  a_phi[dit[ibox]];
-            auto valid          =  grids[dit[ibox]];
+            const auto & resfab =    resid[dit[ibox]];
+            const auto & phifab =    a_phi[dit[ibox]];
+            auto valid          =  m_grids[dit[ibox]];
             int iprint = 0; // I left in a debugging hook.
-            Proto::forallInPlace_i(gsrbResid, valid, phifab, resfab,
+            Proto::forallInPlace_i(gsrbCondu, valid, phifab, resfab,
                                    m_alpha, m_beta, m_dx, iredblack, iprint);
           }
           idebug = 0; //stop here for end of dataiter  iteration
@@ -334,11 +465,11 @@ namespace PrCh_AMR_Elliptic
         loc_dx *= factor;
         Proto_Conductivity_Op* derivedOp = 
           new Proto_Conductivity_Op(m_alpha,
-                                 m_beta,
-                                 loc_dx,
-                                 loc_ref_fine,
-                                 loc_ref_coar,
-                                 m_domBC);
+                                    m_beta,
+                                    loc_dx,
+                                    loc_ref_fine,
+                                    loc_ref_coar,
+                                    m_domBC);
         retval = static_cast< ch_mglevelop* >(derivedOp);
       }
       return retval;
@@ -354,11 +485,11 @@ namespace PrCh_AMR_Elliptic
 
       Proto_Conductivity_Op* derivedOp = 
         new Proto_Conductivity_Op(m_alpha,
-                               m_beta,
-                               loc_dx,
-                               loc_ref_fine,
-                               loc_ref_coar,
-                               m_domBC);
+                                  m_beta,
+                                  loc_dx,
+                                  loc_ref_fine,
+                                  loc_ref_coar,
+                                  m_domBC);
       return  static_cast< ch_amrlevelop* >(derivedOp);
     }
 
