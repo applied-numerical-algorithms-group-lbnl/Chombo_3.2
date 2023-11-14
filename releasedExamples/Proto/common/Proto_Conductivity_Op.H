@@ -9,7 +9,7 @@
 
 ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
 PROTO_KERNEL_START 
-unsigned int  operaConduF(int              a_pt[DIM],
+unsigned int  operaConduF(int                     a_pt[DIM],
                           Proto::Var<Real, 1>     a_lph,
                           Proto::Var<Real, 1>     a_phi,
                           Proto::Var<Real, 1>     a_acoef,
@@ -44,7 +44,7 @@ PROTO_KERNEL_END(operaConduF, operaCondu)
    - (2*beta/h^2)*(bcoef_z(k-1/2 )
 **/
 PROTO_KERNEL_START 
-unsigned int  lambdaConduF(int              a_pt[DIM],
+unsigned int  lambdaConduF(int                     a_pt[DIM],
                            Proto::Var<Real, 1>     a_lambda,
                            Proto::Var<Real, 1>     a_acoef,
                            Proto::Var<Real, 1>     a_bco_x,
@@ -54,7 +54,10 @@ unsigned int  lambdaConduF(int              a_pt[DIM],
                            Real                    a_beta,
                            Real                    a_dx)
 {
-  Real safety = 0.9;
+  //we are approximating the diagonal.   This may have to go lower.
+  // set == 1 for direct comparisons with Proto_Helmholtz_Op 
+  Real safety = 1.0;
+
   Real factor = -2.*a_beta/(a_dx*a_dx);
   Real diagon = a_alpha*a_acoef(0);
   diagon += factor*a_bco_x(0);
@@ -102,23 +105,26 @@ PROTO_KERNEL_END(gsrbConduF, gsrbCondu)
 /// The new cool namespace that everyone wants in on.   
 namespace PrCh_AMR_Elliptic
 {
-  typedef Proto::Stencil<double>            pr_sten;
-  typedef Proto::InterpStencil<double>      pr_interp_sten;
+                                                           
   
-  typedef Chombo::Box                       ch_box;
-  typedef  Proto::Box                       pr_box;
-  typedef Chombo::ProblemDomain             ch_dom;
-  typedef Chombo::DisjointBoxLayout         ch_dbl;
-  typedef Chombo::MayDay                    ch_mayday;
-  typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
-  typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
-  typedef Chombo::MGLevelOp<pr_lbd>  ch_mglevelop;
-  typedef Proto::Stencil<double>           pr_sten;
   
+  typedef Proto::Stencil<double>                           pr_sten;
+  typedef Proto::InterpStencil<double>                     pr_interp_sten;
+  typedef Proto::Box                                       pr_box;
+  typedef Proto::BoxData<double, 1>                        pr_box_data;
   typedef Proto::LevelBoxData<double, 1, Proto::CELL   >   pr_cell_data;
   typedef Proto::LevelBoxData<double, 1, Proto::FACE_0 >   pr_xfac_data;
   typedef Proto::LevelBoxData<double, 1, Proto::FACE_1 >   pr_yfac_data;
   typedef Proto::LevelBoxData<double, 1, Proto::FACE_2 >   pr_zfac_data;
+  typedef Proto::Shift                                     pr_shift;
+  
+  typedef Chombo::Box                                      ch_box;
+  typedef Chombo::ProblemDomain                            ch_dom;
+  typedef Chombo::DisjointBoxLayout                        ch_dbl;
+  typedef Chombo::MayDay                                   ch_mayday;
+  typedef Chombo::AMRLevelOpFactory<pr_cell_data>          ch_amrlevelop_factory;
+  typedef Chombo::AMRLevelOp<       pr_cell_data>          ch_amrlevelop;
+  typedef Chombo::MGLevelOp<        pr_cell_data>          ch_mglevelop;
   
   /// Helmholtz operator with spatially varying coefficients
   /**
@@ -208,18 +214,37 @@ namespace PrCh_AMR_Elliptic
 
     }
 
-    ///gets (b_i+1/2*grad_phi_i+1/2 - b_i+1/2*grad_phi_i+1/2)/m_dx
-    template<Centering cent>
+    ///sets a_incr =  (b_i+1/2*grad_phi_i+1/2 - b_i+1/2*grad_phi_i+1/2)/m_dx
     void
-    getDivergenceIncrement()
+    getDivergenceIncrement(pr_box_data           & a_incr,
+                           const pr_box_data     & a_phi,
+                           const pr_box_data     & a_bcoef,
+                           const pr_box          & a_valid,
+                           const int             & a_face_dir)
     {
+      
+      pr_shift home(pr_pt::Zeros(), 1.0);
+      pr_shift left = pr_shift::Basis(a_face_dir, -1);
+
+      pr_sten hi(home,  1./m_dx);
+      pr_sten lo(left, -1./m_dx);
+
+      pr_sten grad_sten = hi - lo;
+      pr_box face_box = a_valid;
+      face_box.m_hi[a_face_dir] += 1;
+      pr_box_data bco_grad_phi(face_box);
+      //bool initToZero = true; bool applyScale = 1;   
+      grad_sten.apply(bco_grad_phi, a_phi, face_box, true, 1.0);
+      bco_grad_phi *= a_bcoef;
+      grad_sten.apply(a_incr, bco_grad_phi, a_valid, true, 1.0);
     }
     
-    ///this makes a_lph = div(b(grad phi))
-    virtual void
-    computeDivBGradPhi(pr_lbd       & a_lph,
-                       const pr_lbd & a_phi)
+    ///For this one, the derived class may assume all ghost cells have been set correctly
+    virtual void 
+    applyOperator(pr_lbd         & a_lph,
+                  const pr_lbd   & a_phi)
     {
+      CH_TIME("Proto_Conductivity_Op::applyOperator");
       auto dit   = a_lph.begin();
 
       ///fill a_lph with div( b(x) grad (phi))
@@ -238,35 +263,16 @@ namespace PrCh_AMR_Elliptic
         BoxData<double, 1> yincr(valid); yincr.setVal(0.);
         BoxData<double, 1> zincr(valid); zincr.setVal(0.);
         
-        getDivergenceIncrement<PR_FACE_0>(xincr, phifab, bco_x, valid);
-        getDivergenceIncrement<PR_FACE_1>(yincr, phifab, bco_y, valid);
-#if DIM==3                                                  
-        getDivergenceIncrement<PR_FACE_2>(zincr, phifab, bco_z, valid);
+        getDivergenceIncrement(xincr, phifab, bco_x, valid, 0);
+        getDivergenceIncrement(yincr, phifab, bco_y, valid, 1);
+#if DIM==3                                       
+        getDivergenceIncrement(zincr, phifab, bco_z, valid, 2);
 #endif
         ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
         Proto::forallInPlace_i(operaCondu, valid,
                                lphfab, phifab, acofab,
                                xincr, yincr, zincr,
                                m_alpha, m_beta);
-      }
-    }
-    ///For this one, the derived class may assume all ghost cells have been set correctly
-    virtual void 
-    applyOperator(pr_lbd         & a_lph,
-                  const pr_lbd   & a_phi)
-    {
-      CH_TIME("Proto_Conductivity_Op::applyOperator");
-      auto dit   = a_lph.begin();
-      for(int ibox = 0; ibox <  dit.size(); ibox++)
-      {
-        auto        & dst =   a_lph[dit[ibox]];
-        const auto  & src =   a_phi[dit[ibox]];
-        auto valid        = m_grids[dit[ibox]];
-        //this makes a_lph = div(b(grad phi))
-        computeDivBGradPhi(a_lph, a_phi);
-        bool initToZero = true; double scale = 1;
-        ///Note: arguments' order is the opposite of usual (we usually do dst, src).
-        m_sten.apply(src, dst, valid, initToZero, scale); 
       }
     }
     
@@ -289,12 +295,13 @@ namespace PrCh_AMR_Elliptic
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.size(); ibox++)
           {
-            const auto & resfab =    resid[dit[ibox]];
-            const auto & phifab =    a_phi[dit[ibox]];
-            auto valid          =  m_grids[dit[ibox]];
+            const auto & resfab =       resid[dit[ibox]];
+            const auto & phifab =       a_phi[dit[ibox]];
+            const auto & lamfab = (*m_lambda)[dit[ibox]];
+            auto valid          =     m_grids[dit[ibox]];
             int iprint = 0; // I left in a debugging hook.
-            Proto::forallInPlace_i(gsrbCondu, valid, phifab, resfab,
-                                   m_alpha, m_beta, m_dx, iredblack, iprint);
+            Proto::forallInPlace_i(gsrbCondu, valid, phifab, resfab, lamfab,
+                                   iredblack, iprint);
           }
           idebug = 0; //stop here for end of dataiter  iteration
         }
@@ -347,7 +354,7 @@ namespace PrCh_AMR_Elliptic
   {
     
   private:
-    /// Strong construction, emacs and gdb are  a winning formula for life.
+    /// Strong construction, emacs, and gdb are a winning formula for life.
     Proto_Conductivity_Op_Factory();
     
   public:
@@ -363,17 +370,25 @@ namespace PrCh_AMR_Elliptic
     double                                 m_alpha;
     double                                 m_beta;
     int                                    m_max_coarse;
+    vector< shared_ptr<pr_cell_data>       m_acoef;
+    vector< shared_ptr<pr_xfac_data>       m_bco_x;
+    vector< shared_ptr<pr_yfac_data>       m_bco_y;
+    vector< shared_ptr<pr_zfac_data>       m_bco_z;
 
     
     ///the only constructor
     Proto_Conductivity_Op_Factory(
-      const ch_dom                 &        a_coarsest_dom,
-      const Chombo::Vector<ch_dbl> &        a_grids,
-      const Chombo::Vector<int>    &        a_ref_ratios,
-      const double                 &        a_coarsest_dx,
-      const string                 &        a_domBC,
-      const double                 &        a_alpha,
-      const double                 &        a_beta)           
+      const ch_dom                           &  a_coarsest_dom,
+      const vector<ch_dbl>                   &  a_grids,
+      const vector<int>                      &  a_ref_ratios,
+      const double                           &  a_coarsest_dx,
+      const string                           &  a_domBC,
+      const double                           &  a_alpha,
+      const double                           &  a_beta,
+      const vector< shared_ptr<pr_cell_data> &  a_acoef,
+      const vector< shared_ptr<pr_xfac_data> &  a_bco_x,
+      const vector< shared_ptr<pr_yfac_data> &  a_bco_y,
+      const vector< shared_ptr<pr_zfac_data> &  a_bco_z)           
       : ch_amrlevelop_factory()
     {
       m_max_coarse = 2;
