@@ -362,9 +362,9 @@ namespace PrCh_AMR_Elliptic
     /// no dynamic memory used here.   
     virtual ~Proto_Conductivity_Op_Factory() { }
 
-    Chombo::Vector<int>                    m_ref_ratios;
-    Chombo::Vector<ch_dbl>                 m_grids;
-    Chombo::Vector<pair<ch_dom, double> >  m_domain_dx;
+    vector<int>                            m_ref_ratios;
+    vector<pr_dbl>                         m_grids;
+    vector<pair<ch_dom, double> >          m_domain_dx;
     double                                 m_coarsest_dx;
     string                                 m_domBC;
     double                                 m_alpha;
@@ -379,7 +379,7 @@ namespace PrCh_AMR_Elliptic
     ///the only constructor
     Proto_Conductivity_Op_Factory(
       const ch_dom                           &  a_coarsest_dom,
-      const vector<ch_dbl>                   &  a_grids,
+      const vector<pr_dbl>                   &  a_grids,
       const vector<int>                      &  a_ref_ratios,
       const double                           &  a_coarsest_dx,
       const string                           &  a_domBC,
@@ -399,6 +399,12 @@ namespace PrCh_AMR_Elliptic
       m_alpha         =  a_alpha       ;   
       m_beta          =  a_beta        ;
 
+      m_acoef = a_acoef;
+      m_bco_x = a_bco_x;
+      m_bco_y = a_bco_y;
+      m_bco_z = a_bco_z;
+
+      
       m_domain_dx.resize(a_grids.size());
       m_domain_dx[0].first  = a_coarsest_dom;
       m_domain_dx[0].second = a_coarsest_dx;
@@ -451,6 +457,42 @@ namespace PrCh_AMR_Elliptic
         a_ref_fine = m_ref_ratios[a_iref+1];
       }
     }
+
+    virtual void
+    getCoefficients(
+      shared_ptr<pr_cell_data>  & a_acoef,
+      shared_ptr<pr_xfac_data>  & a_bco_x,
+      shared_ptr<pr_yfac_data>  & a_bco_y,
+      shared_ptr<pr_zfac_data>  & a_bco_z,
+      int                         a_iref_index,
+      int                         a_mg_ref_rat)
+    {
+      if(a_mg_ref_rat == 1)
+      {
+        a_acoef = m_acoef[a_iref_index];
+        a_bco_x = m_bco_x[a_iref_index];
+        a_bco_y = m_bco_y[a_iref_index];
+        a_bco_z = m_bco_z[a_iref_index];
+      }
+      else
+      {
+        auto fine_dbl = m_grids[a_iref];
+        auto coar_dbl = fine_dbl.coarsen(a_mg_ref_rat);
+        a_acoef = shared_ptr<pr_cell_data>(new pr_cell_data(coar_dbl, 1, pr_pt::Zeros));
+        a_bco_x = shared_ptr<pr_xfac_data>(new pr_xfac_data(coar_dbl, 1, pr_pt::Zeros));
+        a_bco_y = shared_ptr<pr_yfac_data>(new pr_yfac_data(coar_dbl, 1, pr_pt::Zeros));
+        a_bco_z = shared_ptr<pr_zfac_data>(new pr_zfac_data(coar_dbl, 1, pr_pt::Zeros));
+        auto dit   =  a_acoef.begin();
+        for(int ibox = 0; ibox < dit.size(); ibox++)
+        {
+          PrChUtilities<1>::averageDownCell((*a_acoef)[dit[ibox]], (*m_acoef[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat);
+          PrChUtilities<1>::averageDownFace((*a_bco_x)[dit[ibox]], (*m_bco_x[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 0);
+          PrChUtilities<1>::averageDownFace((*a_bco_y)[dit[ibox]], (*m_bco_y[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 1);
+#if DIM==3
+          PrChUtilities<1>::averageDownFace((*a_bco_z)[dit[ibox]], (*m_bco_z[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 2);
+#endif        
+      }
+   }
       
     virtual inline ch_mglevelop*
     MGnewOp(const ch_dom         & a_dom_fine,
@@ -462,24 +504,35 @@ namespace PrCh_AMR_Elliptic
       int loc_ref_fine, loc_ref_coar;
       get_local_ref_ratios(loc_ref_fine, loc_ref_coar, iref);
       
-      int factor = 1;
+      int mgRefRat = 1;
       for(int idep = 0; idep < a_depth; idep++)
       {
-        factor*= 2;
+        mgRefRat*= 2;
       }
       ch_mglevelop* retval  = NULL;
-      bool grids_coarsenable = m_grids[iref].coarsenable(2*factor);
+      bool grids_coarsenable = m_grids[iref].coarsenable(2*mgRefRat);
       if((a_depth > 0) && (!grids_coarsenable))
       {
         retval = NULL;
       }
       else
       {
-
+        shared_ptr<pr_cell_data>  acoef;
+        shared_ptr<pr_xfac_data>  bco_x;
+        shared_ptr<pr_yfac_data>  bco_y;
+        shared_ptr<pr_zfac_data>  bco_z;
+        
+        getCoefficients(acoef,bco_x,bco_y,bco_z, iref, mgRefRat);
+        auto dblMG = acoef.layout();
         double loc_dx = m_domain_dx[iref].second; 
-        loc_dx *= factor;
+        loc_dx *= mgRefRat;
         Proto_Conductivity_Op* derivedOp = 
-          new Proto_Conductivity_Op(m_alpha,
+          new Proto_Conductivity_Op(acoef,
+                                    bco_x,
+                                    bco_y,
+                                    bco_z,
+                                    
+                                    m_alpha,
                                     m_beta,
                                     loc_dx,
                                     loc_ref_fine,
@@ -499,7 +552,12 @@ namespace PrCh_AMR_Elliptic
       double loc_dx = m_domain_dx[iref].second;
 
       Proto_Conductivity_Op* derivedOp = 
-        new Proto_Conductivity_Op(m_alpha,
+        new Proto_Conductivity_Op(m_acoef[iref],
+                                  m_bco_x[iref],
+                                  m_bco_y[iref],
+                                  m_bco_z[iref],
+                                  m_grids[iref],
+                                  m_alpha,
                                   m_beta,
                                   loc_dx,
                                   loc_ref_fine,
