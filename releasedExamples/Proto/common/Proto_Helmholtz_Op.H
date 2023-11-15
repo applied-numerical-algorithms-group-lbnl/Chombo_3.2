@@ -237,7 +237,7 @@ namespace PrCh_AMR_Elliptic
     ///the only constructor
     Proto_Helmholtz_Op_Factory(
       const ch_dom                 &        a_coarsest_dom,
-      const Chombo::Vector<ch_dbl> &        a_grids,
+      const Chombo::Vector<ch_dbl> &        a_grids, //just used for coarsenability
       const Chombo::Vector<int>    &        a_ref_ratios,
       const double                 &        a_coarsest_dx,
       const string                 &        a_domBC,

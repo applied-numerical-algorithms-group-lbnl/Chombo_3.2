@@ -485,11 +485,12 @@ namespace PrCh_AMR_Elliptic
         auto dit   =  a_acoef.begin();
         for(int ibox = 0; ibox < dit.size(); ibox++)
         {
-          PrChUtilities<1>::averageDownCell((*a_acoef)[dit[ibox]], (*m_acoef[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat);
-          PrChUtilities<1>::averageDownFace((*a_bco_x)[dit[ibox]], (*m_bco_x[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 0);
-          PrChUtilities<1>::averageDownFace((*a_bco_y)[dit[ibox]], (*m_bco_y[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 1);
-#if DIM==3
-          PrChUtilities<1>::averageDownFace((*a_bco_z)[dit[ibox]], (*m_bco_z[a_iref_index])[dit[ibox]], coar_dbl, fine_dbl, a_mg_ref_rat, 2);
+          auto coar_valid = 
+          PrChUtilities<1>::averageDownCell((*a_acoef)[dit[ibox]], (*m_acoef[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat);
+          PrChUtilities<1>::averageDownFace((*a_bco_x)[dit[ibox]], (*m_bco_x[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 0);
+          PrChUtilities<1>::averageDownFace((*a_bco_y)[dit[ibox]], (*m_bco_y[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 1);
+#if DIM==3                                                                                                                 ,
+          PrChUtilities<1>::averageDownFace((*a_bco_z)[dit[ibox]], (*m_bco_z[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 2);
 #endif        
       }
    }

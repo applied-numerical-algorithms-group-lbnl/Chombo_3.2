@@ -27,7 +27,8 @@ namespace Chombo
     ~local_test_harness()
     {;}
 
-    typedef        LevelData<FArrayBox>      ch_ldf;
+    typedef        LevelData<FArrayBox>      ch_ldf_cell;
+    typedef        LevelData<FluxBox>        ch_ldf_flux;
     typedef        ProblemDomain             ch_dom;
     typedef Proto::ProblemDomain             pr_dom;
     typedef Proto::LevelBoxData<double, 1>   pr_lbd;
@@ -38,7 +39,7 @@ namespace Chombo
 
     ///
     static void
-    setRHS(Vector<ch_ldf* >   a_rhs,
+    setRHS(Vector<ch_ldf_cell* >   a_rhs,
            Vector<ch_dom  >&  a_amrDomains,
            Vector<int     >&  a_refRatios,
            Vector<Real    >&  a_amrDx,
@@ -48,7 +49,7 @@ namespace Chombo
 
       for (int lev=0; lev<=a_finestLevel; lev++)
       {
-        ch_ldf& levelRhs = *(a_rhs[lev]);
+        ch_ldf_cell& levelRhs = *(a_rhs[lev]);
         const ch_dbl& levelGrids = levelRhs.getBoxes();
 
         // rhs is cell-centered...
@@ -65,8 +66,24 @@ namespace Chombo
 
     ///
     static void
-    solveForPhi(Vector<ch_ldf* >   a_phi_ch,
-                Vector<ch_ldf* >   a_rhs_ch,
+    defineAndSetCoefficients(RefCountedPtr< ch_ldf_cell> & a_acoef,
+                             RefCountedPtr< ch_ldf_flux> & a_bcoef,
+                             ch_dbl     & a_grids,
+                             double a_aval, double a_bval)
+    {
+      a_acoef = RefCountedPtr<ch_ldf_cell>(new ch_ldf_cell(a_grids, 1, IntVect::Zero));
+      a_bcoef = RefCountedPtr<ch_ldf_flux>(new ch_ldf_flux(a_grids, 1, IntVect::Zero));
+      DataIterator dit = a_grids.dataIterator();
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        (*a_acoef)[dit[ibox]].setVal(a_aval);
+        (*a_bcoef)[dit[ibox]].setVal(a_bval);
+      }
+    }
+    ///
+    static void
+    solveForPhi(Vector<ch_ldf_cell* >   a_phi_ch,
+                Vector<ch_ldf_cell* >   a_rhs_ch,
                 Vector<ch_dbl  >&  a_amr_grids,
                 Vector<ch_dom  >&  a_amr_domains,
                 Vector<int     >&  a_ref_ratios,
@@ -77,7 +94,14 @@ namespace Chombo
       ///the solver declaration has to change 
       shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
       shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
+      Vector<RefCountedPtr< ch_ldf_cell > > acoef(numLevels);
+      Vector<RefCountedPtr< ch_ldf_flux > > bcoef(numLevels);
 
+      for(int ilev = 0; ilev numLevels; ilev++)
+      {
+        double aval = 1; double bval = 1;
+        defineAndSetCoefficients(acoef[ilev], bcoef[ilev], a_amr_grids[ilev] , aval, bval);
+        
       ParmParse ppSolver("solver");
       Real alpha = 4586.;
       Real beta  = 4586.;
@@ -86,11 +110,12 @@ namespace Chombo
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amr_domains[0],
-                                                     a_ref_ratios,
-                                                     a_amr_grids,
-                                                     a_amrDx[0],
-                                                     domain_bc, alpha, beta);
+        PrChUtilities<1>::getProtoConductivityOpFactory(a_amr_domains[0],
+                                                        a_ref_ratios,
+                                                        a_amr_grids,
+                                                        a_amrDx[0],
+                                                        acoef, bcoef, 
+                                                        domain_bc, alpha, beta);
 
       PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids, a_amr_domains,
                                     a_ref_ratios, a_amrDx, solver_factory_ptr);
@@ -160,14 +185,14 @@ namespace Chombo
         amrGrids[ilev].print();
       }
       
-      Vector<ch_ldf* > phi_ch(numLevels, NULL);
-      Vector<ch_ldf* > rhs_ch(numLevels, NULL);
+      Vector<ch_ldf_cell* > phi_ch(numLevels, NULL);
+      Vector<ch_ldf_cell* > rhs_ch(numLevels, NULL);
 
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
-        phi_ch[lev] = new ch_ldf(levelGrids, 1, IntVect::Unit);
-        rhs_ch[lev] = new ch_ldf(levelGrids, 1, IntVect::Zero);
+        phi_ch[lev] = new ch_ldf_cell(levelGrids, 1, IntVect::Unit);
+        rhs_ch[lev] = new ch_ldf_cell(levelGrids, 1, IntVect::Zero);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );

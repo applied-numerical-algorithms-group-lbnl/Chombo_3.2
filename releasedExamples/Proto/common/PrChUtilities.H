@@ -15,6 +15,7 @@
 #include "CONSTANTS.H"
 #include "Proto.H"
 #include "Proto_Helmholtz_Op.H"
+#include "Proto__Op.H"
 #include "memusage.H"
 #include "Vector.H"
 
@@ -34,38 +35,69 @@ namespace Chombo
     ///no data. all static functions
     PrChUtilities(){;}
     ~PrChUtilities(){;}
-    typedef        LevelData<FArrayBox>          ch_ldf;
-    typedef        ProblemDomain                 ch_dom;
-    typedef Proto::ProblemDomain                 pr_dom;
-    typedef Proto::Point                         pr_pt;
-    typedef Proto::Box                           pr_box;
-    typedef        Box                           ch_box;
-    typedef        DisjointBoxLayout             ch_dbl;
-    typedef Proto::DisjointBoxLayout             pr_dbl;
-    typedef Proto::LevelBoxData<double,ncomp>    pr_lbd;
-    typedef        AMRLevelOp<pr_lbd>            ch_amrlevelop;
-    typedef        AMRLevelOpFactory<pr_lbd>     ch_factory;
-    typedef        MayDay                        ch_mayday;
+    typedef        LevelData<FArrayBox>                  ch_ldf_cell;
+    typedef        LevelData<FluxBox>                    ch_ldf_flux;
+    typedef        ProblemDomain                         ch_dom;
+    typedef Proto::ProblemDomain                         pr_dom;
+    typedef Proto::Point                                 pr_pt;
+    typedef Proto::Box                                   pr_box;
+    typedef        Box                                   ch_box;
+    typedef        DisjointBoxLayout                     ch_dbl;
+    typedef Proto::DisjointBoxLayout                     pr_dbl;
+    typedef Proto::LevelBoxData<double,ncomp,PR_CELL>    pr_lbd_cell;
+    typedef Proto::BoxData<double,ncomp>                 pr_box_data;
+    typedef        AMRLevelOp<pr_lbd_cell>               ch_amrlevelop;
+    typedef        AMRLevelOpFactory<pr_lbd_cell>        ch_factory;
+    typedef        MayDay                                ch_mayday;
 
 
-    ///AMRMultigrid's interface requires raw pointers
-    static Vector<ch_ldf*> getRawVectorCh(const Vector<RefCountedPtr<ch_ldf> > a_rhs_shared)
+    /// for averaging stuff based in cells
+    /**
+       set coarse value to arithmetic average of all fine cell values.
+     **/
+    static void
+    averageDownCell(pr_box_data       & a_coar,
+                    const pr_box_data & a_fine,
+                    const pr_box      & a_coar_valid,
+                    int                 a_ref_rat)
     {
-      Vector<ch_ldf *>  raw_rhs(a_rhs_shared.size(), NULL);
+      ch_mayday("average down cell not implemented");
+    }
+    /// for averaging stuff based in faces (
+    /**
+       set coarse value to arithmetic average of all fine face values.   Only faces in the same facedir plane are used.
+       The valid box is cell centered.
+     **/
+    static void
+    averageDownFace(pr_box_data       & a_coar,
+                    const pr_box_data & a_fine,
+                    const pr_box      & a_coar_valid,
+                    int                 a_ref_rat,
+                    int                 a_face_dir)
+    {
+      ch_mayday("average down cell not implemented");
+    }
+    
+    ///AMRMultigrid's interface requires raw pointers
+    static Vector<ch_ldf_cell*>
+    getRawVectorCh(const Vector<RefCountedPtr<ch_ldf_cell> > a_rhs_shared)
+    {
+      Vector<ch_ldf_cell *>  raw_rhs(a_rhs_shared.size(), NULL);
       for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
-        raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
+        raw_rhs[ilev] = (ch_ldf_cell*)(&(*a_rhs_shared[ilev]));
       }
       return raw_rhs;
     }
     
     ///AMRMultigrid's interface requires raw pointers
-    static Vector<pr_lbd*> getRawVectorPr(const vector<shared_ptr<pr_lbd> > a_rhs_shared)
+    static Vector<pr_lbd_cell*>
+    getRawVectorPr(const vector<shared_ptr<pr_lbd_cell> > a_rhs_shared)
     {
-      Vector<pr_lbd *>  raw_rhs(a_rhs_shared.size(), NULL);
+      Vector<pr_lbd_cell *>  raw_rhs(a_rhs_shared.size(), NULL);
       for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
-        raw_rhs[ilev] = (ch_ldf*)(&(*a_rhs_shared[ilev]));
+        raw_rhs[ilev] = (ch_ldf_cell*)(&(*a_rhs_shared[ilev]));
       }
       return raw_rhs;
     }
@@ -136,7 +168,7 @@ namespace Chombo
     
     ///Gets the data pointers from fabs.
     static vector<double*>
-    getRawHostData(const ch_ldf     & a_host_data) 
+    getRawHostData(const ch_ldf_cell     & a_host_data) 
     {
       auto grids =  a_host_data.disjointBoxLayout();
       auto dit   =  grids.dataIterator();
@@ -151,8 +183,8 @@ namespace Chombo
     
     /// Copy the contents of a proto data holder into a Chombo data holder.
     static void
-    copyToHost(ch_ldf       & a_host_data,
-               const pr_lbd & a_devi_data)
+    copyToHost(ch_ldf_cell       & a_host_data,
+               const pr_lbd_cell & a_devi_data)
     {
       CH_TIME(  "PrChUtilities::copyToHost");
       std::vector<double*> rawHostData  = getRawHostData(a_host_data);
@@ -162,8 +194,8 @@ namespace Chombo
 
     /// Copy the contents of a Chombo data holder into a proto data holder.
     static void
-    copyToDevice(pr_lbd             & a_devi_data,
-                 const ch_ldf       & a_host_data)
+    copyToDevice(pr_lbd_cell             & a_devi_data,
+                 const ch_ldf_cell       & a_host_data)
     {
       CH_TIME(  "PrChUtilities::copyToDevice");
       std::vector<double*> rawHostData    = getRawHostData(a_host_data);
@@ -173,8 +205,8 @@ namespace Chombo
 
     ///
     static void
-    setupSolver(shared_ptr< AMRMultiGrid< pr_lbd > >   a_amrSolver,
-                shared_ptr< LinearSolver< pr_lbd > >   a_bottomSolver,
+    setupSolver(shared_ptr< AMRMultiGrid< pr_lbd_cell > >   a_amrSolver,
+                shared_ptr< LinearSolver< pr_lbd_cell > >   a_bottomSolver,
                 const Vector<ch_dbl>& a_amrGrids,
                 const Vector<ch_dom>& a_amrDomains,
                 const Vector<int>& a_refRatios,
@@ -232,6 +264,25 @@ namespace Chombo
       
       ch_factory* base_ptr =  static_cast<ch_factory*>(derived_ptr);
       return shared_ptr<ch_factory>(base_ptr);
+    }
+    ///
+    static shared_ptr<ch_factory>
+    getProtoConductivityFactory(const ch_dom                             & a_coarsest_dom,
+                                const Vector<int>                        & a_ref_ratios,
+                                const Vector<ch_dbl>                     & a_grids,
+                                const double                             & a_coarsest_dx,
+                                const Vector<ch_rcp< ch_ldf_cell > >     & a_acoef,
+                                const Vector<ch_rcp< ch_ldf_flux > >     & a_bcoef,
+                                const string                             & a_domBC,
+                                const double                             & a_alpha,
+                                const double                             & a_beta)
+    {
+
+      shared_ptr<ch_factory> retval;
+      ch_mayday::Error("not implmented");
+
+      return retval;
+      
     }
     ///just always tag IntVect::Zero;
     static void
