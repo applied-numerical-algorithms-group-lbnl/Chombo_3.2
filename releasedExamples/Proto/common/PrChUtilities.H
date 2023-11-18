@@ -15,7 +15,7 @@
 #include "CONSTANTS.H"
 #include "Proto.H"
 #include "Proto_Helmholtz_Op.H"
-#include "Proto__Op.H"
+#include "Proto_Conductivity_Op.H"
 #include "memusage.H"
 #include "Vector.H"
 
@@ -35,48 +35,23 @@ namespace Chombo
     ///no data. all static functions
     PrChUtilities(){;}
     ~PrChUtilities(){;}
-    typedef        LevelData<FArrayBox>                  ch_ldf_cell;
-    typedef        LevelData<FluxBox>                    ch_ldf_flux;
-    typedef        ProblemDomain                         ch_dom;
-    typedef Proto::ProblemDomain                         pr_dom;
-    typedef Proto::Point                                 pr_pt;
-    typedef Proto::Box                                   pr_box;
-    typedef        Box                                   ch_box;
-    typedef        DisjointBoxLayout                     ch_dbl;
-    typedef Proto::DisjointBoxLayout                     pr_dbl;
-    typedef Proto::LevelBoxData<double,ncomp,PR_CELL>    pr_lbd_cell;
-    typedef Proto::BoxData<double,ncomp>                 pr_box_data;
-    typedef        AMRLevelOp<pr_lbd_cell>               ch_amrlevelop;
-    typedef        AMRLevelOpFactory<pr_lbd_cell>        ch_factory;
-    typedef        MayDay                                ch_mayday;
+    typedef        LevelData<FArrayBox>                         ch_ldf_cell;
+    typedef        LevelData<FluxBox>                           ch_ldf_flux;
+    typedef        ProblemDomain                                ch_dom;
+    typedef Proto::ProblemDomain                                pr_dom;
+    typedef Proto::Point                                        pr_pt;
+    typedef Proto::Box                                          pr_box;
+    typedef        Box                                          ch_box;
+    typedef        DisjointBoxLayout                            ch_dbl;
+    typedef Proto::DisjointBoxLayout                            pr_dbl;
+    typedef Proto::LevelBoxData< double, ncomp >                pr_lbd_cell; //memtype = default, centering = cell
+    typedef Proto::BoxData<double,ncomp>                        pr_box_data;
+    typedef        AMRLevelOp<pr_lbd_cell>                      ch_amrlevelop;
+    typedef        AMRLevelOpFactory<pr_lbd_cell>               ch_factory;
+    typedef        MayDay                                       ch_mayday;
+    typedef        RefCountedPtr< ch_ldf_cell >                 ch_ldf_cell_ptr;
+    typedef        RefCountedPtr< ch_ldf_flux >                 ch_ldf_flux_ptr;
 
-
-    /// for averaging stuff based in cells
-    /**
-       set coarse value to arithmetic average of all fine cell values.
-     **/
-    static void
-    averageDownCell(pr_box_data       & a_coar,
-                    const pr_box_data & a_fine,
-                    const pr_box      & a_coar_valid,
-                    int                 a_ref_rat)
-    {
-      ch_mayday("average down cell not implemented");
-    }
-    /// for averaging stuff based in faces (
-    /**
-       set coarse value to arithmetic average of all fine face values.   Only faces in the same facedir plane are used.
-       The valid box is cell centered.
-     **/
-    static void
-    averageDownFace(pr_box_data       & a_coar,
-                    const pr_box_data & a_fine,
-                    const pr_box      & a_coar_valid,
-                    int                 a_ref_rat,
-                    int                 a_face_dir)
-    {
-      ch_mayday("average down cell not implemented");
-    }
     
     ///AMRMultigrid's interface requires raw pointers
     static Vector<ch_ldf_cell*>
@@ -271,8 +246,8 @@ namespace Chombo
                                 const Vector<int>                        & a_ref_ratios,
                                 const Vector<ch_dbl>                     & a_grids,
                                 const double                             & a_coarsest_dx,
-                                const Vector<ch_rcp< ch_ldf_cell > >     & a_acoef,
-                                const Vector<ch_rcp< ch_ldf_flux > >     & a_bcoef,
+                                const Vector< ch_ldf_cell_ptr >          & a_acoef,
+                                const Vector< ch_ldf_flux_ptr >          & a_bcoef,
                                 const string                             & a_domBC,
                                 const double                             & a_alpha,
                                 const double                             & a_beta)

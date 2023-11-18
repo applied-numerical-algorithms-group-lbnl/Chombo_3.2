@@ -62,7 +62,7 @@ namespace Chombo
           thisRhs.setVal(1.);
         }
       }
-    }
+    }//end function setRHS
 
     ///
     static void
@@ -71,6 +71,8 @@ namespace Chombo
                              ch_dbl     & a_grids,
                              double a_aval, double a_bval)
     {
+      CH_TIME("defineAndSetCoefficients");
+
       a_acoef = RefCountedPtr<ch_ldf_cell>(new ch_ldf_cell(a_grids, 1, IntVect::Zero));
       a_bcoef = RefCountedPtr<ch_ldf_flux>(new ch_ldf_flux(a_grids, 1, IntVect::Zero));
       DataIterator dit = a_grids.dataIterator();
@@ -79,7 +81,8 @@ namespace Chombo
         (*a_acoef)[dit[ibox]].setVal(a_aval);
         (*a_bcoef)[dit[ibox]].setVal(a_bval);
       }
-    }
+    } //end function defineAndSetCoefficients
+    
     ///
     static void
     solveForPhi(Vector<ch_ldf_cell* >   a_phi_ch,
@@ -87,21 +90,24 @@ namespace Chombo
                 Vector<ch_dbl  >&  a_amr_grids,
                 Vector<ch_dom  >&  a_amr_domains,
                 Vector<int     >&  a_ref_ratios,
-                Vector<Real    >&  a_amrDx,
-                int a_finestLevel)
+                Vector<Real    >&  a_amrDx)
     {
       CH_TIME("solveForPhi");
-      ///the solver declaration has to change 
+      int numLevels = a_amr_grids.size();
+      
+      ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
       shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
       Vector<RefCountedPtr< ch_ldf_cell > > acoef(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > bcoef(numLevels);
 
-      for(int ilev = 0; ilev numLevels; ilev++)
+      for(int ilev = 0; ilev < numLevels; ilev++)
       {
         double aval = 1; double bval = 1;
-        defineAndSetCoefficients(acoef[ilev], bcoef[ilev], a_amr_grids[ilev] , aval, bval);
-        
+        defineAndSetCoefficients(acoef[ilev], bcoef[ilev],
+                                 a_amr_grids[ilev], aval, bval);
+      }
+      
       ParmParse ppSolver("solver");
       Real alpha = 4586.;
       Real beta  = 4586.;
@@ -110,20 +116,21 @@ namespace Chombo
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>::getProtoConductivityOpFactory(a_amr_domains[0],
+        PrChUtilities<1>:: getProtoConductivityFactory( a_amr_domains[0],
                                                         a_ref_ratios,
                                                         a_amr_grids,
                                                         a_amrDx[0],
                                                         acoef, bcoef, 
                                                         domain_bc, alpha, beta);
 
-      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids, a_amr_domains,
-                                    a_ref_ratios, a_amrDx, solver_factory_ptr);
+      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
+                                    a_amr_domains, a_ref_ratios, a_amrDx,
+                                    solver_factory_ptr);
 
       ///define the proto versions of the data
-      Vector<pr_lbd*>  phi_pr(a_amr_grids.size(), NULL);
-      Vector<pr_lbd*>  rhs_pr(a_amr_grids.size(), NULL);
-      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      Vector<pr_lbd*>   phi_pr(numLevels, NULL);
+      Vector<pr_lbd*>   rhs_pr(numLevels, NULL);
+      for(int ilev = 0; ilev < numLevels; ilev++)
       {
         shared_ptr<pr_dbl> layout_ptr =
           PrChUtilities<1>::getProtoLayout(a_amr_grids[ilev]);
@@ -134,14 +141,14 @@ namespace Chombo
       }
 
       //get the rhs onto the device
-      for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
+      for(int ilev = 0; ilev < numLevels; ilev++)
       {
         PrChUtilities<1>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
       }
 
       //solve for phi on the device
-      bool zeroInitialGuess = true;
-      amr_solver_ptr->solve(phi_pr, rhs_pr, a_finestLevel, 0, zeroInitialGuess); 
+      bool zeroInitialGuess = true;  int lbase = 0; int lmax = numLevels-1; bool print = true;
+      amr_solver_ptr->solve(phi_pr, rhs_pr, lmax, lbase, zeroInitialGuess, print); 
 
       //get phi back onto the host
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
@@ -155,8 +162,7 @@ namespace Chombo
         delete(phi_pr[ilev]);
         delete(rhs_pr[ilev]);
       }
-    }
-
+    }//end function solveForPhi
   
 
     ///
@@ -196,7 +202,7 @@ namespace Chombo
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
-      solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx, finestLevel );
+      solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx);
 
 #ifdef CH_USE_HDF5
       //write the answer to file
@@ -227,31 +233,24 @@ namespace Chombo
 
 
       return 0;
-    }
-  };
-}
+    } // end function runSolver
+  };  // end class local_test_harness
+}     // end namespace Chombo
 /*****/
 int main(int argc, char* argv[])
 {
+
 #ifdef CH_MPI
   MPI_Init(&argc, &argv);
 #endif
-  int status = 0;
-
-  // scoping...
+  if (argc < 2)
   {
-    if (argc < 2)
-    {
-      std::cerr<< " usage " << argv[0] << " <input_file_name> " << std::endl;
-      exit(0);
-    }
-    char* in_file = argv[1];
-    Chombo::ParmParse  pp(argc-2,argv+2,NULL,in_file);
-
-    int solverStatus = Chombo::local_test_harness::runSolver();
-    status += solverStatus;
+    std::cerr<< " usage " << argv[0] << " <input_file_name> " << std::endl;
+    exit(0);
   }
-  //end scoping trick
+  char* in_file = argv[1];
+  Chombo::ParmParse  pp(argc-2,argv+2,NULL,in_file);
+  int status = Chombo::local_test_harness::runSolver();
   
 #ifdef CH_MPI
   dumpmemoryatexit();
