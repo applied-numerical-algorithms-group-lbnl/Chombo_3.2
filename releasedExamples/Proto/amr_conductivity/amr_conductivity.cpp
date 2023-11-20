@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
-#include "Proto_Helmholtz_Op.H"
+#include "Proto_Conductivity_Op.H"
 #include "DebuggingTools.H"
 
 namespace Chombo
