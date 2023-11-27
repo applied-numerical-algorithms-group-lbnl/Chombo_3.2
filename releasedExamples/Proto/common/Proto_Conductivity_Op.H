@@ -485,6 +485,13 @@ namespace PrCh_AMR_Elliptic
       pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
       pr_pt dst_ref_ratio = pr_pt::Ones(1);
       pr_pt dst_shift     = pr_pt::Zeros();
+#if 0      
+      /**
+         This breaks due to a proto quirk that will probably be fixed soon.
+         Right now, adding a stencil with non unity refinement ratio 
+         to an empty stencil causes a runtime error.
+         dtg 11-27-2023
+      **/
       pr_sten whole_sten;
       for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
       {
@@ -493,9 +500,28 @@ namespace PrCh_AMR_Elliptic
                         dst_ref_ratio, dst_shift, src_ref_ratio);
         whole_sten += pt_sten;
       }
+#else
+      ///This is the ugly workaround.
+      vector<pr_sten> pt_stens(ref_box.size());
+      int iref = 0;
+      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
+      {
+        pr_pt ref_pt = *boxit;
+        pr_sten pt_sten(pr_shift(ref_pt), weight,
+                        dst_ref_ratio, dst_shift, src_ref_ratio);
+        pt_stens[iref] = pt_sten;
+        iref++;
+      }
+      pr_sten whole_sten(pt_stens[0]);
+      for(int ivec = 1 /* important that this is = 1*/;
+          ivec < pt_stens.size(); ivec++) 
+      {
+        whole_sten += pt_stens[ivec];
+      }
+#endif      
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
       bool initToZero = true; double applyScale = 1.;
-      whole_sten.apply(a_coar, fine_cast, a_coar_valid, initToZero, applyScale);
+      whole_sten.apply(fine_cast, a_coar, a_coar_valid, initToZero, applyScale);
     }
     /// for averaging stuff based in faces 
     /**
@@ -523,6 +549,13 @@ namespace PrCh_AMR_Elliptic
       pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
       pr_pt dst_ref_ratio = pr_pt::Ones(1);
       pr_pt dst_shift     = pr_pt::Zeros();
+#if 0
+      /**
+         This breaks due to a proto quirk that will probably be fixed soon.
+         Right now, adding a stencil with non unity refinement ratio 
+         to an empty stencil causes a runtime error.
+         dtg 11-27-2023
+      **/
       pr_sten whole_sten;
       for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
       {
@@ -531,13 +564,31 @@ namespace PrCh_AMR_Elliptic
                         dst_ref_ratio, dst_shift, src_ref_ratio);
         whole_sten += pt_sten;
       }
+#else
+      ///this is the ugly workaround
+      vector<pr_sten> pt_stens(ref_box.size());
+      int iref = 0;
+      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
+      {
+        pr_pt ref_pt = *boxit;
+        pr_sten pt_sten(pr_shift(ref_pt), weight,
+                        dst_ref_ratio, dst_shift, src_ref_ratio);
+        pt_stens[iref] = pt_sten;
+        iref++;
+      }
+      pr_sten whole_sten(pt_stens[0]);
+      for(int ivec = 1 /* important that this is = 1*/; ivec < pt_stens.size(); ivec++) 
+      {
+        whole_sten += pt_stens[ivec];
+      }
+#endif      
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
       bool initToZero = true; double applyScale = 1.;
       pr_box coar_face_valid = a_coar_valid;
       coar_face_valid.m_high[a_face_dir] += 1;
       ref_box.recomputeSize();  // required to keep box data consistent after above shenannigans.
       
-      whole_sten.apply(a_coar, fine_cast, coar_face_valid, initToZero, applyScale);
+      whole_sten.apply(fine_cast, a_coar, coar_face_valid, initToZero, applyScale);
 
     }
 
@@ -566,7 +617,9 @@ namespace PrCh_AMR_Elliptic
         a_acoef = shared_ptr<pr_cell_data>(new pr_cell_data(coar_dbl,  pr_pt::Zeros()));
         a_bco_x = shared_ptr<pr_xfac_data>(new pr_xfac_data(coar_dbl,  pr_pt::Zeros()));
         a_bco_y = shared_ptr<pr_yfac_data>(new pr_yfac_data(coar_dbl,  pr_pt::Zeros()));
+#if DIM==3        
         a_bco_z = shared_ptr<pr_zfac_data>(new pr_zfac_data(coar_dbl,  pr_pt::Zeros()));
+#endif        
         auto dit   =  a_acoef->begin();
         for(int ibox = 0; ibox < dit.size(); ibox++)
         {

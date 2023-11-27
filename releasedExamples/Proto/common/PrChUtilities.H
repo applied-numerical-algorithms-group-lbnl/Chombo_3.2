@@ -196,7 +196,51 @@ namespace Chombo
                  const ch_ldf_flux_ptr       & a_host_flux_ptr)
     {
       CH_TIME(  "PrChUtilities::copyToDevice-Flux");
-      ch_mayday::Error("not implemented");
+
+      auto grids    =  a_host_flux_ptr->disjointBoxLayout();
+      auto dit_pr   =  a_devi_xfac_ptr->dataIterator();
+      auto dit_ch   =  grids.dataIterator();
+      
+      for(int ibox  = 0; ibox < dit_ch.size(); ibox++)
+      {
+        auto ind_ch = dit_ch[ibox];
+        auto ind_pr = dit_pr[ibox];
+        {
+          const auto  &   xflux_ch  = (*a_host_flux_ptr)[ind_ch][0];
+          auto        &   xflux_pr  = (*a_devi_xfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = xflux_ch.box();
+          const double*   host_data = xflux_ch.dataPtr(0);
+          double      *   devi_data = xflux_pr.data();
+          
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+        {
+          const auto  &   yflux_ch  = (*a_host_flux_ptr)[ind_ch][1];
+          auto        &   yflux_pr  = (*a_devi_yfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = yflux_ch.box();
+          const double*   host_data = yflux_ch.dataPtr(0);
+          double      *   devi_data = yflux_pr.data();
+          
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+#if DIM==3        
+        {
+          const auto  &   zflux_ch  = (*a_host_flux_ptr)[ind_ch][2];
+          auto        &   zflux_pr  = (*a_devi_zfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = zflux_ch.box();
+          const double*   host_data = zflux_ch.dataPtr(0);
+          double      *   devi_data = zflux_pr.data();
+
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+#endif        
+      }
     }
     
     ///
