@@ -20,8 +20,10 @@ unsigned int  operaConduF(int                     a_pt[DIM],
                           Real                    a_beta)
 {
   //z is set to zero in 2d
-  Real divergence = a_xincr(0) + a_yincr(0) + a_zincr(0);
-  Real lphval = a_alpha*a_acoef(0)*a_phi(0) + a_beta*divergence;
+  double  divergence = a_xincr(0) + a_yincr(0) + a_zincr(0);
+  double  phival     = a_phi(0);  
+  double  acoval     = a_acoef(0);  
+  double  lphval     = a_alpha*acoval*phival + a_beta*divergence;
   a_lph(0) = lphval;
   return 0;
 }
@@ -215,12 +217,12 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///sets a_incr =  (b_i+1/2*grad_phi_i+1/2 - b_i+1/2*grad_phi_i+1/2)/m_dx
-    void
-    getDivergenceIncrement(pr_box_data     & a_incr,
+    int
+    getDivergenceIncrement(pr_box_data           & a_incr,
                            const pr_box_data     & a_phi,
                            const pr_box_data     & a_bcoef,
-                           const pr_box    & a_valid,
-                           const int       & a_face_dir)
+                           const pr_box          & a_valid,
+                           const int             & a_face_dir)
     {
       CH_TIME("Pr_Conductivity::getDivergenceIcrement");
       
@@ -241,9 +243,13 @@ namespace PrCh_AMR_Elliptic
       pr_box_data bco_grad_phi(face_box);
       bool initToZero = true; double applyScale = 1;
       pr_box_data& phicast  = (pr_box_data &) a_phi;
-      grad_sten.apply(bco_grad_phi, phicast, face_box, initToZero, applyScale);
+      ///remember that this goes src, dst instead of chombo standard dst,src
+      grad_sten.apply(phicast, bco_grad_phi, face_box, initToZero, applyScale);
       bco_grad_phi *= a_bcoef;
-      grad_sten.apply(a_incr, bco_grad_phi, a_valid, initToZero, applyScale);
+      ///remember that this goes src, dst instead of chombo standard dst,src
+      grad_sten.apply(bco_grad_phi, a_incr , a_valid , initToZero, applyScale);
+      
+      return 0;
     }
     
     ///For this one, the derived class may assume all ghost cells have been set correctly
@@ -262,9 +268,9 @@ namespace PrCh_AMR_Elliptic
         const auto  & acofab = (*m_acoef)[dit[ibox]];
         auto valid           =    m_grids[dit[ibox]];
         const auto& bco_x    = (*m_bco_x)[dit[ibox]];
-        const auto& bco_y    = (*m_bco_x)[dit[ibox]];
+        const auto& bco_y    = (*m_bco_y)[dit[ibox]];
 #if DIM==3             
-        const auto& bco_z    = (*m_bco_x)[dit[ibox]];
+        const auto& bco_z    = (*m_bco_z)[dit[ibox]];
 #endif        
         pr_box_data xincr(valid); xincr.setVal(0.);
         pr_box_data yincr(valid); yincr.setVal(0.);
@@ -466,22 +472,12 @@ namespace PrCh_AMR_Elliptic
         a_ref_fine = m_ref_ratios[a_iref+1];
       }
     }//end function get_local_ref_ratios
-    /// for averaging stuff based in cells
-    /**
-       set coarse value to arithmetic average of all fine cell values.
-     **/
-    static void
-    averageDownCell(pr_box_data       & a_coar,
-                    const pr_box_data & a_fine,
-                    const pr_box      & a_coar_valid,
-                    int                 a_ref_rat)
-    {
-      pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
-      pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
-      pr_box ref_box = unit_box.refine(pt_ref_rat);
-      int numPts = ref_box.size();
-      double weight = 1.0/double(numPts);
 
+    pr_sten getStencilFromRefBox(pr_box a_ref_box,
+                                 int    a_ref_rat)
+    {
+      int numPts = a_ref_box.size();
+      double weight = 1.0/double(numPts);
       pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
       pr_pt dst_ref_ratio = pr_pt::Ones(1);
       pr_pt dst_shift     = pr_pt::Zeros();
@@ -493,18 +489,19 @@ namespace PrCh_AMR_Elliptic
          dtg 11-27-2023
       **/
       pr_sten whole_sten;
-      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
+      for(auto boxit = a_ref_box.begin(); boxit != a_ref_box.end(); ++boxit)
       {
         pr_pt ref_pt = *boxit;
         pr_sten pt_sten(pr_shift(ref_pt), weight,
                         dst_ref_ratio, dst_shift, src_ref_ratio);
         whole_sten += pt_sten;
       }
+    
 #else
       ///This is the ugly workaround.
-      vector<pr_sten> pt_stens(ref_box.size());
+      vector<pr_sten> pt_stens(a_ref_box.size());
       int iref = 0;
-      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
+      for(auto boxit = a_ref_box.begin(); boxit != a_ref_box.end(); ++boxit)
       {
         pr_pt ref_pt = *boxit;
         pr_sten pt_sten(pr_shift(ref_pt), weight,
@@ -519,6 +516,25 @@ namespace PrCh_AMR_Elliptic
         whole_sten += pt_stens[ivec];
       }
 #endif      
+      return whole_sten;
+    }
+
+    /// for averaging stuff based in cells
+    /**
+       set coarse value to arithmetic average of all fine cell values.
+     **/
+    static void
+    averageDownCell(pr_box_data       & a_coar,
+                    const pr_box_data & a_fine,
+                    const pr_box      & a_coar_valid,
+                    int                 a_ref_rat)
+    {
+      pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
+      pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
+      pr_box ref_box = unit_box.refine(pt_ref_rat);
+      pr_sten whole_sten = getStencilFromRefBox(ref_box);
+
+      
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
       bool initToZero = true; double applyScale = 1.;
       whole_sten.apply(fine_cast, a_coar, a_coar_valid, initToZero, applyScale);
@@ -544,49 +560,13 @@ namespace PrCh_AMR_Elliptic
       
       int numPts = ref_box.size();
       double weight = 1.0/double(numPts);
+      pr_sten whole_sten = getStencilFromRefBox(ref_box);
 
-      ///I think this is correct even though we are restricting the box --dtg
-      pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
-      pr_pt dst_ref_ratio = pr_pt::Ones(1);
-      pr_pt dst_shift     = pr_pt::Zeros();
-#if 0
-      /**
-         This breaks due to a proto quirk that will probably be fixed soon.
-         Right now, adding a stencil with non unity refinement ratio 
-         to an empty stencil causes a runtime error.
-         dtg 11-27-2023
-      **/
-      pr_sten whole_sten;
-      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
-      {
-        pr_pt ref_pt = *boxit;
-        pr_sten pt_sten(pr_shift(ref_pt), weight,
-                        dst_ref_ratio, dst_shift, src_ref_ratio);
-        whole_sten += pt_sten;
-      }
-#else
-      ///this is the ugly workaround
-      vector<pr_sten> pt_stens(ref_box.size());
-      int iref = 0;
-      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
-      {
-        pr_pt ref_pt = *boxit;
-        pr_sten pt_sten(pr_shift(ref_pt), weight,
-                        dst_ref_ratio, dst_shift, src_ref_ratio);
-        pt_stens[iref] = pt_sten;
-        iref++;
-      }
-      pr_sten whole_sten(pt_stens[0]);
-      for(int ivec = 1 /* important that this is = 1*/; ivec < pt_stens.size(); ivec++) 
-      {
-        whole_sten += pt_stens[ivec];
-      }
-#endif      
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
       bool initToZero = true; double applyScale = 1.;
       pr_box coar_face_valid = a_coar_valid;
       coar_face_valid.m_high[a_face_dir] += 1;
-      ref_box.recomputeSize();  // required to keep box data consistent after above shenannigans.
+      coar_face_valid.recomputeSize();  // required to keep box data consistent after above shenannigans.
       
       whole_sten.apply(fine_cast, a_coar, coar_face_valid, initToZero, applyScale);
 
