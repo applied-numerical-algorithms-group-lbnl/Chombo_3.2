@@ -230,24 +230,31 @@ namespace PrCh_AMR_Elliptic
       //Proto::Stencil<double> home(Proto::Shift(Proto::Point::Zeros()), 1.0);
       
       pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir);
+      pr_pt righ_point = (+1)*pr_pt::Basis(a_face_dir);
       pr_shift left(left_point);
+      pr_shift righ(righ_point);
       pr_shift home(Proto::Point::Zeros());
 
-      pr_sten hi(home,  1./m_dx);
-      pr_sten lo(left, -1./m_dx);
+      pr_sten home_sten(home, 1./m_dx);
+      pr_sten left_sten(left, 1./m_dx);
+      pr_sten righ_sten(righ, 1./m_dx);
 
-      pr_sten grad_sten = hi - lo;
+      pr_sten home_minus_left = home_sten - left_sten; 
+      pr_sten righ_minus_home = righ_sten - home_sten;
+      
       pr_box face_box = a_valid;
       face_box.m_high[a_face_dir] += 1;
       face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       pr_box_data bco_grad_phi(face_box);
       bool initToZero = true; double applyScale = 1;
       pr_box_data& phicast  = (pr_box_data &) a_phi;
-      ///remember that this goes src, dst instead of chombo standard dst,src
-      grad_sten.apply(phicast, bco_grad_phi, face_box, initToZero, applyScale);
+      a_incr.setVal(-4586.);
+      
+      home_minus_left.apply(phicast     , bco_grad_phi, ///this arg list is src, dst  so bco_grad_phi is the output
+                            face_box, initToZero, applyScale);
       bco_grad_phi *= a_bcoef;
-      ///remember that this goes src, dst instead of chombo standard dst,src
-      grad_sten.apply(bco_grad_phi, a_incr , a_valid , initToZero, applyScale);
+      righ_minus_home.apply(bco_grad_phi, a_incr ,      ///this arg list is src, dst so a_incr is the output
+                            a_valid , initToZero, applyScale);
       
       return 0;
     }
@@ -473,49 +480,31 @@ namespace PrCh_AMR_Elliptic
       }
     }//end function get_local_ref_ratios
 
-    pr_sten getStencilFromRefBox(pr_box a_ref_box,
-                                 int    a_ref_rat)
+    static pr_sten
+    getStencilFromRefBox(pr_box a_ref_box,
+                         int    a_ref_rat)
     {
       int numPts = a_ref_box.size();
       double weight = 1.0/double(numPts);
       pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
       pr_pt dst_ref_ratio = pr_pt::Ones(1);
       pr_pt dst_shift     = pr_pt::Zeros();
-#if 0      
       /**
-         This breaks due to a proto quirk that will probably be fixed soon.
+         Yes, I know I am setting things on an  empty stencil.
          Right now, adding a stencil with non unity refinement ratio 
-         to an empty stencil causes a runtime error.
-         dtg 11-27-2023
+         to an empty stencil without doing this causes a runtime error.
+         dtg 11-28-2023
       **/
       pr_sten whole_sten;
+      whole_sten.srcRatio()  = src_ref_ratio;
+      whole_sten.destRatio() = dst_ref_ratio;
       for(auto boxit = a_ref_box.begin(); boxit != a_ref_box.end(); ++boxit)
       {
         pr_pt ref_pt = *boxit;
-        pr_sten pt_sten(pr_shift(ref_pt), weight,
-                        dst_ref_ratio, dst_shift, src_ref_ratio);
+        pr_sten pt_sten(pr_shift(ref_pt), weight, dst_ref_ratio, dst_shift, src_ref_ratio);
         whole_sten += pt_sten;
       }
     
-#else
-      ///This is the ugly workaround.
-      vector<pr_sten> pt_stens(a_ref_box.size());
-      int iref = 0;
-      for(auto boxit = a_ref_box.begin(); boxit != a_ref_box.end(); ++boxit)
-      {
-        pr_pt ref_pt = *boxit;
-        pr_sten pt_sten(pr_shift(ref_pt), weight,
-                        dst_ref_ratio, dst_shift, src_ref_ratio);
-        pt_stens[iref] = pt_sten;
-        iref++;
-      }
-      pr_sten whole_sten(pt_stens[0]);
-      for(int ivec = 1 /* important that this is = 1*/;
-          ivec < pt_stens.size(); ivec++) 
-      {
-        whole_sten += pt_stens[ivec];
-      }
-#endif      
       return whole_sten;
     }
 
@@ -532,7 +521,7 @@ namespace PrCh_AMR_Elliptic
       pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
       pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
       pr_box ref_box = unit_box.refine(pt_ref_rat);
-      pr_sten whole_sten = getStencilFromRefBox(ref_box);
+      pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
 
       
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
@@ -558,9 +547,7 @@ namespace PrCh_AMR_Elliptic
       ref_box.m_high[a_face_dir] = 0;
       ref_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       
-      int numPts = ref_box.size();
-      double weight = 1.0/double(numPts);
-      pr_sten whole_sten = getStencilFromRefBox(ref_box);
+      pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
 
       pr_box_data& fine_cast = (pr_box_data&) a_fine;
       bool initToZero = true; double applyScale = 1.;

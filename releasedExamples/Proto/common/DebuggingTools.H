@@ -2,11 +2,11 @@
 #define ____Debugging_Tools____
 ///set this stuff so you can customize your area
 //box bounds of area
-#define DBG_LOX -1
-#define DBG_LOY -1
-#define DBG_LOZ -1
-#define DBG_HIX 2
-#define DBG_HIY 32
+#define DBG_LOX 0
+#define DBG_LOY 0
+#define DBG_LOZ 0
+#define DBG_HIX 4
+#define DBG_HIY 7
 #define DBG_HIZ 0
 
 #include "Proto.H"
@@ -37,7 +37,16 @@ namespace PrChDebug
   typedef    Proto::DisjointBoxLayout        pr_dbl;
   typedef    Proto::LevelBoxData<double,1>   pr_lbd_1;
   typedef    Proto::LevelBoxData<double,DIM> pr_lbd_DIM;
-
+  typedef    Proto::Stencil<double>          pr_sten;
+  
+  void
+  dumpSten(pr_sten* a_sten_ptr)
+  {
+    if(a_sten_ptr != NULL)
+    {
+      a_sten_ptr->print();
+    }
+  }
   ///
   void 
   dumpAreaCh(ch_fab* dataPtr)
@@ -191,6 +200,7 @@ inline void func_to_get_functions_into_namespace()
   PrChDebug::dumpAreaPr(NULL);
   PrChDebug::dumpLDAreaCh(NULL);
   PrChDebug::dumpLDAreaPr(NULL);
+  PrChDebug::dumpSten(NULL);
 }
 
 #undef DBG_LOX 
