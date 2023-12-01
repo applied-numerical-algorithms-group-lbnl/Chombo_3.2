@@ -208,7 +208,7 @@ namespace PrCh_AMR_Elliptic
         //something fake to send
         const auto& bco_z    = (*m_bco_y)[dit[ibox]];
 #endif
-        ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
+        ///compute relaxation coefficient
         Proto::forallInPlace_i(lambdaCondu, valid, lamfab,
                                acofab, bco_x, bco_y, bco_z,
                                m_alpha, m_beta, m_dx);
@@ -216,7 +216,7 @@ namespace PrCh_AMR_Elliptic
 
     }
 
-    ///sets a_incr =  (b_i+1/2*grad_phi_i+1/2 - b_i+1/2*grad_phi_i+1/2)/m_dx
+    ///sets a_incr =  (b_i+1/2*grad_phi_i+1/2 - b_i-1/2*grad_phi_i-1/2)/m_dx
     int
     getDivergenceIncrement(pr_box_data           & a_incr,
                            const pr_box_data     & a_phi,
