@@ -6,6 +6,30 @@
 
 #ifndef __Proto_Viscous_Tensor_Op_H__
 #define __Proto_Viscous_Tensor_Op_H__
+        ///a_flux = eta( grad u + grad u T) + lambda I div U;
+PROTO_KERNEL_START 
+unsigned int  fluxFuncViscoF(int                     a_pt[DIM],
+                             Proto::Var<Real, 1>     a_flux,
+                             Proto::Var<Real, 1>     a_grad_u,
+                             Proto::Var<Real, 1>     a_grad_u_t,
+                             Proto::Var<Real, 1>     a_div_u,
+                             Proto::Var<Real, 1>     a_eta,
+                             Proto::Var<Real, 1>     a_lambda,
+                             int                     a_face_dir,
+                             int                     a_vel_comp)
+{
+  a_flux(0) = a_eta(0)*(a_grad_u(0) + a_grad_u_t(0));
+  if(a_face_dir == a_vel_comp)
+  {
+    a_flux(0) += a_lambda(0)*a_div_u(0);
+  }
+  return 0;
+}
+PROTO_KERNEL_END(fluxFuncViscoF, fluxFuncVisco)
+
+        Proto::forallInPlace_i(fluxFuncVisco, flux_box, flux_comp,
+                               grad_u, grad_u_t, div_u,
+                               a_eta, a_lam, a_face_dir);
 
 ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
 PROTO_KERNEL_START 
@@ -166,29 +190,31 @@ PROTO_KERNEL_END(gsrbViscoF, gsrbVisco)
 namespace PrCh_AMR_Elliptic
 {
   ///trying to stick with mostly Proto data holders here
-  typedef Proto::Stencil<double>                                                           pr_sten;
-  typedef Proto::InterpStencil<double>                                                     pr_interp_sten;
-  typedef Proto::Point                                                                     pr_pt;
-  typedef Proto::Box                                                                       pr_box;
-  typedef Proto::BoxData<double, 1  >                                                      pr_box_data_sca;
-  typedef Proto::BoxData<double, DIM>                                                      pr_box_data_vec;
-  typedef Proto::DisjointBoxLayout                                                         pr_dbl;
-  typedef Proto::Shift                                                                     pr_shift;
-  typedef Proto::LevelBoxData<double,    1 , Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data_sca;
-  typedef Proto::LevelBoxData<double,    1 , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >   pr_xfac_data_sca;
-  typedef Proto::LevelBoxData<double,    1 , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >   pr_yfac_data_sca;
-  typedef Proto::LevelBoxData<double,    1 , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >   pr_zfac_data_sca;
-  typedef Proto::LevelBoxData<double,  DIM , Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data_vec;
-  typedef Proto::LevelBoxData<double,  DIM , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >   pr_xfac_data_vec;
-  typedef Proto::LevelBoxData<double,  DIM , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >   pr_yfac_data_vec;
-  typedef Proto::LevelBoxData<double,  DIM , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >   pr_zfac_data_vec;
+  typedef Proto::Stencil<double>                                                              pr_sten;
+  typedef Proto::InterpStencil<double>                                                        pr_interp_sten;
+  typedef Proto::Point                                                                        pr_pt;
+  typedef Proto::Box                                                                          pr_box;
+  typedef Proto::BoxData<double, 1  >                                                         pr_box_data_sca;
+  typedef Proto::BoxData<double, DIM>                                                         pr_box_data_vec;
+  typedef Proto::BoxData<double, DIM*DIM>                                                     pr_box_data_ten;
+  typedef Proto::DisjointBoxLayout                                                            pr_dbl;
+  typedef Proto::Shift                                                                        pr_shift;
+  typedef Proto::LevelBoxData<double,    1    , Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data_sca;
+  typedef Proto::LevelBoxData<double,    1    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >   pr_xfac_data_sca;
+  typedef Proto::LevelBoxData<double,    1    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >   pr_yfac_data_sca;
+  typedef Proto::LevelBoxData<double,    1    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >   pr_zfac_data_sca;
+  typedef Proto::LevelBoxData<double,  DIM    , Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data_vec;
+  typedef Proto::LevelBoxData<double,  DIM*DIM, Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data_ten;
+  typedef Proto::LevelBoxData<double,  DIM    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >   pr_xfac_data_vec;
+  typedef Proto::LevelBoxData<double,  DIM    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >   pr_yfac_data_vec;
+  typedef Proto::LevelBoxData<double,  DIM    , Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >   pr_zfac_data_vec;
                                                                  
   ///AMRMultigrid forces me to use some of these.
-  typedef Chombo::ProblemDomain                                                        ch_dom;
-  typedef Chombo::MayDay                                                               ch_mayday;
-  typedef Chombo::AMRLevelOpFactory<pr_cell_data_sca>                                  ch_amrlevelop_factory;
-  typedef Chombo::AMRLevelOp<       pr_cell_data_sca>                                  ch_amrlevelop;
-  typedef Chombo::MGLevelOp<        pr_cell_data_sca>                                  ch_mglevelop;
+  typedef Chombo::ProblemDomain                                                               ch_dom;
+  typedef Chombo::MayDay                                                                      ch_mayday;
+  typedef Chombo::AMRLevelOpFactory<pr_cell_data_sca>                                         ch_amrlevelop_factory;
+  typedef Chombo::AMRLevelOp<       pr_cell_data_sca>                                         ch_amrlevelop;
+  typedef Chombo::MGLevelOp<        pr_cell_data_sca>                                         ch_mglevelop;
 
   /// Viscous Tensor operator with variable coefficients.
   /**
@@ -219,6 +245,7 @@ namespace PrCh_AMR_Elliptic
     shared_ptr<pr_yfac_data_sca>  m_lam_y;
     shared_ptr<pr_zfac_data_sca>  m_lam_z;
     shared_ptr<pr_cell_data_vec>  m_relcoef;
+    shared_ptr<pr_cell_data_ten>  m_grad;
     double    m_alpha;
     double    m_beta;
     double    m_dx;
@@ -263,14 +290,21 @@ namespace PrCh_AMR_Elliptic
       m_refToFine = a_refToFine;
       m_refToCoar = a_refToCoar;
       m_domBC     = a_domBC;
-      defineAndSetRelaxationCoefficient();
+      defineAuxilliaries();
+      setRelaxationCoefficient();
     }
 
     ///
-    void defineAndSetRelaxationCoefficient()
+    void defineAuxilliaries()
+    {
+      m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
+      m_grad    = shared_ptr<pr_cell_data_ten>(new pr_cell_data_ten(m_grids, pr_pt::Ones(1) ));
+    }
+    
+    ///
+    void setRelaxationCoefficient()
     {
       CH_TIME("Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient");
-      m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero() ));
       auto dit   = m_relcoef->begin();
       ///fill a_lph with div( b(x) grad (phi))
       for(int ibox = 0; ibox <  dit.size(); ibox++)
@@ -300,24 +334,139 @@ namespace PrCh_AMR_Elliptic
 
     }
 
+    
+    /// find which var you care about in m_grad
+    static int gradIndex(int a_velocity_component,
+                         int a_derivative_direction)
+    {
+      int varnum = a_velocity_component + DIM*a_derivative_direction;
+      return varnum;
+    }
+    ///
+    virtual void
+    computeCCGradient(pr_box_data_ten         &  a_grad,
+                      const pr_box_data_vec   &  a_phi)
+    {
+      pr_box_data_sca vel_x = Proto::slice(a_phi, 0);
+      pr_box_data_sca vel_y = Proto::slice(a_phi, 1);
+#if DIM==3      
+      pr_box_data_sca vel_z = Proto::slice(a_phi, 2);
+#endif
+      bool initToZero = true; double applyScale = 1.;
+      
+      pr_sten gradient_stencils[DIM];
+      for(int deriv_dir = 0;  deriv_dir < DIM; deriv_dir++)
+      {        
+        pr_pt left_point = (-1)*pr_pt::Basis(deriv_dir);
+        pr_pt righ_point = (+1)*pr_pt::Basis(deriv_dir);
+        pr_shift righ(righ_point);
+        pr_shift left(left_point);
+        double weight = 1.0/(2.*m_dx);
+        pr_sten  left_sten(left, weight);
+        pr_sten  righ_sten(righ, weight);
+        pr_sten  cent_grad = (righ_sten - left_sten);
+        gradient_stencils[deriv_dir] = cent_grad;
+      }
+
+      for(int comp_dir = 0; comp_dir < DIM; comp_dir++)
+      {
+        pr_box_data_sca velo_comp = Proto::slice(a_phi, comp_dir);
+        for(int deriv_dir = 0;  deriv_dir < DIM; deriv_dir++)
+        {
+          int grad_index = gradIndex(comp_dir, deriv_di9r);
+          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_index);
+
+          //rememeber that this goes src, dst so grad_comp is the output
+          gradient_stencils[deriv_dir].apply(velo_comp, grad_comp, a_valid, initToZero, applyScale);
+        }
+      }
+    }
+    ///Assumes that the ghost cells of a_phi are already set correctly.
+    virtual void
+    computeCCGradient(const pr_cell_data_vec   & a_phi)
+    {
+      auto dit   = a_phi.begin();
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        computeCCGradient((*m_grad)[dit[ibox]], a_phi[dit[ibox]]); 
+      }
+      m_grad->exchange(); //this is why grad is over the whole level
+    }
+
     ///gets flux vector for a given face direction
     int
     getFluxDotNormal(pr_box_data_vec           & a_flux,
                      const pr_box_data_vec     & a_phi,
                      const pr_box_data_sca     & a_eta,
                      const pr_box_data_sca     & a_lam,
+                     const pr_box_data_ten     & a_grad,
                      const pr_box              & a_valid,
                      const int                 & a_face_dir)
     {
-      ch_mayday::Error("not implemented");
+      bool initToZero = true; double applyScale = 1;
+      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir);
+      pr_pt righ_point = (+1)*pr_pt::Basis(a_face_dir);
+      pr_shift righ(righ_point);
+      pr_shift left(left_point);
+      pr_shift home(Proto::Point::Zeros());
+      pr_sten righ_sten(righ, 1./m_dx);
+
+      //get face centered velocity divergence
+      pr_box flux_box = a_valid;
+      flux_box.m_high[a_face_dir] += 1;
+      flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
+      pr_box_data_sca div_u(flux_box);
+      for(int icomp = 0; icomp < DIM; icomp++)
+      {
+        pr_box_data_sca div_u_incr(flux_box);
+        if(icomp == a_face_dir);
+        {
+          pr_sten home_sten(home, 1./m_dx);
+          pr_sten left_sten(left, 1./m_dx);
+          pr_sten home_minu_left = home - left;
+          pr_box_data_sca velo_comp = Proto::slice(a_phi, icomp);
+          //this is src, dest so divu_incr is the output
+          home_minus_left.apply(velo_comp, div_u_incr ,      
+                                flux_box , initToZero, applyScale);
+        }
+        else
+        {
+          pr_sten left_sten(left, 0.5);
+          pr_sten righ_sten(righ, 0.5);
+          pr_sten ave_sten = left_sten + right_sten;
+          int grad_ind = gradIndex(icomp, icomp);
+          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
+          //this is src, dest so divu_incr is the output
+          ave_sten.apply(grad_comp, div_u_incr ,      
+                         flux_box, initToZero, applyScale);
+        }
+        div_u += div_u_incr;
+      } //end loop over components
+      
+      ///F(u) = eta*(grad(u) + grad(u)^T) + lambda*I div(u)
+      for(int icomp = 0; icomp < DIM; icomp++)
+      {
+        pr_box_data_sca flux_comp = Proto::slice(a_flux, icomp);
+
+        int ind_gradu  = gradIndex(a_face_dir, icomp     );
+        int ind_graduT = gradIndex(icomp     , a_face_dir);
+        pr_box_data_sca grad_u   = Proto::slice(a_grad, ind_gradu);
+        pr_box_data_sca grad_u_t = Proto::slice(a_grad, ind_graduT);
+        
+        ///a_flux = eta( grad u + grad u T) + lambda I div U;
+        Proto::forallInPlace_i(fluxFuncVisco, flux_box, flux_comp,
+                               grad_u, grad_u_t, div_u,
+                               a_eta, a_lam, a_face_dir, icomp);
+      }
+      return 0;
     }
-    
     ///sets a_incr =  (flux_i+1/2 - flux_i-1/2)/m_dx
     int
     getDivergenceIncrement(pr_box_data_sca           & a_incr,
                            const pr_box_data_vec     & a_phi,
                            const pr_box_data_sca     & a_eta,
                            const pr_box_data_sca     & a_lam,
+                           const pr_box_data_ten     & a_grad,
                            const pr_box              & a_valid,
                            const int                 & a_face_dir)
     {
@@ -327,7 +476,7 @@ namespace PrCh_AMR_Elliptic
       face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       
       pr_box_data_vec  flux_dot_normal(face_box);
-      getFluxDotNormal(flux_dot_normal, a_phi, a_eta, a_lam, valid, a_face_dir);
+      getFluxDotNormal(flux_dot_normal, a_phi, a_eta, a_lam, a_grad, valid, a_face_dir);
       
 
       //Proto::Stencil<double> home(Proto::Shift(Proto::Point::Zeros()), 1.0);
@@ -355,12 +504,14 @@ namespace PrCh_AMR_Elliptic
     
     ///For this one, the derived class may assume all ghost cells have been set correctly
     virtual void 
-    applyOperator(pr_lbd         & a_lph,
-                  const pr_lbd   & a_phi)
+    applyOperator(pr_cell_data_vec         & a_lph,
+                  const pr_cell_data_vec   & a_phi)
     {
       CH_TIME("Proto_Viscous_Tensor_Op::applyOperator");
       auto dit   = a_lph.begin();
 
+      //this fills m_grad with Grad(a_phi)
+      computeCCGradient(a_phi);
       ///fill a_lph with div( b(x) grad (phi))
       for(int ibox = 0; ibox <  dit.size(); ibox++)
       {
@@ -372,6 +523,7 @@ namespace PrCh_AMR_Elliptic
         const auto& eta_y    = (*m_eta_y)[dit[ibox]];
         const auto& lam_x    = (*m_lam_x)[dit[ibox]];
         const auto& lam_y    = (*m_lam_y)[dit[ibox]];
+        const auto& gradfab  =  (*m_grad)[dit[ibox]];
 #if DIM==3                         
         const auto& eta_z    = (*m_eta_z)[dit[ibox]];
         const auto& lam_z    = (*m_lam_z)[dit[ibox]];
@@ -382,10 +534,10 @@ namespace PrCh_AMR_Elliptic
         pr_box_data_sca yincr(valid); yincr.setVal(0.);
         pr_box_data_sca zincr(valid); zincr.setVal(0.); 
         
-        getDivergenceIncrement(xincr, phifab, eta_x, lam_x, valid, 0);
-        getDivergenceIncrement(yincr, phifab, eta_y, lam_y, valid, 1);
-#if DIM==3                                    
-        getDivergenceIncrement(zincr, phifab, eta_z, lam_z, valid, 2);
+        getDivergenceIncrement(xincr, phifab, eta_x, lam_x, gradfab, valid, 0);
+        getDivergenceIncrement(yincr, phifab, eta_y, lam_y, gradfab, valid, 1);
+#if DIM==3                                                                
+        getDivergenceIncrement(zincr, phifab, eta_z, lam_z, gradfab, valid, 2);
 #endif
         ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
         Proto::forallInPlace_i(operaVisco, valid,
@@ -397,13 +549,13 @@ namespace PrCh_AMR_Elliptic
     
     ///phi+= lambda*resid on red black
     virtual void
-    relax(pr_lbd       & a_phi,
-          const pr_lbd & a_rhs,
+    relax(pr_cell_data_vec       & a_phi,
+          const pr_cell_data_vec & a_rhs,
           int a_iterations)
     {
       CH_TIME("Pr_Viscous_Tensor::relax");
       
-      pr_lbd resid;
+      pr_cell_data_vec resid;
       create(resid, a_rhs);
       auto dit   =  a_rhs.begin();
       
@@ -436,8 +588,8 @@ namespace PrCh_AMR_Elliptic
         For now, we shall restrict ourselves to the big two: Neumann and Dirichlet.
     **/
     virtual void
-    fillGhostDataOutsideDomain(pr_lbd          & a_phi,
-                               const ch_dom    & a_domain)
+    fillGhostDataOutsideDomain(pr_cell_data_vec          & a_phi,
+                               const ch_dom              & a_domain)
     {
       CH_TIME("Pr_Viscous_Tensor::fillGhostdataOutsideDomain");
       typedef Proto_Transition::DataUtilities<1> pr_trans_data_sca;
@@ -482,14 +634,14 @@ namespace PrCh_AMR_Elliptic
 
     virtual ~Proto_Viscous_Tensor_Op_Factory() { }
 
-    vector<int>                            m_ref_ratios;
-    vector<pr_dbl>                         m_grids;
-    vector<pair<ch_dom, double> >          m_domain_dx;
-    double                                 m_coarsest_dx;
-    string                                 m_domBC;
-    double                                 m_alpha;
-    double                                 m_beta;
-    int                                    m_max_coarse;
+    vector<int>                                m_ref_ratios;
+    vector<pr_dbl>                             m_grids;
+    vector<pair<ch_dom, double> >              m_domain_dx;
+    double                                     m_coarsest_dx;
+    string                                     m_domBC;
+    double                                     m_alpha;
+    double                                     m_beta;
+    int                                        m_max_coarse;
     vector< shared_ptr<pr_cell_data_sca> >     m_acoef;
     vector< shared_ptr<pr_xfac_data_sca> >     m_bco_x;
     vector< shared_ptr<pr_yfac_data_sca> >     m_bco_y;
@@ -625,6 +777,7 @@ namespace PrCh_AMR_Elliptic
       
       pr_box_data_sca& fine_cast = (pr_box_data_sca&) a_fine;
       bool initToZero = true; double applyScale = 1.;
+      //rememeber that this goes src, dst so a_coar is the output
       whole_sten.apply(fine_cast, a_coar, a_coar_valid, initToZero, applyScale);
     }
     /// for averaging stuff based in faces 
