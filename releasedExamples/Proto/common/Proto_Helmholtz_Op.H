@@ -127,7 +127,7 @@ namespace PrCh_AMR_Elliptic
       CH_TIME("Proto_Helmholtz_Op::applyOperator");
       auto grids = a_lph.layout();
       auto dit   = a_lph.begin();
-      for(int ibox = 0; ibox <  dit.size(); ibox++)
+      for(int ibox = 0; ibox <  dit.localSize(); ibox++)
       {
         auto        & dst = a_lph[dit[ibox]];
         const auto  & src = a_phi[dit[ibox]];
@@ -156,7 +156,7 @@ namespace PrCh_AMR_Elliptic
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
           residual(resid, a_phi, a_rhs);
-          for(int ibox = 0; ibox < dit.size(); ibox++)
+          for(int ibox = 0; ibox < dit.localSize(); ibox++)
           {
             const auto & resfab =  resid[dit[ibox]];
             const auto & phifab =  a_phi[dit[ibox]];

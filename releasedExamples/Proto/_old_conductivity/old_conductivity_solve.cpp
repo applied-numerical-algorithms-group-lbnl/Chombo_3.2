@@ -195,6 +195,9 @@ namespace Chombo
           auto iv = boxit();
           RealVect pos = VCLocalFunctions::cellLocation(iv, dx);
           aCoef(iv, 0) = pos[0];
+          //debug
+          aCoef(iv, 0) = 1;
+          //end debug
         } // end loop over cells
       }   // end loop over grids
       if(ilev < a_params.m_maxLevel)
@@ -228,6 +231,9 @@ namespace Chombo
             //bcoef = x + y + z in the amrpoissonop example
             Real sum = pos.sum();
             bcofab(iv,  0) = sum;
+            //begin debug
+            bcofab(iv,  0) = 1.;
+            //end debug
           } // end loop over cells
         }   // end loop over face direction
       }     // end loop over boxes

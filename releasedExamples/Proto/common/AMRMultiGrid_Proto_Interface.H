@@ -521,7 +521,7 @@ namespace PrCh_AMR_Elliptic
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook
-      for(int ibox = 0; ibox < dit.size(); ibox++)
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         auto       & lphfab =  a_lphi[dit[ibox]];
         const auto &   xfab =  a_xval[dit[ibox]];
@@ -544,7 +544,7 @@ namespace PrCh_AMR_Elliptic
       auto dbl = a_fir.layout();
       auto dit = a_fir.begin();
       double localSum = 0.;
-      for(int ibox = 0; ibox < dit.size(); ibox++)
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         const auto& firfab = a_fir[dit[ibox]];
         const auto& secfab = a_sec[dit[ibox]];
@@ -594,7 +594,7 @@ namespace PrCh_AMR_Elliptic
       pr_interp_sten interp_stencil = pr_interp_sten::Constant(pr_pt::Ones(2));
       auto grids =  a_phiMedi.layout();
       auto dit   =  a_phiMedi.begin();
-      for(int ibox = 0; ibox < dit.size(); ibox++)
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         const pr_bd & corfab =   localCor[dit[ibox]];
         pr_bd       & phifab =  a_phiMedi[dit[ibox]];
@@ -615,7 +615,7 @@ namespace PrCh_AMR_Elliptic
       auto A = pr_sten::AvgDown(2);
       auto grids =  a_resCoar.layout();
       auto dit   =  a_resCoar.begin();
-      for(int ibox = 0; ibox < dit.size(); ibox++)
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         auto & finefab =   a_resFine[dit[ibox]];
         auto & coarfab =   a_resCoar[dit[ibox]];

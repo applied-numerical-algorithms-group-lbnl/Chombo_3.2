@@ -195,7 +195,7 @@ namespace PrCh_AMR_Elliptic
       m_lambda = shared_ptr<pr_cell_data>(new pr_cell_data(m_grids, pr_pt::Zero() ));
       auto dit   = m_lambda->begin();
       ///fill a_lph with div( b(x) grad (phi))
-      for(int ibox = 0; ibox <  dit.size(); ibox++)
+      for(int ibox = 0; ibox <  dit.localSize(); ibox++)
       {
         const auto  & lamfab = (*m_lambda)[dit[ibox]];
         const auto  & acofab =  (*m_acoef)[dit[ibox]];
@@ -268,7 +268,7 @@ namespace PrCh_AMR_Elliptic
       auto dit   = a_lph.begin();
 
       ///fill a_lph with div( b(x) grad (phi))
-      for(int ibox = 0; ibox <  dit.size(); ibox++)
+      for(int ibox = 0; ibox <  dit.localSize(); ibox++)
       {
         auto        & lphfab =      a_lph[dit[ibox]];
         const auto  & phifab =      a_phi[dit[ibox]];
@@ -314,7 +314,7 @@ namespace PrCh_AMR_Elliptic
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
           residual(resid, a_phi, a_rhs);
-          for(int ibox = 0; ibox < dit.size(); ibox++)
+          for(int ibox = 0; ibox < dit.localSize(); ibox++)
           {
             const auto & resfab =       resid[dit[ibox]];
             const auto & phifab =       a_phi[dit[ibox]];
@@ -588,7 +588,7 @@ namespace PrCh_AMR_Elliptic
         a_bco_z = shared_ptr<pr_zfac_data>(new pr_zfac_data(coar_dbl,  pr_pt::Zeros()));
 #endif        
         auto dit   =  a_acoef->begin();
-        for(int ibox = 0; ibox < dit.size(); ibox++)
+        for(int ibox = 0; ibox < dit.localSize(); ibox++)
         {
           averageDownCell((*a_acoef)[dit[ibox]], (*m_acoef[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat);
           averageDownFace((*a_bco_x)[dit[ibox]], (*m_bco_x[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 0);

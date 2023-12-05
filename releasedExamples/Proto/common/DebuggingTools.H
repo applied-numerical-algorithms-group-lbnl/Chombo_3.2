@@ -185,7 +185,7 @@ namespace PrChDebug
     {
       pr_lbd_1 & data = *dataPtr;
       auto  dit = data.dataIterator();
-      for(int ibox = 0; ibox < dit.size(); ibox++)
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         cout << "ibox = " << ibox << ":" << endl;
         dumpAreaPr(&data[dit[ibox]]);
