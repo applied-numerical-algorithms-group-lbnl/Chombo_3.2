@@ -208,15 +208,18 @@ void VCAMRPoissonOp2::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs,
     } // end loop over boxes
 }
 
-void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>     &      a_resCoar,
-                                      LevelData<FArrayBox>      &      a_phiFine,
-                                      const LevelData<FArrayBox>&      a_rhsFine)
+void
+VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>      &      a_resCoar,
+                                  LevelData<FArrayBox>      &      a_phiFine,
+                                  const LevelData<FArrayBox>&      a_rhsFine)
 {
   CH_TIME("VCAMRPoissonOp2::restrictResidual");
 
   homogeneousCFInterp(a_phiFine);
   LevelData<FArrayBox> resFine;
   create(resFine, a_rhsFine);
+  residual(resFine, a_phiFine, a_rhsFine);
+  
   const DisjointBoxLayout& dblCoar = a_resCoar.disjointBoxLayout();
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   
