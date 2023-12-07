@@ -53,8 +53,8 @@ namespace Chombo
     retval.m_coarsestDomain = a_coarsestDomain;
     retval.m_coarsestDx     = a_coarsestDx;
     
-
-    ParmParse ppGetVCP("getVCParameters");
+    //solver to match other things
+    ParmParse ppGetVCP("solver");
     ppGetVCP.get( "alpha",   retval.m_alpha);
     ppGetVCP.get( "beta",    retval.m_beta);
     return retval;

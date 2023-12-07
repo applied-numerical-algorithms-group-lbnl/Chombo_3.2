@@ -20,6 +20,7 @@
 #include "MultilevelLinearOp.H"
 #include "BiCGStabSolver.H"
 #include "PrChUtilities.H"
+#include "DebuggingTools.H"
 #include "AMRIO.H"
 
 
@@ -39,7 +40,6 @@ namespace Chombo
   {
     string which_solver;
     ParmParse ppSolver("solver");
-    ppSolver.get("which_solver", which_solver);
     // set up multigrid solver parameters
     int numSmooth, numMG, maxIter;
     Real eps, hang;
@@ -51,71 +51,23 @@ namespace Chombo
     ppSolver.get("hang",      hang);
     Real normThresh = 1.0e-10;
 
-    if(which_solver == string("AMRMultiGrid"))
-    {
-      BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
-      AMRMultiGrid<  LevelData<FArrayBox> > amr_mg_solver;
-      amr_mg_solver.define(a_params.m_coarsestDomain,
-                           (*a_opFactory),
-                           &bottomSolver,
-                           a_params.m_numLevels);
+
+    BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
+    AMRMultiGrid<  LevelData<FArrayBox> > amr_mg_solver;
+    amr_mg_solver.define(a_params.m_coarsestDomain,
+                         (*a_opFactory),
+                         &bottomSolver,
+                         a_params.m_numLevels);
     
-      amr_mg_solver.setSolverParameters(numSmooth, numSmooth, numSmooth,
-                                        numMG, maxIter, eps, hang, normThresh);
+    amr_mg_solver.setSolverParameters(numSmooth, numSmooth, numSmooth,
+                                      numMG, maxIter, eps, hang, normThresh);
 
-      amr_mg_solver.m_verbosity = 3;
-      Vector<LevelData<FArrayBox>*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
-      Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
+    amr_mg_solver.m_verbosity = 3;
+    Vector<LevelData<FArrayBox>*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
+    Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
       
-      amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_maxLevel, 0, true);
-    } //end use amrmultigrid
-    else if(which_solver == string("BiCGStab"))
-    {
-      Vector<RealVect>           vectDx(a_params.m_numLevels);
-      Vector<ProblemDomain> vectDomains(a_params.m_numLevels);
-      
-      RealVect dxLev     =      a_params.m_coarsestDx*RealVect::Unit;
-      ProblemDomain domLev(     a_params.m_coarsestDomain);
-      for (int ilev = 0; ilev < a_params.m_numLevels; ilev++)
-      {
-        vectDomains[ilev] = domLev;
-        vectDx     [ilev] =  dxLev;
-        if(ilev < (a_params.m_numLevels-1))
-        {
-          domLev.refine  (a_params.m_refRatio[ilev]);
-          dxLev   /= Real(a_params.m_refRatio[ilev]);
-        }
-      }
-      
-      int lBase = 0;
-      MultilevelLinearOp<FArrayBox> mlOp;
+    amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_maxLevel, 0, true);
 
-      mlOp.m_num_mg_iterations = numMG;
-      mlOp.m_num_mg_smooth = numSmooth;
-      int preCondSolverDepth = -1;
-      mlOp.m_preCondSolverDepth = preCondSolverDepth;
-
-
-      mlOp.define(a_grids, a_params.m_refRatio, vectDomains,
-                  vectDx, a_opFactory, lBase);
-
-      BiCGStabSolver<Vector<LevelData<FArrayBox>* > > solver;
-
-      bool homogeneousBC = false;
-      solver.define(&mlOp, homogeneousBC);
-      solver.m_verbosity = 5;///bicgstab does not print much if you use lower
-      solver.m_normType = 0;
-      solver.m_eps = eps;
-      solver.m_imax = maxIter;
-
-      Vector<LevelData<FArrayBox>*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
-      Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
-      solver.solve(raw_phi, raw_rhs);
-    } //end using bicgstab
-    else
-    {
-      MayDay::Error("poissonSolver: bogus which_solver");
-    }//end switch on solver type
   }//end function poissonSolve
   
   ///call define but do not fill data
