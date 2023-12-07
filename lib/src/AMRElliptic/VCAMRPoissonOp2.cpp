@@ -27,6 +27,51 @@
 
 #include "NamespaceHeader.H"
 
+void
+VCAMRPoissonOp2::
+relax(LevelData<FArrayBox>&       a_phi,
+      const LevelData<FArrayBox>& a_rhs,
+      int                         a_iterations)
+{
+  CH_TIME("AMRPoissonOp::levelGSRB");
+
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  const DisjointBoxLayout& grids = a_rhs.disjointBoxLayout();
+
+  DataIterator dit = a_phi.dataIterator();
+  int nbox=dit.size();
+  int ibreak = 0;
+  // do first red, then black passes
+  LevelData<FArrayBox> resid;
+  create(resid, a_rhs);
+  for (int iter  = 0; iter < a_iterations; iter++)
+  {
+    for (int iredblack = 0; iredblack <= 1; iredblack++)
+    {
+
+      residual(resid, a_phi, a_rhs);
+      for(int ibox = 0; ibox < nbox; ibox++)
+      {
+        FArrayBox& phiFab = a_phi[dit[ibox]];
+        FArrayBox& resFab = resid[dit[ibox]];
+        FArrayBox& lamFab = m_lambda[dit[ibox]];
+        Box valid         = grids[dit[ibox]];
+        FORT_GSRBSANELY(CHF_FRA1(phiFab, 0),
+                        CHF_FRA1(resFab, 0),
+                        CHF_FRA1(lamFab, 0),
+                        CHF_BOX(valid),
+                        CHF_CONST_INT(iredblack));
+      } // end loop through ibox
+      ibreak = 1;
+    } // end loop through red-black
+    ibreak = 1;
+  }//end loop over iteration number
+}
+
 void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
                                const LevelData<FArrayBox>& a_phi,
                                const LevelData<FArrayBox>& a_rhs,
@@ -86,45 +131,16 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
     } // end loop over boxes
 }
 
-/**************************/
-// this preconditioner first initializes phihat to (IA)phihat = rhshat
-// (diagonization of L -- A is the matrix version of L)
-// then smooths with a couple of passes of levelGSRB
+
 void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
                               const LevelData<FArrayBox>& a_rhs)
 {
   CH_TIME("VCAMRPoissonOp2::preCond");
 
-  // diagonal term of this operator in:
-  //
-  //       alpha * a(i)
-  //     + beta  * sum_over_dir (b(i-1/2*e_dir) + b(i+1/2*e_dir)) / (dx*dx)
-  //
-  // The inverse of this is our initial multiplier.
+  int num_relax = 27;
 
-  int ncomp = a_phi.nComp();
-
-  CH_assert(m_lambda.isDefined());
-  CH_assert(a_rhs.nComp()    == ncomp);
-  CH_assert(m_bCoef->nComp() == ncomp);
-
-  // Recompute the relaxation coefficient if needed.
-  resetLambda();
-
-  // don't need to use a Copier -- plain copy will do
-  DataIterator dit = a_phi.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-    {
-      // also need to average and sum face-centered bCoefs to cell-centers
-      Box gridBox = a_rhs[dit].box();
-
-      // approximate inverse
-      a_phi[dit].copy(a_rhs[dit]);
-      a_phi[dit].mult(m_lambda[dit], gridBox, 0, 0, ncomp);
-    }
-
-  relax(a_phi, a_rhs, 2);
-}
+  this->relax(a_phi, a_rhs, num_relax);
+}    
 
 void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
                              const LevelData<FArrayBox>& a_phi,
@@ -201,13 +217,16 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>     &      a_resCoar
   homogeneousCFInterp(a_phiFine);
   LevelData<FArrayBox> resFine;
   create(resFine, a_rhsFine);
-  const DisjointBoxLayout& dblCoar = a_phiFine.disjointBoxLayout();
+  const DisjointBoxLayout& dblCoar = a_resCoar.disjointBoxLayout();
+  const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
+  
   auto dit = dblCoar.dataIterator();
   for (int ibox = 0; ibox < dit.size(); ibox++)
   {
     auto&        resCoarFAB = a_resCoar[dit[ibox]];
     const  auto& resFineFAB =   resFine[dit[ibox]];
     Box coarValid = dblCoar[dit[ibox]];
+    Box fineValid = dblFine[dit[ibox]];
     FORT_RESTRICTSANELY(CHF_FRA1(resCoarFAB, 0),
                         CHF_FRA1(resFineFAB, 0),
                         CHF_BOX(coarValid));
@@ -503,245 +522,6 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
 
 #endif
 
-void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::levelGSRB");
-
-  CH_assert(a_phi.isDefined());
-  CH_assert(a_rhs.isDefined());
-  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-  CH_assert(a_phi.nComp() == a_rhs.nComp());
-
-  // Recompute the relaxation coefficient if needed.
-  resetLambda();
-
-  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-
-  DataIterator dit = a_phi.dataIterator();
-
-  // do first red, then black passes
-  for (int whichPass = 0; whichPass <= 1; whichPass++)
-    {
-
-      // fill in intersection of ghostcells and a_phi's boxes
-      {
-        CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
-        homogeneousCFInterp(a_phi);
-      }
-
-      {
-        CH_TIME("VCAMRPoissonOp2::levelGSRB::exchange");
-        a_phi.exchange(a_phi.interval(), m_exchangeCopier);
-      }
-
-      {
-        CH_TIME("VCAMRPoissonOp2::levelGSRB::BCs");
-        // now step through grids...
-        for (dit.begin(); dit.ok(); ++dit)
-          {
-            // invoke physical BC's where necessary
-            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx, true);
-          }
-      }
-
-      for (dit.begin(); dit.ok(); ++dit)
-        {
-          const Box& region = dbl.get(dit());
-          const FluxBox& thisBCoef  = (*m_bCoef)[dit];
-
-#if CH_SPACEDIM == 1
-          FORT_GSRBHELMHOLTZVC1D
-#elif CH_SPACEDIM == 2
-          FORT_GSRBHELMHOLTZVC2D
-#elif CH_SPACEDIM == 3
-          FORT_GSRBHELMHOLTZVC3D
-#else
-          This_will_not_compile!
-#endif
-                                (CHF_FRA(a_phi[dit]),
-                                 CHF_CONST_FRA(a_rhs[dit]),
-                                 CHF_BOX(region),
-                                 CHF_CONST_REAL(m_dx),
-                                 CHF_CONST_REAL(m_alpha),
-                                 CHF_CONST_FRA((*m_aCoef)[dit]),
-                                 CHF_CONST_REAL(m_beta),
-#if CH_SPACEDIM >= 1
-                                 CHF_CONST_FRA(thisBCoef[0]),
-#endif
-#if CH_SPACEDIM >= 2
-                                 CHF_CONST_FRA(thisBCoef[1]),
-#endif
-#if CH_SPACEDIM >= 3
-                                 CHF_CONST_FRA(thisBCoef[2]),
-#endif
-#if CH_SPACEDIM >= 4
-                                 This_will_not_compile!
-#endif
-                                 CHF_CONST_FRA(m_lambda[dit]),
-                                 CHF_CONST_INT(whichPass));
-        } // end loop through grids
-    } // end loop through red-black
-}
-
-void VCAMRPoissonOp2::levelMultiColor(LevelData<FArrayBox>&       a_phi,
-                                     const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::levelMultiColor");
-  MayDay::Abort("VCAMRPoissonOp2::levelMultiColor - Not implemented");
-}
-
-void VCAMRPoissonOp2::looseGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::looseGSRB");
-#if 1
-  MayDay::Abort("VCAMRPoissonOp2::looseGSRB - Not implemented");
-#else
-  // This implementation converges at half the rate of "levelGSRB" in
-  // multigrid solves
-  CH_assert(a_phi.isDefined());
-  CH_assert(a_rhs.isDefined());
-  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
-  CH_assert(a_phi.nComp() == a_rhs.nComp());
-
-  // Recompute the relaxation coefficient if needed.
-  resetLambda();
-
-  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
-
-  DataIterator dit = a_phi.dataIterator();
-
-  // fill in intersection of ghostcells and a_phi's boxes
-  {
-    CH_TIME("VCAMRPoissonOp2::looseGSRB::homogeneousCFInterp");
-    homogeneousCFInterp(a_phi);
-  }
-
-  {
-    CH_TIME("VCAMRPoissonOp2::looseGSRB::exchange");
-    a_phi.exchange(a_phi.interval(), m_exchangeCopier);
-  }
-
-  // now step through grids...
-  for (dit.begin(); dit.ok(); ++dit)
-  {
-    // invoke physical BC's where necessary
-    {
-      CH_TIME("VCAMRPoissonOp2::looseGSRB::BCs");
-      m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx, true);
-    }
-
-    const Box& region = dbl.get(dit());
-    const FluxBox& thisBCoef  = (*m_bCoef)[dit];
-
-    int whichPass = 0;
-
-#if CH_SPACEDIM == 1
-    FORT_GSRBHELMHOLTZVC1D
-#elif CH_SPACEDIM == 2
-    FORT_GSRBHELMHOLTZVC2D
-#elif CH_SPACEDIM == 3
-    FORT_GSRBHELMHOLTZVC3D
-#else
-    This_will_not_compile!
-#endif
-                          (CHF_FRA(a_phi[dit]),
-                           CHF_CONST_FRA(a_rhs[dit]),
-                           CHF_BOX(region),
-                           CHF_CONST_REAL(m_dx),
-                           CHF_CONST_REAL(m_alpha),
-                           CHF_CONST_FRA((*m_aCoef)[dit]),
-                           CHF_CONST_REAL(m_beta),
-#if CH_SPACEDIM >= 1
-                           CHF_CONST_FRA(thisBCoef[0]),
-#endif
-#if CH_SPACEDIM >= 2
-                           CHF_CONST_FRA(thisBCoef[1]),
-#endif
-#if CH_SPACEDIM >= 3
-                           CHF_CONST_FRA(thisBCoef[2]),
-#endif
-#if CH_SPACEDIM >= 4
-                           This_will_not_compile!
-#endif
-                           CHF_CONST_FRA(m_lambda[dit]),
-                           CHF_CONST_INT(whichPass));
-
-    whichPass = 1;
-
-#if CH_SPACEDIM == 1
-    FORT_GSRBHELMHOLTZVC1D
-#elif CH_SPACEDIM == 2
-    FORT_GSRBHELMHOLTZVC2D
-#elif CH_SPACEDIM == 3
-    FORT_GSRBHELMHOLTZVC3D
-#else
-    This_will_not_compile!
-#endif
-                          (CHF_FRA(a_phi[dit]),
-                           CHF_CONST_FRA(a_rhs[dit]),
-                           CHF_BOX(region),
-                           CHF_CONST_REAL(m_dx),
-                           CHF_CONST_REAL(m_alpha),
-                           CHF_CONST_FRA((*m_aCoef)[dit]),
-                           CHF_CONST_REAL(m_beta),
-#if CH_SPACEDIM >= 1
-                           CHF_CONST_FRA(thisBCoef[0]),
-#endif
-#if CH_SPACEDIM >= 2
-                           CHF_CONST_FRA(thisBCoef[1]),
-#endif
-#if CH_SPACEDIM >= 3
-                           CHF_CONST_FRA(thisBCoef[2]),
-#endif
-#if CH_SPACEDIM >= 4
-                           This_will_not_compile!
-#endif
-                           CHF_CONST_FRA(m_lambda[dit]),
-                           CHF_CONST_INT(whichPass));
-  } // end loop through grids
-#endif
-}
-
-void VCAMRPoissonOp2::overlapGSRB(LevelData<FArrayBox>&       a_phi,
-                                 const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::overlapGSRB");
-  MayDay::Abort("VCAMRPoissonOp2::overlapGSRB - Not implemented");
-}
-
-void VCAMRPoissonOp2::levelGSRBLazy(LevelData<FArrayBox>&       a_phi,
-                                   const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::levelGSRBLazy");
-  MayDay::Abort("VCAMRPoissonOp2::levelGSRBLazy - Not implemented");
-}
-
-void VCAMRPoissonOp2::levelJacobi(LevelData<FArrayBox>&       a_phi,
-                                 const LevelData<FArrayBox>& a_rhs)
-{
-  CH_TIME("VCAMRPoissonOp2::levelJacobi");
-
-  // Recompute the relaxation coefficient if needed.
-  resetLambda();
-
-  LevelData<FArrayBox> resid;
-  create(resid, a_rhs);
-
-  // Get the residual
-  residual(resid,a_phi,a_rhs,true);
-
-  // Multiply by the weights
-  DataIterator dit = m_lambda.dataIterator();
-  for (dit.begin(); dit.ok(); ++dit)
-  {
-    resid[dit].mult(m_lambda[dit]);
-  }
-
-  // Do the Jacobi relaxation
-  incr(a_phi, resid, 0.5);
-}
 
 void VCAMRPoissonOp2::getFlux(FArrayBox&       a_flux,
                              const FArrayBox& a_data,

@@ -54,6 +54,10 @@ public:
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
                        const LevelData<FArrayBox>& a_residual);
 
+  virtual void relax(LevelData<FArrayBox>&       a_e,
+                     const LevelData<FArrayBox>& a_residual,
+                     int                         a_iterations);
+    
   ///
   virtual void applyOpI(LevelData<FArrayBox>&       a_lhs,
                         const LevelData<FArrayBox>& a_phi,
@@ -216,23 +220,6 @@ protected:
   // Does the relaxation coefficient need to be reset?
   bool m_lambdaNeedsResetting;
 
-  virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
-
-  virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs);
-
-  virtual void looseGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
-
-  virtual void overlapGSRB(LevelData<FArrayBox>&       a_phi,
-                           const LevelData<FArrayBox>& a_rhs);
-
-  virtual void levelGSRBLazy(LevelData<FArrayBox>&       a_phi,
-                             const LevelData<FArrayBox>& a_rhs);
-
-  virtual void levelJacobi(LevelData<FArrayBox>&       a_phi,
-                           const LevelData<FArrayBox>& a_rhs);
 
   /// computes flux over face-centered a_facebox.
   virtual void getFlux(FArrayBox&       a_flux,
@@ -241,11 +228,6 @@ protected:
                        const Box&       a_facebox,
                        int              a_dir,
                        int              a_ref = 1) const ;
-#if 0
-  /// utility function which computes operator after all bc's have been set
-  void computeOperatorNoBCs(LevelData<FArrayBox>&       a_lhs,
-                            const LevelData<FArrayBox>& a_phi);
-#endif
 };
 
 ///

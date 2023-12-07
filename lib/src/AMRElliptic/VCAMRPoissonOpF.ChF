@@ -424,6 +424,33 @@ C     ------------------------------------------------------------------
       return
       end
 
+      subroutine GSRBSANELY(
+     &     CHF_FRA1[phi],
+     &     CHF_CONST_FRA1[res],
+     &     CHF_CONST_FRA1[lam],
+     &     CHF_BOX[valid],
+     &     CHF_INT[iredblack])
+
+
+      integer CHF_DDECL[i;j;k], sumijk, modtwo
+
+      CHF_MULTIDO[valid; i; j; k]
+      
+        sumijk = CHF_DTERM[i ; +j; +k]
+        modtwo = modulo(sumijk, 2)
+        if(modtwo .eq. iredblack) then
+
+         
+           phi(     CHF_IX[i;j;k]) = phi(CHF_IX[i;j;k]) +
+     $          lam(CHF_IX[i;j;k])*res(  CHF_IX[i;j;k])
+           
+      endif
+
+      CHF_ENDDO
+
+      return
+      end
+      
 C -------------------------------------------------------------
 C  utility function -- increments lhs with average from  faces
 C  to cell-centers of bCoefs in dir direction
