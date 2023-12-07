@@ -380,106 +380,46 @@ C     ------------------------------------------------------------------
       return
       end
 
-C     -----------------------------------------------------------------
-C     subroutine RESTRICTRESVC{1D,2D,3D}
-C     computes restriction of residual to a coarser multgrid level
-C        res[2h] = I[h->2h] (rhs[h] - L(phi[h]))
-C     INPUTS/OUTPUTS:
-C     res       <=  res[2h]
-C     rhs       =>  rhs[h]
-C     phi       =>  phi[h]
-C     alpha      => contant multiplier of aCoef
-C     aCoef      => spatially varying coef of I
-C     beta       => contant multiplier of bCoef
-C     bCoef[012] => face-centered coefs of Grad
-C     region    =>  Box over which rhs is defined (in h index space)
-C     dx        =>  grid spacing in h
-C     ------------------------------------------------------------------
-#if CH_SPACEDIM == 1
-      subroutine RESTRICTRESVC1D(
-     &     CHF_FRA[res],
-     &     CHF_CONST_FRA[phi],
-     &     CHF_CONST_FRA[rhs],
-     &     CHF_CONST_REAL[alpha],
-     &     CHF_CONST_FRA[aCoef],
-     &     CHF_CONST_REAL[beta],
-     &     CHF_CONST_FRA[bCoef0],
-     &     CHF_BOX[region],
-     &     CHF_CONST_REAL[dx])
-#elif CH_SPACEDIM == 2
-      subroutine RESTRICTRESVC2D(
-     &     CHF_FRA[res],
-     &     CHF_CONST_FRA[phi],
-     &     CHF_CONST_FRA[rhs],
-     &     CHF_CONST_REAL[alpha],
-     &     CHF_CONST_FRA[aCoef],
-     &     CHF_CONST_REAL[beta],
-     &     CHF_CONST_FRA[bCoef0],
-     &     CHF_CONST_FRA[bCoef1],
-     &     CHF_BOX[region],
-     &     CHF_CONST_REAL[dx])
-#elif CH_SPACEDIM == 3
-      subroutine RESTRICTRESVC3D(
-     &     CHF_FRA[res],
-     &     CHF_CONST_FRA[phi],
-     &     CHF_CONST_FRA[rhs],
-     &     CHF_CONST_REAL[alpha],
-     &     CHF_CONST_FRA[aCoef],
-     &     CHF_CONST_REAL[beta],
-     &     CHF_CONST_FRA[bCoef0],
-     &     CHF_CONST_FRA[bCoef1],
-     &     CHF_CONST_FRA[bCoef2],
-     &     CHF_BOX[region],
-     &     CHF_CONST_REAL[dx])
-#else
-      Somthing_that_will_not_compile
-#endif
 
-      REAL_T denom,dxinv,lofphi
-      integer n,ncomp
+      subroutine RESTRICTSANELY(
+     &     CHF_FRA1[resCoar],
+     &     CHF_CONST_FRA1[resFine],
+     &     CHF_BOX[boxCoar])
 
-      integer CHF_DDECL[i;j;k]
-      integer CHF_DDECL[ii;jj;kk]
 
-      ncomp = CHF_NCOMP[phi]
+      integer CHF_DDECL[ifine;jfine;kfine]
+      integer CHF_DDECL[icoar;jcoar;kcoar]
+      REAL_T factor
 
-      dxinv = one / (dx*dx)
-      denom = D_TERM(2, *2, *2)
+#if DIM==1
+      factor  = 1./2.
+#endif      
+#if DIM==2
+      factor = 1./4.
+#endif      
+#if DIM==3
+      factor  = 1./8.
+#endif      
 
-      do n = 0, ncomp-1
-        CHF_MULTIDO[region; i; j; k]
+        CHF_MULTIDO[boxCoar; icoar; jcoar; kcoar]
           CHF_DTERM[
-          ii = i/2 ;
-          jj = j/2 ;
-          kk = k/2 ]
+          ifine = 2*icoar ;
+          jfine = 2*jcoar ;
+          kfine = 2*kcoar ]
 
-          lofphi =
-     &        alpha * aCoef(CHF_IX[i;j;k],n) * phi(CHF_IX[i;j;k],n)
-     &      - beta  *
-     &         (CHF_DTERM[
-     &           bCoef0(CHF_IX[i+1;j  ;k  ],n)
-     &           * (phi(CHF_IX[i+1;j  ;k  ],n)-phi(CHF_IX[i  ;j  ;k  ],n))
-     &
-     &         - bCoef0(CHF_IX[i  ;j  ;k  ],n)
-     &           * (phi(CHF_IX[i  ;j  ;k  ],n)-phi(CHF_IX[i-1;j  ;k  ],n)) ;
-     &
-     &         + bCoef1(CHF_IX[i  ;j+1;k  ],n)
-     &           * (phi(CHF_IX[i  ;j+1;k  ],n)-phi(CHF_IX[i  ;j  ;k  ],n))
-     &
-     &         - bCoef1(CHF_IX[i  ;j  ;k  ],n)
-     &           * (phi(CHF_IX[i  ;j  ;k  ],n)-phi(CHF_IX[i  ;j-1;k  ],n)) ;
-     &
-     &         + bCoef2(CHF_IX[i  ;j  ;k+1],n)
-     &           * (phi(CHF_IX[i  ;j  ;k+1],n)-phi(CHF_IX[i  ;j  ;k  ],n))
-     &
-     &         - bCoef2(CHF_IX[i  ;j  ;k  ],n)
-     &           * (phi(CHF_IX[i  ;j  ;k  ],n)-phi(CHF_IX[i  ;j  ;k-1],n)) ]
-     &         ) * dxinv
-
-          res(CHF_IX[ii;jj;kk],n) = res(CHF_IX[ii;jj;kk],n)
-     &                            + (rhs(CHF_IX[i;j;k],n) - lofphi) / denom
+          resCoar(CHF_IX[icoar  ;jcoar  ;kcoar  ]) =
+     &      factor*(CHF_DTERM[
+     &                      resFine(CHF_IX[ifine  ;jfine  ;kfine  ])
+     &              +       resFine(CHF_IX[ifine+1;jfine  ;kfine  ]);
+     &              +       resFine(CHF_IX[ifine  ;jfine+1;kfine  ])
+     &              +       resFine(CHF_IX[ifine+1;jfine+1;kfine  ]);
+     &              +       resFine(CHF_IX[ifine  ;jfine  ;kfine+1])
+     &              +       resFine(CHF_IX[ifine+1;jfine  ;kfine+1])
+     &              +       resFine(CHF_IX[ifine  ;jfine+1;kfine+1])
+     &              +       resFine(CHF_IX[ifine+1;jfine+1;kfine+1])]
+     $         )
+                  
         CHF_ENDDO
-      enddo
 
       return
       end

@@ -192,67 +192,26 @@ void VCAMRPoissonOp2::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs,
     } // end loop over boxes
 }
 
-void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
-                                      LevelData<FArrayBox>&       a_phiFine,
-                                      const LevelData<FArrayBox>& a_rhsFine)
+void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>     &      a_resCoar,
+                                      LevelData<FArrayBox>      &      a_phiFine,
+                                      const LevelData<FArrayBox>&      a_rhsFine)
 {
   CH_TIME("VCAMRPoissonOp2::restrictResidual");
 
   homogeneousCFInterp(a_phiFine);
-  const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
-  for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
-    {
-      FArrayBox& phi = a_phiFine[dit];
-      m_bc(phi, dblFine[dit()], m_domain, m_dx, true);
-    }
-
-  a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
-
-  for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
-    {
-      FArrayBox&       phi = a_phiFine[dit];
-      const FArrayBox& rhs = a_rhsFine[dit];
-      FArrayBox&       res = a_resCoarse[dit];
-
-      const FArrayBox& thisACoef = (*m_aCoef)[dit];
-      const FluxBox&   thisBCoef = (*m_bCoef)[dit];
-
-      Box region = dblFine.get(dit());
-      const IntVect& iv = region.smallEnd();
-      IntVect civ = coarsen(iv, 2);
-
-      res.setVal(0.0);
-
-#if CH_SPACEDIM == 1
-      FORT_RESTRICTRESVC1D
-#elif CH_SPACEDIM == 2
-      FORT_RESTRICTRESVC2D
-#elif CH_SPACEDIM == 3
-      FORT_RESTRICTRESVC3D
-#else
-      This_will_not_compile!
-#endif
-                          (CHF_FRA_SHIFT(res, civ),
-                           CHF_CONST_FRA_SHIFT(phi, iv),
-                           CHF_CONST_FRA_SHIFT(rhs, iv),
-                           CHF_CONST_REAL(m_alpha),
-                           CHF_CONST_FRA_SHIFT(thisACoef, iv),
-                           CHF_CONST_REAL(m_beta),
-#if CH_SPACEDIM >= 1
-                           CHF_CONST_FRA_SHIFT(thisBCoef[0], iv),
-#endif
-#if CH_SPACEDIM >= 2
-                           CHF_CONST_FRA_SHIFT(thisBCoef[1], iv),
-#endif
-#if CH_SPACEDIM >= 3
-                           CHF_CONST_FRA_SHIFT(thisBCoef[2], iv),
-#endif
-#if CH_SPACEDIM >= 4
-                           This_will_not_compile!
-#endif
-                           CHF_BOX_SHIFT(region, iv),
-                           CHF_CONST_REAL(m_dx));
-    }
+  LevelData<FArrayBox> resFine;
+  create(resFine, a_rhsFine);
+  const DisjointBoxLayout& dblCoar = a_phiFine.disjointBoxLayout();
+  auto dit = dblCoar.dataIterator();
+  for (int ibox = 0; ibox < dit.size(); ibox++)
+  {
+    auto&        resCoarFAB = a_resCoar[dit[ibox]];
+    const  auto& resFineFAB =   resFine[dit[ibox]];
+    Box coarValid = dblCoar[dit[ibox]];
+    FORT_RESTRICTSANELY(CHF_FRA1(resCoarFAB, 0),
+                        CHF_FRA1(resFineFAB, 0),
+                        CHF_BOX(coarValid));
+  }
 }
 
 void VCAMRPoissonOp2::setAlphaAndBeta(const Real& a_alpha,
