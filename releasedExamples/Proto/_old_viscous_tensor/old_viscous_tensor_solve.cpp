@@ -74,23 +74,24 @@ namespace Chombo
   void
   defineData(Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_phi,
              Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_rhs,
-             Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_aCoef,
+             Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_aco,
              Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_eta,
              Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_lam,
              const Vector< DisjointBoxLayout >                & a_grids)
   {
-    a_phi  .resize(a_grids.size());
-    a_rhs  .resize(a_grids.size());
-    a_aCoef.resize(a_grids.size());
-    a_bCoef.resize(a_grids.size());
+    a_phi.resize(a_grids.size());
+    a_rhs.resize(a_grids.size());
+    a_aco.resize(a_grids.size());
+    a_eta.resize(a_grids.size());
+    a_lam.resize(a_grids.size());
     
     for(int ilev = 0; ilev < a_grids.size(); ilev++)
     {
-      a_phi  [ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Unit));
-      a_rhs  [ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Zero));
-      a_aCoef[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1 , IntVect::Zero));
-      a_eta  [ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
-      a_lam  [ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
+      a_phi[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Unit));
+      a_rhs[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Zero));
+      a_aco[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1 , IntVect::Zero));
+      a_eta[ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
+      a_lam[ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
     }  ///end loop over levels
   }    //end function defineData
 
@@ -105,11 +106,17 @@ namespace Chombo
     /// a good UI is a joy forever
     Vector<LevelData<FArrayBox>*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
     Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
-    string         phiFileName(          "phi.hdf5");
-    Vector<string> phiVarNames(1, string("phi"));
-    string         rhsFileName(          "rhs.hdf5");
-    Vector<string> rhsVarNames(1, string("rhs"));
-
+    string         phiFileName("phi.hdf5");
+    string         rhsFileName("rhs.hdf5");
+    
+    Vector<string> phiVarNames(DIM);
+    Vector<string> rhsVarNames(DIM);
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      phiVarNames[idir] = string("vel_comp_") + std::to_string(idir);
+      rhsVarNames[idir] = string("rhs_comp_") + std::to_string(idir);
+    }
+      
     Real fakeTime = 1.0;
     Real fakeDt = 1.0;
     WriteAMRHierarchyHDF5(phiFileName,  a_grids,
@@ -167,13 +174,12 @@ namespace Chombo
                   const VCPoissonParameters                      & a_params)
   {
     Real etaVal, lamVal;
-    Parmparse pp("viscous_op");
+    Chombo::ParmParse pp("viscous_op");
     pp.get("eta_value"   , etaVal);
     pp.get("lambda_value", lamVal);
     for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
     {
-      Real  dx = a_params.m_coarsestDx;
-      DataIterator dit = a_bCoef[ilev]->dataIterator();
+      DataIterator dit = a_eta[ilev]->dataIterator();
       for (dit.begin(); dit.ok(); ++dit)
       {
         FluxBox& thisEta = (*a_eta[ilev])[dit];
