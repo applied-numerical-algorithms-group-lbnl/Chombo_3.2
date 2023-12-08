@@ -406,6 +406,27 @@ namespace Chombo
 
       return retval;
     }
+
+
+    ///
+    static shared_ptr<ch_factory>
+    getProtoViscousTensorOpFactory(const ch_dom                             & a_coarsest_dom,
+                                   const Vector<int>                        & a_ref_ratios,
+                                   const Vector<ch_dbl>                     & a_grids,
+                                   const double                             & a_coarsest_dx,
+                                   const Vector< ch_ldf_cell_ptr >          & a_aco,
+                                   const Vector< ch_ldf_flux_ptr >          & a_eta,
+                                   const Vector< ch_ldf_flux_ptr >          & a_lam,
+                                   const string                             & a_domBC,
+                                   const double                             & a_alpha,
+                                   const double                             & a_beta)
+    {
+
+      static shared_ptr<ch_factory> retval;
+      ch_mayday::Error("not implemented");
+      return retval;
+    }
+
     ///just always tag IntVect::Zero;
     static void
     setupLLCornerGrids(Vector<ch_dbl>& a_amrGrids,

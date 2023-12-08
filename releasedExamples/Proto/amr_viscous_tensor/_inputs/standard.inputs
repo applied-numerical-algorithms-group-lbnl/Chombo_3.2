@@ -1,5 +1,6 @@
 #main parameters
 main.verbosity = 4 # higher number means more verbose output
+main.iterations = 1 # number of times to do Poisson solve
 main.writePlotFiles = 0 # if 1, write hdf5 plotfiles
 main.mg_type = 0 # 0: correction scheme; 1: FAS MG
 
@@ -17,26 +18,22 @@ setupLLCornerGrids.is_periodic = 0 0 0
 #grids.grids_file = grids.dat #uncomment to read in grids
 
 # Multigrid solver parameters
-solver.num_smooth = 4
-solver.num_mg     = 1
-solver.num_bottom = 1
-solver.num_pre = 4
-solver.num_post = 4
-solver.cycle_type = 0 # FULL=0,VCYCLE=1,FCYCLE=2
-solver.max_iterations = 100
-solver.tolerance  = 1.0e-12
-solver.hang       = 1.0e-10
-#1 gsrb 4586--slowgsrb
-solver.relax_mode = 1 
+PrChUtil_setupSolver.num_smooth = 4
+PrChUtil_setupSolver.num_mg     = 1
+PrChUtil_setupSolver.num_bottom = 1
+PrChUtil_setupSolver.num_pre = 4
+PrChUtil_setupSolver.num_post = 4
+PrChUtil_setupSolver.cycle_type = 0 # FULL=0,VCYCLE=1,FCYCLE=2
+PrChUtil_setupSolver.max_iterations = 100
+PrChUtil_setupSolver.tolerance  = 1.0e-12
+PrChUtil_setupSolver.hang       = 1.0e-10
 
-#lphi = (alpha I + beta div grad ) phi
+#bcs for lfaces 1==const neumann, 0 == const dirc
+solver.domain_bc = "Dirichlet"
+
 solver.alpha =  4.5
-solver.beta  = -0.86
+solver.beta  =   -0.86
+
 viscous_op.eta_value    = 1.
 viscous_op.lambda_value = 1.
 viscous_op.acoef_value  = 1. 
-#bcs for lfaces 1==const neumann, 0 == const dirc
-bc_lo              = 0 0 0   
-bc_hi              = 0 0 0   
-bc_value = 0.0  
-

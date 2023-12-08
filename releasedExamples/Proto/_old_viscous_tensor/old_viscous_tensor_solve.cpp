@@ -143,27 +143,17 @@ namespace Chombo
            const VCPoissonParameters                       & a_params)
   {
 
+    Chombo::ParmParse pp("viscous_op");
+    double aco_val;
+    pp.get("acoef_value", aco_val);
     for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
     {
-      Real dx = a_params.m_coarsestDx;
       DataIterator dit = a_aCoefVec[ilev]->dataIterator();
       for (dit.begin(); dit.ok(); ++dit)
       {
         FArrayBox& aCoef = (*a_aCoefVec[ilev])[dit];
-        for(BoxIterator boxit(aCoef.box()); boxit.ok(); ++boxit)
-        {
-          auto iv = boxit();
-          RealVect pos = VCLocalFunctions::cellLocation(iv, dx);
-          aCoef(iv, 0) = pos[0];
-          //debug
-          aCoef(iv, 0) = 1;
-          //end debug
-        } // end loop over cells
+        aCoef.setVal(aco_val);
       }   // end loop over grids
-      if(ilev < a_params.m_maxLevel)
-      {
-        dx /= a_params.m_refRatio[ilev];
-      }   // end if on a coarse level
     }     // end loop over levels
   }       //end function setACoef
 
