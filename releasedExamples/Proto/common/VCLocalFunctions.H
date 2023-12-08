@@ -17,6 +17,7 @@ using std::cerr;
 #include "DisjointBoxLayout.H"
 #include "AMRMultiGrid.H"
 #include "VCAMRPoissonOp2.H"
+#include "ViscousTensorOp.H"
 #include "ParmParse.H"
 #include "FArrayBox.H"
 
@@ -39,10 +40,10 @@ namespace Chombo
 
   ///sending in a bunch of stuff so I can keep functions consistent
   inline VCPoissonParameters
-    getVCParameters(int                   a_finestLevel,
-                    Real                  a_coarsestDx,
-                    ProblemDomain         a_coarsestDomain,
-                    Vector<int>           a_refRatio)
+  getVCParameters(int                   a_finestLevel,
+                  Real                  a_coarsestDx,
+                  ProblemDomain         a_coarsestDomain,
+                  Vector<int>           a_refRatio)
   {
     VCPoissonParameters  retval;
 
@@ -67,7 +68,7 @@ namespace Chombo
     VCLocalFunctions(){;}
     ~VCLocalFunctions(){;}
 
-    ///not sure this can be in a class
+    ///
     static void
     ParseBC(FArrayBox& a_state,
             const Box& a_valid,
@@ -75,15 +76,6 @@ namespace Chombo
             Real a_dx,
             bool a_homogeneous)
     {
-      //string domBC;  //always dirichlet
-      //ParmParse pp("ParseBC");
-      //pp.get("domain_bc", domBC);
-      RealVect  bc_value = RealVect::Zero;
-      IntVect   bc_type  =  IntVect::Zero;
-      RefCountedPtr<BCFunction> diri_only =
-        ConstDiriNeumBC(bc_type, bc_value,
-                        bc_type, bc_value);
-
       if (!a_domain.domainBox().contains(a_state.box()))
       {
         Box valid = a_valid;
@@ -137,6 +129,8 @@ namespace Chombo
       }
       return retval;
     }
+
+    ///
     static 
     RefCountedPtr< AMRLevelOpFactory<LevelData<FArrayBox> > >
     getConductivityFactory( Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_aCoef,
@@ -159,7 +153,31 @@ namespace Chombo
       AMRLevelOpFactory<LevelData<FArrayBox> >* base_ptr
         = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(derived_ptr);
       return RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > >(base_ptr);
-    }
-  };
-}
+    } //end function getConductivityFactory
+
+    ///
+    static 
+    RefCountedPtr< AMRLevelOpFactory<LevelData<FArrayBox> > >
+    getViscousTensorFactory( Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_aCo,
+                             Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_eta,
+                             Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_lam,
+                             Vector<DisjointBoxLayout>                    &   a_grids,
+                             VCPoissonParameters                          &   a_params)
+    {
+      ViscousTensoryOpFactory* derived_ptr
+        = (new ViscousTensoryOpFactory(a_grids, a_eta, a_lam, a_acoef, 
+                                       a_params.m_alpha,
+                                       a_params.m_beta,
+                                       a_params.m_refRatio,
+                                       a_params.m_coarsestDomain,
+                                       a_params.m_coarsestDx,
+                                       &ParseBC));
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >* base_ptr
+        = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(  derived_ptr);
+      return RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > >(base_ptr);
+    } //end function getViscousTensorFactory
+  };  //end class VCLocalFunctions
+}     //end namespace chombo
+
 #endif
