@@ -27,15 +27,16 @@ namespace Chombo
     ~local_test_harness()
     {;}
 
-    typedef        LevelData<FArrayBox>      ch_ldf_cell;
-    typedef        LevelData<FluxBox>        ch_ldf_flux;
-    typedef        ProblemDomain             ch_dom;
-    typedef Proto::ProblemDomain             pr_dom;
-    typedef Proto::LevelBoxData<double, 1>   pr_lbd;
-    typedef        AMRLevelOpFactory<pr_lbd> ch_op_fact_pr;
-    typedef        DisjointBoxLayout         ch_dbl;
-    typedef Proto::DisjointBoxLayout         pr_dbl;
-    typedef Proto::Point                     pr_pt;
+    typedef        LevelData<FArrayBox>          ch_ldf_cell;
+    typedef        LevelData<FluxBox>            ch_ldf_flux;
+    typedef        ProblemDomain                 ch_dom;
+    typedef Proto::ProblemDomain                 pr_dom;
+    typedef Proto::LevelBoxData<double, 1>       pr_lbd_sca;
+    typedef Proto::LevelBoxData<double, DIM>     pr_lbd_vec;
+    typedef        AMRLevelOpFactory<pr_lbd_vec> ch_op_fact_pr;
+    typedef        DisjointBoxLayout             ch_dbl;
+    typedef Proto::DisjointBoxLayout             pr_dbl;
+    typedef Proto::Point                         pr_pt;
 
     ///
     static void
@@ -104,8 +105,8 @@ namespace Chombo
       pp.get("eta_value"   , eta_val);
       pp.get("lambda_value", lam_val);
       ///the solver declaration has to change because amrmultigrid is templated on data type
-      shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
-      shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
+      shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
+      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd_vec > ());
       Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > eta(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > lam(numLevels);
@@ -124,35 +125,36 @@ namespace Chombo
       ppSolver.get("beta" , beta) ;
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
+      ch_dom coarsest_dom = a_amr_domains[0];
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>:: getProtoViscousTensorOpFactory(a_amr_domains[0],
-                                                          a_ref_ratios,
-                                                          a_amr_grids,
-                                                          a_amrDx[0],
-                                                          aco, eta, lam,  
-                                                          domain_bc, alpha, beta);
+        PrChUtilities<DIM>:: getProtoViscousTensorOpFactory(coarsest_dom, //a_amr_domains[0],
+                                                            a_ref_ratios,
+                                                            a_amr_grids,
+                                                            a_amrDx[0],
+                                                            aco, eta, lam,  
+                                                            domain_bc, alpha, beta);
 
-      PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
-                                    a_amr_domains, a_ref_ratios, a_amrDx,
-                                    solver_factory_ptr);
+      PrChUtilities<DIM>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
+                                      a_amr_domains, a_ref_ratios, a_amrDx,
+                                      solver_factory_ptr);
 
       ///define the proto versions of the data
-      Vector<pr_lbd*>   phi_pr(numLevels, NULL);
-      Vector<pr_lbd*>   rhs_pr(numLevels, NULL);
+      Vector<pr_lbd_vec*>   phi_pr(numLevels, NULL);
+      Vector<pr_lbd_vec*>   rhs_pr(numLevels, NULL);
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
         shared_ptr<pr_dbl> layout_ptr =
           PrChUtilities<1>::getProtoLayout(a_amr_grids[ilev]);
         pr_pt ghost_phi = ProtoCh::getPoint(a_phi_ch[ilev]->ghostVect());
         pr_pt ghost_rhs = ProtoCh::getPoint(a_rhs_ch[ilev]->ghostVect());
-        phi_pr[ilev] = new pr_lbd(*layout_ptr, ghost_phi);
-        rhs_pr[ilev] = new pr_lbd(*layout_ptr, ghost_rhs);
+        phi_pr[ilev] = new pr_lbd_vec(*layout_ptr, ghost_phi);
+        rhs_pr[ilev] = new pr_lbd_vec(*layout_ptr, ghost_rhs);
       }
 
       //get the rhs onto the device
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
-        PrChUtilities<1>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
+        PrChUtilities<DIM>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
       }
 
       //solve for phi on the device
@@ -162,7 +164,7 @@ namespace Chombo
       //get phi back onto the host
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
       {
-        PrChUtilities<1>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
+        PrChUtilities<DIM>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
       }
 
       //clean up device data

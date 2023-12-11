@@ -16,6 +16,7 @@
 #include "Proto.H"
 #include "Proto_Helmholtz_Op.H"
 #include "Proto_Conductivity_Op.H"
+#include "Proto_Viscous_Tensor_Op.H"
 #include "memusage.H"
 #include "Vector.H"
 
@@ -48,11 +49,12 @@ namespace Chombo
     typedef         DisjointBoxLayout              ch_dbl;
     typedef  Proto::DisjointBoxLayout              pr_dbl;
     //typedef  Proto::LevelBoxData< double, ncomp >  pr_lbd_cell; 
-    typedef  Proto::BoxData<double,ncomp>          pr_box_data;
-    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell; 
-    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >  pr_lbd_xfac; 
-    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >  pr_lbd_yfac; 
-    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >  pr_lbd_zfac;
+    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell;
+    ///sometimes you need to specify
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
+
     typedef         AMRLevelOp<pr_lbd_cell>        ch_amrlevelop;
     typedef         AMRLevelOpFactory<pr_lbd_cell> ch_factory;
     typedef         MayDay                         ch_mayday;
@@ -67,6 +69,7 @@ namespace Chombo
     static Vector<ch_ldf_cell*>
     getRawVectorCh(const Vector<RefCountedPtr<ch_ldf_cell> > a_rhs_shared)
     {
+      CH_TIME("PrChUtilities::getRawVectorCh");
       Vector<ch_ldf_cell *>  raw_rhs(a_rhs_shared.size(), NULL);
       for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
@@ -79,6 +82,7 @@ namespace Chombo
     static Vector<pr_lbd_cell*>
     getRawVectorPr(const vector<shared_ptr<pr_lbd_cell> > a_rhs_shared)
     {
+      CH_TIME("PrChUtilities::getRawVectorPr");
       Vector<pr_lbd_cell *>  raw_rhs(a_rhs_shared.size(), NULL);
       for(int ilev = 0; ilev <  a_rhs_shared.size() ; ilev++)
       {
@@ -97,6 +101,7 @@ namespace Chombo
                  pr_dom                             & a_domain,
                  const ch_dbl                       & a_grids)
     {
+      CH_TIME("PrChUtilities::getRawLayout");
       a_raw_layout.resize(0);
       a_domain = ProtoCh::getProtoDomain(a_grids.physDomain());
       a_box_size = pr_pt::Ones(4586);
@@ -141,6 +146,7 @@ namespace Chombo
     static shared_ptr<pr_dbl>
     getProtoLayout(const ch_dbl& a_grids)
     {
+      CH_TIME("PrChUtilities::getProtoLayout");
       vector<pair<pr_pt, unsigned int> >  raw_layout;
       pr_pt                               box_size;
       pr_dom                              domain;
@@ -151,282 +157,6 @@ namespace Chombo
       
     }
     
-    ///Gets the data pointers from fabs.
-    static vector<double*>
-    getRawHostData(const ch_ldf_cell     & a_host_data) 
-    {
-      auto grids =  a_host_data.disjointBoxLayout();
-      auto dit   =  grids.dataIterator();
-      vector<double*> rawHostData(dit.size());
-      for(int ibox = 0; ibox < dit.size(); ibox++)
-      {
-        const auto  & fab  =  a_host_data[dit[ibox]];
-        rawHostData[ibox] =  (double*)(fab.dataPtr(0)); 
-      }
-      return rawHostData;
-    }
-    
-    /// Copy the contents of a proto data holder into a Chombo data holder.
-    static void
-    copyToHost(ch_ldf_cell       & a_host_data,
-               const pr_lbd_cell & a_devi_data)
-    {
-      CH_TIME(  "PrChUtilities::copyToHost");
-      std::vector<double*> rawHostData  = getRawHostData(a_host_data);
-      Proto_Transition::DataUtilities<ncomp>::copyToHost(rawHostData,
-                                                         a_devi_data);
-    }
-
-    /// Copy the contents of a Chombo data holder into a proto data holder.
-    static void
-    copyToDevice(pr_lbd_cell             & a_devi_data,
-                 const ch_ldf_cell       & a_host_data)
-    {
-      CH_TIME(  "PrChUtilities::copyToDevice-Cell");
-      std::vector<double*> rawHostData    = getRawHostData(a_host_data);
-      Proto_Transition::DataUtilities<ncomp>::copyToDevice(a_devi_data,
-                                                           rawHostData);
-    }
-
-    /// Copy the contents of a Chombo flux data holder into a DIM face-based proto data holders .
-    static void
-    copyToDevice(pr_lbd_xfac_ptr             & a_devi_xfac_ptr,
-                 pr_lbd_yfac_ptr             & a_devi_yfac_ptr,
-                 pr_lbd_zfac_ptr             & a_devi_zfac_ptr,
-                 const ch_ldf_flux_ptr       & a_host_flux_ptr)
-    {
-      CH_TIME(  "PrChUtilities::copyToDevice-Flux");
-
-      auto grids    =  a_host_flux_ptr->disjointBoxLayout();
-      auto dit_pr   =  a_devi_xfac_ptr->dataIterator();
-      auto dit_ch   =  grids.dataIterator();
-      
-      for(int ibox  = 0; ibox < dit_ch.size(); ibox++)
-      {
-        auto ind_ch = dit_ch[ibox];
-        auto ind_pr = dit_pr[ibox];
-        {
-          const auto  &   xflux_ch  = (*a_host_flux_ptr)[ind_ch][0];
-          auto        &   xflux_pr  = (*a_devi_xfac_ptr)[ind_pr];
-          
-          const auto  &   flux_box  = xflux_ch.box();
-          const double*   host_data = xflux_ch.dataPtr(0);
-          double      *   devi_data = xflux_pr.data();
-          
-          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
-          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
-        }
-        {
-          const auto  &   yflux_ch  = (*a_host_flux_ptr)[ind_ch][1];
-          auto        &   yflux_pr  = (*a_devi_yfac_ptr)[ind_pr];
-          
-          const auto  &   flux_box  = yflux_ch.box();
-          const double*   host_data = yflux_ch.dataPtr(0);
-          double      *   devi_data = yflux_pr.data();
-          
-          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
-          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
-        }
-#if DIM==3        
-        {
-          const auto  &   zflux_ch  = (*a_host_flux_ptr)[ind_ch][2];
-          auto        &   zflux_pr  = (*a_devi_zfac_ptr)[ind_pr];
-          
-          const auto  &   flux_box  = zflux_ch.box();
-          const double*   host_data = zflux_ch.dataPtr(0);
-          double      *   devi_data = zflux_pr.data();
-
-          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
-          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
-        }
-#endif        
-      }
-    }
-    
-    ///
-    static void
-    setupSolver(shared_ptr< AMRMultiGrid< pr_lbd_cell > >   a_amrSolver,
-                shared_ptr< LinearSolver< pr_lbd_cell > >   a_bottomSolver,
-                const Vector<ch_dbl>& a_amrGrids,
-                const Vector<ch_dom>& a_amrDomains,
-                const Vector<int>& a_refRatios,
-                const Vector<Real>& a_amrDx,
-                shared_ptr<ch_factory> a_solver_factory_ptr)
-    {
-      CH_TIME("PrChUtilities::setupSolver");
-
-      ParmParse ppSolver("PrChUtil_setupSolver");
-
-      a_amrSolver->define(a_amrDomains[0], *a_solver_factory_ptr,
-                          &(*a_bottomSolver), a_amrGrids.size());
-
-      // multigrid solver parameters
-      int numSmooth, numMG, maxIter;
-      Real eps, hang;
-      ppSolver.get("num_smooth", numSmooth);
-      ppSolver.get("num_mg",     numMG);
-      ppSolver.get("max_iterations", maxIter);
-      ppSolver.get("tolerance", eps);
-      ppSolver.get("hang",      hang);
-
-      Real normThresh = 1.0e-30;
-      a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
-                                       numMG, maxIter, eps, hang, normThresh);
-      a_amrSolver->m_verbosity = 3;
-
-      // optional parameters
-      ppSolver.query("num_pre", a_amrSolver->m_pre);
-      ppSolver.query("num_post", a_amrSolver->m_post);
-      ppSolver.query("num_bottom", a_amrSolver->m_bottom);
-    }//end function setupSolver
-
-    ///
-    static shared_ptr<ch_factory>
-    getProtoHelmholtzOpFactory(const ch_dom         &        a_coarsest_dom,
-                               const Vector<int>    &        a_ref_ratios,
-                               const Vector<ch_dbl> &        a_grids,
-                               const double         &        a_coarsest_dx,
-                               const string         &        a_domBC,
-                               const double         &        a_alpha,
-                               const double         &        a_beta)               
-    {
-
-      typedef PrCh_AMR_Elliptic::Proto_Helmholtz_Op_Factory prch_helm_fact;
-      
-      prch_helm_fact* derived_ptr =
-        new prch_helm_fact(a_coarsest_dom,
-                           a_grids,
-                           a_ref_ratios,
-                           a_coarsest_dx,        
-                           a_domBC,              
-                           a_alpha,              
-                           a_beta);
-      
-      ch_factory* base_ptr =  static_cast<ch_factory*>(derived_ptr);
-      return shared_ptr<ch_factory>(base_ptr);
-    } //end function getProtoHelmholtzFactory
-
-    ///
-    static void
-    protoizeConductivityArguments(vector<pr_dbl>                        & a_grids_pr,
-                                  vector<pr_lbd_cell_ptr>               & a_acoef_pr,
-                                  vector<pr_lbd_xfac_ptr>               & a_bco_x_pr,
-                                  vector<pr_lbd_yfac_ptr>               & a_bco_y_pr,
-                                  vector<pr_lbd_zfac_ptr>               & a_bco_z_pr,
-                                  vector<int>                           & a_refrat_pr,
-                                  const Vector<ch_dbl>                  & a_grids_ch,
-                                  const Vector< ch_ldf_cell_ptr >       & a_acoef_ch,
-                                  const Vector< ch_ldf_flux_ptr >       & a_bcoef_ch,
-                                  const Vector<int>                     & a_refrat_bigV)
-    {
-      a_refrat_pr.resize(      a_refrat_bigV.size());
-      for(int ilev = 0; ilev < a_refrat_bigV.size(); ilev++)
-      {
-        a_refrat_pr[ilev] = a_refrat_bigV[ilev];
-      }
-
-      a_grids_pr.resize(        a_grids_ch.size());
-      for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
-      {
-        shared_ptr<pr_dbl>  lev_ptr = getProtoLayout(a_grids_ch[ilev]);
-        a_grids_pr[ilev] = *lev_ptr;
-      }
-
-      a_acoef_pr.resize(       a_grids_pr.size());
-      a_bco_x_pr.resize(       a_grids_pr.size());
-      a_bco_y_pr.resize(       a_grids_pr.size());
-      a_bco_z_pr.resize(       a_grids_pr.size());
-      for(int ilev = 0; ilev < a_grids_pr.size(); ilev++)
-      {
-        {
-          ch_iv ghost_iv = a_acoef_ch[ilev]->ghostVect();
-          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
-          a_acoef_pr[ilev] = pr_lbd_cell_ptr( new pr_lbd_cell(a_grids_pr[ilev], ghost_pt));
-          copyToDevice(*a_acoef_pr[ilev], *a_acoef_ch[ilev]);
-        }
-        {
-          ch_iv ghost_iv = a_bcoef_ch[ilev]->ghostVect();
-          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
-          a_bco_x_pr[ilev] = pr_lbd_xfac_ptr( new pr_lbd_xfac(a_grids_pr[ilev], ghost_pt)); // 
-          a_bco_y_pr[ilev] = pr_lbd_yfac_ptr( new pr_lbd_yfac(a_grids_pr[ilev], ghost_pt)); //
-#if DIM==3          
-          a_bco_z_pr[ilev] = pr_lbd_zfac_ptr( new pr_lbd_zfac(a_grids_pr[ilev], ghost_pt)); //
-#endif          
-          copyToDevice(a_bco_x_pr[ilev],
-                       a_bco_y_pr[ilev],
-                       a_bco_z_pr[ilev],
-                       a_bcoef_ch[ilev]);
-        }
-      }
-    }//end function protoizeConductivityArguments;
-    ///
-    static shared_ptr<ch_factory>
-    getProtoConductivityFactory(const ch_dom                             & a_coarsest_dom,
-                                const Vector<int>                        & a_ref_ratios,
-                                const Vector<ch_dbl>                     & a_grids,
-                                const double                             & a_coarsest_dx,
-                                const Vector< ch_ldf_cell_ptr >          & a_acoef,
-                                const Vector< ch_ldf_flux_ptr >          & a_bcoef,
-                                const string                             & a_domBC,
-                                const double                             & a_alpha,
-                                const double                             & a_beta)
-    {
-
-      typedef PrCh_AMR_Elliptic::Proto_Conductivity_Op_Factory  prch_cond_fact;
-      vector<pr_dbl>                        grids_pr;
-      vector<pr_lbd_cell_ptr>               acoef_pr;
-      vector<pr_lbd_xfac_ptr>               bco_x_pr;
-      vector<pr_lbd_yfac_ptr>               bco_y_pr;
-      vector<pr_lbd_zfac_ptr>               bco_z_pr;
-      vector<int>                           refrat_pr;
-
-      protoizeConductivityArguments(grids_pr,
-                                    acoef_pr,
-                                    bco_x_pr,
-                                    bco_y_pr,
-                                    bco_z_pr,
-                                    refrat_pr,
-                                    a_grids,a_acoef,a_bcoef, a_ref_ratios);
-
-      prch_cond_fact * derived_ptr =
-        new prch_cond_fact(a_coarsest_dom,
-                           grids_pr,
-                           refrat_pr,
-                           a_coarsest_dx,
-                           a_domBC,
-                           a_alpha,
-                           a_beta,
-                           acoef_pr,
-                           bco_x_pr,
-                           bco_y_pr,
-                           bco_z_pr);           
-
-      ch_factory* base_ptr = static_cast<ch_factory*>(derived_ptr);
-      shared_ptr<ch_factory> retval(base_ptr);
-
-      return retval;
-    }
-
-
-    ///
-    static shared_ptr<ch_factory>
-    getProtoViscousTensorOpFactory(const ch_dom                             & a_coarsest_dom,
-                                   const Vector<int>                        & a_ref_ratios,
-                                   const Vector<ch_dbl>                     & a_grids,
-                                   const double                             & a_coarsest_dx,
-                                   const Vector< ch_ldf_cell_ptr >          & a_aco,
-                                   const Vector< ch_ldf_flux_ptr >          & a_eta,
-                                   const Vector< ch_ldf_flux_ptr >          & a_lam,
-                                   const string                             & a_domBC,
-                                   const double                             & a_alpha,
-                                   const double                             & a_beta)
-    {
-
-      static shared_ptr<ch_factory> retval;
-      ch_mayday::Error("not implemented");
-      return retval;
-    }
-
     ///just always tag IntVect::Zero;
     static void
     setupLLCornerGrids(Vector<ch_dbl>& a_amrGrids,
@@ -554,7 +284,470 @@ namespace Chombo
         }
       }
     } //end setupLLCornerGrids
-  };  //end class PrChUtilities
+    
+    ///Gets the data pointers from fabs.
+    static vector<double*>
+    getRawHostData(const ch_ldf_cell     & a_host_data) 
+    {
+      CH_TIME("PrChUtilities::getRaHostData");
+      auto grids =  a_host_data.disjointBoxLayout();
+      auto dit   =  grids.dataIterator();
+      vector<double*> rawHostData(dit.size());
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        const auto  & fab  =  a_host_data[dit[ibox]];
+        rawHostData[ibox] =  (double*)(fab.dataPtr(0)); 
+      }
+      return rawHostData;
+    }
+    
+    /// Copy the contents of a proto data holder into a Chombo data holder.
+    static void
+    copyToHost(ch_ldf_cell       & a_host_data,
+               const pr_lbd_cell & a_devi_data)
+    {
+      CH_TIME(  "PrChUtilities::copyToHost");
+      std::vector<double*> rawHostData  = getRawHostData(a_host_data);
+      Proto_Transition::DataUtilities<ncomp>::copyToHost(rawHostData,
+                                                         a_devi_data);
+    }
+
+    /// Copy the contents of a Chombo data holder into a proto data holder.
+    static void
+    copyToDevice(pr_lbd_cell             & a_devi_data,
+                 const ch_ldf_cell       & a_host_data)
+    {
+      CH_TIME(  "PrChUtilities::copyToDevice-Cell");
+      std::vector<double*> rawHostData    = getRawHostData(a_host_data);
+      Proto_Transition::DataUtilities<ncomp>::copyToDevice(a_devi_data,
+                                                           rawHostData);
+    }
+
+    /// Copy the contents of a Chombo flux data holder into a DIM face-based proto data holders .
+    static void
+    copyToDevice(pr_lbd_xfac_ptr             & a_devi_xfac_ptr,
+                 pr_lbd_yfac_ptr             & a_devi_yfac_ptr,
+                 pr_lbd_zfac_ptr             & a_devi_zfac_ptr,
+                 const ch_ldf_flux_ptr       & a_host_flux_ptr)
+    {
+      CH_TIME(  "PrChUtilities::copyToDevice-Flux");
+
+      auto grids    =  a_host_flux_ptr->disjointBoxLayout();
+      auto dit_pr   =  a_devi_xfac_ptr->dataIterator();
+      auto dit_ch   =  grids.dataIterator();
+      
+      for(int ibox  = 0; ibox < dit_ch.size(); ibox++)
+      {
+        auto ind_ch = dit_ch[ibox];
+        auto ind_pr = dit_pr[ibox];
+        {
+          const auto  &   xflux_ch  = (*a_host_flux_ptr)[ind_ch][0];
+          auto        &   xflux_pr  = (*a_devi_xfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = xflux_ch.box();
+          const double*   host_data = xflux_ch.dataPtr(0);
+          double      *   devi_data = xflux_pr.data();
+          
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+        {
+          const auto  &   yflux_ch  = (*a_host_flux_ptr)[ind_ch][1];
+          auto        &   yflux_pr  = (*a_devi_yfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = yflux_ch.box();
+          const double*   host_data = yflux_ch.dataPtr(0);
+          double      *   devi_data = yflux_pr.data();
+          
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+#if DIM==3        
+        {
+          const auto  &   zflux_ch  = (*a_host_flux_ptr)[ind_ch][2];
+          auto        &   zflux_pr  = (*a_devi_zfac_ptr)[ind_pr];
+          
+          const auto  &   flux_box  = zflux_ch.box();
+          const double*   host_data = zflux_ch.dataPtr(0);
+          double      *   devi_data = zflux_pr.data();
+
+          size_t data_size = ncomp*sizeof(double)*(flux_box.numPts());
+          Proto_Transition::DataUtilities<ncomp>::copyToDevice(devi_data, host_data, data_size);
+        }
+#endif        
+      }
+    }
+    
+    ///
+    static void
+    setupSolver(shared_ptr< AMRMultiGrid< pr_lbd_cell > >   a_amrSolver,
+                shared_ptr< LinearSolver< pr_lbd_cell > >   a_bottomSolver,
+                const Vector<ch_dbl>& a_amrGrids,
+                const Vector<ch_dom>& a_amrDomains,
+                const Vector<int>& a_refRatios,
+                const Vector<Real>& a_amrDx,
+                shared_ptr<ch_factory> a_solver_factory_ptr)
+    {
+      CH_TIME("PrChUtilities::setupSolver");
+
+      ParmParse ppSolver("PrChUtil_setupSolver");
+
+      a_amrSolver->define(a_amrDomains[0], *a_solver_factory_ptr,
+                          &(*a_bottomSolver), a_amrGrids.size());
+
+      // multigrid solver parameters
+      int numSmooth, numMG, maxIter;
+      Real eps, hang;
+      ppSolver.get("num_smooth", numSmooth);
+      ppSolver.get("num_mg",     numMG);
+      ppSolver.get("max_iterations", maxIter);
+      ppSolver.get("tolerance", eps);
+      ppSolver.get("hang",      hang);
+
+      Real normThresh = 1.0e-30;
+      a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
+                                       numMG, maxIter, eps, hang, normThresh);
+      a_amrSolver->m_verbosity = 3;
+
+      // optional parameters
+      ppSolver.query("num_pre", a_amrSolver->m_pre);
+      ppSolver.query("num_post", a_amrSolver->m_post);
+      ppSolver.query("num_bottom", a_amrSolver->m_bottom);
+    }//end function setupSolver
+  }; //end class PrChUtilities
+
+  /// stuff for Helmholtz and conductivity
+  class HelmholtzUtilities()
+  {
+  public:
+
+    typedef         LevelData<FArrayBox>           ch_ldf_cell;
+    typedef         LevelData<FluxBox>             ch_ldf_flux;
+    typedef         ProblemDomain                  ch_dom;
+    typedef  Proto::ProblemDomain                  pr_dom;
+    typedef  Proto::Point                          pr_pt;
+    typedef         IntVect                        ch_iv;
+    typedef  Proto::Box                            pr_box;
+    typedef         Box                            ch_box;
+    typedef         DisjointBoxLayout              ch_dbl;
+    typedef  Proto::DisjointBoxLayout              pr_dbl;
+    //typedef  Proto::LevelBoxData< double, ncomp >  pr_lbd_cell; 
+
+    typedef  Proto::LevelBoxData< double, 1, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell;
+    ///sometimes you need to specify
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
+
+    typedef         AMRLevelOp<pr_lbd_cell>        ch_amrlevelop;
+    typedef         AMRLevelOpFactory<pr_lbd_cell> ch_factory;
+    typedef         MayDay                         ch_mayday;
+    typedef         RefCountedPtr< ch_ldf_cell  >   ch_ldf_cell_ptr;
+    typedef         RefCountedPtr< ch_ldf_flux  >   ch_ldf_flux_ptr;
+    typedef         shared_ptr<    pr_lbd_cell  >   pr_lbd_cell_ptr;
+    typedef         shared_ptr<    pr_lbd_xfac  >   pr_lbd_xfac_ptr;
+    typedef         shared_ptr<    pr_lbd_yfac  >   pr_lbd_yfac_ptr;    
+    typedef         shared_ptr<    pr_lbd_zfac  >   pr_lbd_zfac_ptr;    
+
+    ///
+    static shared_ptr<ch_factory>
+    getProtoHelmholtzOpFactory(const ch_dom         &        a_coarsest_dom,
+                               const Vector<int>    &        a_ref_ratios,
+                               const Vector<ch_dbl> &        a_grids,
+                               const double         &        a_coarsest_dx,
+                               const string         &        a_domBC,
+                               const double         &        a_alpha,
+                               const double         &        a_beta)               
+    {
+
+      typedef PrCh_AMR_Elliptic::Proto_Helmholtz_Op_Factory prch_helm_fact;
+      
+      prch_helm_fact* derived_ptr =
+        new prch_helm_fact(a_coarsest_dom,
+                           a_grids,
+                           a_ref_ratios,
+                           a_coarsest_dx,        
+                           a_domBC,              
+                           a_alpha,              
+                           a_beta);
+      
+      ch_factory* base_ptr =  static_cast<ch_factory*>(derived_ptr);
+      return shared_ptr<ch_factory>(base_ptr);
+    } //end function getProtoHelmholtzFactory
+
+    ///
+    static void
+    protoizeConductivityArguments(vector<pr_dbl>                        & a_grids_pr,
+                                  vector<pr_lbd_cell_ptr>               & a_acoef_pr,
+                                  vector<pr_lbd_xfac_ptr>               & a_bco_x_pr,
+                                  vector<pr_lbd_yfac_ptr>               & a_bco_y_pr,
+                                  vector<pr_lbd_zfac_ptr>               & a_bco_z_pr,
+                                  vector<int>                           & a_refrat_pr,
+                                  const Vector<ch_dbl>                  & a_grids_ch,
+                                  const Vector< ch_ldf_cell_ptr >       & a_acoef_ch,
+                                  const Vector< ch_ldf_flux_ptr >       & a_bcoef_ch,
+                                  const Vector<int>                     & a_refrat_bigV)
+    {
+      CH_TIME("PrChUtilities::protoizeConductivityArguments");
+      a_refrat_pr.resize(      a_refrat_bigV.size());
+      for(int ilev = 0; ilev < a_refrat_bigV.size(); ilev++)
+      {
+        a_refrat_pr[ilev] = a_refrat_bigV[ilev];
+      }
+
+      a_grids_pr.resize(        a_grids_ch.size());
+      for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
+      {
+        shared_ptr<pr_dbl>  lev_ptr = getProtoLayout(a_grids_ch[ilev]);
+        a_grids_pr[ilev] = *lev_ptr;
+      }
+
+      a_acoef_pr.resize(       a_grids_pr.size());
+      a_bco_x_pr.resize(       a_grids_pr.size());
+      a_bco_y_pr.resize(       a_grids_pr.size());
+      a_bco_z_pr.resize(       a_grids_pr.size());
+      for(int ilev = 0; ilev < a_grids_pr.size(); ilev++)
+      {
+        {
+          ch_iv ghost_iv = a_acoef_ch[ilev]->ghostVect();
+          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
+          a_acoef_pr[ilev] = pr_lbd_cell_ptr( new pr_lbd_cell(a_grids_pr[ilev], ghost_pt));
+          PrChUtilities<1>::copyToDevice(*a_acoef_pr[ilev], *a_acoef_ch[ilev]);
+        }
+        {
+          ch_iv ghost_iv = a_bcoef_ch[ilev]->ghostVect();
+          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
+          a_bco_x_pr[ilev] = pr_lbd_xfac_ptr( new pr_lbd_xfac(a_grids_pr[ilev], ghost_pt)); // 
+          a_bco_y_pr[ilev] = pr_lbd_yfac_ptr( new pr_lbd_yfac(a_grids_pr[ilev], ghost_pt)); //
+#if DIM==3          
+          a_bco_z_pr[ilev] = pr_lbd_zfac_ptr( new pr_lbd_zfac(a_grids_pr[ilev], ghost_pt)); //
+#endif          
+          PrChUtilities<1>::copyToDevice(a_bco_x_pr[ilev],
+                                         a_bco_y_pr[ilev],
+                                         a_bco_z_pr[ilev],
+                                         a_bcoef_ch[ilev]);
+        }
+      }
+    }//end function protoizeConductivityArguments;
+    ///
+    static shared_ptr<ch_factory>
+    getProtoConductivityFactory(const ch_dom                             & a_coarsest_dom,
+                                const Vector<int>                        & a_ref_ratios,
+                                const Vector<ch_dbl>                     & a_grids,
+                                const double                             & a_coarsest_dx,
+                                const Vector< ch_ldf_cell_ptr >          & a_acoef,
+                                const Vector< ch_ldf_flux_ptr >          & a_bcoef,
+                                const string                             & a_domBC,
+                                const double                             & a_alpha,
+                                const double                             & a_beta)
+    {
+
+      CH_TIME("PrChUtilities::getProtoConductivityFactory");
+      typedef PrCh_AMR_Elliptic::Proto_Conductivity_Op_Factory  prch_cond_fact;
+      vector<pr_dbl>                        grids_pr;
+      vector<pr_lbd_cell_ptr>               acoef_pr;
+      vector<pr_lbd_xfac_ptr>               bco_x_pr;
+      vector<pr_lbd_yfac_ptr>               bco_y_pr;
+      vector<pr_lbd_zfac_ptr>               bco_z_pr;
+      vector<int>                           refrat_pr;
+
+      protoizeConductivityArguments(grids_pr,
+                                    acoef_pr,
+                                    bco_x_pr,
+                                    bco_y_pr,
+                                    bco_z_pr,
+                                    refrat_pr,
+                                    a_grids,a_acoef,a_bcoef, a_ref_ratios);
+
+      prch_cond_fact * derived_ptr =
+        new prch_cond_fact(a_coarsest_dom,
+                           grids_pr,
+                           refrat_pr,
+                           a_coarsest_dx,
+                           a_domBC,
+                           a_alpha,
+                           a_beta,
+                           acoef_pr,
+                           bco_x_pr,
+                           bco_y_pr,
+                           bco_z_pr);           
+
+      ch_factory* base_ptr = static_cast<ch_factory*>(derived_ptr);
+      shared_ptr<ch_factory> retval(base_ptr);
+
+      return retval;
+    }
+
+  }; //end class HelmholtzUtilties
+
+  ///ViscousTensorOp  just has to be different
+  class ViscousTensorUtilites
+  {
+  public:
+
+    typedef         LevelData<FArrayBox>           ch_ldf_cell;
+    typedef         LevelData<FluxBox>             ch_ldf_flux;
+    typedef         ProblemDomain                  ch_dom;
+    typedef  Proto::ProblemDomain                  pr_dom;
+    typedef  Proto::Point                          pr_pt;
+    typedef         IntVect                        ch_iv;
+    typedef  Proto::Box                            pr_box;
+    typedef         Box                            ch_box;
+    typedef         DisjointBoxLayout              ch_dbl;
+    typedef  Proto::DisjointBoxLayout              pr_dbl;
+    //typedef  Proto::LevelBoxData< double, ncomp >  pr_lbd_cell; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_sca;
+    typedef  Proto::LevelBoxData< double, DIM, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_vec;
+    ///sometimes you need to specify
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
+    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
+
+    typedef         AMRLevelOp<pr_lbd_cell>             ch_amrlevelop;
+    typedef         AMRLevelOpFactory<pr_lbd_cell>      ch_factory;
+    typedef         MayDay                              ch_mayday;
+    typedef         RefCountedPtr< ch_ldf_cell  >       ch_ldf_cell_ptr;
+    typedef         RefCountedPtr< ch_ldf_flux  >       ch_ldf_flux_ptr;
+    typedef         shared_ptr<    pr_lbd_cell_sca  >   pr_lbd_cell_sca_ptr;
+    typedef         shared_ptr<    pr_lbd_cell_vec  >   pr_lbd_cell_vec_ptr;
+    typedef         shared_ptr<    pr_lbd_xfac  >       pr_lbd_xfac_ptr;
+    typedef         shared_ptr<    pr_lbd_yfac  >       pr_lbd_yfac_ptr;    
+    typedef         shared_ptr<    pr_lbd_zfac  >       pr_lbd_zfac_ptr;    
+
+    ///
+    static void
+    protoizeViscousTensorArguments(vector<pr_dbl>                        & a_grids_pr,
+                                   vector<pr_lbd_cell_sca_ptr>           & a_acoef_pr,
+                                   vector<pr_lbd_xfac_ptr>               & a_eta_x_pr,
+                                   vector<pr_lbd_yfac_ptr>               & a_eta_y_pr,
+                                   vector<pr_lbd_zfac_ptr>               & a_eta_z_pr,
+                                   vector<pr_lbd_xfac_ptr>               & a_lam_x_pr,
+                                   vector<pr_lbd_yfac_ptr>               & a_lam_y_pr,
+                                   vector<pr_lbd_zfac_ptr>               & a_lam_z_pr,
+                                   vector<int>                           & a_refrat_pr,
+                                   const Vector<ch_dbl>                  & a_grids_ch,
+                                   const Vector< ch_ldf_cell_ptr >       & a_acoef_ch,
+                                   const Vector< ch_ldf_flux_ptr >       & a_eta_ch,
+                                   const Vector< ch_ldf_flux_ptr >       & a_lam_ch,
+                                   const Vector<int>                     & a_refrat_bigV)
+    {
+      CH_TIME("PrChUtilities::protoizeViscousTensorArguments");
+      a_refrat_pr.resize(      a_refrat_bigV.size());
+      for(int ilev = 0; ilev < a_refrat_bigV.size(); ilev++)
+      {
+        a_refrat_pr[ilev] = a_refrat_bigV[ilev];
+      }
+
+      a_grids_pr.resize(        a_grids_ch.size());
+      for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
+      {
+        shared_ptr<pr_dbl>  lev_ptr = getProtoLayout(a_grids_ch[ilev]);
+        a_grids_pr[ilev] = *lev_ptr;
+      }
+
+      a_acoef_pr.resize(       a_grids_pr.size());
+      a_eta_x_pr.resize(       a_grids_pr.size());
+      a_eta_y_pr.resize(       a_grids_pr.size());
+      a_eta_z_pr.resize(       a_grids_pr.size());
+      a_lam_x_pr.resize(       a_grids_pr.size());
+      a_lam_y_pr.resize(       a_grids_pr.size());
+      a_lam_z_pr.resize(       a_grids_pr.size());
+      for(int ilev = 0; ilev < a_grids_pr.size(); ilev++)
+      {
+        {
+          ch_iv ghost_iv = a_acoef_ch[ilev]->ghostVect();
+          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
+          a_acoef_pr[ilev] = pr_lbd_cell_ptr( new pr_lbd_cell(a_grids_pr[ilev], ghost_pt));
+          PrChUtilities<1>::copyToDevice(*a_acoef_pr[ilev], *a_acoef_ch[ilev]);
+        }
+        {
+          ch_iv ghost_iv = a_eta_ch[ilev]->ghostVect();
+          pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
+          a_eta_x_pr[ilev] = pr_lbd_xfac_ptr( new pr_lbd_xfac(a_grids_pr[ilev], ghost_pt)); // 
+          a_eta_y_pr[ilev] = pr_lbd_yfac_ptr( new pr_lbd_yfac(a_grids_pr[ilev], ghost_pt)); //
+#if DIM==3  
+          a_eta_z_pr[ilev] = pr_lbd_zfac_ptr( new pr_lbd_zfac(a_grids_pr[ilev], ghost_pt)); //
+#endif          
+
+          a_lam_x_pr[ilev] = pr_lbd_xfac_ptr( new pr_lbd_xfac(a_grids_pr[ilev], ghost_pt)); // 
+          a_lam_y_pr[ilev] = pr_lbd_yfac_ptr( new pr_lbd_yfac(a_grids_pr[ilev], ghost_pt)); //
+#if DIM==3  
+          a_lam_z_pr[ilev] = pr_lbd_zfac_ptr( new pr_lbd_zfac(a_grids_pr[ilev], ghost_pt)); //
+#endif          
+          PrChUtilities<1>::copyToDevice(a_eta_x_pr[ilev],
+                                         a_eta_y_pr[ilev],
+                                         a_eta_z_pr[ilev],
+                                         a_eta_ch[ilev]);
+          PrChUtilities<1>::copyToDevice(a_lam_x_pr[ilev],
+                                         a_lam_y_pr[ilev],
+                                         a_lam_z_pr[ilev],
+                                         a_lam_ch[ilev]);
+        }
+      }
+    }//end function protoizeViscousTensorArguments;
+    ///
+    static shared_ptr<ch_factory>
+    getProtoViscousTensorOpFactory(const ch_dom                             & a_coarsest_dom,
+                                   const Vector<int>                        & a_ref_ratios,
+                                   const Vector<ch_dbl>                     & a_grids,
+                                   const double                             & a_coarsest_dx,
+                                   const Vector< ch_ldf_cell_ptr >          & a_aco,
+                                   const Vector< ch_ldf_flux_ptr >          & a_eta,
+                                   const Vector< ch_ldf_flux_ptr >          & a_lam,
+                                   const string                             & a_domBC,
+                                   const double                             & a_alpha,
+                                   const double                             & a_beta)
+    {
+      CH_TIME("PrChUtilities::getProtoViscousTensorOpFactory");
+
+      typedef PrCh_AMR_Elliptic::Proto_Viscous_Tensor_Op_Factory  prch_visc_fact;
+      vector<pr_dbl>                        grids_pr;
+      vector<pr_lbd_cell_sca_ptr>           acoef_pr;
+      vector<pr_lbd_xfac_ptr>               eta_x_pr;
+      vector<pr_lbd_yfac_ptr>               eta_y_pr;
+      vector<pr_lbd_zfac_ptr>               eta_z_pr;
+      vector<pr_lbd_xfac_ptr>               lam_x_pr;
+      vector<pr_lbd_yfac_ptr>               lam_y_pr;
+      vector<pr_lbd_zfac_ptr>               lam_z_pr;
+      vector<int>                           refrat_pr;
+
+      protoizeViscousTensorArguments(grids_pr,
+                                     acoef_pr,
+                                     eta_x_pr,
+                                     eta_y_pr,
+                                     eta_z_pr,
+                                     lam_x_pr,
+                                     lam_y_pr,
+                                     lam_z_pr,
+                                     refrat_pr,
+                                     a_grids,
+                                     a_aco,
+                                     a_eta,
+                                     a_lam,
+                                     a_ref_ratios);
+
+      prch_visc_fact * derived_ptr =
+        new prch_visc_fact(a_coarsest_dom,
+                           grids_pr,
+                           refrat_pr,
+                           a_coarsest_dx,
+                           a_domBC,
+                           a_alpha,
+                           a_beta,
+                           acoef_pr,
+                           eta_x_pr,
+                           eta_y_pr,
+                           eta_z_pr,
+                           lam_x_pr,
+                           lam_y_pr,
+                           lam_z_pr);           
+
+      ch_factory* base_ptr = static_cast<ch_factory*>(derived_ptr);
+      shared_ptr<ch_factory> retval(base_ptr);
+      return retval;
+    }
+
+  };  //end class ViscousTensorUtilities
 }     //end namespace Chombo
 
 #endif //include guard
