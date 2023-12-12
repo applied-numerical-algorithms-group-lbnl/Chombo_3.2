@@ -208,8 +208,8 @@ namespace Chombo
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
-        phi_ch[lev] = new ch_ldf_cell(levelGrids, 1, IntVect::Unit);
-        rhs_ch[lev] = new ch_ldf_cell(levelGrids, 1, IntVect::Zero);
+        phi_ch[lev] = new ch_ldf_cell(levelGrids, DIM, IntVect::Unit);
+        rhs_ch[lev] = new ch_ldf_cell(levelGrids, DIM, IntVect::Zero);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
@@ -218,8 +218,11 @@ namespace Chombo
 #ifdef CH_USE_HDF5
       //write the answer to file
       string fname("phi.hdf5");
-      Vector<string> varNames(1, string("phi"));
-
+      Vector<string> varNames(DIM);
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        varNames[idir] = string("phi_comp_") + std::to_string(idir);
+      }
       Real bogusVal = 4586.0;
 
       WriteAMRHierarchyHDF5(fname,
