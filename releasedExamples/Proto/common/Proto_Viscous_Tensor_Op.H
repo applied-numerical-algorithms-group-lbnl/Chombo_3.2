@@ -155,13 +155,13 @@ unsigned int  relaxCoefViscoF(int                        a_pt[DIM],
       double incr = 0;
       if(icomp == face_dir)
       {
-        incr = a_beta*(4*eta_val[face_dir] + 2*lam_val[face_dir])/(a_dx*a_dx);
+        incr = a_beta*(4.*eta_val[face_dir] + 2.*lam_val[face_dir])/(a_dx*a_dx);
       }
       else
       {
-        incr = 2*(a_beta*eta_val[face_dir])/(a_dx*a_dx);
+        incr = a_beta*(2.*eta_val[face_dir])/(a_dx*a_dx);
       }
-      inv_lam[face_dir] -= incr;
+      inv_lam[icomp] -= incr;
     }//end loop over face_dir
     a_relCoef(icomp) = safety/inv_lam[icomp];
   }
