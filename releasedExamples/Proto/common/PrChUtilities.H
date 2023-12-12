@@ -48,12 +48,10 @@ namespace Chombo
     typedef         Box                            ch_box;
     typedef         DisjointBoxLayout              ch_dbl;
     typedef  Proto::DisjointBoxLayout              pr_dbl;
-    //typedef  Proto::LevelBoxData< double, ncomp >  pr_lbd_cell; 
-    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell;
-    ///sometimes you need to specify
-    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
-    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
-    typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
+    typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >      pr_lbd_cell;
+    typedef  Proto::LevelBoxData< double, 1,     Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
+    typedef  Proto::LevelBoxData< double, 1,     Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
+    typedef  Proto::LevelBoxData< double, 1,     Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
 
     typedef         AMRLevelOp<pr_lbd_cell>        ch_amrlevelop;
     typedef         AMRLevelOpFactory<pr_lbd_cell> ch_factory;
@@ -417,7 +415,7 @@ namespace Chombo
   }; //end class PrChUtilities
 
   /// stuff for Helmholtz and conductivity
-  class HelmholtzUtilities()
+  class HelmholtzUtilities
   {
   public:
 
@@ -498,7 +496,7 @@ namespace Chombo
       a_grids_pr.resize(        a_grids_ch.size());
       for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
       {
-        shared_ptr<pr_dbl>  lev_ptr = getProtoLayout(a_grids_ch[ilev]);
+        shared_ptr<pr_dbl>  lev_ptr = PrChUtilities<1>::getProtoLayout(a_grids_ch[ilev]);
         a_grids_pr[ilev] = *lev_ptr;
       }
 
@@ -581,7 +579,7 @@ namespace Chombo
   }; //end class HelmholtzUtilties
 
   ///ViscousTensorOp  just has to be different
-  class ViscousTensorUtilites
+  class ViscousTensorUtilities
   {
   public:
 
@@ -595,16 +593,15 @@ namespace Chombo
     typedef         Box                            ch_box;
     typedef         DisjointBoxLayout              ch_dbl;
     typedef  Proto::DisjointBoxLayout              pr_dbl;
-    //typedef  Proto::LevelBoxData< double, ncomp >  pr_lbd_cell; 
+
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_sca;
     typedef  Proto::LevelBoxData< double, DIM, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_vec;
-    ///sometimes you need to specify
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
 
-    typedef         AMRLevelOp<pr_lbd_cell>             ch_amrlevelop;
-    typedef         AMRLevelOpFactory<pr_lbd_cell>      ch_factory;
+    typedef         AMRLevelOp<pr_lbd_cell_vec>         ch_amrlevelop;
+    typedef         AMRLevelOpFactory<pr_lbd_cell_vec>  ch_factory;
     typedef         MayDay                              ch_mayday;
     typedef         RefCountedPtr< ch_ldf_cell  >       ch_ldf_cell_ptr;
     typedef         RefCountedPtr< ch_ldf_flux  >       ch_ldf_flux_ptr;
@@ -641,7 +638,7 @@ namespace Chombo
       a_grids_pr.resize(        a_grids_ch.size());
       for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
       {
-        shared_ptr<pr_dbl>  lev_ptr = getProtoLayout(a_grids_ch[ilev]);
+        shared_ptr<pr_dbl>  lev_ptr = PrChUtilities<DIM>::getProtoLayout(a_grids_ch[ilev]);
         a_grids_pr[ilev] = *lev_ptr;
       }
 
@@ -657,7 +654,7 @@ namespace Chombo
         {
           ch_iv ghost_iv = a_acoef_ch[ilev]->ghostVect();
           pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
-          a_acoef_pr[ilev] = pr_lbd_cell_ptr( new pr_lbd_cell(a_grids_pr[ilev], ghost_pt));
+          a_acoef_pr[ilev] = pr_lbd_cell_sca_ptr( new pr_lbd_cell_sca(a_grids_pr[ilev], ghost_pt));
           PrChUtilities<1>::copyToDevice(*a_acoef_pr[ilev], *a_acoef_ch[ilev]);
         }
         {

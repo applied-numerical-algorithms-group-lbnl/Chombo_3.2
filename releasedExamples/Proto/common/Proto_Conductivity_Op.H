@@ -7,6 +7,25 @@
 #ifndef __Proto_Conductivity_Op_H
 #define __Proto_Conductivity_Op_H
 
+/****************/
+PROTO_KERNEL_START 
+
+unsigned int axbyConduF(int              a_pt[DIM],
+                        Proto::Var<Real, 1>     a_lph,
+                        Proto::Var<Real, 1>     a_x,
+                        Proto::Var<Real, 1>     a_y,
+                        Real             a_a,
+                        Real             a_b,
+                        int              a_iprint)
+{
+  double xval = a_x(0);
+  double yval = a_y(0);
+  double lph  = a_a*xval + a_b*yval;
+  a_lph(0) = lph;
+  return 0;
+
+}
+PROTO_KERNEL_END(axbyConduF, axbyCondu) 
 ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
 PROTO_KERNEL_START 
 unsigned int  operaConduF(int                     a_pt[DIM],
@@ -188,6 +207,32 @@ namespace PrCh_AMR_Elliptic
       defineAndSetRelaxationCoefficient();
     }
 
+    /// output = aco*xval + bco*yval.   components defeat just doing this in the base class
+    /**
+       Standard function that I use for all arithmetic.  Because this is not fortran,
+       it does not matter if any of the arguments point to overlapping things.
+     **/
+    virtual void 
+    axby(pr_lbd         & a_lphi,
+         const pr_lbd   & a_xval,
+         const pr_lbd   & a_yval,
+         double    a_aco,
+         double    a_bco) 
+    {
+      auto grids =  a_lphi.layout();
+      auto dit   =  a_lphi.begin();
+      int iprint = 0; //debugging hook
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        auto       & lphfab =  a_lphi[dit[ibox]];
+        const auto &   xfab =  a_xval[dit[ibox]];
+        const auto &   yfab =  a_yval[dit[ibox]];
+        auto valid          =   grids[dit[ibox]];
+        Proto::forallInPlace_i(axbyCondu, valid, lphfab, xfab, yfab,
+                               a_aco, a_bco, iprint);
+      }
+    }
+    
     ///
     void defineAndSetRelaxationCoefficient()
     {

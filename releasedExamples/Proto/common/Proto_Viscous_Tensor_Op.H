@@ -6,6 +6,28 @@
 
 #ifndef __Proto_Viscous_Tensor_Op_H__
 #define __Proto_Viscous_Tensor_Op_H__
+/****************/
+PROTO_KERNEL_START 
+
+unsigned int axbyViscoF(int                       a_pt[DIM],
+                        Proto::Var<Real, DIM>     a_lph,
+                        Proto::Var<Real, DIM>     a_x,
+                        Proto::Var<Real, DIM>     a_y,
+                        Real                      a_a,
+                        Real                      a_b,
+                        int                       a_iprint)
+{
+  for(int idir = 0; idir < DIM; idir++)
+  {
+    double xval = a_x(idir);
+    double yval = a_y(idir);
+    double lph  = a_a*xval + a_b*yval;
+    a_lph(idir) = lph;
+  }
+  return 0;
+
+}
+PROTO_KERNEL_END(axbyViscoF, axbyVisco) 
 ///a_flux = eta( grad u + grad u T) + lambda I div U;
 PROTO_KERNEL_START 
 unsigned int  fluxFuncViscoF(int                     a_pt[DIM],
@@ -291,6 +313,32 @@ namespace PrCh_AMR_Elliptic
       setRelaxationCoefficient();
     }
 
+    /// output = aco*xval + bco*yval.   components defeat just doing this in the base class
+    /**
+       Standard function that I use for all arithmetic.  Because this is not fortran,
+       it does not matter if any of the arguments point to overlapping things.
+     **/
+    virtual void 
+    axby(pr_lbd         & a_lphi,
+         const pr_lbd   & a_xval,
+         const pr_lbd   & a_yval,
+         double    a_aco,
+         double    a_bco) 
+    {
+      auto grids =  a_lphi.layout();
+      auto dit   =  a_lphi.begin();
+      int iprint = 0; //debugging hook
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        auto       & lphfab =  a_lphi[dit[ibox]];
+        const auto &   xfab =  a_xval[dit[ibox]];
+        const auto &   yfab =  a_yval[dit[ibox]];
+        auto valid          =   grids[dit[ibox]];
+        Proto::forallInPlace_i(axbyVisco, valid, lphfab, xfab, yfab,
+                               a_aco, a_bco, iprint);
+      }
+    }
+    
     ///
     void defineAuxilliaries()
     {
@@ -577,7 +625,7 @@ namespace PrCh_AMR_Elliptic
             const auto & lamfab = (*m_relcoef)[dit[ibox]];
             auto valid          =     m_grids[dit[ibox]];
             int iprint = 0; // I left in a debugging hook.
-            Proto::forallInPlace_i(gsrbCondu, valid, phifab, resfab, lamfab,
+            Proto::forallInPlace_i(gsrbVisco, valid, phifab, resfab, lamfab,
                                    iredblack, iprint);
           }
           idebug = 0; //stop here for end of dataiter  iteration

@@ -127,12 +127,12 @@ namespace Chombo
       ppSolver.get("domain_bc", domain_bc);
       ch_dom coarsest_dom = a_amr_domains[0];
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<DIM>:: getProtoViscousTensorOpFactory(coarsest_dom, //a_amr_domains[0],
-                                                            a_ref_ratios,
-                                                            a_amr_grids,
-                                                            a_amrDx[0],
-                                                            aco, eta, lam,  
-                                                            domain_bc, alpha, beta);
+        ViscousTensorUtilities::getProtoViscousTensorOpFactory(coarsest_dom, //a_amr_domains[0],
+                                                               a_ref_ratios,
+                                                               a_amr_grids,
+                                                               a_amrDx[0],
+                                                               aco, eta, lam,  
+                                                               domain_bc, alpha, beta);
 
       PrChUtilities<DIM>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
                                       a_amr_domains, a_ref_ratios, a_amrDx,

@@ -4,25 +4,6 @@
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
 
-/****************/
-PROTO_KERNEL_START 
-
-unsigned int axbyPointwiseF(int              a_pt[DIM],
-                            Proto::Var<Real, 1>     a_lph,
-                            Proto::Var<Real, 1>     a_x,
-                            Proto::Var<Real, 1>     a_y,
-                            Real             a_a,
-                            Real             a_b,
-                            int              a_iprint)
-{
-  double xval = a_x(0);
-  double yval = a_y(0);
-  double lph  = a_a*xval + a_b*yval;
-  a_lph(0) = lph;
-  return 0;
-
-}
-PROTO_KERNEL_END(axbyPointwiseF, axbyPointwise) 
 ///
 /**
    Namespace PrCh_AMR_Elliptic
@@ -90,7 +71,7 @@ namespace PrCh_AMR_Elliptic
   class Base_Proto_AMRLevelOp: public Chombo::Base_Simplified_AMRLevelOp<Proto::LevelBoxData<double, ncomp> >
   {
   public:
-    typedef                                       Proto::LevelBoxData<double, ncomp>    pr_lbd;
+    typedef                                     Proto::LevelBoxData<double, ncomp  >    pr_lbd;
     typedef Chombo::Base_Simplified_AMRLevelOp< Proto::LevelBoxData<double, ncomp> >    ch_amrlevelop;
     typedef                                    Chombo::Box                              ch_box;
     typedef                                    Chombo::MayDay                           ch_mayday;
@@ -172,7 +153,7 @@ namespace PrCh_AMR_Elliptic
       return sum;
     }
 
-    /// output = aco*xval + bco*yval
+    /// output = aco*xval + bco*yval.   components defeat just doing this in the base class
     /**
        Standard function that I use for all arithmetic.  Because this is not fortran,
        it does not matter if any of the arguments point to overlapping things.
@@ -182,21 +163,8 @@ namespace PrCh_AMR_Elliptic
          const pr_lbd   & a_xval,
          const pr_lbd   & a_yval,
          double    a_aco,
-         double    a_bco)
-    {
-      auto grids =  a_lphi.layout();
-      auto dit   =  a_lphi.begin();
-      int iprint = 0; //debugging hook
-      for(int ibox = 0; ibox < dit.localSize(); ibox++)
-      {
-        auto       & lphfab =  a_lphi[dit[ibox]];
-        const auto &   xfab =  a_xval[dit[ibox]];
-        const auto &   yfab =  a_yval[dit[ibox]];
-        auto valid          =   grids[dit[ibox]];
-        Proto::forallInPlace_i(axbyPointwise, valid, lphfab, xfab, yfab,
-                               a_aco, a_bco, iprint);
-      }
-    }
+         double    a_bco) = 0;
+    
     ///
     /**
        These two have to on the same layout for this to work.
@@ -252,7 +220,7 @@ namespace PrCh_AMR_Elliptic
                      const pr_lbd        & a_corCoar)
     {
       //borrowed from Phil's levelmultigrid example in proto/example
-      typedef Proto::BoxData<double> pr_bd;
+      typedef Proto::BoxData<double, ncomp> pr_bd;
       pr_lbd localCor;
       this->createCoarser(   localCor, a_phiMedi, true);
       a_corCoar.copyTo(localCor);
@@ -262,8 +230,8 @@ namespace PrCh_AMR_Elliptic
       auto dit   =  a_phiMedi.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        const pr_bd & corfab =   localCor[dit[ibox]];
-        pr_bd       & phifab =  a_phiMedi[dit[ibox]];
+        pr_bd & corfab =   localCor[dit[ibox]];
+        pr_bd & phifab =  a_phiMedi[dit[ibox]];
 
         pr_bd fineCorr = interp_stencil(corfab);
         phifab += fineCorr;

@@ -86,11 +86,11 @@ namespace Chombo
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        PrChUtilities<1>::getProtoHelmholtzOpFactory(a_amr_domains[0],
-                                                     a_ref_ratios,
-                                                     a_amr_grids,
-                                                     a_amrDx[0],
-                                                     domain_bc, alpha, beta);
+        HelmholtzUtilities::getProtoHelmholtzOpFactory(a_amr_domains[0],
+                                                       a_ref_ratios,
+                                                       a_amr_grids,
+                                                       a_amrDx[0],
+                                                       domain_bc, alpha, beta);
 
       PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids, a_amr_domains,
                                     a_ref_ratios, a_amrDx, solver_factory_ptr);

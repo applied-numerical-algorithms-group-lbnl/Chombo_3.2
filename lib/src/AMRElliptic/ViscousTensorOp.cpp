@@ -1456,19 +1456,19 @@ ViscousTensorOpFactory(const Vector<DisjointBoxLayout>&                     a_gr
 
 void
 ViscousTensorOpFactory::
-define(const Vector<DisjointBoxLayout>&                     a_grids,
-       const Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_eta,
-       const Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_lambda,
+define(const Vector<DisjointBoxLayout>&                       a_grids,
+       const Vector<RefCountedPtr<LevelData<FluxBox> > >&     a_eta,
+       const Vector<RefCountedPtr<LevelData<FluxBox> > >&     a_lambda,
        const Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_acoef,
-       Real                                                 a_alpha,
-       Real                                                 a_beta,
-       const Vector<int>&                                   a_refRatios,
-       const ProblemDomain&                                 a_coarseDomain,
-       const Real&                                          a_coarseDx,
-       BCHolder                                             a_bc,
-       Real                                                 a_safety,
-       Real                                                 a_relaxTolerance,
-       int                                                  a_relaxMinIter)
+       Real                                                   a_alpha,
+       Real                                                   a_beta,
+       const Vector<int>&                                     a_refRatios,
+       const ProblemDomain&                                   a_coarseDomain,
+       const Real&                                            a_coarseDx,
+       BCHolder                                               a_bc,
+       Real                                                   a_safety,
+       Real                                                   a_relaxTolerance,
+       int                                                    a_relaxMinIter)
 {
   m_alpha = a_alpha;
   m_beta  = a_beta;
@@ -1482,15 +1482,15 @@ define(const Vector<DisjointBoxLayout>&                     a_grids,
   m_bc = a_bc;
   m_safety = a_safety;
   m_relaxTolerance = a_relaxTolerance;
-  m_relaxMinIter = a_relaxMinIter;
-  m_domains[0] = a_coarseDomain;
+  m_relaxMinIter   = a_relaxMinIter;
+  m_domains[0]     = a_coarseDomain;
   m_dx[0] = a_coarseDx;
   for (int i=1; i<a_grids.size(); i++)
-    {
-      m_dx[i] = m_dx[i-1]/m_refRatios[i-1] ;
-      m_domains[i] = m_domains[i-1];
-      m_domains[i].refine(m_refRatios[i-1]);
-    }
+  {
+    m_dx[i] = m_dx[i-1]/m_refRatios[i-1] ;
+    m_domains[i] = m_domains[i-1];
+    m_domains[i].refine(m_refRatios[i-1]);
+  }
 }
 /***/
 ViscousTensorOp*
