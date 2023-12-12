@@ -134,7 +134,7 @@ unsigned int  relaxCoefViscoF(int                        a_pt[DIM],
                               double                     a_dx)
 {
   //this this is approximate, might have to have a real safety here
-  double safety = 1.0;
+  double safety = 0.9; //same as ViscousTensorOpF.ChF
   double inv_lam[DIM];
   double eta_val[DIM];
   double lam_val[DIM];
@@ -145,7 +145,7 @@ unsigned int  relaxCoefViscoF(int                        a_pt[DIM],
   lam_val[1] = a_lam_y(0) ;
 #if DIM==3
   eta_val[2] = a_eta_z(0) ;
-  lam_val[2] = a_lam_y(0) ;
+  lam_val[2] = a_lam_z(0) ;
 #endif
   for(int icomp = 0; icomp < DIM; icomp++)
   {
@@ -159,7 +159,7 @@ unsigned int  relaxCoefViscoF(int                        a_pt[DIM],
       }
       else
       {
-        incr = 2*a_beta*eta_val[face_dir];
+        incr = 2*(a_beta*eta_val[face_dir])/(a_dx*a_dx);
       }
       inv_lam[face_dir] -= incr;
     }//end loop over face_dir
@@ -610,8 +610,8 @@ namespace PrCh_AMR_Elliptic
       
       pr_cell_data_vec resid;
       create(resid, a_rhs);
-      auto dit   =  a_rhs.begin();
-      
+      auto  dit       =  a_rhs.begin();
+      auto& relco_lbd = (*m_relcoef);
       int idebug = 0; // gdb debugging hook
       for(int iiter = 0; iiter < a_iterations;  iiter++)
       {
@@ -622,7 +622,7 @@ namespace PrCh_AMR_Elliptic
           {
             const auto & resfab =       resid[dit[ibox]];
             const auto & phifab =       a_phi[dit[ibox]];
-            const auto & lamfab = (*m_relcoef)[dit[ibox]];
+            const auto & lamfab =   relco_lbd[dit[ibox]];
             auto valid          =     m_grids[dit[ibox]];
             int iprint = 0; // I left in a debugging hook.
             Proto::forallInPlace_i(gsrbVisco, valid, phifab, resfab, lamfab,
