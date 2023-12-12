@@ -5,6 +5,35 @@ C    \___/_//_/\___/_/_/_/_.__/\___/
 C    Please refer to Copyright.txt, in Chombo's root directory.
 
 #include "CONSTANTS.H"
+      subroutine GSRBSANELYVEC(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[res],
+     &     CHF_CONST_FRA[lam],
+     &     CHF_BOX[valid],
+     &     CHF_INT[iredblack,
+     $     CHF_INT[ncomp]])
+
+
+      integer CHF_DDECL[i;j;k], sumijk, modtwo, n
+
+      do n=0, ncomp-1
+         CHF_MULTIDO[valid; i; j; k]
+         
+         sumijk = CHF_DTERM[i ; +j; +k]
+         modtwo = modulo(sumijk, 2)
+         if(modtwo .eq. iredblack) then
+
+            
+            phi(     CHF_IX[i;j;k], n) = phi(CHF_IX[i;j;k], n) +
+     $           lam(CHF_IX[i;j;k], n)*res(  CHF_IX[i;j;k], n)
+            
+         endif
+
+         CHF_ENDDO
+      enddo
+
+      return
+      end
       subroutine extraptoghostvel(
      $     chf_fra[vel],
      $     chf_box[lobox],

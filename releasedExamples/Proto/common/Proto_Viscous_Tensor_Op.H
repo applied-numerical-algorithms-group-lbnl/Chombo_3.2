@@ -351,10 +351,12 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient");
       auto dit   = m_relcoef->begin();
+
+      auto& relco_lbd = *m_relcoef;
       ///fill a_lph with div( b(x) grad (phi))
       for(int ibox = 0; ibox <  dit.localSize(); ibox++)
       {
-        const auto  & relcofab =(*m_relcoef)[dit[ibox]];
+        const auto  & relcofab =   relco_lbd[dit[ibox]];
         const auto  & acoeffab =  (*m_acoef)[dit[ibox]];
         auto valid             =     m_grids[dit[ibox]];
         const auto& eta_x      =  (*m_eta_x)[dit[ibox]];
@@ -376,7 +378,8 @@ namespace PrCh_AMR_Elliptic
                                lam_x, lam_y, lam_z,
                                m_alpha, m_beta, m_dx);
       }
-
+      
+      return;
     }
 
     

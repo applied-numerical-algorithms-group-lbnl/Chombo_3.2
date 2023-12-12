@@ -19,7 +19,7 @@
 #include "QuadCFInterp.H"
 #include "CoarseAverageFace.H"
 #include "CoarseAverage.H"
-//#include "InterpF_F.H"
+#include "ParmParse.H"
 #include "NamespaceHeader.H"
 
 // initialize static members here.
@@ -1114,11 +1114,11 @@ setToZero(LevelData<FArrayBox>& a_lhs)
 /***/
 void
 ViscousTensorOp::
-relax(LevelData<FArrayBox>&       a_phi,
-      const LevelData<FArrayBox>& a_rhs,
-      int a_iterations)
+fancyFastRelax(LevelData<FArrayBox>&       a_phi,
+               const LevelData<FArrayBox>& a_rhs,
+               int a_iterations)
 {
-  CH_TIME("ViscousTensorOp::relax");
+  CH_TIME("ViscousTensorOp::fancyFastRelax");
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -1198,6 +1198,76 @@ relax(LevelData<FArrayBox>&       a_phi,
       }
       whichIter++;
     }
+}
+
+
+/**
+    Used for debugging other things
+**/
+void
+ViscousTensorOp::
+slowGSRB(LevelData<FArrayBox>&       a_phi,
+         const LevelData<FArrayBox>& a_rhs,
+         int a_iterations)
+{
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  const DisjointBoxLayout& grids = a_rhs.disjointBoxLayout();
+
+  DataIterator dit = a_phi.dataIterator();
+  int nbox=dit.size();
+  int ibreak = 0;
+  // do first red, then black passes
+  LevelData<FArrayBox> resid;
+  create(resid, a_rhs);
+  for (int iter  = 0; iter < a_iterations; iter++)
+  {
+    for (int iredblack = 0; iredblack <= 1; iredblack++)
+    {
+
+      residual(resid, a_phi, a_rhs);
+      for(int ibox = 0; ibox < nbox; ibox++)
+      {
+        FArrayBox& phiFab =       a_phi[dit[ibox]];
+        FArrayBox& resFab =       resid[dit[ibox]];
+        FArrayBox& lamFab = m_relaxCoef[dit[ibox]];
+        Box valid         =       grids[dit[ibox]];
+        int ncomponent    = SpaceDim;
+        FORT_GSRBSANELYVEC(CHF_FRA(phiFab),
+                           CHF_FRA(resFab),
+                           CHF_FRA(lamFab),
+                           CHF_BOX(valid),
+                           CHF_CONST_INT(iredblack),
+                           CHF_CONST_INT(ncomponent));
+      } // end loop through ibox
+      ibreak = 1;
+    } // end loop through red-black
+    ibreak = 1;
+  }//end loop over iteration number
+
+}
+void
+ViscousTensorOp::
+relax(LevelData<FArrayBox>&       a_phi,
+      const LevelData<FArrayBox>& a_rhs,
+      int a_iterations)
+{
+  CH_TIME("ViscousTensorOp::relax");
+  bool slow_relax_mode = false;
+  ParmParse pp("ViscousTensorOp");
+  pp.query("slow_relax_mode", slow_relax_mode);
+  if(slow_relax_mode)
+  {
+    slowGSRB(a_phi, a_rhs, a_iterations);
+  }
+  else
+  {
+    //used for debugging other things
+    fancyFastRelax(a_phi, a_rhs, a_iterations);
+  }
 }
 /***/
 Real

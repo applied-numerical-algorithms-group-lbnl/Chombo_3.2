@@ -273,7 +273,16 @@ public:
   virtual void relax(LevelData<FArrayBox>& a_e,
                      const LevelData<FArrayBox>& a_residual,
                      int iterations);
-
+  ///for debugging other things  Accessible via parmparse
+  void  slowGSRB(LevelData<FArrayBox>&       a_phi,
+                 const LevelData<FArrayBox>& a_rhs,
+                 int a_iterations);
+  
+  ///for ordinary runs--default.
+  void  fancyFastRelax(LevelData<FArrayBox>&       a_phi,
+                       const LevelData<FArrayBox>& a_rhs,
+                       int a_iterations);
+  
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,
                              bool ghosted);
