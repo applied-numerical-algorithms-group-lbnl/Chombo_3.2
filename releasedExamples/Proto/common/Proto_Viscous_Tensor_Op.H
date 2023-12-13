@@ -198,7 +198,7 @@ unsigned int  gsrbViscoF(int                       a_pt[DIM],
       Real phival = a_phi(icomp);
       Real resval = a_res(icomp);
 
-      a_phi(0) = phival + lambda*resval;
+      a_phi(icomp) = phival + lambda*resval;
     }
   }
   return 0;

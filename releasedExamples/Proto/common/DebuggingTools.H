@@ -23,21 +23,23 @@
 **/
 namespace PrChDebug
 {
-  typedef   Chombo::IntVect                  ch_iv;
-  typedef   Chombo::Box                      ch_box;
-  typedef   Chombo::FArrayBox                ch_fab;
-  typedef   Chombo::DataIterator             ch_dit;
-  typedef   Chombo::DisjointBoxLayout        ch_dbl;
-  typedef   Chombo::LevelData<ch_fab>        ch_ldf;
-                                              
-  typedef    Proto::Point                    pr_pt;
-  typedef    Proto::Box                      pr_box;
-  typedef    Proto::BoxData<double, 1>       pr_fab_1;
-  typedef    Proto::BoxData<double, DIM>     pr_fab_dim;
-  typedef    Proto::DisjointBoxLayout        pr_dbl;
-  typedef    Proto::LevelBoxData<double,1>   pr_lbd_1;
-  typedef    Proto::LevelBoxData<double,DIM> pr_lbd_dim;
-  typedef    Proto::Stencil<double>          pr_sten;
+  typedef   Chombo::IntVect                      ch_iv;
+  typedef   Chombo::Box                          ch_box;
+  typedef   Chombo::FArrayBox                    ch_fab;
+  typedef   Chombo::DataIterator                 ch_dit;
+  typedef   Chombo::DisjointBoxLayout            ch_dbl;
+  typedef   Chombo::LevelData<ch_fab>            ch_ldf;
+                                                  
+  typedef    Proto::Point                        pr_pt;
+  typedef    Proto::Box                          pr_box;
+  typedef    Proto::BoxData<double, 1>           pr_fab_1;
+  typedef    Proto::BoxData<double, DIM>         pr_fab_vec;
+  typedef    Proto::BoxData<double, DIM*DIM>     pr_fab_ten;
+  typedef    Proto::DisjointBoxLayout            pr_dbl;
+  typedef    Proto::LevelBoxData<double,1>       pr_lbd_1;
+  typedef    Proto::LevelBoxData<double,DIM>     pr_lbd_vec;
+  typedef    Proto::LevelBoxData<double,DIM*DIM> pr_lbd_ten;
+  typedef    Proto::Stencil<double>              pr_sten;
   
   void
   dumpSten(pr_sten* a_sten_ptr)
@@ -163,7 +165,7 @@ namespace PrChDebug
 
 
   void 
-  dumpAreaDIMPr(pr_fab_dim* dataPtr)
+  dumpAreaVecPr(pr_fab_vec* dataPtr)
   {
     static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
     static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
@@ -217,7 +219,64 @@ namespace PrChDebug
       }// end loop over components
       
     } //end if not null
-  } //end function dumpAreaDIMPr
+  } //end function dumpAreaVecPr
+
+  void 
+  dumpAreaTenPr(pr_fab_ten* dataPtr)
+  {
+    static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+    static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+    static const pr_box     s_areaBox(s_areaLo, s_areaHi);
+
+    if(dataPtr != NULL)
+    {
+      using std::cout;
+      using std::end;
+
+      cout    << setprecision(8)
+              << setiosflags(ios::showpoint)
+              << setiosflags(ios::scientific);
+
+      pr_box area = s_areaBox;
+
+      auto & data   = *dataPtr;
+      pr_box databox  = dataPtr->box();
+      pr_box printBox = databox & s_areaBox;
+      pr_pt  hideb    = printBox.high();
+      pr_pt  lodeb    = printBox.low();
+      
+      for(int ivar = 0; ivar < DIM*DIM; ivar++)
+      {
+        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
+        cout << "data for variable "<< ivar << ":" << endl;
+#if DIM==3        
+        for(int k = hideb[2]; k >= lodeb[2]; k--)
+        {
+#endif          
+          for(int j = hideb[1]; j >= lodeb[1]; j--)
+          {
+            for(int i = lodeb[0]; i <= hideb[0]; i++)
+            {
+              pr_pt pt(D_DECL(i,j,k));
+              cout << pt << ":";
+              double data_value = data(pt, ivar);
+              //keeps positive and negative numbers lined up
+              if(    data_value >= 0)
+              {
+                cout << " "; 
+              }
+              // 
+              cout  << data_value << "  ";
+            } //end loop in x dir
+            cout << endl;
+          } //end loop in  y dir
+#if DIM==3
+        } //end loop in z direction
+#endif
+      }// end loop over components
+      
+    } //end if not null
+  } //end function dumpAreaTenPr
   
   /// print to screen (very neatly) data from the area whereever it is found in chombo data
   void 
@@ -253,28 +312,46 @@ namespace PrChDebug
 
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
-  dumpLDAreaDIMPr(pr_lbd_dim* dataPtr)
+  dumpLDAreaTenPr(pr_lbd_ten* dataPtr)
   {
     if(dataPtr != NULL)
     {
-      pr_lbd_dim & data = *dataPtr;
+      pr_lbd_ten & data = *dataPtr;
       auto  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaDIMPr(&data[dit[ibox]]);
+        dumpAreaTenPr(&data[dit[ibox]]);
+      }
+    }
+  }
+  /// print to screen (very neatly) data from the area whereever it is found in proto data
+  void 
+  dumpLDAreaVecPr(pr_lbd_vec* dataPtr)
+  {
+    if(dataPtr != NULL)
+    {
+      pr_lbd_vec & data = *dataPtr;
+      auto  dit = data.dataIterator();
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        cout << "ibox = " << ibox << ":" << endl;
+        dumpAreaVecPr(&data[dit[ibox]]);
       }
     }
   }
 }//end namespace PrChDebug
 
+///
 inline void func_to_get_functions_into_symbol_table()
 {
   PrChDebug::dumpAreaCh(NULL);
   PrChDebug::dumpLDAreaCh(NULL);
   PrChDebug::dumpLDAreaPr(NULL);
-  PrChDebug::dumpAreaDIMPr(NULL);
-  PrChDebug::dumpLDAreaDIMPr(NULL);
+  PrChDebug::dumpAreaVecPr(NULL);
+  PrChDebug::dumpAreaTenPr(NULL);
+  PrChDebug::dumpLDAreaVecPr(NULL);
+  PrChDebug::dumpLDAreaTenPr(NULL);
   PrChDebug::dumpSten(NULL);
 }
 
