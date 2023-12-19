@@ -444,7 +444,81 @@ namespace PrCh_AMR_Elliptic
       }
       m_grad->exchange(); //this is why grad is over the whole level
     }
+    ///
+    /**
+       Average cell-centered gradients to the face centers
+       Overwrite this with phi difference if face_dir == diff_dir.
+     **/
+    int
+    getFaceDivAndGrad(pr_box_data_sca          & a_face_div,
+                      pr_box_data_ten          & a_face_grad,
+                      const pr_box_data_vec    & a_phi,
+                      const pr_box_data_ten    & a_grad,
+                      const pr_box             & a_flux_box,
+                      const int                & a_face_dir)
+    {
+      ///always.   
+      bool initToZero = true; double applyScale = 1;
+      ///define all our fancy stencils
+      pr_sten averaging_stens[DIM];
+      pr_sten div_veloc_stens[DIM];
+      for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
+      {
+        pr_pt home_point = (-1)*pr_pt::Zeros();
+        //pr_pt left_point = (-1)*pr_pt::Basis(diff_dir);
+        pr_pt righ_point = (+1)*pr_pt::Basis(diff_dir);
 
+        
+        pr_shift home(home_point);
+        //pr_shift left(left_point);
+        pr_shift righ(righ_point);
+
+        pr_sten home_sten(home, 1.);
+        //pr_sten left_sten(left, 1.);
+        pr_sten righ_sten(righ, 1.);
+
+        averaging_stens[diff_dir] = (0.5     )*(righ_sten + home_sten);
+        div_veloc_stens[diff_dir] = (1.0/m_dx)*(righ_sten - home_sten);
+      }
+      //first divergence (which has a funny composite stencil)
+      a_face_div.setVal(0.);
+      for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
+      {
+        pr_box_data_sca div_u_incr(a_flux_box);
+        if(diff_dir == a_face_dir)
+        {
+          pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
+          //this is src, dest so divu_incr is the output
+          div_veloc_stens[diff_dir].apply(velo_comp, div_u_incr ,      
+                                          a_flux_box , initToZero, applyScale);
+        }
+        else
+        {
+          int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
+          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
+          //this is src, dest so divu_incr is the output
+          averaging_stens[diff_dir].apply(grad_comp, div_u_incr ,      
+                                          a_flux_box, initToZero, applyScale);
+        }
+        a_face_div += div_u_incr;
+      }
+
+      //now for the gradient (which is always averaged)
+      for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
+      {
+        for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
+        {
+          int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
+          pr_box_data_sca cell_grad_comp = Proto::slice(a_grad     , grad_ind);
+          pr_box_data_sca face_grad_comp = Proto::slice(a_face_grad, grad_ind);
+          //this is src, dest so face_grad_comp is the output
+          averaging_stens[diff_dir].apply(cell_grad_comp, face_grad_comp,      
+                                          a_flux_box, initToZero, applyScale);
+        }
+      }
+      return 0;
+    }
+       
     ///gets flux vector for a given face direction
     int
     getFluxDotNormal(pr_box_data_vec           & a_flux,
@@ -455,45 +529,14 @@ namespace PrCh_AMR_Elliptic
                      const pr_box              & a_valid,
                      const int                 & a_face_dir)
     {
-      bool initToZero = true; double applyScale = 1;
-      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir);
-      pr_pt righ_point = (+1)*pr_pt::Basis(a_face_dir);
-      pr_shift righ(righ_point);
-      pr_shift left(left_point);
-      pr_shift home(Proto::Point::Zeros());
-      pr_sten righ_sten(righ, 1./m_dx);
 
       //get face centered velocity divergence
       pr_box flux_box = a_valid;
       flux_box.m_high[a_face_dir] += 1;
       flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
-      pr_box_data_sca div_u(flux_box);
-      for(int icomp = 0; icomp < DIM; icomp++)
-      {
-        pr_box_data_sca div_u_incr(flux_box);
-        if(icomp == a_face_dir)
-        {
-          pr_sten home_sten(home, 1./m_dx);
-          pr_sten left_sten(left, 1./m_dx);
-          pr_sten home_minu_left = home_sten - left_sten;
-          pr_box_data_sca velo_comp = Proto::slice(a_phi, icomp);
-          //this is src, dest so divu_incr is the output
-          home_minu_left.apply(velo_comp, div_u_incr ,      
-                               flux_box , initToZero, applyScale);
-        }
-        else
-        {
-          pr_sten left_sten(left, 0.5);
-          pr_sten righ_sten(righ, 0.5);
-          pr_sten ave_sten = left_sten + righ_sten;
-          int grad_ind = gradIndex(icomp, a_face_dir);
-          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
-          //this is src, dest so divu_incr is the output
-          ave_sten.apply(grad_comp, div_u_incr ,      
-                         flux_box, initToZero, applyScale);
-        }
-        div_u += div_u_incr;
-      } //end loop over components
+      pr_box_data_sca face_divu(flux_box);
+      pr_box_data_ten face_grad(flux_box);
+      getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_face_dir);
       
       ///F(u) = eta*(grad(u) + grad(u)^T) + lambda*I div(u)
       for(int icomp = 0; icomp < DIM; icomp++)
@@ -502,12 +545,12 @@ namespace PrCh_AMR_Elliptic
 
         int ind_gradu  = gradIndex(a_face_dir, icomp     );
         int ind_graduT = gradIndex(icomp     , a_face_dir);
-        pr_box_data_sca grad_u   = Proto::slice(a_grad, ind_gradu);
-        pr_box_data_sca grad_u_t = Proto::slice(a_grad, ind_graduT);
+        pr_box_data_sca grad_u   = Proto::slice(face_grad, ind_gradu);
+        pr_box_data_sca grad_u_t = Proto::slice(face_grad, ind_graduT);
         
         ///a_flux = eta( grad u + grad u T) + lambda I div U;
         Proto::forallInPlace_i(fluxFuncVisco, flux_box, flux_comp,
-                               grad_u, grad_u_t, div_u,
+                               grad_u, grad_u_t, face_divu,
                                a_eta, a_lam, a_face_dir, icomp);
       }
       return 0;
