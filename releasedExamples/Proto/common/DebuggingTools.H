@@ -70,9 +70,14 @@ namespace PrChDebug
 
       ch_fab & data   = *dataPtr;
       ch_box databox  = dataPtr->box();
-      ch_box printBox = databox & s_areaBox;
-      ch_iv  hideb    = printBox.bigEnd();
-      ch_iv  lodeb    = printBox.smallEnd();
+      ch_iv  hidata    = databox.bigEnd();
+      ch_iv  lodata    = databox.smallEnd();
+
+      ///to get around weird box types
+      ch_box printBox(lodata, hidata);
+      printBox &= s_areaBox;
+      ch_iv lodeb = printBox.smallEnd();
+      ch_iv hideb = printBox.bigEnd();
       
       for(int ivar = 0; ivar < data.nComp(); ivar++)
       {
