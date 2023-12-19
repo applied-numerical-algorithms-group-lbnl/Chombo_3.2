@@ -387,7 +387,7 @@ namespace PrCh_AMR_Elliptic
     static int gradIndex(int a_velocity_component,
                          int a_derivative_direction)
     {
-      int varnum = a_velocity_component + DIM*a_derivative_direction;
+      int varnum = a_velocity_component*DIM + a_derivative_direction;
       return varnum;
     }
     ///
@@ -486,7 +486,7 @@ namespace PrCh_AMR_Elliptic
           pr_sten left_sten(left, 0.5);
           pr_sten righ_sten(righ, 0.5);
           pr_sten ave_sten = left_sten + righ_sten;
-          int grad_ind = gradIndex(icomp, icomp);
+          int grad_ind = gradIndex(icomp, a_face_dir);
           pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
           //this is src, dest so divu_incr is the output
           ave_sten.apply(grad_comp, div_u_incr ,      
@@ -615,7 +615,8 @@ namespace PrCh_AMR_Elliptic
       create(resid, a_rhs);
       auto  dit       =  a_rhs.begin();
       auto& relco_lbd = (*m_relcoef);
-      int idebug = 0; // gdb debugging hook
+      // gdb debugging hook.  semantically does nothing.
+      int idebug = 0; 
       for(int iiter = 0; iiter < a_iterations;  iiter++)
       {
         for(int iredblack = 0; iredblack < 2; iredblack++)
@@ -635,6 +636,7 @@ namespace PrCh_AMR_Elliptic
         }
         idebug = 0;   //stop here for end of red-black iteration
       }
+      idebug = 0;     //stop here for end of relax 
     }
 
     

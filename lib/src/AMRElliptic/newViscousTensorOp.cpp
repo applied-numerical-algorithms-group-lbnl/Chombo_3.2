@@ -1219,7 +1219,12 @@ slowGSRB(LevelData<FArrayBox>&       a_phi,
 
   DataIterator dit = a_phi.dataIterator();
   int nbox=dit.size();
-  int ibreak = 0;
+  /**
+     This is a hook for debuggging other codes.
+     It gives an easy way to get gdb to break 
+     at just the right spots.
+  **/
+  int ibreak = 0; 
   // do first red, then black passes
   LevelData<FArrayBox> resid;
   create(resid, a_rhs);
@@ -1243,11 +1248,11 @@ slowGSRB(LevelData<FArrayBox>&       a_phi,
                            CHF_CONST_INT(iredblack),
                            CHF_CONST_INT(ncomponent));
       } // end loop through ibox
-      ibreak = 1;
-    } // end loop through red-black
-    ibreak = 1;
-  }//end loop over iteration number
-
+      ibreak = 1;  //stop here for end of dataiterator iteration
+    } 
+    ibreak = 1;    //stop here for end of red black iteration
+  }
+  ibreak = 1;      //stop here for end of relax
 }
 void
 ViscousTensorOp::
