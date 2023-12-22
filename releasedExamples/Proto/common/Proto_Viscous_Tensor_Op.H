@@ -2,6 +2,7 @@
 #include "AMRMultiGrid_Proto_Interface.H"
 #include "PrChUtilities.H"
 #include "ProtoInterface.H"
+#include "Proto_LoHiCenterStencil.H"
 #include "Vector.H"
 
 #ifndef __Proto_Viscous_Tensor_Op_H__
@@ -256,6 +257,8 @@ namespace PrCh_AMR_Elliptic
     {
     }
 
+
+    
     shared_ptr<pr_cell_data_sca>  m_acoef;
     shared_ptr<pr_xfac_data_sca>  m_eta_x;
     shared_ptr<pr_yfac_data_sca>  m_eta_y;
@@ -444,6 +447,102 @@ namespace PrCh_AMR_Elliptic
       }
       m_grad->exchange(); //this is why grad is over the whole level
     }
+
+      
+    ///
+    /**
+       pr_pt home_point = (-1)*pr_pt::Zeros();
+       //pr_pt left_point = (-1)*pr_pt::Basis(diff_dir);
+       pr_pt righ_point = (+1)*pr_pt::Basis(diff_dir);
+
+        
+       pr_shift home(home_point);
+       //pr_shift left(left_point);
+       pr_shift righ(righ_point);
+
+       pr_sten home_sten(home, 1.);
+       //pr_sten left_sten(left, 1.);
+       pr_sten righ_sten(righ, 1.);
+
+       averaging_stens[diff_dir] = (0.5     )*(righ_sten + home_sten);
+       div_veloc_stens[diff_dir] = (1.0/m_dx)*(righ_sten - home_sten);
+    **/
+    int getDivIncrFromGradStencil(lo_hi_center_t &  a_div_grad_lhc, 
+                                  const pr_box   &  a_lo_box,
+                                  const pr_box   &  a_hi_box,
+                                  const pr_box   &  a_ce_box,
+                                  const int      &  a_has_lo,
+                                  const int      &  a_has_hi,
+                                  const int      &  a_diff_dir)
+    {
+      a_div_grad_lhc.setBoxes(a_lo_box,
+                              a_hi_box,
+                              a_ce_box,
+                              a_has_lo,
+                              a_has_hi);
+    }
+    
+    ///
+    int getDivIncrFromVeloStencil(lo_hi_center_t &  a_div_velo_lhc, 
+                                  const pr_box   &  a_lo_box,
+                                  const pr_box   &  a_hi_box,
+                                  const pr_box   &  a_ce_box,
+                                  const int      &  a_has_lo,
+                                  const int      &  a_has_hi,
+                                  const int      &  a_diff_dir)
+    {
+      a_div_velo_lhc.setBoxes(a_lo_box,
+                              a_hi_box,
+                              a_ce_box,
+                              a_has_lo,
+                              a_has_hi);
+    }
+
+    ///
+    int getFaceGradFromCellGradStencil(lo_hi_center_t &  a_grad_grad_lhc, 
+                                       const pr_box   &  a_lo_box,
+                                       const pr_box   &  a_hi_box,
+                                       const pr_box   &  a_ce_box,
+                                       const int      &  a_has_lo,
+                                       const int      &  a_has_hi,
+                                       const int      &  a_diff_dir)
+    {
+      a_grad_grad_lhc.setBoxes(a_lo_box,
+                               a_hi_box,
+                               a_ce_box,
+                               a_has_lo,
+                               a_has_hi);
+
+      
+
+    }
+    
+    ///
+    int getFaceDivAndGradStencils(lo_hi_center_t  & a_div_grad_lhc, 
+                                  lo_hi_center_t  & a_div_velo_lhc,
+                                  lo_hi_center_t  & a_grad_grad_lhc,
+                                  const pr_box    & a_flux_box,
+                                  const pr_box    & a_valid,
+                                  const int       & a_face_dir,
+                                  const int       & a_diff_dir)
+    {
+      pr_box  flux_box = a_valid;
+      flux_box.m_high[a_face_dir] += 1;
+      flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
+
+
+      pr_box lo_box, hi_box, ce_box, has_lo, hashi;
+      loHiCenterFace(lo_box, hi_box, ce_box,
+                     has_lo, has_hi, flux_box,
+                     a_valid, a_face_dir, a_diff_dir);
+
+      getDivIncrFromGradStencil(      a_div_grad_lhc, lo_box, hi_box, ce_box, has_lo, hashi);
+      getDivIncrFromVeloStencil(      a_div_velo_lhc, lo_box, hi_box, ce_box, has_lo, hashi);
+      getFaceGradFromCellGradStencil(a_grad_grad_lhc, lo_box, hi_box, ce_box, has_lo, hashi);
+
+      return 0;
+    }
+
     ///
     /**
        Average cell-centered gradients to the face centers
@@ -455,50 +554,38 @@ namespace PrCh_AMR_Elliptic
                       const pr_box_data_vec    & a_phi,
                       const pr_box_data_ten    & a_grad,
                       const pr_box             & a_flux_box,
+                      const pr_box             & a_valid,
                       const int                & a_face_dir)
     {
+      
       ///always.   
       bool initToZero = true; double applyScale = 1;
+      
       ///define all our fancy stencils
-      pr_sten averaging_stens[DIM];
-      pr_sten div_veloc_stens[DIM];
+      lo_hi_center_t div_grad_lhc[DIM], div_velo_lhc[DIM], grad_grad_lhc[DIM];
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        pr_pt home_point = (-1)*pr_pt::Zeros();
-        //pr_pt left_point = (-1)*pr_pt::Basis(diff_dir);
-        pr_pt righ_point = (+1)*pr_pt::Basis(diff_dir);
-
-        
-        pr_shift home(home_point);
-        //pr_shift left(left_point);
-        pr_shift righ(righ_point);
-
-        pr_sten home_sten(home, 1.);
-        //pr_sten left_sten(left, 1.);
-        pr_sten righ_sten(righ, 1.);
-
-        averaging_stens[diff_dir] = (0.5     )*(righ_sten + home_sten);
-        div_veloc_stens[diff_dir] = (1.0/m_dx)*(righ_sten - home_sten);
+        getFaceDivAndGradStencils(div_grad_lhc[diff_dir], div_velo_lhc[diff_dir], grad_grad[DIM],
+                                  a_flux_box, a_valid, a_face_dir, diff_dir);
       }
-      //first divergence (which has a funny composite stencil)
+
+      ///first divergence (which has a funny composite stencil)
       a_face_div.setVal(0.);
+      pr_box_data_sca div_u_incr(a_flux_box);
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        pr_box_data_sca div_u_incr(a_flux_box);
         if(diff_dir == a_face_dir)
         {
           pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
-          //this is src, dest so divu_incr is the output
-          div_veloc_stens[diff_dir].apply(velo_comp, div_u_incr ,      
-                                          a_flux_box , initToZero, applyScale);
+          ///this is standard chombo dst, src so div_u_incr is  the output
+          loHiCenterApply(div_u_incr, velo_comp, div_velo_lhc);
         }
         else
         {
           int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
           pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
-          //this is src, dest so divu_incr is the output
-          averaging_stens[diff_dir].apply(grad_comp, div_u_incr ,      
-                                          a_flux_box, initToZero, applyScale);
+          ///this is standard chombo dst, src so div_u_incr is  the output
+          loHiCenterApply(div_u_incr, grad_comp, div_grad_lhc);
         }
         a_face_div += div_u_incr;
       }
@@ -511,9 +598,8 @@ namespace PrCh_AMR_Elliptic
           int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
           pr_box_data_sca cell_grad_comp = Proto::slice(a_grad     , grad_ind);
           pr_box_data_sca face_grad_comp = Proto::slice(a_face_grad, grad_ind);
-          //this is src, dest so face_grad_comp is the output
-          averaging_stens[diff_dir].apply(cell_grad_comp, face_grad_comp,      
-                                          a_flux_box, initToZero, applyScale);
+          //this is standard chombo dest, src so face_grad_comp is the output
+          loHiCenterApply(face_grad_comp, cell_grad_comp, grad_grad_lhc);
         }
       }
       return 0;
@@ -536,7 +622,7 @@ namespace PrCh_AMR_Elliptic
       flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       pr_box_data_sca face_divu(flux_box);
       pr_box_data_ten face_grad(flux_box);
-      getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_face_dir);
+      getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_valid,a_face_dir);
       
       ///F(u) = eta*(grad(u) + grad(u)^T) + lambda*I div(u)
       for(int icomp = 0; icomp < DIM; icomp++)
@@ -722,13 +808,13 @@ namespace PrCh_AMR_Elliptic
     {
       return m_refToCoar;
     }
-  }; ///end class proto_conductivity_op
+  }; ///end class Proto_Viscous_Tensor_Op
 
   class Proto_Viscous_Tensor_Op_Factory: public ch_amrlevelop_fact_vec
   {
     
   private:
-    /// Strong construction, emacs, and gdb are a winning formula for life.
+    /// Strong construction, emacs, gdb, and Oxford commas are a winning formula for life.
     Proto_Viscous_Tensor_Op_Factory();
     
   public:
@@ -823,6 +909,7 @@ namespace PrCh_AMR_Elliptic
       return iref;
     } //end function get_ref_index
 
+    ///
     inline void
     get_local_ref_ratios(int    & a_ref_fine,
                          int    & a_ref_coar,
@@ -1075,7 +1162,7 @@ namespace PrCh_AMR_Elliptic
       int iref = get_ref_index(a_indexSpace);
       int ref_rat = m_ref_ratios[iref];
       return ref_rat;
-    }
-  };
-} //end namespace Pr_Ch_AMR_AMRElliptic
+    }//end function refToFiner
+  }; //end class Proto_Viscous_Tensor_Op_Factory
+}    //end namespace Pr_Ch_AMR_AMRElliptic
 #endif
