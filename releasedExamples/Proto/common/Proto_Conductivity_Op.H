@@ -274,7 +274,7 @@ namespace PrCh_AMR_Elliptic
 
       //Proto::Stencil<double> home(Proto::Shift(Proto::Point::Zeros()), 1.0);
       
-      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir);
+      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir); //arg must be positive
       pr_pt righ_point = (+1)*pr_pt::Basis(a_face_dir);
       pr_shift left(left_point);
       pr_shift righ(righ_point);

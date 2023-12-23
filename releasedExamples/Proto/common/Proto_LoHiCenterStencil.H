@@ -26,7 +26,7 @@ namespace PrCh_Lo_Hi_Center
   typedef Proto::ProblemDomain          pr_dom;
 
   ///
-  class lo_hi_center_t
+  class LHC_MetaData
   {
   public:
     pr_sten m_lo_sten;
@@ -104,9 +104,9 @@ namespace PrCh_Lo_Hi_Center
       //Shift/intersect/shift back for high and low sides
       /// to see if we are at the domain boundary
       //Have to catch return values because shift is constant in proto
-      tmp_hi = in_box;
-      tmp_lo = in_box;
-      tmp_hi = tmp_hi.shift(a_diff_dir, 1);
+      pr_box tmp_hi = in_box;
+      pr_box tmp_lo = in_box;
+      tmp_hi = tmp_hi.shift(a_diff_dir, 1); 
       tmp_lo = tmp_lo.shift(a_diff_dir,-1);
         
       tmp_hi &= domain_face_box;
@@ -119,17 +119,18 @@ namespace PrCh_Lo_Hi_Center
       {
         a_has_hi = 1;
         a_hi_box = pr_box(in_box.m_low, in_box.m_high);
-        a_hi_box.m_low[a_diff_dir] = in_box.m_high[diff_dir]; //single plane in diffdir
+        a_hi_box.m_low[a_diff_dir] = in_box.m_high[a_diff_dir]; //single plane in diffdir
         a_hi_box.recomputeSize();//required to keep box data consistent after above shenanigans.
       }
       if(tmp_lo != in_box)
       {
-        a_has_lo = l;
+        a_has_lo = 1;
         a_lo_box = pr_box(in_box.m_low, in_box.m_high);
-        a_lo_box.m_high[a_diff_dir] = in_box.m_low[diff_dir]; //single plane in diffdir
+        a_lo_box.m_high[a_diff_dir] = in_box.m_low[a_diff_dir]; //single plane in diffdir
         a_lo_box.recomputeSize();//required to keep box data consistent after above shenanigans.
       }
     }
+    return 0;
   }
   ///
   /**
@@ -139,9 +140,9 @@ namespace PrCh_Lo_Hi_Center
      3. if(hasHi) (Hi stencil gets applied on the hi box )
      This uses the standard chombo semantic of dest, src.
   **/
-  void loHiCenterApply(pr_box_data_sca         & a_dst,
+  int  loHiCenterApply(pr_box_data_sca         & a_dst,
                        const pr_box_data_sca   & a_src,
-                       const lo_hi_center_t    & a_sten) const
+                       const LHC_MetaData      & a_sten) 
   {
     ///always.   
     bool initToZero = true; double applyScale = 1;
@@ -158,6 +159,7 @@ namespace PrCh_Lo_Hi_Center
       //this is src, dest so a_dst is the output
       a_sten.m_hi_sten.apply(a_src, a_dst, a_sten.m_hi_box, initToZero, applyScale);
     }
+    return 0;
   }//end function loHiCenterApply
 
 } //end namespace Pr_Ch_AMR_AMRElliptic

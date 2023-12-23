@@ -937,11 +937,11 @@ void ViscousTensorOp::getFlux(FArrayBox&       a_flux,
   dx /= a_ref;
   CH_assert(a_data.nComp() == m_ncomp);
   a_flux.resize(a_faceBox, a_data.nComp());
-  FArrayBox  faceDiv(a_faceBox, 1);
+  FArrayBox  faceDivu(a_faceBox, 1);
   FArrayBox  faceGrad(a_faceBox, a_gradData.nComp());
-  getFaceDivAndGrad(faceDiv, faceGrad, a_data, a_gradData, domain, a_faceBox, a_dir, dx);
+  getFaceDivAndGrad(faceDivu, faceGrad, a_data, a_gradData, domain, a_faceBox, a_dir, dx);
 
-  getFluxFromDivAndGrad(a_flux, faceDiv, faceGrad, a_etaFace, a_lambdaFace, a_faceBox, a_dir);
+  getFluxFromDivAndGrad(a_flux, faceDivu, faceGrad, a_etaFace, a_lambdaFace, a_faceBox, a_dir);
   a_flux *= m_beta;
 }
 void ViscousTensorOp::getFluxFromDivAndGrad(FArrayBox&       a_flux,
@@ -1252,6 +1252,7 @@ slowGSRB(LevelData<FArrayBox>&       a_phi,
     } 
     ibreak = 1;    //stop here for end of red black iteration
   }
+
   ibreak = 1;      //stop here for end of relax
 }
 void
