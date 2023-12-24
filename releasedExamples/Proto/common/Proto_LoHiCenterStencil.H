@@ -24,7 +24,7 @@ namespace PrCh_Lo_Hi_Center
   typedef Proto::BoxData<double, 1  >   pr_box_data_sca;
   typedef Proto::Shift                  pr_shift;
   typedef Proto::ProblemDomain          pr_dom;
-
+  typedef Chombo::MayDay                ch_mayday;
   ///
   class LHC_MetaData
   {
@@ -139,25 +139,52 @@ namespace PrCh_Lo_Hi_Center
      2. if(hasLo) (Lo stencil gets applied on the lo box )
      3. if(hasHi) (Hi stencil gets applied on the hi box )
      This uses the standard chombo semantic of dest, src.
+
+     Note 1: The source for the lo and hi are not necessarily the same as the center
+     stencil's source so we send the low and high source as  pointers.    
+
+     Note 2: Lo and Hi stencil execution does not always
+     happen so those pointers can be null. 
+
+     Note 3: In the viscous tensor operator,
+     velocity stencil applies rely upon ghost cells; 
+     grad stencil applies rely upon one-sided-ness.    
+
+     Note 4: Yes it does really work that way.
+     Make fun if you like, but this operator has been widely used. 
+     Good engineering is not always elegant.
+
+     Note 5: In that vein, I am unsatisfied with the LoHiCenter API 
+     but I cannot think of anything better. 
   **/
   int  loHiCenterApply(pr_box_data_sca         & a_dst,
-                       const pr_box_data_sca   & a_src,
+                       const pr_box_data_sca   & a_src_ce,
+                       const pr_box_data_sca   * a_src_lo_ptr,
+                       const pr_box_data_sca   * a_src_hi_ptr,
                        const LHC_MetaData      & a_sten) 
   {
     ///always.   
     bool initToZero = true; double applyScale = 1;
     //this is src, dest so a_dst is the output
-    a_sten.m_ce_sten.apply(  a_src, a_dst, a_sten.m_ce_box, initToZero, applyScale);
+    a_sten.m_ce_sten.apply(  a_src_ce, a_dst, a_sten.m_ce_box, initToZero, applyScale);
 
     if(a_sten.m_has_lo == 1)
     {
+      if(a_src_lo_ptr == NULL)
+      {
+        ch_mayday::Error("loHiCenterApply: Error: has_lo == 1 and src_lo_ptr == NULL");
+      }
       //this is src, dest so a_dst is the output
-      a_sten.m_lo_sten.apply(a_src, a_dst, a_sten.m_lo_box, initToZero, applyScale);
+      a_sten.m_lo_sten.apply(*a_src_lo_ptr, a_dst, a_sten.m_lo_box, initToZero, applyScale);
     }
     if(a_sten.m_has_hi == 1)
     {
+      if(a_src_hi_ptr == NULL)
+      {
+        ch_mayday::Error("loHiCenterApply: Error: has_hi == 1 and src_hi_ptr == NULL");
+      }
       //this is src, dest so a_dst is the output
-      a_sten.m_hi_sten.apply(a_src, a_dst, a_sten.m_hi_box, initToZero, applyScale);
+      a_sten.m_hi_sten.apply(*a_src_hi_ptr, a_dst, a_sten.m_hi_box, initToZero, applyScale);
     }
     return 0;
   }//end function loHiCenterApply

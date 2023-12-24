@@ -454,17 +454,19 @@ namespace PrCh_AMR_Elliptic
       
     ///
     /**
-       This one relies upon velo having correct ghost cells so only centered diff
+       Stencil for partial(u_facedir)/partial(x_facedir)
+       This is a centered difference of velocity  only and relies upon 
+       the velocity  having correct ghost cell values.
     **/
     int getFaceGradFromVeloStencil(lo_hi_center_t &  a_div_velo_lhc, 
-                                  const pr_box   &  a_lo_box,
-                                  const pr_box   &  a_hi_box,
-                                  const pr_box   &  a_ce_box,
-                                  const int      &  a_has_lo,
-                                  const int      &  a_has_hi,
-                                  const int      &  a_face_dir,
-                                  const int      &  a_diff_dir,
-                                  const pr_box   &  a_flux_box)
+                                   const pr_box   &  a_lo_box,
+                                   const pr_box   &  a_hi_box,
+                                   const pr_box   &  a_ce_box,
+                                   const int      &  a_has_lo,
+                                   const int      &  a_has_hi,
+                                   const int      &  a_face_dir,
+                                   const int      &  a_diff_dir,
+                                   const pr_box   &  a_flux_box)
     {
       ///this is just to make sure I am keeping this stuff straight.
       if(a_face_dir != a_diff_dir)
@@ -484,9 +486,12 @@ namespace PrCh_AMR_Elliptic
       pr_shift righ_one_s(righ_one);
       pr_sten home_sten(    home_s    , 1.);
       pr_sten righ_one_sten(righ_one_s, 1.);
-      ///this gets applied to velocity
       a_div_velo_lhc.m_ce_sten = (1.0/m_dx)*(righ_one_sten - home_sten);
-      //this one relies upon velo having correct ghost cells so only centered diff
+      /**
+         This stencil gets applied to velocity
+         and relies upon velo having correct ghost cells 
+         so only centered diff.   
+      **/
       a_div_velo_lhc.m_ce_box = a_flux_box;
       a_div_velo_lhc.m_has_lo = 0;
       a_div_velo_lhc.m_has_hi = 0;
@@ -494,6 +499,12 @@ namespace PrCh_AMR_Elliptic
     } ///end function getFaceGradFromVeloStencil
 
     ///
+    /**
+       This gets a face centered gradient where face_dir != div_dir.
+       Where there a gradient on both sides of the face, it is a simple average 
+       from cell centers.
+       At boundaries it is extrapolated from neighbors.
+     **/
     int getFaceGradFromGradStencil(lo_hi_center_t &  a_div_grad_lhc, 
                                    const pr_box   &  a_lo_box,
                                    const pr_box   &  a_hi_box,
@@ -504,6 +515,7 @@ namespace PrCh_AMR_Elliptic
                                    const int      &  a_diff_dir,
                                    const pr_box   &  a_flux_box)
     {
+      ///trying to keep stuff straight
       if(a_face_dir == a_diff_dir)
       {
         ch_mayday::Error("This one only should be when facedir!=diffdir. Calling wrong stencil, maybe?");
@@ -620,25 +632,40 @@ namespace PrCh_AMR_Elliptic
                                           a_valid, a_face_dir, diff_dir, domain);
         if(diff_dir == a_face_dir)
         {
-          ///define all our fancy stencils
+          /**
+             Stencil for partial(u_facedir)/partial(x_facedir)
+             This is a centered difference of velocity  only and relies upon 
+             the velocity  having correct ghost cell values.
+             srcLo and srcHi are set to NULL because they will not be used.
+          **/
           lo_hi_center_t div_velo_lhc;
           getFaceGradFromVeloStencil(div_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                      a_face_dir, diff_dir, a_flux_box);
           
           pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
-          ///this is standard chombo dst, src so div_u_incr is  the output
-          PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, velo_comp,
+          /**
+             This is standard chombo dst, src so div_u_incr is  the output.
+          **/
+          PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, velo_comp, NULL, NULL,
                                              div_velo_lhc);
         }
         else
         {
+          /**
+             This gets a face centered gradient where face_dir != div_dir.
+             Where there a gradient on both sides of the face, it is a simple average 
+             from cell centers.
+             At boundaries it is extrapolated from neighbors.
+          **/
           lo_hi_center_t grad_grad_lhc;
           getFaceGradFromGradStencil(grad_grad_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
-                                     a_face_dir, a_diff_dir, a_flux_box);
+                                     a_face_dir, diff_dir, a_flux_box);
           int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
           pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
-          ///this is standard chombo dst, src so div_u_incr is  the output
-          PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, grad_comp,
+          /**
+             This is standard chombo dst, src so div_u_incr is  the output.
+          **/
+          PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, grad_comp, &grad_comp, &grad_comp,
                                              grad_grad_lhc);
         }
         a_face_div += div_u_incr;
@@ -647,6 +674,12 @@ namespace PrCh_AMR_Elliptic
       //now for the gradient 
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
+        pr_box lo_box, hi_box, ce_box;
+        int has_lo=4586, has_hi=4586;
+        PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
+                                          has_lo, has_hi, a_flux_box,
+                                          a_valid, a_face_dir, diff_dir, domain);
+        
         for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
         {
           int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
@@ -657,20 +690,20 @@ namespace PrCh_AMR_Elliptic
           {
             lo_hi_center_t div_velo_lhc;
             getFaceGradFromVeloStencil(div_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
-                                       a_face_dir, a_diff_dir, a_flux_box);
+                                       a_face_dir, diff_dir, a_flux_box);
             //this is standard chombo dest, src so face_grad_comp is the output
-            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp,
+            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp, NULL, NULL, 
                                                div_velo_lhc);
           }
           else
           {
             lo_hi_center_t grad_grad_lhc;
             getFaceGradFromGradStencil(grad_grad_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
-                                       a_face_dir, a_diff_dir, a_flux_box);
+                                       a_face_dir, diff_dir, a_flux_box);
             int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
             pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
             ///this is standard chombo dst, src so face_grad_comp is  the output
-            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, grad_comp,
+            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, grad_comp, &grad_comp, &grad_comp,
                                                grad_grad_lhc);
           }
         }
