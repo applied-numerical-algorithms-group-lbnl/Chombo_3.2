@@ -480,13 +480,16 @@ namespace PrCh_AMR_Elliptic
                               a_ce_box);
 
       pr_pt home     =  pr_pt::Zeros();
-      pr_pt righ_one = (+1)*pr_pt::Basis(a_diff_dir); //arg must be positive
+      //pr_pt righ_one = (+1)*pr_pt::Basis(a_diff_dir); //arg must be positive
+      pr_pt   left_one = (-1)*pr_pt::Basis(a_diff_dir); //arg must be positive
       //center stencil
       pr_shift home_s(home);
-      pr_shift righ_one_s(righ_one);
+      //pr_shift righ_one_s(righ_one);
+      pr_shift   left_one_s(left_one);
       pr_sten home_sten(    home_s    , 1.);
-      pr_sten righ_one_sten(righ_one_s, 1.);
-      a_div_velo_lhc.m_ce_sten = (1.0/m_dx)*(righ_one_sten - home_sten);
+      //pr_sten righ_one_sten(righ_one_s, 1.);
+      pr_sten   left_one_sten(left_one_s, 1.);
+      a_div_velo_lhc.m_ce_sten = (1.0/m_dx)*(home_sten - left_one_sten);
       /**
          This stencil gets applied to velocity
          and relies upon velo having correct ghost cells 

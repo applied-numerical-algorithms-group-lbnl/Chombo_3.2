@@ -879,7 +879,9 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
   for (int divDir = 0; divDir < SpaceDim; divDir++)
     {
       int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
-      FORT_FACEDIVINCRVTOP(CHF_FRA1(a_faceDiv, 0),
+      FArrayBox divu_incr(a_faceDiv.box(), 1);
+      divu_incr.setVal(0.);
+      FORT_FACEDIVINCRVTOP(CHF_FRA1(divu_incr, 0),
                            CHF_FRA(a_data),
                            CHF_FRA(a_gradData),
                            CHF_BOX(a_faceBox),
@@ -893,6 +895,7 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                            CHF_INT(divDir),
                            CHF_INT(gradComp));
 
+      a_faceDiv += divu_incr;
       //now average cell-centered gradients to the face centers
       //use diffs in data if divDir == faceDir
     }
