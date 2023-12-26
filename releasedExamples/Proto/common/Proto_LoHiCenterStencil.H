@@ -64,7 +64,6 @@ namespace PrCh_Lo_Hi_Center
                  const pr_box  &  a_flux_box, //called inBox in VTO.cpp
                  const pr_box  &  a_valid,
                  const int     &  a_face_dir,
-                 const int     &  a_diff_dir,
                  const pr_dom  &  a_domain)
   {
     /**
@@ -84,7 +83,7 @@ namespace PrCh_Lo_Hi_Center
      // if we're periodic in a_dir, then all boxes are
      // contained in the domain (DFM 2/5/10)
      **/
-    bool periodic = a_domain.isPeriodic(a_diff_dir);
+    bool periodic = a_domain.isPeriodic(a_face_dir);
     if(!periodic)
     {
       pr_box domain_face_box = a_domain.box();
@@ -93,9 +92,9 @@ namespace PrCh_Lo_Hi_Center
 
       //have to catch return values because proto has a const semantic for grow
       a_ce_box =  a_flux_box;
-      a_ce_box =  a_ce_box.grow(a_diff_dir, 1);
+      a_ce_box =  a_ce_box.grow(a_face_dir, 1);
       a_ce_box &= domain_face_box;
-      a_ce_box =  a_ce_box.grow(a_diff_dir,-1);
+      a_ce_box =  a_ce_box.grow(a_face_dir,-1);
 
       //flux box intersected with domain
       pr_box in_box = a_flux_box;
@@ -106,27 +105,27 @@ namespace PrCh_Lo_Hi_Center
       //Have to catch return values because shift is constant in proto
       pr_box tmp_hi = in_box;
       pr_box tmp_lo = in_box;
-      tmp_hi = tmp_hi.shift(a_diff_dir, 1); 
-      tmp_lo = tmp_lo.shift(a_diff_dir,-1);
+      tmp_hi = tmp_hi.shift(a_face_dir, 1); 
+      tmp_lo = tmp_lo.shift(a_face_dir,-1);
         
       tmp_hi &= domain_face_box;
       tmp_lo &= domain_face_box;
         
-      tmp_hi = tmp_hi.shift(a_diff_dir,-1);
-      tmp_lo = tmp_lo.shift(a_diff_dir, 1);
+      tmp_hi = tmp_hi.shift(a_face_dir,-1);
+      tmp_lo = tmp_lo.shift(a_face_dir, 1);
         
       if(tmp_hi != in_box)
       {
         a_has_hi = 1;
         a_hi_box = pr_box(in_box.m_low, in_box.m_high);
-        a_hi_box.m_low[a_diff_dir] = in_box.m_high[a_diff_dir]; //single plane in diffdir
+        a_hi_box.m_low[a_face_dir] = in_box.m_high[a_face_dir]; //single plane in diffdir
         a_hi_box.recomputeSize();//required to keep box data consistent after above shenanigans.
       }
       if(tmp_lo != in_box)
       {
         a_has_lo = 1;
         a_lo_box = pr_box(in_box.m_low, in_box.m_high);
-        a_lo_box.m_high[a_diff_dir] = in_box.m_low[a_diff_dir]; //single plane in diffdir
+        a_lo_box.m_high[a_face_dir] = in_box.m_low[a_face_dir]; //single plane in diffdir
         a_lo_box.recomputeSize();//required to keep box data consistent after above shenanigans.
       }
     }

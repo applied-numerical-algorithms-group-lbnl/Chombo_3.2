@@ -868,6 +868,18 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
   Box interiorFaceBox ;
   Box loBoxFace, hiBoxFace;
   int hasLo, hasHi;
+  
+  ParmParse pp("ViscousTensorOp");
+  /**
+     This is an input file flag which signals
+     the operator to call slower, less arcane 
+     functions in the service of debugging other codes.
+     This mostly means making unnecessary temporaries that I can gaze upon
+     while laboring in gdb.
+     It started in the relax function, hence the name.   
+  **/
+  bool slow_relax_mode = false; 
+  pp.query("slow_relax_mode", slow_relax_mode);
 
   loHiCenterFace(loBoxFace, hasLo,
                  hiBoxFace, hasHi,
@@ -877,11 +889,32 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                  a_faceDir);
 
   for (int divDir = 0; divDir < SpaceDim; divDir++)
+  {
+    int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
+    if(slow_relax_mode)
     {
-      int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
-      FArrayBox divu_incr(a_faceDiv.box(), 1);
-      divu_incr.setVal(0.);
-      FORT_FACEDIVINCRVTOP(CHF_FRA1(divu_incr, 0),
+      ///for debugging other codes
+      FArrayBox div_u_incr(a_faceDiv.box(), 1);
+      div_u_incr.setVal(0.);
+      FORT_FACEDIVINCRVTOP(CHF_FRA1(div_u_incr, 0),
+                           CHF_FRA(a_data),
+                           CHF_FRA(a_gradData),
+                           CHF_BOX(a_faceBox),
+                           CHF_BOX(interiorFaceBox),
+                           CHF_BOX(loBoxFace),
+                           CHF_INT(hasLo),
+                           CHF_BOX(hiBoxFace),
+                           CHF_INT(hasHi),
+                           CHF_REAL(a_dx),
+                           CHF_INT(a_faceDir),
+                           CHF_INT(divDir),
+                           CHF_INT(gradComp));
+      a_faceDiv += div_u_incr;
+    }
+    else
+    {
+      ///this standard version should be a bit faster
+      FORT_FACEDIVINCRVTOP(CHF_FRA1(a_faceDiv, 0),
                            CHF_FRA(a_data),
                            CHF_FRA(a_gradData),
                            CHF_BOX(a_faceBox),
@@ -895,32 +928,32 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                            CHF_INT(divDir),
                            CHF_INT(gradComp));
 
-      a_faceDiv += divu_incr;
-      //now average cell-centered gradients to the face centers
-      //use diffs in data if divDir == faceDir
     }
+    //now average cell-centered gradients to the face centers
+    //use diffs in data if divDir == faceDir
+  }
 
   for (int divDir = 0; divDir < SpaceDim; divDir++)
+  {
+    for (int velDir = 0; velDir < SpaceDim; velDir++)
     {
-      for (int velDir = 0; velDir < SpaceDim; velDir++)
-        {
-          int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
-          FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
-                               CHF_FRA1(a_gradData, gradcomp),
-                               CHF_FRA1(a_data, velDir),
-                               CHF_BOX(a_faceBox),
-                               CHF_BOX(interiorFaceBox),
-                               CHF_BOX(loBoxFace),
-                               CHF_INT(hasLo),
-                               CHF_BOX(hiBoxFace),
-                               CHF_INT(hasHi),
-                               CHF_REAL(a_dx),
-                               CHF_INT(a_faceDir),
-                               CHF_INT(divDir));
-
-        }
+      int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
+      FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
+                           CHF_FRA1(a_gradData, gradcomp),
+                           CHF_FRA1(a_data, velDir),
+                           CHF_BOX(a_faceBox),
+                           CHF_BOX(interiorFaceBox),
+                           CHF_BOX(loBoxFace),
+                           CHF_INT(hasLo),
+                           CHF_BOX(hiBoxFace),
+                           CHF_INT(hasHi),
+                           CHF_REAL(a_dx),
+                           CHF_INT(a_faceDir),
+                           CHF_INT(divDir));
 
     }
+
+  }
 }
 /***/
 void ViscousTensorOp::getFlux(FArrayBox&       a_flux,

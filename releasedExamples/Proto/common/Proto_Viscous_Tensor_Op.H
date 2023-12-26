@@ -183,8 +183,7 @@ unsigned int  gsrbViscoF(int                       a_pt[DIM],
                          Proto::Var<Real, DIM>     a_phi,
                          Proto::Var<Real, DIM>     a_res,
                          Proto::Var<Real, DIM>     a_lam,
-                         int                       a_iredBlack,
-                         int                       a_iprint)
+                         int                       a_iredBlack)
 {
   int sumpt = 0;
   for(int idir = 0; idir < DIM; idir++)
@@ -579,31 +578,32 @@ namespace PrCh_AMR_Elliptic
                                a_hi_box,
                                a_ce_box);
       pr_pt home     =  pr_pt::Zeros();
-      pr_pt left_one = (-1)*pr_pt::Basis(a_diff_dir);
-      //center stencil
+      ///extrapolations in the facedir direction.  
+      pr_pt left_one = (-1)*pr_pt::Basis(a_face_dir);
+      pr_pt left_two = (-2)*pr_pt::Basis(a_face_dir);
+      pr_pt righ_one = ( 1)*pr_pt::Basis(a_face_dir);
       pr_shift home_s(home);
-      pr_shift left_one_s(left_one);
-      pr_sten home_sten(    home_s    , 1.);
+      pr_shift left_one_s(  left_one);
+      pr_shift left_two_s(  left_two);
+      pr_shift righ_one_s(  righ_one);
+      
       pr_sten left_one_sten(left_one_s, 1.);
-
+      pr_sten left_two_sten(left_two_s, 1.);
+      pr_sten righ_one_sten(righ_one_s, 1.);
+      pr_sten home_sten(    home_s    , 1.);
+      
       //these get applied to gradients.
+      //center stencil
       a_grad_grad_lhc.m_ce_sten = (1./2.)*(home_sten + left_one_sten);
        
       if(a_has_lo == 1)
       {
-        pr_pt    righ_one = ( 1)*pr_pt::Basis(a_diff_dir);
-        pr_shift righ_one_s(  righ_one);
-        pr_sten righ_one_sten(righ_one_s, 1.);
         a_grad_grad_lhc.m_lo_sten = (1.0/2.)*(3.*home_sten - righ_one_sten);
       }
       if(a_has_hi == 1)
       {
-        pr_pt    left_two = (-2)*pr_pt::Basis(a_diff_dir);
-        pr_shift left_two_s(   left_two);
-        pr_sten  left_two_sten(left_two_s, 1.);
         a_grad_grad_lhc.m_hi_sten = (1.0/2.)*(3.*left_one_sten - left_two_sten);
       }
-      return 0;
       return 0;
     }///end function getFaceGradFromCellGradStencil
     
@@ -626,13 +626,15 @@ namespace PrCh_AMR_Elliptic
       ///first divergence 
       a_face_div.setVal(0.);
       pr_box_data_sca div_u_incr(a_flux_box);
+      pr_box lo_box, hi_box, ce_box;
+      int has_lo=4586, has_hi=4586;
+      PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
+                                        has_lo, has_hi, a_flux_box,
+                                        a_valid, a_face_dir, domain);
+      
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        pr_box lo_box, hi_box, ce_box;
-        int has_lo=4586, has_hi=4586;
-        PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
-                                          has_lo, has_hi, a_flux_box,
-                                          a_valid, a_face_dir, diff_dir, domain);
+        div_u_incr.setVal(0.);  //this is important.
         if(diff_dir == a_face_dir)
         {
           /**
@@ -677,12 +679,6 @@ namespace PrCh_AMR_Elliptic
       //now for the gradient 
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        pr_box lo_box, hi_box, ce_box;
-        int has_lo=4586, has_hi=4586;
-        PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
-                                          has_lo, has_hi, a_flux_box,
-                                          a_valid, a_face_dir, diff_dir, domain);
-        
         for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
         {
           int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
@@ -866,9 +862,10 @@ namespace PrCh_AMR_Elliptic
             const auto & phifab =       a_phi[dit[ibox]];
             const auto & lamfab =   relco_lbd[dit[ibox]];
             auto valid          =     m_grids[dit[ibox]];
-            int iprint = 0; // I left in a debugging hook.
-            Proto::forallInPlace_i(gsrbVisco, valid, phifab, resfab, lamfab,
-                                   iredblack, iprint);
+
+            Proto::forallInPlace_i(gsrbVisco, valid,
+                                   phifab, resfab, lamfab,
+                                   iredblack);
           }
           idebug = 0; //stop here for end of dataiter  iteration
         }
