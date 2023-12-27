@@ -11,7 +11,7 @@
 # Rules of engagement
 * Proto knows nothing about Chombo.
 * Interactions with  proto are  mediated through a plain old data  interface.
-* These examples rely heavily on namespaces.
+* These examples rely heavily upon namespaces.
 * To use this stuff, you have to make your code compile with NAMESPACE=TRUE.
 
 # Procedure for porting your Chombo code to Proto.
@@ -26,11 +26,11 @@
 # Directories
 * common holds code used by several examples
 * data_transfer tests moving data between proto and Chombo data types.
-* amr_helmoltz uses AMRMultiGrid and proto to solve the constant-coefficient Helmholtz equation.
+* amr_helmoltz uses AMRMultiGrid and Proto_Helmholtz_Op to solve the constant-coefficient Helmholtz equation.
 * _old_helmoltz does the same thing with AMRPoissonOp so the two can be easily compared.
-* amr_conductivity uses AMRMultiGrid and proto to solve the variable-coefficient Helmholtz equation.
+* amr_conductivity uses AMRMultiGrid and Proto_Conductivity_Op to solve the variable-coefficient Helmholtz equation.
 * _old_conductivity  does the same thing with VCAMRPoissonOp so the two can be easily compared.
-* amr_viscous_tensor uses AMRMultiGrid and proto to solve the variable-coefficient Viscous Tensor equation.
+* amr_viscous_tensor uses AMRMultiGrid and Proto_Viscous_Tensor_Op to solve the variable-coefficient Viscous Tensor equation.
 * _old_viscous_tensor  does the same thing with ViscousTensorOp so the two can be easily compared.
 * _proto_sg_poisson is a Chombo port of a proto example to demonstrate Proto syntax.
 

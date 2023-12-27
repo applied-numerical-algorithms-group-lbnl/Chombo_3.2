@@ -528,7 +528,8 @@ namespace PrCh_AMR_Elliptic
                               a_hi_box,
                               a_ce_box);
       pr_pt home     =  pr_pt::Zeros();
-      pr_pt left_one = (-1)*pr_pt::Basis(a_diff_dir);
+      ///this extrapolates in face dir
+      pr_pt left_one = (-1)*pr_pt::Basis(a_face_dir);
       //center stencil
       pr_shift home_s(home);
       pr_shift left_one_s(left_one);
