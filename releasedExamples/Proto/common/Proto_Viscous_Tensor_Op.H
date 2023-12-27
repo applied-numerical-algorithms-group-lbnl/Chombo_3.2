@@ -677,7 +677,8 @@ namespace PrCh_AMR_Elliptic
         a_face_div += div_u_incr;
       }
 
-      //now for the gradient 
+      //now for the gradient
+      int ibreak = 4586;
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
         for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
@@ -700,14 +701,14 @@ namespace PrCh_AMR_Elliptic
             lo_hi_center_t grad_grad_lhc;
             getFaceGradFromGradStencil(grad_grad_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                        a_face_dir, diff_dir, a_flux_box);
-            int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
-            pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
             ///this is standard chombo dst, src so face_grad_comp is  the output
-            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, grad_comp, &grad_comp, &grad_comp,
+            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, cell_grad_comp, &cell_grad_comp, &cell_grad_comp,
                                                grad_grad_lhc);
           }
-        }
-      }
+          ibreak = 0; //stop here for //end of if() branch
+        }   // end velo_dir loop
+        ibreak = 0;   //stop here for //end of velo_dir loop
+      }     // end diff_dir loop         
       return 0;
     }///end function getFaceDivAndGrad
        

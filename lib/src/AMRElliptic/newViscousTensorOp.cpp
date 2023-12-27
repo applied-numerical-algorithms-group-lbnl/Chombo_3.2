@@ -933,6 +933,8 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
     //use diffs in data if divDir == faceDir
   }
 
+  int ibreak = 4586; //for debugging other codes
+  a_faceGrad.setVal(0.);
   for (int divDir = 0; divDir < SpaceDim; divDir++)
   {
     for (int velDir = 0; velDir < SpaceDim; velDir++)
@@ -950,10 +952,12 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                            CHF_REAL(a_dx),
                            CHF_INT(a_faceDir),
                            CHF_INT(divDir));
-
+      ibreak = 0; //stop here for after grad_comp computation
     }
+    ibreak = 0;   //stop here for the end of velDir loop
 
   }
+  ibreak = 0;     //stop here for the end of divDir loop
 }
 /***/
 void ViscousTensorOp::getFlux(FArrayBox&       a_flux,
