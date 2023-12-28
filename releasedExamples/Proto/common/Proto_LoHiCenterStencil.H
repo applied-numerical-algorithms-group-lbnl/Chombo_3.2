@@ -6,12 +6,9 @@
 
 #ifndef __Lo_Hi_Center_Stencil__
 #define __Lo_Hi_Center_Stencil__
-/****************/
-PROTO_KERNEL_START 
-
 /// 
 /**
-   Tools to manage center/lo/hi stencil paradigm everywhere in ViscousTensorOp.
+   Tools to manage center/lo/hi stencil paradigm everywhere in the vector operators.
    For now, it seems simplest to just leave everything just hanging out there as 
    static functions and public data.
    This will at least standardize apply and computing the one-sided boxes.

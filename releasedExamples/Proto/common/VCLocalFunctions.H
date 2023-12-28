@@ -18,6 +18,7 @@ using std::cerr;
 #include "AMRMultiGrid.H"
 #include "VCAMRPoissonOp2.H"
 #include "ViscousTensorOp.H"
+#include "ResistivityOp.H"
 #include "ParmParse.H"
 #include "FArrayBox.H"
 
@@ -177,6 +178,31 @@ namespace Chombo
         = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(  derived_ptr);
       return RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > >(base_ptr);
     } //end function getViscousTensorFactory
+
+
+    ///
+    static 
+    RefCountedPtr< AMRLevelOpFactory<LevelData<FArrayBox> > >
+    getResistivityOpFactory( Vector<RefCountedPtr<LevelData<FArrayBox> > >&   a_acoef,
+                             Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_eta,
+                             Vector<RefCountedPtr<LevelData<FluxBox> > >  &   a_lam,
+                             Vector<DisjointBoxLayout>                    &   a_grids,
+                             VCPoissonParameters                          &   a_params)
+    {
+      ResistivityOpFactory* derived_ptr
+        = (new ResistivityOpFactory(a_grids, a_eta, a_lam, a_acoef, 
+                                      a_params.m_alpha,
+                                      a_params.m_beta,
+                                      a_params.m_refRatio,
+                                      a_params.m_coarsestDomain,
+                                      a_params.m_coarsestDx,
+                                      &ParseBC));
+
+      AMRLevelOpFactory<LevelData<FArrayBox> >* base_ptr
+        = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(  derived_ptr);
+      return RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> > >(base_ptr);
+    } //end function getResistivityOpFactory
+
   };  //end class VCLocalFunctions
 }     //end namespace chombo
 

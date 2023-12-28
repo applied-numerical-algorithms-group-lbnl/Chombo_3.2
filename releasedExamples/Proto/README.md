@@ -32,5 +32,7 @@
 * _old_conductivity  does the same thing with VCAMRPoissonOp so the two can be easily compared.
 * amr_viscous_tensor uses AMRMultiGrid and Proto_Viscous_Tensor_Op to solve the variable-coefficient Viscous Tensor equation.
 * _old_viscous_tensor  does the same thing with ViscousTensorOp so the two can be easily compared.
+* amr_resisitivity uses AMRMultiGrid and Proto_Resistivity_Op to solve the variable-coefficient magnetic resistivity equation.
+* _old_resistivity  does the same thing with ResistivityOp so the two can be easily compared.
 * _proto_sg_poisson is a Chombo port of a proto example to demonstrate Proto syntax.
 

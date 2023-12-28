@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
-#include "Proto_Viscous_Tensor_Op.H"
+#include "Proto_Resistivity_Op.H"
 #include "DebuggingTools.H"
 
 namespace Chombo
@@ -99,7 +99,7 @@ namespace Chombo
       CH_TIME("solveForPhi");
       int numLevels = a_amr_grids.size();
       
-      Chombo::ParmParse pp("viscous_op");
+      Chombo::ParmParse pp("resistivity_op");
       double aco_val = 1; double eta_val = 1; double lam_val = 1.;
       pp.get("acoef_value" , aco_val);
       pp.get("eta_value"   , eta_val);
@@ -127,12 +127,12 @@ namespace Chombo
       ppSolver.get("domain_bc", domain_bc);
       ch_dom coarsest_dom = a_amr_domains[0];
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
-        TensorUtilities::getProtoViscousTensorOpFactory(coarsest_dom, //a_amr_domains[0],
-                                                        a_ref_ratios,
-                                                        a_amr_grids,
-                                                        a_amrDx[0],
-                                                        aco, eta, lam,  
-                                                        domain_bc, alpha, beta);
+        TensorUtilities::getProtoResistivityOpFactory(coarsest_dom, //a_amr_domains[0],
+                                                      a_ref_ratios,
+                                                      a_amr_grids,
+                                                      a_amrDx[0],
+                                                      aco, eta, lam,  
+                                                      domain_bc, alpha, beta);
 
       PrChUtilities<DIM>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
                                       a_amr_domains, a_ref_ratios, a_amrDx,
