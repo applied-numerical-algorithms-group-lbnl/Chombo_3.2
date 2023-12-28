@@ -529,28 +529,28 @@ namespace PrCh_AMR_Elliptic
                               a_ce_box);
       pr_pt home     =  pr_pt::Zeros();
       ///this extrapolates in face dir
+      pr_pt righ_one = ( 1)*pr_pt::Basis(a_face_dir);
       pr_pt left_one = (-1)*pr_pt::Basis(a_face_dir);
+      pr_pt left_two = (-2)*pr_pt::Basis(a_face_dir);
       //center stencil
-      pr_shift home_s(home);
+      pr_shift righ_one_s(righ_one);
       pr_shift left_one_s(left_one);
-      pr_sten home_sten(        home_s, 1.);
-      pr_sten left_one_sten(left_one_s, 1.);
-
+      pr_shift left_two_s(left_two);
+      pr_sten  righ_one_sten(righ_one_s, 1.);
+      pr_sten  left_one_sten(left_one_s, 1.);
+      pr_sten  left_two_sten(left_two_s,1.);
+      
+      pr_shift   home_s(home);
+      pr_sten home_sten(home_s, 1.);
       //these get applied to gradients.
       a_div_grad_lhc.m_ce_sten = (1./2.)*(home_sten + left_one_sten);
        
       if(a_has_lo == 1)
       {
-        pr_pt     righ_one = ( 1)*pr_pt::Basis(a_diff_dir);
-        pr_shift  righ_one_s(righ_one);
-        pr_sten righ_one_sten(righ_one_s, 1.);
         a_div_grad_lhc.m_lo_sten = (1./2.)*(3.*home_sten - righ_one_sten);
       }
       if(a_has_hi == 1)
       {
-        pr_pt     left_two = (-2)*pr_pt::Basis(a_diff_dir);
-        pr_shift  left_two_s(left_two);
-        pr_sten   left_two_sten(left_two_s, 1.);
         a_div_grad_lhc.m_hi_sten = (1./2.)*(3.*left_one_sten - left_two_sten);
       }
       return 0;
@@ -704,6 +704,7 @@ namespace PrCh_AMR_Elliptic
             ///this is standard chombo dst, src so face_grad_comp is  the output
             PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, cell_grad_comp, &cell_grad_comp, &cell_grad_comp,
                                                grad_grad_lhc);
+            ibreak = 0; //sometimes scoping is confusing in gdb
           }
           ibreak = 0; //stop here for //end of if() branch
         }   // end velo_dir loop
