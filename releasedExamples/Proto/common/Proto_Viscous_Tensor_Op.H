@@ -323,9 +323,9 @@ namespace PrCh_AMR_Elliptic
        it does not matter if any of the arguments point to overlapping things.
     **/
     virtual void 
-    axby(pr_lbd         & a_lphi,
-         const pr_lbd   & a_xval,
-         const pr_lbd   & a_yval,
+    axby(pr_cell_data_vec         & a_lphi,
+         const pr_cell_data_vec   & a_xval,
+         const pr_cell_data_vec   & a_yval,
          double    a_aco,
          double    a_bco) 
     {
