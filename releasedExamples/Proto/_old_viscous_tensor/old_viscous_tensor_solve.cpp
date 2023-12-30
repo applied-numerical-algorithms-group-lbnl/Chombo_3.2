@@ -157,7 +157,7 @@ namespace Chombo
     }     // end loop over levels
   }       //end function setACoef
 
-  /// sets bcoef(x, y, z) = x + y + z
+  /// 
   static void
   setEtaAndLambda(Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_eta,
                   Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_lam,

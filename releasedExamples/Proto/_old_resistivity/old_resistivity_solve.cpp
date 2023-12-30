@@ -74,24 +74,19 @@ namespace Chombo
   void
   defineData(Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_phi,
              Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_rhs,
-             Vector< RefCountedPtr< LevelData< FArrayBox > > >& a_aco,
              Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_eta,
-             Vector< RefCountedPtr< LevelData<   FluxBox > > >& a_lam,
              const Vector< DisjointBoxLayout >                & a_grids)
   {
     a_phi.resize(a_grids.size());
     a_rhs.resize(a_grids.size());
-    a_aco.resize(a_grids.size());
     a_eta.resize(a_grids.size());
-    a_lam.resize(a_grids.size());
     
     for(int ilev = 0; ilev < a_grids.size(); ilev++)
     {
-      a_phi[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Unit));
-      a_rhs[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev],DIM, IntVect::Zero));
-      a_aco[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 1 , IntVect::Zero));
+      //always 3 magnetic variables 
+      a_phi[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 3 , IntVect::Unit));
+      a_rhs[ilev] = RefCountedPtr< LevelData< FArrayBox > >( new   LevelData< FArrayBox > (a_grids[ilev], 3 , IntVect::Zero));
       a_eta[ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
-      a_lam[ilev] = RefCountedPtr< LevelData<   FluxBox > >( new   LevelData<   FluxBox > (a_grids[ilev], 1 , IntVect::Zero));
     }  ///end loop over levels
   }    //end function defineData
 
@@ -108,12 +103,13 @@ namespace Chombo
     Vector<LevelData<FArrayBox>*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
     string         phiFileName("phi.hdf5");
     string         rhsFileName("rhs.hdf5");
-    
-    Vector<string> phiVarNames(DIM);
-    Vector<string> rhsVarNames(DIM);
-    for(int idir = 0; idir < DIM; idir++)
+
+    //always 3 variables in mag
+    Vector<string> phiVarNames(3);
+    Vector<string> rhsVarNames(3);
+    for(int idir = 0; idir < 3; idir++)
     {
-      phiVarNames[idir] = string("vel_comp_") + std::to_string(idir);
+      phiVarNames[idir] = string("mag_comp_") + std::to_string(idir);
       rhsVarNames[idir] = string("rhs_comp_") + std::to_string(idir);
     }
       
@@ -137,49 +133,25 @@ namespace Chombo
 #endif
   } //end function ouputData
 
-  /// sets acoef(x, y, z) = x
-  void
-  setACoef(Vector<RefCountedPtr< LevelData<FArrayBox> > >  & a_aCoefVec,
-           const VCPoissonParameters                       & a_params)
-  {
 
-    Chombo::ParmParse pp("resistivity_op");
-    double aco_val;
-    pp.get("acoef_value", aco_val);
-    for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
-    {
-      DataIterator dit = a_aCoefVec[ilev]->dataIterator();
-      for (dit.begin(); dit.ok(); ++dit)
-      {
-        FArrayBox& aCoef = (*a_aCoefVec[ilev])[dit];
-        aCoef.setVal(aco_val);
-      }   // end loop over grids
-    }     // end loop over levels
-  }       //end function setACoef
-
-  /// sets bcoef(x, y, z) = x + y + z
+  /// 
   static void
-  setEtaAndLambda(Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_eta,
-                  Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_lam,
-                  const VCPoissonParameters                      & a_params)
+  setEta(Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_eta,
+         const VCPoissonParameters                      & a_params)
   {
-    Real etaVal, lamVal;
+    Real etaVal;
     Chombo::ParmParse pp("resistivity_op");
     pp.get("eta_value"   , etaVal);
-    pp.get("lambda_value", lamVal);
     for(int ilev = 0; ilev < a_params.m_numLevels; ilev++)
     {
       DataIterator dit = a_eta[ilev]->dataIterator();
       for (dit.begin(); dit.ok(); ++dit)
       {
         FluxBox& thisEta = (*a_eta[ilev])[dit];
-        FluxBox& thisLam = (*a_lam[ilev])[dit];
         for (int face_dir=0; face_dir < SpaceDim; face_dir++)
         {
           FArrayBox& etafab = thisEta[face_dir];
-          FArrayBox& lamfab = thisLam[face_dir];
           etafab.setVal(etaVal);
-          lamfab.setVal(lamVal);
         }   // end loop over face direction
       }     // end loop over boxes
     }       // end loop over levels
@@ -204,9 +176,7 @@ namespace Chombo
   {
     Vector<RefCountedPtr<LevelData< FArrayBox > > > phi;
     Vector<RefCountedPtr<LevelData< FArrayBox > > > rhs;
-    Vector<RefCountedPtr<LevelData< FArrayBox > > > aCoef;
     Vector<RefCountedPtr<LevelData<   FluxBox > > > eta;
-    Vector<RefCountedPtr<LevelData<   FluxBox > > > lambda;
 
     Vector<DisjointBoxLayout> amrGrids;
     Vector<ProblemDomain> amrDomains;
@@ -225,13 +195,12 @@ namespace Chombo
       getVCParameters(finestLevel, amrDx[0], amrDomains[0], refRatios);
     
 
-    defineData(phi, rhs, aCoef, eta, lambda,  amrGrids);
+    defineData(phi, rhs, eta, amrGrids);
     setRHSConst(rhs, 1.0);
-    setACoef(aCoef, param);
-    setEtaAndLambda(eta, lambda, param);
+    setEta(eta, param);
 
     RefCountedPtr<AMRLevelOpFactory<LevelData<FArrayBox> >  >  
-      op_factory = VCLocalFunctions::getResistivityOpFactory(aCoef, eta, lambda, amrGrids, param);
+      op_factory = VCLocalFunctions::getResistivityOpFactory(eta, amrGrids, param);
 
     poissonSolve(phi, rhs, op_factory, amrGrids, param);
     outputData(  phi, rhs,             amrGrids, param);

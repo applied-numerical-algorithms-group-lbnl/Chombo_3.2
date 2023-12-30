@@ -10,7 +10,7 @@
 /****************/
 PROTO_KERNEL_START 
 ///always 3  variables here
-unsigned int axbyResistF(int                      a_pt[DIM],
+unsigned int axbyResistF(int                       a_pt[DIM],
                          Proto::Var<Real,   3>     a_lph,
                          Proto::Var<Real,   3>     a_x,
                          Proto::Var<Real,   3>     a_y,
@@ -50,25 +50,23 @@ unsigned int  fluxFuncResistF(int                     a_pt[DIM],
 PROTO_KERNEL_END(fluxFuncResistF, fluxFuncResist)
 
 
-///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
+///a_lph = alpha*phi + beta(xincr + yincr + zincr)
 PROTO_KERNEL_START 
-unsigned int  operaResistF(int                       a_pt[DIM],
-                           Proto::Var<Real, DIM>     a_lph,
-                           Proto::Var<Real, DIM>     a_phi,
-                           Proto::Var<Real,  1 >     a_acoef,
-                           Proto::Var<Real, DIM>     a_xincr,
-                           Proto::Var<Real, DIM>     a_yincr,
-                           Proto::Var<Real, DIM>     a_zincr,
-                           Real                      a_alpha,
-                           Real                      a_beta)
+unsigned int  operaResistF(int                     a_pt[DIM],
+                           Proto::Var<Real, 3>     a_lph,
+                           Proto::Var<Real, 3>     a_phi,
+                           Proto::Var<Real, 3>     a_xincr,
+                           Proto::Var<Real, 3>     a_yincr,
+                           Proto::Var<Real, 3>     a_zincr,
+                           Real                    a_alpha,
+                           Real                    a_beta)
 {
   //zincr is set to zero in 2d
-  for(int idir = 0; idir < DIM; idir++)
+  for(int idir = 0; idir < 3; idir++)
   {
     double  divergence = a_xincr(idir) + a_yincr(idir) + a_zincr(idir);
     double  phival     =   a_phi(idir);  
-    double  acoval     = a_acoef(0);   //same acoef for all variables
-    double  lphval     = a_alpha*acoval*phival + a_beta*divergence;
+    double  lphval     = a_alpha*phival + a_beta*divergence;
     a_lph(idir) = lphval;
   }
   return 0;
@@ -130,7 +128,7 @@ PROTO_KERNEL_END(relaxCoefResistF, relaxCoefResist)
    sum(i+j+k)%2== iredblack
 **/
 PROTO_KERNEL_START 
-unsigned int  gsrbResistF(int                    a_pt[DIM],
+unsigned int  gsrbResistF(int                     a_pt[DIM],
                           Proto::Var<Real, 3>     a_phi,
                           Proto::Var<Real, 3>     a_res,
                           Proto::Var<Real, 3>     a_lam,
@@ -164,29 +162,29 @@ namespace PrCh_AMR_Elliptic
   typedef Proto::InterpStencil<double>                                                  pr_interp_sten;
   typedef Proto::Point                                                                  pr_pt;
   typedef Proto::Box                                                                    pr_box;
-  typedef Proto::BoxData<double, 1  >                                                   pr_box_data_sca;
+  typedef Proto::BoxData<double, 1  >                                                   pr_box_data_scalar;
   //always 3 variables. can be two derivatives
-  typedef Proto::BoxData<double, 3>                                                     pr_box_data_vec;
-  typedef Proto::BoxData<double, 3*DIM>                                                 pr_box_data_ten;
+  typedef Proto::BoxData<double, 3>                                                     pr_box_data_three;
+  typedef Proto::BoxData<double, 3*DIM>                                                 pr_box_data_thrdim;
   typedef Proto::DisjointBoxLayout                                                      pr_dbl;
   typedef Proto::Shift                                                                  pr_shift;
-  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_sca;
-  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 > pr_xfac_data_sca;
-  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 > pr_yfac_data_sca;
-  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 > pr_zfac_data_sca;
+  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_scalar;
+  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 > pr_xfac_data_scalar;
+  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 > pr_yfac_data_scalar;
+  typedef Proto::LevelBoxData<double, 1    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 > pr_zfac_data_scalar;
   //always 3 variables. can be two derivatives
-  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_vec;
-  typedef Proto::LevelBoxData<double, 3*DIM, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_ten;
-  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 > pr_xfac_data_vec;
-  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 > pr_yfac_data_vec;
-  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 > pr_zfac_data_vec;
+  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_three;
+  typedef Proto::LevelBoxData<double, 3*DIM, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   > pr_cell_data_thrdim;
+  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 > pr_xfac_data_three;
+  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 > pr_yfac_data_three;
+  typedef Proto::LevelBoxData<double, 3    , Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 > pr_zfac_data_three;
                                                                  
   ///AMRMultigrid forces me to use some of these.
   typedef Chombo::ProblemDomain                                                         ch_dom; // 
   typedef Chombo::MayDay                                                                ch_mayday;
-  typedef Chombo::AMRLevelOpFactory<pr_cell_data_vec>                                   ch_amrlevelop_fact_vec;
-  typedef Chombo::AMRLevelOp<       pr_cell_data_vec>                                   ch_amrlevelop_vec;
-  typedef Chombo::MGLevelOp<        pr_cell_data_vec>                                   ch_mglevelop_vec;
+  typedef Chombo::AMRLevelOpFactory<pr_cell_data_three>                                 ch_amrlevelop_fact_three;
+  typedef Chombo::AMRLevelOp<       pr_cell_data_three>                                 ch_amrlevelop_three;
+  typedef Chombo::MGLevelOp<        pr_cell_data_three>                                 ch_mglevelop_three;
 
   typedef PrCh_Lo_Hi_Center::LHC_MetaData     lo_hi_center_t;
 
@@ -215,11 +213,11 @@ namespace PrCh_AMR_Elliptic
     {
     }
 
-    shared_ptr<pr_xfac_data_sca>  m_eta_x;
-    shared_ptr<pr_yfac_data_sca>  m_eta_y;
-    shared_ptr<pr_zfac_data_sca>  m_eta_z;
-    shared_ptr<pr_cell_data_vec>  m_relcoef;
-    shared_ptr<pr_cell_data_ten>  m_grad;
+    shared_ptr<pr_xfac_data_scalar>  m_eta_x;
+    shared_ptr<pr_yfac_data_scalar>  m_eta_y;
+    shared_ptr<pr_zfac_data_scalar>  m_eta_z;
+    shared_ptr<pr_cell_data_three>  m_relcoef;
+    shared_ptr<pr_cell_data_thrdim>  m_grad;
     double    m_alpha;
     double    m_beta;
     double    m_dx;
@@ -230,16 +228,16 @@ namespace PrCh_AMR_Elliptic
     
     ///
     Proto_Resistivity_Op(
-      shared_ptr<pr_xfac_data_sca>  a_eta_x,
-      shared_ptr<pr_yfac_data_sca>  a_eta_y,
-      shared_ptr<pr_zfac_data_sca>  a_eta_z,
-      const pr_dbl&                 a_grids,
-      const double&                 a_alpha,
-      const double&                 a_beta,
-      const double&                 a_dx,
-      const int   &                 a_refToFine,
-      const int   &                 a_refToCoar,
-      const string&                 a_domBC)
+      shared_ptr<pr_xfac_data_scalar>  a_eta_x,
+      shared_ptr<pr_yfac_data_scalar>  a_eta_y,
+      shared_ptr<pr_zfac_data_scalar>  a_eta_z,
+      const pr_dbl   &                 a_grids,
+      const double   &                 a_alpha,
+      const double   &                 a_beta,
+      const double   &                 a_dx,
+      const int      &                 a_refToFine,
+      const int      &                 a_refToCoar,
+      const string   &                 a_domBC)
     {
       CH_TIME("Proto_Resistivity_Op::Proto_Resistivity_Op");
       m_eta_x     = a_eta_x;
@@ -263,9 +261,9 @@ namespace PrCh_AMR_Elliptic
        it does not matter if any of the arguments point to overlapping things.
     **/
     virtual void 
-    axby(pr_cell_data_vec         & a_lphi,
-         const pr_cell_data_vec   & a_xval,
-         const pr_cell_data_vec   & a_yval,
+    axby(pr_cell_data_three         & a_lphi,
+         const pr_cell_data_three   & a_xval,
+         const pr_cell_data_three   & a_yval,
          double    a_aco,
          double    a_bco) 
     {
@@ -286,8 +284,8 @@ namespace PrCh_AMR_Elliptic
     ///
     void defineAuxilliaries()
     {
-      m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
-      m_grad    = shared_ptr<pr_cell_data_ten>(new pr_cell_data_ten(m_grids, pr_pt::Ones(1) ));
+      m_relcoef = shared_ptr<pr_cell_data_three>(new pr_cell_data_three(m_grids, pr_pt::Zero()  ));
+      m_grad    = shared_ptr<pr_cell_data_thrdim>(new pr_cell_data_thrdim(m_grids, pr_pt::Ones(1) ));
     }
     
     ///
@@ -306,11 +304,9 @@ namespace PrCh_AMR_Elliptic
         const auto& eta_y      =  (*m_eta_y)[dit[ibox]];
 #if DIM==3                        
         const auto& eta_z      =  (*m_eta_z)[dit[ibox]];
-        const auto& lam_z      =  (*m_lam_z)[dit[ibox]];
 #else
         //something fake to send in 2d
         const auto& eta_z      =  (*m_eta_x)[dit[ibox]];
-        const auto& lam_z      =  (*m_lam_x)[dit[ibox]];
 #endif
         ///compute relaxation coefficient
         Proto::forallInPlace_i(relaxCoefResist, valid, 
@@ -334,15 +330,12 @@ namespace PrCh_AMR_Elliptic
     
     ///
     virtual void
-    computeCCGradient(pr_box_data_ten         &  a_grad,
-                      const pr_box_data_vec   &  a_phi,
+    computeCCGradient(pr_box_data_thrdim         &  a_grad,
+                      const pr_box_data_three   &  a_phi,
                       pr_box                     a_valid)
     {
-      pr_box_data_sca vel_x = Proto::slice(a_phi, 0);
-      pr_box_data_sca vel_y = Proto::slice(a_phi, 1);
-#if DIM==3      
-      pr_box_data_sca vel_z = Proto::slice(a_phi, 2);
-#endif
+      
+      //always.
       bool initToZero = true; double applyScale = 1.;
       
       pr_sten gradient_stencils[DIM];
@@ -362,12 +355,12 @@ namespace PrCh_AMR_Elliptic
       ///always 3 mag comps
       for(int comp_dir = 0; comp_dir < 3; comp_dir++)
       {
-        pr_box_data_sca mag_comp = Proto::slice(a_phi, comp_dir);
+        pr_box_data_scalar mag_comp = Proto::slice(a_phi, comp_dir);
         //derivs only get dim
         for(int deriv_dir = 0;  deriv_dir < DIM; deriv_dir++)
         {
           int grad_index = gradIndex(comp_dir, deriv_dir);
-          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_index);
+          pr_box_data_scalar grad_comp = Proto::slice(a_grad, grad_index);
 
           //rememeber that this goes src, dst so grad_comp is the output
           gradient_stencils[deriv_dir].apply(mag_comp, grad_comp, a_valid, initToZero, applyScale);
@@ -376,7 +369,7 @@ namespace PrCh_AMR_Elliptic
     }
     ///Assumes that the ghost cells of a_phi are already set correctly.
     virtual void
-    computeCCGradient(const pr_cell_data_vec   & a_phi)
+    computeCCGradient(const pr_cell_data_three   & a_phi)
     {
       auto dit   = a_phi.begin();
       auto dbl   = a_phi.layout();
@@ -553,19 +546,19 @@ namespace PrCh_AMR_Elliptic
        Overwrite this with phi difference if face_dir == diff_dir.
     **/
     int
-    getFaceDivAndGrad(pr_box_data_sca          & a_face_div,
-                      pr_box_data_ten          & a_face_grad,
-                      const pr_box_data_vec    & a_phi,
-                      const pr_box_data_ten    & a_grad,
-                      const pr_box             & a_flux_box,
-                      const pr_box             & a_valid,
-                      const int                & a_face_dir)
+    getFaceDivAndGrad(pr_box_data_scalar          & a_face_div,
+                      pr_box_data_thrdim          & a_face_grad,
+                      const pr_box_data_three     & a_phi,
+                      const pr_box_data_thrdim    & a_grad,
+                      const pr_box                & a_flux_box,
+                      const pr_box                & a_valid,
+                      const int                   & a_face_dir)
     {
 
       pr_dom domain = m_grids.domain();
       ///first divergence 
       a_face_div.setVal(0.);
-      pr_box_data_sca div_b_incr(a_flux_box);
+      pr_box_data_scalar div_b_incr(a_flux_box);
       pr_box lo_box, hi_box, ce_box;
       int has_lo=4586, has_hi=4586;
       PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
@@ -587,12 +580,12 @@ namespace PrCh_AMR_Elliptic
           getFaceGradFromMagnStencil(div_magn_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                      a_face_dir, diff_dir, a_flux_box);
           
-          pr_box_data_sca magn_comp = Proto::slice(a_phi, diff_dir);
+          pr_box_data_scalar magn_comp = Proto::slice(a_phi, diff_dir);
           /**
              This is standard chombo dst, src so div_b_incr is  the output.
           **/
-          PrCh_Lo_Hi_Center::loHiCenterApply(div_b_incr, velo_comp, NULL, NULL,
-                                             div_velo_lhc);
+          PrCh_Lo_Hi_Center::loHiCenterApply(div_b_incr, magn_comp, NULL, NULL,
+                                             div_magn_lhc);
         }
         else
         {
@@ -606,7 +599,7 @@ namespace PrCh_AMR_Elliptic
           getFaceGradFromGradStencil(grad_grad_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                      a_face_dir, diff_dir, a_flux_box);
           int grad_ind = gradIndex(diff_dir, diff_dir); // indicies match because this is divergence
-          pr_box_data_sca grad_comp = Proto::slice(a_grad, grad_ind);
+          pr_box_data_scalar grad_comp = Proto::slice(a_grad, grad_ind);
           /**
              This is standard chombo dst, src so div_b_incr is  the output.
           **/
@@ -623,13 +616,13 @@ namespace PrCh_AMR_Elliptic
         for(int magn_dir = 0; magn_dir < DIM; magn_dir++)
         {
           int grad_ind = gradIndex(magn_dir, diff_dir); // indicies match because this is divergence
-          pr_box_data_sca magn_comp      = Proto::slice(a_phi      , magn_dir);
-          pr_box_data_sca cell_grad_comp = Proto::slice(a_grad     , grad_ind);
-          pr_box_data_sca face_grad_comp = Proto::slice(a_face_grad, grad_ind);
+          pr_box_data_scalar magn_comp      = Proto::slice(a_phi      , magn_dir);
+          pr_box_data_scalar cell_grad_comp = Proto::slice(a_grad     , grad_ind);
+          pr_box_data_scalar face_grad_comp = Proto::slice(a_face_grad, grad_ind);
           if( (a_face_dir == diff_dir) )
           {
             lo_hi_center_t div_magn_lhc;
-            getFaceGradFromVeloStencil(div_magn_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
+            getFaceGradFromMagnStencil(div_magn_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                        a_face_dir, diff_dir, a_flux_box);
             //this is standard chombo dest, src so face_grad_comp is the output
             PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, magn_comp, NULL, NULL, 
@@ -654,31 +647,31 @@ namespace PrCh_AMR_Elliptic
        
     ///gets flux vector for a given face direction
     int
-    getFluxDotNormal(pr_box_data_vec           & a_flux,
-                     const pr_box_data_vec     & a_phi,
-                     const pr_box_data_sca     & a_eta,
-                     const pr_box_data_ten     & a_grad,
-                     const pr_box              & a_valid,
-                     const int                 & a_face_dir)
+    getFluxDotNormal(pr_box_data_three           & a_flux,
+                     const pr_box_data_three     & a_phi,
+                     const pr_box_data_scalar    & a_eta,
+                     const pr_box_data_thrdim    & a_grad,
+                     const pr_box                & a_valid,
+                     const int                   & a_face_dir)
     {
 
       //get face centered velocity divergence
       pr_box flux_box = a_valid;
       flux_box.m_high[a_face_dir] += 1;
       flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
-      pr_box_data_sca face_divu(flux_box);
-      pr_box_data_ten face_grad(flux_box);
+      pr_box_data_scalar face_divu(flux_box);
+      pr_box_data_thrdim face_grad(flux_box);
       getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_valid,a_face_dir);
       
       ///F(B) = eta*(grad(B) + grad(B)^T + I div(B))
       for(int icomp = 0; icomp < DIM; icomp++)
       {
-        pr_box_data_sca flux_comp = Proto::slice(a_flux, icomp);
+        pr_box_data_scalar flux_comp = Proto::slice(a_flux, icomp);
 
         int ind_gradu  = gradIndex(a_face_dir, icomp     );
         int ind_graduT = gradIndex(icomp     , a_face_dir);
-        pr_box_data_sca grad_b   = Proto::slice(face_grad, ind_gradu);
-        pr_box_data_sca grad_b_t = Proto::slice(face_grad, ind_graduT);
+        pr_box_data_scalar grad_b   = Proto::slice(face_grad, ind_gradu);
+        pr_box_data_scalar grad_b_t = Proto::slice(face_grad, ind_graduT);
         
         ///a_flux = eta( grad B + grad B T + I div B);
         Proto::forallInPlace_i(fluxFuncResist, flux_box, flux_comp,
@@ -689,19 +682,19 @@ namespace PrCh_AMR_Elliptic
     }///end function getFluxDotNormal
     ///sets a_incr =  (flux_i+1/2 - flux_i-1/2)/m_dx
     int
-    getDivergenceIncrement(pr_box_data_vec           & a_incr,
-                           const pr_box_data_vec     & a_phi,
-                           const pr_box_data_sca     & a_eta,
-                           const pr_box_data_ten     & a_grad,
-                           const pr_box              & a_valid,
-                           const int                 & a_face_dir)
+    getDivergenceIncrement(pr_box_data_three           & a_incr,
+                           const pr_box_data_three     & a_phi,
+                           const pr_box_data_scalar    & a_eta,
+                           const pr_box_data_thrdim    & a_grad,
+                           const pr_box                & a_valid,
+                           const int                   & a_face_dir)
     {
       CH_TIME("Pr_Resistivity::getDivergenceIcrement");
       pr_box face_box = a_valid;
       face_box.m_high[a_face_dir] += 1;
       face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       
-      pr_box_data_vec  flux_dot_normal(face_box);
+      pr_box_data_three  flux_dot_normal(face_box);
       getFluxDotNormal(flux_dot_normal, a_phi, a_eta, a_grad, a_valid, a_face_dir);
       
 
@@ -722,8 +715,8 @@ namespace PrCh_AMR_Elliptic
 
       for(int icomp = 0; icomp < DIM; icomp++)
       {
-        pr_box_data_sca flux_comp = Proto::slice(flux_dot_normal, icomp);
-        pr_box_data_sca incr_comp = Proto::slice(a_incr         , icomp);
+        pr_box_data_scalar flux_comp = Proto::slice(flux_dot_normal, icomp);
+        pr_box_data_scalar incr_comp = Proto::slice(a_incr         , icomp);
         ///this arg list is src, dst so  incr_comp is the output
         righ_minus_home.apply(flux_comp, incr_comp,
                               a_valid , initToZero, applyScale);
@@ -734,8 +727,8 @@ namespace PrCh_AMR_Elliptic
     
     ///For this one, the derived class may assume all ghost cells have been set correctly
     virtual void 
-    applyOperator(pr_cell_data_vec         & a_lph,
-                  const pr_cell_data_vec   & a_phi)
+    applyOperator(pr_cell_data_three         & a_lph,
+                  const pr_cell_data_three   & a_phi)
     {
       CH_TIME("Proto_Resistivity_Op::applyOperator");
       auto dit   = a_lph.begin();
@@ -747,7 +740,6 @@ namespace PrCh_AMR_Elliptic
       {
         auto        & lphfab =      a_lph[dit[ibox]];
         const auto  & phifab =      a_phi[dit[ibox]];
-        const auto  & acofab = (*m_acoef)[dit[ibox]];
         auto valid           =    m_grids[dit[ibox]];
         const auto& eta_x    = (*m_eta_x)[dit[ibox]];
         const auto& eta_y    = (*m_eta_y)[dit[ibox]];
@@ -757,18 +749,18 @@ namespace PrCh_AMR_Elliptic
 #endif        
 
         //the setvals are meaningful here. 
-        pr_box_data_vec xincr(valid); xincr.setVal(0.);
-        pr_box_data_vec yincr(valid); yincr.setVal(0.);
-        pr_box_data_vec zincr(valid); zincr.setVal(0.); 
+        pr_box_data_three xincr(valid); xincr.setVal(0.);
+        pr_box_data_three yincr(valid); yincr.setVal(0.);
+        pr_box_data_three zincr(valid); zincr.setVal(0.); 
         
         getDivergenceIncrement(xincr, phifab, eta_x, gradfab, valid, 0);
         getDivergenceIncrement(yincr, phifab, eta_y, gradfab, valid, 1);
 #if DIM==3                                                         
         getDivergenceIncrement(zincr, phifab, eta_z, gradfab, valid, 2);
 #endif
-        ///a_lph = alpha*acoef*phi + beta(xincr + yincr + zincr)
+        ///a_lph = alpha**phi + beta(xincr + yincr + zincr)
         Proto::forallInPlace_i(operaResist, valid,
-                               lphfab, phifab, acofab,
+                               lphfab, phifab,
                                xincr, yincr, zincr,
                                m_alpha, m_beta);
       }
@@ -776,13 +768,13 @@ namespace PrCh_AMR_Elliptic
     
     ///phi+= lambda*resid on red black
     virtual void
-    relax(pr_cell_data_vec       & a_phi,
-          const pr_cell_data_vec & a_rhs,
+    relax(pr_cell_data_three       & a_phi,
+          const pr_cell_data_three & a_rhs,
           int a_iterations)
     {
       CH_TIME("Pr_Resistivity::relax");
       
-      pr_cell_data_vec resid;
+      pr_cell_data_three resid;
       create(resid, a_rhs);
       auto  dit       =  a_rhs.begin();
       auto& relco_lbd = (*m_relcoef);
@@ -818,11 +810,11 @@ namespace PrCh_AMR_Elliptic
         For now, we shall restrict ourselves to the big two: Neumann and Dirichlet.
     **/
     virtual void
-    fillGhostDataOutsideDomain(pr_cell_data_vec          & a_phi,
-                               const ch_dom              & a_domain)
+    fillGhostDataOutsideDomain(pr_cell_data_three          & a_phi,
+                               const ch_dom                & a_domain)
     {
       CH_TIME("Pr_Resistivity::fillGhostdataOutsideDomain");
-      typedef Proto_Transition::DataUtilities<DIM> pr_trans_data_vec;
+      typedef Proto_Transition::DataUtilities<3> pr_trans_data_three;
       pr_dom domain = ProtoCh::getProtoDomain(a_domain);
       pr_box dombox = domain.box();
       for(int idir = 0; idir < DIM; idir++)
@@ -831,11 +823,11 @@ namespace PrCh_AMR_Elliptic
         {
           if(m_domBC == string("Dirichlet"))
           {
-            pr_trans_data_vec::domainGhostReflectOdd( a_phi, dombox, idir, hilo);
+            pr_trans_data_three::domainGhostReflectOdd( a_phi, dombox, idir, hilo);
           }
           else if(m_domBC == string("Neumann"))
           {
-            pr_trans_data_vec::domainGhostReflectEven(a_phi, dombox, idir, hilo);
+            pr_trans_data_three::domainGhostReflectEven(a_phi, dombox, idir, hilo);
           }
           else
           {
@@ -853,7 +845,7 @@ namespace PrCh_AMR_Elliptic
     }
   }; ///end class Proto_Resistivity_Op
 
-  class Proto_Resistivity_Op_Factory: public ch_amrlevelop_fact_vec
+  class Proto_Resistivity_Op_Factory: public ch_amrlevelop_fact_three
   {
     
   private:
@@ -864,57 +856,44 @@ namespace PrCh_AMR_Elliptic
 
     virtual ~Proto_Resistivity_Op_Factory() { }
 
-    vector<int>                                m_ref_ratios;
-    vector<pr_dbl>                             m_grids;
-    vector<pair<ch_dom, double> >              m_domain_dx;
-    double                                     m_coarsest_dx;
-    string                                     m_domBC;
-    double                                     m_alpha;
-    double                                     m_beta;
-    int                                        m_max_coarse;
-    vector< shared_ptr<pr_cell_data_sca> >     m_acoef;
-    vector< shared_ptr<pr_xfac_data_sca> >     m_eta_x;
-    vector< shared_ptr<pr_yfac_data_sca> >     m_eta_y;
-    vector< shared_ptr<pr_zfac_data_sca> >     m_eta_z;
-    vector< shared_ptr<pr_xfac_data_sca> >     m_lam_x;
-    vector< shared_ptr<pr_yfac_data_sca> >     m_lam_y;
-    vector< shared_ptr<pr_zfac_data_sca> >     m_lam_z;
+    vector<int>                                   m_ref_ratios;
+    vector<pr_dbl>                                m_grids;
+    vector<pair<ch_dom, double> >                 m_domain_dx;
+    double                                        m_coarsest_dx;
+    string                                        m_domBC;
+    double                                        m_alpha;
+    double                                        m_beta;
+    int                                           m_max_coarse;
+    vector< shared_ptr<pr_xfac_data_scalar> >     m_eta_x;
+    vector< shared_ptr<pr_yfac_data_scalar> >     m_eta_y;
+    vector< shared_ptr<pr_zfac_data_scalar> >     m_eta_z;
 
     
     ///the only constructor
     Proto_Resistivity_Op_Factory(
-      const ch_dom                                 &  a_coarsest_dom,
-      const vector<pr_dbl>                         &  a_grids,
-      const vector<int>                            &  a_ref_ratios,
-      const double                                 &  a_coarsest_dx,
-      const string                                 &  a_domBC,
-      const double                                 &  a_alpha,
-      const double                                 &  a_beta,
-      const vector< shared_ptr<pr_cell_data_sca> > &  a_acoef,
-      const vector< shared_ptr<pr_xfac_data_sca> > &  a_eta_x,
-      const vector< shared_ptr<pr_yfac_data_sca> > &  a_eta_y,
-      const vector< shared_ptr<pr_zfac_data_sca> > &  a_eta_z,
-      const vector< shared_ptr<pr_xfac_data_sca> > &  a_lam_x,
-      const vector< shared_ptr<pr_yfac_data_sca> > &  a_lam_y,
-      const vector< shared_ptr<pr_zfac_data_sca> > &  a_lam_z)
-    : ch_amrlevelop_fact_vec()
+      const ch_dom                                    &  a_coarsest_dom,
+      const vector<pr_dbl>                            &  a_grids,
+      const vector<int>                               &  a_ref_ratios,
+      const double                                    &  a_coarsest_dx,
+      const string                                    &  a_domBC,
+      const double                                    &  a_alpha,
+      const double                                    &  a_beta,
+      const vector< shared_ptr<pr_xfac_data_scalar> > &  a_eta_x,
+      const vector< shared_ptr<pr_yfac_data_scalar> > &  a_eta_y,
+      const vector< shared_ptr<pr_zfac_data_scalar> > &  a_eta_z)
+    : ch_amrlevelop_fact_three()
     {
       CH_TIME("Pr_Resistivity_Factory_Constructor");
       m_max_coarse = 2;
-      m_ref_ratios    =  a_ref_ratios  ;
+      m_ref_ratios    =  a_ref_ratios;
       m_grids         =  a_grids;
-      m_coarsest_dx   =  a_coarsest_dx ;   
-      m_domBC         =  a_domBC       ;         
-      m_alpha         =  a_alpha       ;   
-      m_beta          =  a_beta        ;
-
-      m_acoef = a_acoef;
-      m_eta_x = a_eta_x;
-      m_eta_y = a_eta_y;
-      m_eta_z = a_eta_z;
-      m_lam_x = a_lam_x;
-      m_lam_y = a_lam_y;
-      m_lam_z = a_lam_z;
+      m_coarsest_dx   =  a_coarsest_dx;   
+      m_domBC         =  a_domBC;         
+      m_alpha         =  a_alpha;   
+      m_beta          =  a_beta;
+      m_eta_x         =  a_eta_x;
+      m_eta_y         =  a_eta_y;
+      m_eta_z         =  a_eta_z;
 
       
       m_domain_dx.resize(a_grids.size());
@@ -1004,8 +983,8 @@ namespace PrCh_AMR_Elliptic
        set coarse value to arithmetic average of all fine cell values.
     **/
     static void
-    averageDownCell(pr_box_data_sca       & a_coar,
-                    const pr_box_data_sca & a_fine,
+    averageDownCell(pr_box_data_scalar       & a_coar,
+                    const pr_box_data_scalar & a_fine,
                     const pr_box      & a_coar_valid,
                     int                 a_ref_rat)
     {
@@ -1015,7 +994,7 @@ namespace PrCh_AMR_Elliptic
       pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
 
       
-      pr_box_data_sca& fine_cast = (pr_box_data_sca&) a_fine;
+      pr_box_data_scalar& fine_cast = (pr_box_data_scalar&) a_fine;
       bool initToZero = true; double applyScale = 1.;
       //rememeber that this goes src, dst so a_coar is the output
       whole_sten.apply(fine_cast, a_coar, a_coar_valid, initToZero, applyScale);
@@ -1026,11 +1005,11 @@ namespace PrCh_AMR_Elliptic
        The valid box is cell centered.
     **/
     static void
-    averageDownFace(pr_box_data_sca       & a_coar,
-                    const pr_box_data_sca & a_fine,
-                    const pr_box      & a_coar_valid,
-                    int                 a_ref_rat,
-                    int                 a_face_dir)
+    averageDownFace(pr_box_data_scalar       & a_coar,
+                    const pr_box_data_scalar & a_fine,
+                    const pr_box             & a_coar_valid,
+                    int                        a_ref_rat,
+                    int                        a_face_dir)
     {
       pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
       pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
@@ -1041,7 +1020,7 @@ namespace PrCh_AMR_Elliptic
       
       pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
 
-      pr_box_data_sca& fine_cast = (pr_box_data_sca&) a_fine;
+      pr_box_data_scalar& fine_cast = (pr_box_data_scalar&) a_fine;
       bool initToZero = true; double applyScale = 1.;
       pr_box coar_face_valid = a_coar_valid;
       coar_face_valid.m_high[a_face_dir] += 1;
@@ -1053,65 +1032,43 @@ namespace PrCh_AMR_Elliptic
 
     virtual void
     getCoefficients(
-      shared_ptr<pr_cell_data_sca>  & a_acoef,
-      shared_ptr<pr_xfac_data_sca>  & a_eta_x,
-      shared_ptr<pr_yfac_data_sca>  & a_eta_y,
-      shared_ptr<pr_zfac_data_sca>  & a_eta_z,
-      shared_ptr<pr_xfac_data_sca>  & a_lam_x,
-      shared_ptr<pr_yfac_data_sca>  & a_lam_y,
-      shared_ptr<pr_zfac_data_sca>  & a_lam_z,
-      int                         a_iref_index,
-      int                         a_mg_ref_rat)
+      shared_ptr<pr_xfac_data_scalar>  & a_eta_x,
+      shared_ptr<pr_yfac_data_scalar>  & a_eta_y,
+      shared_ptr<pr_zfac_data_scalar>  & a_eta_z,
+      int                                a_iref_index,
+      int                                a_mg_ref_rat)
     {
       CH_TIME("Pr_Resistivity_Factory_getCoefficients");
       if(a_mg_ref_rat == 1)
       {
-        a_acoef = m_acoef[a_iref_index];
         a_eta_x = m_eta_x[a_iref_index];
         a_eta_y = m_eta_y[a_iref_index];
         a_eta_z = m_eta_z[a_iref_index];
-
-        a_lam_x = m_lam_x[a_iref_index];
-        a_lam_y = m_lam_y[a_iref_index];
-        a_lam_z = m_lam_z[a_iref_index];
-
       }
       else
       {
         auto fine_dbl = m_grids[a_iref_index];
         //auto coar_dbl = fine_dbl.coarsen(pr_pt::Ones(a_mg_ref_rat));
         pr_dbl coar_dbl = fine_dbl.coarsen(pr_pt::Ones(a_mg_ref_rat));
-        a_acoef = shared_ptr<pr_cell_data_sca>(new pr_cell_data_sca(coar_dbl,  pr_pt::Zeros()));
 
-        a_eta_x = shared_ptr<pr_xfac_data_sca>(new pr_xfac_data_sca(coar_dbl,  pr_pt::Zeros()));
-        a_eta_y = shared_ptr<pr_yfac_data_sca>(new pr_yfac_data_sca(coar_dbl,  pr_pt::Zeros()));
+        a_eta_x = shared_ptr<pr_xfac_data_scalar>(new pr_xfac_data_scalar(coar_dbl,  pr_pt::Zeros()));
+        a_eta_y = shared_ptr<pr_yfac_data_scalar>(new pr_yfac_data_scalar(coar_dbl,  pr_pt::Zeros()));
 #if DIM==3
-        a_eta_z = shared_ptr<pr_zfac_data_sca>(new pr_zfac_data_sca(coar_dbl,  pr_pt::Zeros()));
+        a_eta_z = shared_ptr<pr_zfac_data_scalar>(new pr_zfac_data_scalar(coar_dbl,  pr_pt::Zeros()));
 #endif        
-        a_lam_x = shared_ptr<pr_xfac_data_sca>(new pr_xfac_data_sca(coar_dbl,  pr_pt::Zeros()));
-        a_lam_y = shared_ptr<pr_yfac_data_sca>(new pr_yfac_data_sca(coar_dbl,  pr_pt::Zeros()));
-#if DIM==3
-        a_lam_z = shared_ptr<pr_zfac_data_sca>(new pr_zfac_data_sca(coar_dbl,  pr_pt::Zeros()));
-#endif        
-        auto dit   =  a_acoef->begin();
+        auto dit   =  a_eta_x->begin();
         for(int ibox = 0; ibox < dit.localSize(); ibox++)
         {
-          averageDownCell((*a_acoef)[dit[ibox]], (*m_acoef[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat);
           averageDownFace((*a_eta_x)[dit[ibox]], (*m_eta_x[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 0);
           averageDownFace((*a_eta_y)[dit[ibox]], (*m_eta_y[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 1);
 #if DIM==3           
           averageDownFace((*a_eta_z)[dit[ibox]], (*m_eta_z[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 2);
 #endif        
-          averageDownFace((*a_lam_x)[dit[ibox]], (*m_lam_x[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 0);
-          averageDownFace((*a_lam_y)[dit[ibox]], (*m_lam_y[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 1);
-#if DIM==3     
-          averageDownFace((*a_lam_z)[dit[ibox]], (*m_lam_z[a_iref_index])[dit[ibox]], coar_dbl[dit[ibox]], a_mg_ref_rat, 2);
-#endif        
         }//end loop over boxes
       }//  end averaging down case
     }//end function getCoefficients
       
-    virtual inline ch_mglevelop_vec*
+    virtual inline ch_mglevelop_three*
     MGnewOp(const ch_dom         & a_dom_fine,
             int                    a_depth,
             bool                   a_homo_only = true)
@@ -1127,7 +1084,7 @@ namespace PrCh_AMR_Elliptic
       {
         mgRefRat*= 2;
       }
-      ch_mglevelop_vec* retval  = NULL;
+      ch_mglevelop_three* retval  = NULL;
       bool grids_coarsenable = m_grids[iref].coarsenable(pr_pt::Ones(2*mgRefRat));
       if((a_depth > 0) && (!grids_coarsenable))
       {
@@ -1135,31 +1092,21 @@ namespace PrCh_AMR_Elliptic
       }
       else
       {
-        shared_ptr<pr_cell_data_sca>  acoef;
-        shared_ptr<pr_xfac_data_sca>  eta_x;
-        shared_ptr<pr_yfac_data_sca>  eta_y;
-        shared_ptr<pr_zfac_data_sca>  eta_z;
-        shared_ptr<pr_xfac_data_sca>  lam_x;
-        shared_ptr<pr_yfac_data_sca>  lam_y;
-        shared_ptr<pr_zfac_data_sca>  lam_z;
+        shared_ptr<pr_xfac_data_scalar>  eta_x;
+        shared_ptr<pr_yfac_data_scalar>  eta_y;
+        shared_ptr<pr_zfac_data_scalar>  eta_z;
 
         
-        getCoefficients(acoef,
-                        eta_x,eta_y,eta_z,
-                        lam_x,lam_y,lam_z,
+        getCoefficients(eta_x,eta_y,eta_z,
                         iref, mgRefRat);
         
-        auto dblMG = acoef->layout();
+        auto dblMG = eta_x->layout();
         double loc_dx = m_domain_dx[iref].second; 
         loc_dx *= mgRefRat;
         Proto_Resistivity_Op* derivedOp = 
-          new Proto_Resistivity_Op(acoef,
-                                   eta_x,
+          new Proto_Resistivity_Op(eta_x,
                                    eta_y,
                                    eta_z,
-                                   lam_x,
-                                   lam_y,
-                                   lam_z,
                                    dblMG,
                                    m_alpha,
                                    m_beta,
@@ -1167,13 +1114,13 @@ namespace PrCh_AMR_Elliptic
                                    loc_ref_fine,
                                    loc_ref_coar,
                                    m_domBC);
-        retval = static_cast< ch_mglevelop_vec* >(derivedOp);
+        retval = static_cast< ch_mglevelop_three* >(derivedOp);
       } //end case (we can return an operator)
       return retval;
     } //end function mgnewop
 
     ///
-    virtual inline ch_amrlevelop_vec* AMRnewOp(const ch_dom & a_indexSpace)
+    virtual inline ch_amrlevelop_three* AMRnewOp(const ch_dom & a_indexSpace)
     {
       CH_TIME("Pr_Resistivity_Factory_AMRnewOp");
       int iref = get_ref_index(a_indexSpace);
@@ -1182,13 +1129,9 @@ namespace PrCh_AMR_Elliptic
       double loc_dx = m_domain_dx[iref].second;
 
       Proto_Resistivity_Op* derivedOp = 
-        new Proto_Resistivity_Op(m_acoef[iref],
-                                 m_eta_x[iref],
+        new Proto_Resistivity_Op(m_eta_x[iref],
                                  m_eta_y[iref],
                                  m_eta_z[iref],
-                                 m_lam_x[iref],
-                                 m_lam_y[iref],
-                                 m_lam_z[iref],
                                  m_grids[iref],
                                  m_alpha,
                                  m_beta,
@@ -1196,7 +1139,7 @@ namespace PrCh_AMR_Elliptic
                                  loc_ref_fine,
                                  loc_ref_coar,
                                  m_domBC);
-      return  static_cast< ch_amrlevelop_vec* >(derivedOp);
+      return  static_cast< ch_amrlevelop_three* >(derivedOp);
     } //end function AMRnewOp
 
     ///

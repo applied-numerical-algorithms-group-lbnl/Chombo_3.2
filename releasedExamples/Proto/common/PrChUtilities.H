@@ -600,37 +600,83 @@ namespace Chombo
 
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_sca;
     typedef  Proto::LevelBoxData< double, DIM, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_vec;
+    typedef  Proto::LevelBoxData< double, 3  , Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >  pr_lbd_cell_three;
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
     typedef  Proto::LevelBoxData< double, 1,   Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_2 >      pr_lbd_zfac;
 
-    typedef         AMRLevelOp<pr_lbd_cell_vec>         ch_amrlevelop;
-    typedef         AMRLevelOpFactory<pr_lbd_cell_vec>  ch_factory;
-    typedef         MayDay                              ch_mayday;
-    typedef         RefCountedPtr< ch_ldf_cell  >       ch_ldf_cell_ptr;
-    typedef         RefCountedPtr< ch_ldf_flux  >       ch_ldf_flux_ptr;
-    typedef         shared_ptr<    pr_lbd_cell_sca  >   pr_lbd_cell_sca_ptr;
-    typedef         shared_ptr<    pr_lbd_cell_vec  >   pr_lbd_cell_vec_ptr;
-    typedef         shared_ptr<    pr_lbd_xfac  >       pr_lbd_xfac_ptr;
-    typedef         shared_ptr<    pr_lbd_yfac  >       pr_lbd_yfac_ptr;    
-    typedef         shared_ptr<    pr_lbd_zfac  >       pr_lbd_zfac_ptr;    
+    typedef         AMRLevelOp<pr_lbd_cell_vec>           ch_amrlevelop;
+    typedef         AMRLevelOpFactory<pr_lbd_cell_vec>    ch_factory_vec;
+    typedef         AMRLevelOpFactory<pr_lbd_cell_three>  ch_factory_three;
+    typedef         MayDay                                ch_mayday;
+    typedef         RefCountedPtr< ch_ldf_cell  >         ch_ldf_cell_ptr;
+    typedef         RefCountedPtr< ch_ldf_flux  >         ch_ldf_flux_ptr;
+    typedef         shared_ptr<    pr_lbd_cell_sca  >     pr_lbd_cell_sca_ptr;
+    typedef         shared_ptr<    pr_lbd_cell_vec  >     pr_lbd_cell_vec_ptr;
+    typedef         shared_ptr<    pr_lbd_xfac  >         pr_lbd_xfac_ptr;
+    typedef         shared_ptr<    pr_lbd_yfac  >         pr_lbd_yfac_ptr;    
+    typedef         shared_ptr<    pr_lbd_zfac  >         pr_lbd_zfac_ptr;    
 
     ///
     static void
-    protoizeCoefficients(vector<pr_dbl>                        & a_grids_pr,
-                         vector<pr_lbd_cell_sca_ptr>           & a_acoef_pr,
-                         vector<pr_lbd_xfac_ptr>               & a_eta_x_pr,
-                         vector<pr_lbd_yfac_ptr>               & a_eta_y_pr,
-                         vector<pr_lbd_zfac_ptr>               & a_eta_z_pr,
-                         vector<pr_lbd_xfac_ptr>               & a_lam_x_pr,
-                         vector<pr_lbd_yfac_ptr>               & a_lam_y_pr,
-                         vector<pr_lbd_zfac_ptr>               & a_lam_z_pr,
-                         vector<int>                           & a_refrat_pr,
-                         const Vector<ch_dbl>                  & a_grids_ch,
-                         const Vector< ch_ldf_cell_ptr >       & a_acoef_ch,
-                         const Vector< ch_ldf_flux_ptr >       & a_eta_ch,
-                         const Vector< ch_ldf_flux_ptr >       & a_lam_ch,
-                         const Vector<int>                     & a_refrat_bigV)
+    protoizeCoefficientsResist(vector<pr_dbl>                        & a_grids_pr,
+                               vector<pr_lbd_xfac_ptr>               & a_eta_x_pr,
+                               vector<pr_lbd_yfac_ptr>               & a_eta_y_pr,
+                               vector<pr_lbd_zfac_ptr>               & a_eta_z_pr,
+                               vector<int>                           & a_refrat_pr,
+                               const Vector<ch_dbl>                  & a_grids_ch,
+                               const Vector< ch_ldf_flux_ptr >       & a_eta_ch,
+                               const Vector<int>                     & a_refrat_bigV)
+    {
+      CH_TIME("PrChUtilities::protoizeCoefficients");
+      a_refrat_pr.resize(      a_refrat_bigV.size());
+      for(int ilev = 0; ilev < a_refrat_bigV.size(); ilev++)
+      {
+        a_refrat_pr[ilev] = a_refrat_bigV[ilev];
+      }
+
+      a_grids_pr.resize(        a_grids_ch.size());
+      for( int ilev = 0; ilev < a_grids_ch.size(); ilev++)
+      {
+        shared_ptr<pr_dbl>  lev_ptr = PrChUtilities<DIM>::getProtoLayout(a_grids_ch[ilev]);
+        a_grids_pr[ilev] = *lev_ptr;
+      }
+
+      a_eta_x_pr.resize(       a_grids_pr.size());
+      a_eta_y_pr.resize(       a_grids_pr.size());
+      a_eta_z_pr.resize(       a_grids_pr.size());
+      for(int ilev = 0; ilev < a_grids_pr.size(); ilev++)
+      {
+        ch_iv ghost_iv = a_eta_ch[ilev]->ghostVect();
+        pr_pt ghost_pt = ProtoCh::getPoint(ghost_iv);
+        a_eta_x_pr[ilev] = pr_lbd_xfac_ptr( new pr_lbd_xfac(a_grids_pr[ilev], ghost_pt)); // 
+        a_eta_y_pr[ilev] = pr_lbd_yfac_ptr( new pr_lbd_yfac(a_grids_pr[ilev], ghost_pt)); //
+#if DIM==3  
+        a_eta_z_pr[ilev] = pr_lbd_zfac_ptr( new pr_lbd_zfac(a_grids_pr[ilev], ghost_pt)); //
+#endif          
+        PrChUtilities<1>::copyToDevice(a_eta_x_pr[ilev],
+                                       a_eta_y_pr[ilev],
+                                       a_eta_z_pr[ilev],
+                                       a_eta_ch[ilev]);
+
+      }
+    }//end function protoizeCoefficientsResist
+    ///
+    static void
+    protoizeCoefficientsVTO(vector<pr_dbl>                        & a_grids_pr,
+                            vector<pr_lbd_cell_sca_ptr>           & a_acoef_pr,
+                            vector<pr_lbd_xfac_ptr>               & a_eta_x_pr,
+                            vector<pr_lbd_yfac_ptr>               & a_eta_y_pr,
+                            vector<pr_lbd_zfac_ptr>               & a_eta_z_pr,
+                            vector<pr_lbd_xfac_ptr>               & a_lam_x_pr,
+                            vector<pr_lbd_yfac_ptr>               & a_lam_y_pr,
+                            vector<pr_lbd_zfac_ptr>               & a_lam_z_pr,
+                            vector<int>                           & a_refrat_pr,
+                            const Vector<ch_dbl>                  & a_grids_ch,
+                            const Vector< ch_ldf_cell_ptr >       & a_acoef_ch,
+                            const Vector< ch_ldf_flux_ptr >       & a_eta_ch,
+                            const Vector< ch_ldf_flux_ptr >       & a_lam_ch,
+                            const Vector<int>                     & a_refrat_bigV)
     {
       CH_TIME("PrChUtilities::protoizeCoefficients");
       a_refrat_pr.resize(      a_refrat_bigV.size());
@@ -685,9 +731,9 @@ namespace Chombo
                                          a_lam_ch[ilev]);
         }
       }
-    }//end function protoizeCoefficients
+    }//end function protoizeCoefficientsVTO
     ///
-    static shared_ptr<ch_factory>
+    static shared_ptr<ch_factory_vec>
     getProtoViscousTensorOpFactory(const ch_dom                             & a_coarsest_dom,
                                    const Vector<int>                        & a_ref_ratios,
                                    const Vector<ch_dbl>                     & a_grids,
@@ -712,20 +758,20 @@ namespace Chombo
       vector<pr_lbd_zfac_ptr>               lam_z_pr;
       vector<int>                           refrat_pr;
 
-      protoizeCoefficients(grids_pr,
-                           acoef_pr,
-                           eta_x_pr,
-                           eta_y_pr,
-                           eta_z_pr,
-                           lam_x_pr,
-                           lam_y_pr,
-                           lam_z_pr,
-                           refrat_pr,
-                           a_grids,
-                           a_aco,
-                           a_eta,
-                           a_lam,
-                           a_ref_ratios);
+      protoizeCoefficientsVTO(grids_pr,
+                              acoef_pr,
+                              eta_x_pr,
+                              eta_y_pr,
+                              eta_z_pr,
+                              lam_x_pr,
+                              lam_y_pr,
+                              lam_z_pr,
+                              refrat_pr,
+                              a_grids,
+                              a_aco,
+                              a_eta,
+                              a_lam,
+                              a_ref_ratios);
 
       prch_visc_fact * derived_ptr =
         new prch_visc_fact(a_coarsest_dom,
@@ -743,20 +789,18 @@ namespace Chombo
                            lam_y_pr,
                            lam_z_pr);           
 
-      ch_factory* base_ptr = static_cast<ch_factory*>(derived_ptr);
-      shared_ptr<ch_factory> retval(base_ptr);
+      ch_factory_vec* base_ptr = static_cast<ch_factory_vec*>(derived_ptr);
+      shared_ptr<ch_factory_vec> retval(base_ptr);
       return retval;
     } //end function get viscous factory
     
     ///
-    static shared_ptr<ch_factory>
+    static shared_ptr<ch_factory_three>
     getProtoResistivityOpFactory(const ch_dom                             & a_coarsest_dom,
                                  const Vector<int>                        & a_ref_ratios,
                                  const Vector<ch_dbl>                     & a_grids,
                                  const double                             & a_coarsest_dx,
-                                 const Vector< ch_ldf_cell_ptr >          & a_aco,
                                  const Vector< ch_ldf_flux_ptr >          & a_eta,
-                                 const Vector< ch_ldf_flux_ptr >          & a_lam,
                                  const string                             & a_domBC,
                                  const double                             & a_alpha,
                                  const double                             & a_beta)
@@ -769,25 +813,16 @@ namespace Chombo
       vector<pr_lbd_xfac_ptr>               eta_x_pr;
       vector<pr_lbd_yfac_ptr>               eta_y_pr;
       vector<pr_lbd_zfac_ptr>               eta_z_pr;
-      vector<pr_lbd_xfac_ptr>               lam_x_pr;
-      vector<pr_lbd_yfac_ptr>               lam_y_pr;
-      vector<pr_lbd_zfac_ptr>               lam_z_pr;
       vector<int>                           refrat_pr;
 
-      protoizeCoefficients(grids_pr,
-                           acoef_pr,
-                           eta_x_pr,
-                           eta_y_pr,
-                           eta_z_pr,
-                           lam_x_pr,
-                           lam_y_pr,
-                           lam_z_pr,
-                           refrat_pr,
-                           a_grids,
-                           a_aco,
-                           a_eta,
-                           a_lam,
-                           a_ref_ratios);
+      protoizeCoefficientsResist(grids_pr,
+                                 eta_x_pr,
+                                 eta_y_pr,
+                                 eta_z_pr,
+                                 refrat_pr,
+                                 a_grids,
+                                 a_eta,
+                                 a_ref_ratios);
 
       prch_resist_fact * derived_ptr =
         new prch_resist_fact(a_coarsest_dom,
@@ -797,18 +832,14 @@ namespace Chombo
                              a_domBC,
                              a_alpha,
                              a_beta,
-                             acoef_pr,
                              eta_x_pr,
                              eta_y_pr,
-                             eta_z_pr,
-                             lam_x_pr,
-                             lam_y_pr,
-                             lam_z_pr);           
+                             eta_z_pr);
 
-      ch_factory* base_ptr = static_cast<ch_factory*>(derived_ptr);
-      shared_ptr<ch_factory> retval(base_ptr);
+      ch_factory_three* base_ptr = static_cast<ch_factory_three*>(derived_ptr);
+      shared_ptr<ch_factory_three> retval(base_ptr);
       return retval;
-    }//end function get resistivity factory
+    }//end function getProtoResistivityFactory
 
   };  //end class TensorUtilities
 }     //end namespace Chombo

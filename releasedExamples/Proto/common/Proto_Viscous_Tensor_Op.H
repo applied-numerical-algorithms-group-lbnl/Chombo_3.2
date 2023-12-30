@@ -401,11 +401,7 @@ namespace PrCh_AMR_Elliptic
                       const pr_box_data_vec   &  a_phi,
                       pr_box                     a_valid)
     {
-      pr_box_data_sca vel_x = Proto::slice(a_phi, 0);
-      pr_box_data_sca vel_y = Proto::slice(a_phi, 1);
-#if DIM==3      
-      pr_box_data_sca vel_z = Proto::slice(a_phi, 2);
-#endif
+      //always.
       bool initToZero = true; double applyScale = 1.;
       
       pr_sten gradient_stencils[DIM];

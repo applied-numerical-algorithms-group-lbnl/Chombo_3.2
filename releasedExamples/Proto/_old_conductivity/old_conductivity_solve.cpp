@@ -159,7 +159,7 @@ namespace Chombo
     }     // end loop over levels
   }       //end function setACoef
 
-  /// sets bcoef(x, y, z) = x + y + z
+  /// 
   static void
   setBCoef(Vector< RefCountedPtr< LevelData<FluxBox> > >  & a_bCoef,
            const VCPoissonParameters                      & a_params)
@@ -194,7 +194,7 @@ namespace Chombo
         dx /= a_params.m_refRatio[ilev];
       }     // end if on a coarse level
     }       // end loop over levels
-  }//.end function setBCoef
+  }//          end function setBCoef
 
   /********/
   void setRHSConst(Vector< RefCountedPtr<LevelData<FArrayBox> > >   a_rhs,
