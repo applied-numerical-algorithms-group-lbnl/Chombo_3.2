@@ -11,6 +11,7 @@
 #include "ResistivityOp.H"
 #include "FORT_PROTO.H"
 #include "ResistivityOpF_F.H"
+#include "ViscousTensorOpF_F.H"
 #include "BoxIterator.H"
 #include "AverageF_F.H"
 #include "InterpF_F.H"
@@ -827,6 +828,83 @@ relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
       int a_iterations)
 {
+  CH_TIME("ResistivityOp::relax");
+  bool slow_relax_mode = false;
+  ParmParse pp("ResistivityOp");
+  pp.query("slow_relax_mode", slow_relax_mode);
+  if(slow_relax_mode)
+  {
+    slowGSRB(a_phi, a_rhs, a_iterations);
+  }
+  else
+  {
+    //used for debugging other things
+    fastGSRB(a_phi, a_rhs, a_iterations);
+  }
+}
+/**
+   Intended for debugging other codes.
+**/
+void
+ResistivityOp::
+slowGSRB(LevelData<FArrayBox>&       a_phi,
+         const LevelData<FArrayBox>& a_rhs,
+         int a_iterations)
+{
+  CH_TIME("ResistivityOp::slowGSRB");
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  const DisjointBoxLayout& grids = a_rhs.disjointBoxLayout();
+
+  DataIterator dit = a_phi.dataIterator();
+  int nbox=dit.size();
+  /**
+     This is a hook for debuggging other codes.
+     It gives an easy way to get gdb to break 
+     at just the right spots.
+  **/
+  int ibreak = 0; 
+  // do first red, then black passes
+  LevelData<FArrayBox> resid;
+  create(resid, a_rhs);
+  for (int iter  = 0; iter < a_iterations; iter++)
+  {
+    for (int iredblack = 0; iredblack <= 1; iredblack++)
+    {
+
+      residual(resid, a_phi, a_rhs);
+      for(int ibox = 0; ibox < nbox; ibox++)
+      {
+        FArrayBox& phiFab =    a_phi[dit[ibox]];
+        FArrayBox& resFab =    resid[dit[ibox]];
+        FArrayBox& lamFab = m_lambda[dit[ibox]];
+        Box valid         =    grids[dit[ibox]];
+        int ncomponent    = a_phi.nComp();
+        FORT_GSRBSANELYVEC(CHF_FRA(phiFab),
+                           CHF_FRA(resFab),
+                           CHF_FRA(lamFab),
+                           CHF_BOX(valid),
+                           CHF_CONST_INT(iredblack),
+                           CHF_CONST_INT(ncomponent));
+      } // end loop through ibox
+      ibreak = 1;  //stop here for end of dataiterator iteration
+    } 
+    ibreak = 1;    //stop here for end of red black iteration
+  }
+
+  ibreak = 1;      //stop here for end of relax
+}
+/***/
+void
+ResistivityOp::
+fastGSRB(LevelData<FArrayBox>&       a_phi,
+         const LevelData<FArrayBox>& a_rhs,
+         int a_iterations)
+{
+  CH_TIME("ResistivityOp::fastGSRB");
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
   CH_assert(a_phi.ghostVect() >= IntVect::Unit);

@@ -10,6 +10,12 @@
 
 // dtg 2007
 
+/**
+   In the end, nothing survives but your deeds and your software.
+   dtg 12/30/2023.    
+**/
+
+
 #ifndef _RESISTIVITYOP_H_
 #define _RESISTIVITYOP_H_
 
@@ -24,6 +30,7 @@
 #include "TensorCFInterp.H"
 #include "CoarseAverage.H"
 #include "AMRTGA.H"
+#include "ParmParse.H"
 #include "NamespaceHeader.H"
 
 ///
@@ -149,16 +156,23 @@ public:
   virtual Real norm(const LevelData<FArrayBox>& a_x, int a_ord);
 
   virtual void setToZero( LevelData<FArrayBox>& a_x);
-  /*@}*/
 
-  /**
-     \name MGLevelOp functions */
-  /*@{*/
 
+  /// calls gsrb
   virtual void relax(LevelData<FArrayBox>& a_e,
                      const LevelData<FArrayBox>& a_residual,
                      int iterations);
 
+  ///default
+  virtual void fastGSRB(LevelData<FArrayBox>& a_e,
+                        const LevelData<FArrayBox>& a_residual,
+                        int iterations);
+
+  ///run if ResistivityOp::slow_relax_mode = true in ParmParse
+  virtual void slowGSRB(LevelData<FArrayBox>& a_e,
+                        const LevelData<FArrayBox>& a_residual,
+                        int iterations);
+  
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,
                              bool ghosted);
