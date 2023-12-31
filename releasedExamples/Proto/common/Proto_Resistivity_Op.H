@@ -75,6 +75,15 @@ PROTO_KERNEL_END(operaResistF, operaResist)
 
 /// 
 /**
+   Ignoring differences within the cell.  ResistivityOp has lambda =
+   alpha - beta*sum_dir(ehi + elo)/dx/dx We will set ehi = elo =
+   e_i+/2 because forall does not do stencils and I do not want to do
+   a bunch of shifting nonsense.  Note: You could send in ehi and elo
+   as shifted and unshifted versions.  It would not be that
+   complicated since there is only eta to send.  I think this will
+   work, however, and if coefficients are varying that strongly, I
+   doubt that the other version would save convergence.
+   dtg 12/30/2023.
  **/
 PROTO_KERNEL_START 
 unsigned int  relaxCoefResistF(int                        a_pt[DIM],
@@ -87,8 +96,7 @@ unsigned int  relaxCoefResistF(int                        a_pt[DIM],
                                double                     a_dx)
 {
   //this this is approximate, might have to have a real safety here
-  Chombo::MayDay::Error("guessing here--look up the right formula");
-  double safety = 0.9; //
+  double safety = 1.0;// matches resistivityOp
   double inv_lam[DIM];
   double eta_val[DIM];
 
@@ -102,15 +110,7 @@ unsigned int  relaxCoefResistF(int                        a_pt[DIM],
     inv_lam[icomp] = a_alpha; //acoef always one here
     for(int face_dir = 0; face_dir < DIM; face_dir++)
     {
-      double incr = 0;
-      if(icomp == face_dir)
-      {
-        incr = a_beta*(6.*eta_val[face_dir])/(a_dx*a_dx); //lam always =  eta here
-      }
-      else
-      {
-        incr = a_beta*(2.*eta_val[face_dir])/(a_dx*a_dx);
-      }
+      double incr = a_beta*(2.*eta_val[face_dir])/(a_dx*a_dx);
       inv_lam[icomp] -= incr;
     }//end loop over face_dir
     a_relCoef(icomp) = safety/inv_lam[icomp];

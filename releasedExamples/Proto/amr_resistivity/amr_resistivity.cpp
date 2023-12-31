@@ -31,10 +31,11 @@ namespace Chombo
     typedef        LevelData<FluxBox>            ch_ldf_flux;
     typedef        ProblemDomain                 ch_dom;
     typedef Proto::ProblemDomain                 pr_dom;
-    typedef Proto::LevelBoxData<double, 1>       pr_lbd_sca;
-    typedef Proto::LevelBoxData<double, DIM>     pr_lbd_vec;
-    typedef        AMRLevelOpFactory<pr_lbd_vec> ch_op_fact_pr;
-    typedef        DisjointBoxLayout             ch_dbl;
+    typedef Proto::LevelBoxData<double, 1>       pr_lbd_scalar;
+    typedef Proto::LevelBoxData<double, 3>       pr_lbd_three;
+    //typedef Proto::LevelBoxData<double,DIM>      pr_lbd_vec;
+    typedef AMRLevelOpFactory<pr_lbd_three>      ch_op_fact_pr;
+    typedef DisjointBoxLayout                    ch_dbl;
     typedef Proto::DisjointBoxLayout             pr_dbl;
     typedef Proto::Point                         pr_pt;
 
@@ -67,23 +68,17 @@ namespace Chombo
 
     ///
     static void
-    defineAndSetCoefficients(RefCountedPtr< ch_ldf_cell> & a_aco,
-                             RefCountedPtr< ch_ldf_flux> & a_eta,
-                             RefCountedPtr< ch_ldf_flux> & a_lam,
+    defineAndSetCoefficients(RefCountedPtr< ch_ldf_flux> & a_eta,
                              ch_dbl                      & a_grids,
-                             double a_aco_val, double a_eta_val, double a_lam_val)
+                             double a_eta_val)
     {
       CH_TIME("defineAndSetCoefficients");
 
-      a_aco = RefCountedPtr<ch_ldf_cell>(new ch_ldf_cell(a_grids, 1, IntVect::Zero));
       a_eta = RefCountedPtr<ch_ldf_flux>(new ch_ldf_flux(a_grids, 1, IntVect::Zero));
-      a_lam = RefCountedPtr<ch_ldf_flux>(new ch_ldf_flux(a_grids, 1, IntVect::Zero));
       DataIterator dit = a_grids.dataIterator();
       for(int ibox = 0; ibox < dit.size(); ibox++)
       {
-        (*a_aco)[dit[ibox]].setVal(a_aco_val);
         (*a_eta)[dit[ibox]].setVal(a_eta_val);
-        (*a_lam)[dit[ibox]].setVal(a_lam_val);
       }
     } //end function defineAndSetCoefficients
     
@@ -100,22 +95,18 @@ namespace Chombo
       int numLevels = a_amr_grids.size();
       
       Chombo::ParmParse pp("resistivity_op");
-      double aco_val = 1; double eta_val = 1; double lam_val = 1.;
-      pp.get("acoef_value" , aco_val);
+      double eta_val = 4586; 
       pp.get("eta_value"   , eta_val);
-      pp.get("lambda_value", lam_val);
       ///the solver declaration has to change because amrmultigrid is templated on data type
-      shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
-      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd_vec > ());
-      Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);
+      shared_ptr<AMRMultiGrid<pr_lbd_three > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_three > ());
+      shared_ptr<LinearSolver<pr_lbd_three>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd_three > ());
       Vector<RefCountedPtr< ch_ldf_flux > > eta(numLevels);
-      Vector<RefCountedPtr< ch_ldf_flux > > lam(numLevels);
 
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
         
-        defineAndSetCoefficients(aco[ilev], eta[ilev], lam[ilev],
-                                 a_amr_grids[ilev], aco_val, eta_val, lam_val);
+        defineAndSetCoefficients(eta[ilev], 
+                                 a_amr_grids[ilev], eta_val);
       }
       
       ParmParse ppSolver("solver");
@@ -131,30 +122,32 @@ namespace Chombo
                                                       a_ref_ratios,
                                                       a_amr_grids,
                                                       a_amrDx[0],
-                                                      aco, eta, lam,  
+                                                      eta,
                                                       domain_bc, alpha, beta);
 
-      PrChUtilities<DIM>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
-                                      a_amr_domains, a_ref_ratios, a_amrDx,
-                                      solver_factory_ptr);
+      ///always 3 for resistivity
+      PrChUtilities<3>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids,
+                                    a_amr_domains, a_ref_ratios, a_amrDx,
+                                    solver_factory_ptr);
 
       ///define the proto versions of the data
-      Vector<pr_lbd_vec*>   phi_pr(numLevels, NULL);
-      Vector<pr_lbd_vec*>   rhs_pr(numLevels, NULL);
+      Vector<pr_lbd_three*>   phi_pr(numLevels, NULL);
+      Vector<pr_lbd_three*>   rhs_pr(numLevels, NULL);
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
         shared_ptr<pr_dbl> layout_ptr =
           PrChUtilities<1>::getProtoLayout(a_amr_grids[ilev]);
         pr_pt ghost_phi = ProtoCh::getPoint(a_phi_ch[ilev]->ghostVect());
         pr_pt ghost_rhs = ProtoCh::getPoint(a_rhs_ch[ilev]->ghostVect());
-        phi_pr[ilev] = new pr_lbd_vec(*layout_ptr, ghost_phi);
-        rhs_pr[ilev] = new pr_lbd_vec(*layout_ptr, ghost_rhs);
+        phi_pr[ilev] = new pr_lbd_three(*layout_ptr, ghost_phi);
+        rhs_pr[ilev] = new pr_lbd_three(*layout_ptr, ghost_rhs);
       }
 
       //get the rhs onto the device
+      ///always 3 for resistivity
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
-        PrChUtilities<DIM>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
+        PrChUtilities<3>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
       }
 
       //solve for phi on the device
@@ -164,7 +157,7 @@ namespace Chombo
       //get phi back onto the host
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
       {
-        PrChUtilities<DIM>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
+        PrChUtilities<3>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
       }
 
       //clean up device data
@@ -181,8 +174,6 @@ namespace Chombo
     {
       CH_TIME("runSolver");
 
-
-      // set up grids&
       Vector<ch_dbl> amrGrids;
       Vector<ch_dom> amrDomains;
       Vector<int> refRatios;
@@ -217,11 +208,11 @@ namespace Chombo
 
 #ifdef CH_USE_HDF5
 
-      string fname("phi.hdf5");
-      Vector<string> varNames(DIM);
-      for(int idir = 0; idir < DIM; idir++)
+      string fname("mag.hdf5");
+      Vector<string> varNames(3);
+      for(int idir = 0; idir < 3; idir++)
       {
-        varNames[idir] = string("phi_comp_") + std::to_string(idir);
+        varNames[idir] = string("mag_comp_") + std::to_string(idir);
       }
       Real bogusVal = 4586.0;
 
