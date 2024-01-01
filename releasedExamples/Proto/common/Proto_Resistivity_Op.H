@@ -97,7 +97,7 @@ unsigned int  relaxCoefResistF(int                        a_pt[DIM],
 {
   //this this is approximate, might have to have a real safety here
   double safety = 1.0;// matches resistivityOp
-  double inv_lam[DIM];
+  double inv_lam[3];
   double eta_val[DIM];
 
   eta_val[0] = a_eta_x(0) ;
@@ -330,9 +330,9 @@ namespace PrCh_AMR_Elliptic
     
     ///
     virtual void
-    computeCCGradient(pr_box_data_thrdim         &  a_grad,
+    computeCCGradient(pr_box_data_thrdim        &  a_grad,
                       const pr_box_data_three   &  a_phi,
-                      pr_box                     a_valid)
+                      pr_box                       a_valid)
     {
       
       //always.
@@ -613,7 +613,8 @@ namespace PrCh_AMR_Elliptic
       int ibreak = 4586;
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        for(int magn_dir = 0; magn_dir < DIM; magn_dir++)
+        //magnetism has 3 vars
+        for(int magn_dir = 0; magn_dir < 3; magn_dir++)
         {
           int grad_ind = gradIndex(magn_dir, diff_dir); // indicies match because this is divergence
           pr_box_data_scalar magn_comp      = Proto::slice(a_phi      , magn_dir);
@@ -664,7 +665,8 @@ namespace PrCh_AMR_Elliptic
       getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_valid,a_face_dir);
       
       ///F(B) = eta*(grad(B) + grad(B)^T + I div(B))
-      for(int icomp = 0; icomp < DIM; icomp++)
+      //magnetism has 3 comps
+      for(int icomp = 0; icomp < 3; icomp++)
       {
         pr_box_data_scalar flux_comp = Proto::slice(a_flux, icomp);
 
@@ -712,8 +714,8 @@ namespace PrCh_AMR_Elliptic
       
       bool initToZero = true; double applyScale = 1;
       a_incr.setVal(-4586.);
-
-      for(int icomp = 0; icomp < DIM; icomp++)
+      ///always 3 for magnetism
+      for(int icomp = 0; icomp < 3; icomp++)
       {
         pr_box_data_scalar flux_comp = Proto::slice(flux_dot_normal, icomp);
         pr_box_data_scalar incr_comp = Proto::slice(a_incr         , icomp);
