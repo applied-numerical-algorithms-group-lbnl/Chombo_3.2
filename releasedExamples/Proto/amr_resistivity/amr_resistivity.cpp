@@ -199,8 +199,9 @@ namespace Chombo
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
-        phi_ch[lev] = new ch_ldf_cell(levelGrids, DIM, IntVect::Unit);
-        rhs_ch[lev] = new ch_ldf_cell(levelGrids, DIM, IntVect::Zero);
+        ///always 3 for magnetism.
+        phi_ch[lev] = new ch_ldf_cell(levelGrids, 3, IntVect::Unit);
+        rhs_ch[lev] = new ch_ldf_cell(levelGrids, 3, IntVect::Zero);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );

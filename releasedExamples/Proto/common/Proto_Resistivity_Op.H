@@ -330,9 +330,9 @@ namespace PrCh_AMR_Elliptic
     
     ///
     virtual void
-    computeCCGradient(pr_box_data_thrdim        &  a_grad,
-                      const pr_box_data_three   &  a_phi,
-                      pr_box                       a_valid)
+    cellGrad(pr_box_data_thrdim        &  a_grad,
+             const pr_box_data_three   &  a_phi,
+             pr_box                       a_valid)
     {
       
       //always.
@@ -352,6 +352,7 @@ namespace PrCh_AMR_Elliptic
         gradient_stencils[deriv_dir] = cent_grad;
       }
 
+      int ibreak = 4586;  //gdb hook
       ///always 3 mag comps
       for(int comp_dir = 0; comp_dir < 3; comp_dir++)
       {
@@ -364,20 +365,22 @@ namespace PrCh_AMR_Elliptic
 
           //rememeber that this goes src, dst so grad_comp is the output
           gradient_stencils[deriv_dir].apply(mag_comp, grad_comp, a_valid, initToZero, applyScale);
+          ibreak++;
         }
       }
     }
     ///Assumes that the ghost cells of a_phi are already set correctly.
     virtual void
-    computeCCGradient(const pr_cell_data_three   & a_phi)
+    fillGrad(const pr_cell_data_three   & a_phi)
     {
       auto dit   = a_phi.begin();
       auto dbl   = a_phi.layout();
-      
+      int ibreak = 4586; //gdb hook
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         auto valid = dbl[dit[ibox]];
-        computeCCGradient((*m_grad)[dit[ibox]], a_phi[dit[ibox]], valid); 
+        cellGrad((*m_grad)[dit[ibox]], a_phi[dit[ibox]], valid);
+        ibreak++;
       }
       m_grad->exchange(); //this is why grad is over the whole level
     } //end function co mputeCCGradient
@@ -736,7 +739,7 @@ namespace PrCh_AMR_Elliptic
       auto dit   = a_lph.begin();
 
       //this fills m_grad with Grad(a_phi)
-      computeCCGradient(a_phi);
+      fillGrad(a_phi);
       ///fill a_lph with div( b(x) grad (phi))
       for(int ibox = 0; ibox <  dit.localSize(); ibox++)
       {

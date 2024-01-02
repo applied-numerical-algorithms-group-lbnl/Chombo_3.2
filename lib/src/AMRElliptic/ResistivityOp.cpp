@@ -1273,20 +1273,20 @@ cellGrad(FArrayBox&             a_gradPhi,
   //always three components
   CH_assert(a_gradPhi.nComp() == s_nGradComp);
   CH_assert(a_phi.nComp()     == s_nComp);
-
-  for (int derivDir = 0; derivDir < SpaceDim; derivDir++)
+  int ibreak = 4586; //gdb hook
+  for (int phiDir = 0; phiDir < s_nComp;  phiDir++)
+  {
+    for (int derivDir = 0; derivDir < SpaceDim; derivDir++)
     {
-      for (int phiDir = 0; phiDir < s_nComp;  phiDir++)
-        {
-          int gradcomp = TensorCFInterp::gradIndex(phiDir,derivDir);
-          FORT_CELLGRADROP(CHF_FRA1(a_gradPhi, gradcomp),
-                           CHF_CONST_FRA1(a_phi, phiDir),
-                           CHF_BOX(a_grid),
-                           CHF_CONST_REAL(m_dx),
-                           CHF_CONST_INT(derivDir));
-
-        }
+      int gradcomp = TensorCFInterp::gradIndex(phiDir,derivDir);
+      FORT_CELLGRADROP(CHF_FRA1(a_gradPhi, gradcomp),
+                       CHF_CONST_FRA1(a_phi, phiDir),
+                       CHF_BOX(a_grid),
+                       CHF_CONST_REAL(m_dx),
+                       CHF_CONST_INT(derivDir));
+      ibreak++;
     }
+  }
 }
 /**/
 void
@@ -1310,11 +1310,13 @@ fillGrad(const LevelData<FArrayBox>&       a_phi)
   phi.exchange(phi.interval(), m_exchangeCopier);
   const DisjointBoxLayout& grids = a_phi.disjointBoxLayout();
   //compute gradient of phi for parts NOT in ghost cells
+  int ibreak = 4586; //just a gdb hook
   for (DataIterator dit = grids.dataIterator(); dit.ok(); ++dit)
     {
       cellGrad(m_grad[dit()],
                a_phi [dit()],
                grids.get(dit()));
+      ibreak++;
     }
   m_grad.exchange();
 }
