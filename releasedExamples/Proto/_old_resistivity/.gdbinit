@@ -7,6 +7,6 @@ break exit
 break abort
 set auto-load safe-path /
 break Chombo::ResistivityOp::slowGSRB
-break Chombo::ResistivityOp::cellGrad
+break Chombo::ResistivityOp::getFlux
 
 

@@ -29,25 +29,6 @@ unsigned int axbyResistF(int                       a_pt[DIM],
 
 }
 PROTO_KERNEL_END(axbyResistF, axbyResist) 
-///a_flux(B) = eta( grad B + grad B T + I div U);
-PROTO_KERNEL_START 
-unsigned int  fluxFuncResistF(int                     a_pt[DIM],
-                              Proto::Var<Real, 1>     a_flux,
-                              Proto::Var<Real, 1>     a_grad_u,
-                              Proto::Var<Real, 1>     a_grad_u_t,
-                              Proto::Var<Real, 1>     a_div_u,
-                              Proto::Var<Real, 1>     a_eta,
-                              int                     a_face_dir,
-                              int                     a_mag_comp)
-{
-  a_flux(0) = a_eta(0)*(a_grad_u(0) - a_grad_u_t(0));
-  if(a_face_dir == a_mag_comp)
-  {
-    a_flux(0) += a_eta(0)*a_div_u(0);
-  }
-  return 0;
-}
-PROTO_KERNEL_END(fluxFuncResistF, fluxFuncResist)
 
 
 ///a_lph = alpha*phi + beta(xincr + yincr + zincr)
@@ -651,12 +632,12 @@ namespace PrCh_AMR_Elliptic
        
     ///gets flux vector for a given face direction
     int
-    getFluxDotNormal(pr_box_data_three           & a_flux,
-                     const pr_box_data_three     & a_phi,
-                     const pr_box_data_scalar    & a_eta,
-                     const pr_box_data_thrdim    & a_grad,
-                     const pr_box                & a_valid,
-                     const int                   & a_face_dir)
+    getFlux(pr_box_data_three           & a_flux,
+            const pr_box_data_three     & a_phi,
+            const pr_box_data_scalar    & a_eta,
+            const pr_box_data_thrdim    & a_grad,
+            const pr_box                & a_valid,
+            const int                   & a_face_dir)
     {
 
       //get face centered velocity divergence
@@ -665,26 +646,39 @@ namespace PrCh_AMR_Elliptic
       flux_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       pr_box_data_scalar face_divu(flux_box);
       pr_box_data_thrdim face_grad(flux_box);
+      
       getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_valid,a_face_dir);
       
-      ///F(B) = eta*(grad(B) + grad(B)^T + I div(B))
-      //magnetism has 3 comps
-      for(int icomp = 0; icomp < 3; icomp++)
+      //this is needed
+      a_flux.setVal(0.);
+      //copy the divergence into the diagonal component of the flux
+      //diagonal component of the flux is the a_face_dir comp
+      pr_box_data_scalar flux_diag = Proto::slice(a_flux, a_face_dir);
+      flux_diag += face_divu;
+      //now add in grad v - (grad v)^T
+      //There are always 3 components.  There are SpaceDim directions.
+      for (int component = 0; component < 3; component++)
       {
-        pr_box_data_scalar flux_comp = Proto::slice(a_flux, icomp);
-
-        int ind_gradu  = gradIndex(a_face_dir, icomp     );
-        int ind_graduT = gradIndex(icomp     , a_face_dir);
-        pr_box_data_scalar grad_b   = Proto::slice(face_grad, ind_gradu);
-        pr_box_data_scalar grad_b_t = Proto::slice(face_grad, ind_graduT);
-        
-        ///a_flux = eta( grad B + grad B T + I div B);
-        Proto::forallInPlace_i(fluxFuncResist, flux_box, flux_comp,
-                               grad_b, grad_b_t, face_divu,
-                               a_eta, a_face_dir, icomp);
+        pr_box_data_scalar flux_comp = Proto::slice(a_flux, component);
+        //otherwise, grad(B)-grad^T(B)   = 0
+        if(component != a_face_dir)
+        {
+          int ind_gradb  = gradIndex(component, a_face_dir);
+          pr_box_data_scalar grad_b    = Proto::slice(face_grad, ind_gradb);
+          flux_comp +=  grad_b;
+          //do not do 3d derivs in 2d
+          if(component < DIM)
+          {
+            int ind_gradb_T  = gradIndex(a_face_dir, component);
+            pr_box_data_scalar grad_b_T    = Proto::slice(face_grad, ind_gradb_T);
+            flux_comp -=  grad_b_T;
+          }
+        }
+        flux_comp *= a_eta;
+        flux_comp *= m_beta;
       }
       return 0;
-    }///end function getFluxDotNormal
+    }///end function getFlux
     ///sets a_incr =  (flux_i+1/2 - flux_i-1/2)/m_dx
     int
     getDivergenceIncrement(pr_box_data_three           & a_incr,
@@ -700,10 +694,7 @@ namespace PrCh_AMR_Elliptic
       face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
       
       pr_box_data_three  flux_dot_normal(face_box);
-      getFluxDotNormal(flux_dot_normal, a_phi, a_eta, a_grad, a_valid, a_face_dir);
-      
-
-      //Proto::Stencil<double> home(Proto::Shift(Proto::Point::Zeros()), 1.0);
+      getFlux(flux_dot_normal, a_phi, a_eta, a_grad, a_valid, a_face_dir);
       
       pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir);
       pr_pt righ_point = (+1)*pr_pt::Basis(a_face_dir);

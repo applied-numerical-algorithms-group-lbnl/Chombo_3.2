@@ -675,34 +675,35 @@ void ResistivityOp::getFlux(FArrayBox&       a_flux,
   //now add in grad v - (grad v)^T
   //There are always 3 components.  There are SpaceDim directions.
   for (int component = 0; component < s_nComp; component++)
+  {
+    //they subtract to zero, otherwise
+    if (component != a_faceDir)
     {
-      if (component != a_faceDir)
-        {
-          int fluxComp = component;
-          {
-            int gradComp = TensorCFInterp::gradIndex(component, a_faceDir);
-            Real gradsign =  1.0;
-            FORT_ADDGRADTOFLUXROP(CHF_FRA(a_flux),
-                                    CHF_INT(fluxComp),
-                                    CHF_FRA(faceGrad),
-                                    CHF_INT( gradComp),
-                                    CHF_REAL(gradsign),
-                                    CHF_BOX(a_faceBox));
-          }
-          //don't 3d derivs in 2d
-          if (component < SpaceDim)
-            {
-              int tranComp = TensorCFInterp::gradIndex(a_faceDir, component);
-              Real transign = -1.0;
-              FORT_ADDGRADTOFLUXROP(CHF_FRA(a_flux),
-                                    CHF_INT(fluxComp),
-                                    CHF_FRA(faceGrad),
-                                    CHF_INT( tranComp),
-                                    CHF_REAL(transign),
-                                    CHF_BOX(a_faceBox));
-            }
-        }
+      int fluxComp = component;
+      {
+        int gradComp = TensorCFInterp::gradIndex(component, a_faceDir);
+        Real gradsign =  1.0;
+        FORT_ADDGRADTOFLUXROP(CHF_FRA(a_flux),
+                              CHF_INT(fluxComp),
+                              CHF_FRA(faceGrad),
+                              CHF_INT( gradComp),
+                              CHF_REAL(gradsign),
+                              CHF_BOX(a_faceBox));
+      }
+      //don't 3d derivs in 2d
+      if (component < SpaceDim)
+      {
+        int tranComp = TensorCFInterp::gradIndex(a_faceDir, component);
+        Real transign = -1.0;
+        FORT_ADDGRADTOFLUXROP(CHF_FRA(a_flux),
+                              CHF_INT(fluxComp),
+                              CHF_FRA(faceGrad),
+                              CHF_INT( tranComp),
+                              CHF_REAL(transign),
+                              CHF_BOX(a_faceBox));
+      }
     }
+  }
   //now flux gets multiplied by eta*beta
   //so that div F = beta*div(eta F)
   for (int icomp = 0; icomp < s_nComp; icomp++)

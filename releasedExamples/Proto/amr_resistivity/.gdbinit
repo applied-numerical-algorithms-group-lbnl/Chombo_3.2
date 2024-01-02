@@ -7,6 +7,7 @@ break exit
 break abort
 set auto-load safe-path /
 break PrCh_AMR_Elliptic::Proto_Resistivity_Op::relax
-break PrCh_AMR_Elliptic::Proto_Resistivity_Op::cellGrad
+break PrCh_AMR_Elliptic::Proto_Resistivity_Op::getFlux
+
 
 
