@@ -17,3 +17,7 @@ pristine:
 	make realclean
 	cd $(CHOMBO_HOME); make realclean
 
+main:
+	make realclean
+	make all
+	mv $(ebase)*.ex main.exe

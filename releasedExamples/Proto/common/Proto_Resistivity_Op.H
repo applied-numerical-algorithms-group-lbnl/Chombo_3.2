@@ -46,8 +46,9 @@ unsigned int  operaResistF(int                     a_pt[DIM],
   for(int idir = 0; idir < 3; idir++)
   {
     double  divergence = a_xincr(idir) + a_yincr(idir) + a_zincr(idir);
-    double  phival     =   a_phi(idir);  
-    double  lphval     = a_alpha*phival + a_beta*divergence;
+    double  phival     =   a_phi(idir);
+    //To match standard ResistivityOp, beta is baked into the flux in this operator.
+    double  lphval     = a_alpha*phival + divergence;
     a_lph(idir) = lphval;
   }
   return 0;
@@ -630,7 +631,10 @@ namespace PrCh_AMR_Elliptic
       return 0;
     }///end function getFaceDivAndGrad
        
-    ///gets flux vector for a given face direction
+    /**
+     This function fills the flux vector for a given face direction
+     To match standard ResistivityOp, beta is baked into the flux in this operator.
+    **/
     int
     getFlux(pr_box_data_three           & a_flux,
             const pr_box_data_three     & a_phi,
@@ -675,6 +679,7 @@ namespace PrCh_AMR_Elliptic
           }
         }
         flux_comp *= a_eta;
+        // To match standard ResistivityOp, beta is baked into the flux in this operator.
         flux_comp *= m_beta;
       }
       return 0;
