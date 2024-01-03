@@ -78,6 +78,7 @@ computeOperatorNoBCs(LevelData<FArrayBox>& a_lhs,
 {
 
   //  Real dx = m_dx;
+  
   const DisjointBoxLayout dbl= a_phi.getBoxes();
   DataIterator dit = a_phi.dataIterator();
   //this makes the lhs = alpha*phi
@@ -88,14 +89,21 @@ computeOperatorNoBCs(LevelData<FArrayBox>& a_lhs,
       Box gridBox = dbl.get(dit());
       FluxBox flux(gridBox, s_nComp);
       FluxBox& eta = (*m_eta)[dit];
-
+      FArrayBox& lhsFAB = a_lhs[dit()];
+#ifndef  NDEBUG
+      ///for checking other codes
+      int ibreak = 4586; //gdb hook for debugging other codes
+      FArrayBox xincr(lhsFAB.box(), lhsFAB.nComp()); xincr.setVal(0.);
+      FArrayBox yincr(lhsFAB.box(), lhsFAB.nComp()); yincr.setVal(0.);
+      FArrayBox zincr(lhsFAB.box(), lhsFAB.nComp()); zincr.setVal(0.);
+#endif
+      
       //operator is alpha I + (divF) = I + beta*div(eta(grad B - grad B^T) + eta I div B )
       //beta and eta are incorporated into the flux F
       for (int idir = 0; idir < SpaceDim; idir++)
         {
           Box faceBox = surroundingNodes(gridBox, idir);
           getFlux(flux[idir], a_phi[dit()], m_grad[dit()], eta[idir], faceBox, idir);
-          FArrayBox& lhsFAB = a_lhs[dit()];
           const FArrayBox& fluxFAB = flux[idir];
 
           //beta and eta are part of the flux.
@@ -104,6 +112,28 @@ computeOperatorNoBCs(LevelData<FArrayBox>& a_lhs,
                                 CHF_BOX(gridBox),
                                 CHF_REAL(m_dx),
                                 CHF_CONST_INT(idir));
+#ifndef NDEBUG
+          FArrayBox* incr_ptr = NULL;
+          if(idir ==0)
+          {
+            incr_ptr = &xincr;
+          }
+          else if(idir ==1)
+          {
+            incr_ptr = &yincr;
+          }
+          else
+          {
+            incr_ptr = &zincr;
+          }
+          FArrayBox& incrFAB = *incr_ptr;
+          FORT_ADDDIVFLUXDIRROP(CHF_FRA(incrFAB),
+                                CHF_CONST_FRA(fluxFAB),
+                                CHF_BOX(gridBox),
+                                CHF_REAL(m_dx),
+                                CHF_CONST_INT(idir));
+          ibreak = 4586;
+#endif          
         }
     } // end loop over boxes
 }
