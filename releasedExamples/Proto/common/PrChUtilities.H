@@ -274,7 +274,7 @@ namespace Chombo
 
         meshGen.regrid(new_meshes, tags,  0, a_max_level,  old_meshes);
 
-        for (int ilev=0; ilev < a_max_level; ilev++)
+        for (int ilev=0; ilev <= a_max_level; ilev++)
         {
           const auto& boxes = new_meshes[ilev];
           Vector<int> procs;
