@@ -274,12 +274,17 @@ namespace Chombo
 
         meshGen.regrid(new_meshes, tags,  0, a_max_level,  old_meshes);
 
+        ch_dom dom_lev = baseDomain;
         for (int ilev=0; ilev <= a_max_level; ilev++)
         {
           const auto& boxes = new_meshes[ilev];
           Vector<int> procs;
           LoadBalance(procs, boxes);
-          a_amrGrids[ilev] = ch_dbl(boxes, procs);
+          a_amrGrids[ilev] = ch_dbl(boxes, procs, dom_lev);
+          if(ilev < a_max_level)
+          {
+            dom_lev.refine(a_refRatios[ilev]);
+          }
         }
       }
     } //end setupLLCornerGrids
