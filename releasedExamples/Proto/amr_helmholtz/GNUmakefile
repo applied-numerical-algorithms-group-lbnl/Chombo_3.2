@@ -19,5 +19,5 @@ pristine:
 
 main:
 	make realclean
-	make all
+	make -j32 all
 	mv $(ebase)*.ex main.exe
