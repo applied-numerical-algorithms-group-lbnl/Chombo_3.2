@@ -38,7 +38,7 @@ namespace PrChDebug
   typedef    Proto::BoxData<double, 3*DIM>       pr_fab_threedim;
   typedef    Proto::BoxData<double, DIM*DIM>     pr_fab_ten;
   typedef    Proto::DisjointBoxLayout            pr_dbl;
-  typedef    Proto::LevelBoxData<double,1>       pr_lbd_1;
+  typedef    Proto::LevelBoxData<double,1>       pr_lbd_sca;
   typedef    Proto::LevelBoxData<double,DIM>     pr_lbd_vec;
   typedef    Proto::LevelBoxData<double,3  >     pr_lbd_three;
   typedef    Proto::LevelBoxData<double,3*DIM>   pr_lbd_threedim;
@@ -419,11 +419,11 @@ namespace PrChDebug
 
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
-  dumpLDAreaPr(pr_lbd_1* dataPtr)
+  dumpLDAreaPr(pr_lbd_sca* dataPtr)
   {
     if(dataPtr != NULL)
     {
-      pr_lbd_1 & data = *dataPtr;
+      pr_lbd_sca & data = *dataPtr;
       auto  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
@@ -491,11 +491,44 @@ namespace PrChDebug
       }
     }
   }
+
+  void dumpLayoutCh(ch_dbl* a_data_ptr)
+  {
+    if(a_data_ptr != NULL)
+    {
+      a_data_ptr->print();
+    }
+  }
+  void dumpLayoutPr(pr_dbl* a_data_ptr)
+  {
+    if(a_data_ptr != NULL)
+    {
+      a_data_ptr->print();
+    }
+  }
+  void dumpLDLayoutPr(pr_lbd_sca* a_data_ptr)
+  {
+    if(a_data_ptr != NULL)
+    {
+      a_data_ptr->layout().print();
+    }
+  }
+  void dumpLDLayoutCh(ch_ldf* a_data_ptr)
+  {
+    if(a_data_ptr != NULL)
+    {
+      a_data_ptr->disjointBoxLayout().print();
+    }
+  }
 }//end namespace PrChDebug
 
 ///
 inline void dummy_function_to_get_functions_into_symbol_table()
 {
+  PrChDebug::dumpLayoutCh(NULL);
+  PrChDebug::dumpLayoutPr(NULL);
+  PrChDebug::dumpLDLayoutCh(NULL);
+  PrChDebug::dumpLDLayoutPr(NULL);
   PrChDebug::dumpAreaCh(NULL);
   PrChDebug::dumpLDAreaCh(NULL);
   PrChDebug::dumpLDAreaPr(NULL);

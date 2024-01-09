@@ -85,6 +85,12 @@ namespace PrCh_AMR_Elliptic
     ///This class has no data
     virtual ~Base_Proto_AMRLevelOp(){}
 
+    /// These can be on different layouts
+    virtual void assign(    pr_lbd& a_lhs, const pr_lbd& a_rhs)
+    {
+      CH_TIME("Base_Proto_AMRLevelOp::assign");
+      a_rhs.copyTo(a_lhs);
+    }
     ///
     virtual ch_dom
     getDomainFromData(const pr_lbd & a_data)

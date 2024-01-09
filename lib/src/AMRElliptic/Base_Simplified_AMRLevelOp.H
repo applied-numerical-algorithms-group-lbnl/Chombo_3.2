@@ -115,13 +115,6 @@ public:
   }
 
 
-  ///
-  virtual void assign(    level_data_type& a_lhs, const level_data_type& a_rhs)
-  {
-    CH_TIME("Base_Simplified_AMRLevelOp::assign");
-    //a_lhs = 0. * a_lhs + 1.* a_rhs
-    this->axby(a_lhs, a_lhs, a_rhs, 0.0, 1.0);
-  }
 
   ///
   virtual void
