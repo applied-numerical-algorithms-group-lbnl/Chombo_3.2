@@ -196,12 +196,13 @@ namespace Chombo
       Vector<ch_ldf_cell* > phi_ch(numLevels, NULL);
       Vector<ch_ldf_cell* > rhs_ch(numLevels, NULL);
 
+      IntVect ivghost = 4*IntVect::Unit;
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
         ///always 3 for magnetism.
-        phi_ch[lev] = new ch_ldf_cell(levelGrids, 3, IntVect::Unit);
-        rhs_ch[lev] = new ch_ldf_cell(levelGrids, 3, IntVect::Zero);
+        phi_ch[lev] = new ch_ldf_cell(levelGrids, 3, ivghost);
+        rhs_ch[lev] = new ch_ldf_cell(levelGrids, 3, ivghost);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
