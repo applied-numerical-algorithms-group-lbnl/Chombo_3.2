@@ -73,6 +73,7 @@ namespace PrCh_AMR_Elliptic
   typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
   typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
   typedef Chombo::MGLevelOp<pr_lbd>  ch_mglevelop;
+  typedef Proto_Transition::DataUtilities<1> pr_trans_data;
   
   /// 
   /**
@@ -164,6 +165,43 @@ namespace PrCh_AMR_Elliptic
       }
     }
     
+    /// amr thing
+    virtual void
+    fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
+                                         const pr_lbd &  a_data_coar)
+    {
+      int   reflect_sign_lo[DIM];
+      int   reflect_sign_hi[DIM];  
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        if(m_domBC == string("Dirichlet"))
+        {
+          reflect_sign_lo[idir] = -1;
+          reflect_sign_hi[idir] = -1;
+        }
+        else if(m_domBC == string("Neumann"))
+        {
+          reflect_sign_lo[idir] = 1;
+          reflect_sign_hi[idir] = 1;
+        }
+        else
+        {
+          ch_mayday::Error("Proto_Helmholtz_Op::fillCFGhost: unrecognized bc string");
+        }
+      }
+
+      pr_box domain_coar = a_data_coar.layout().domain().box();
+      pr_pt ref_pt(pr_pt::Ones(m_refToCoar));
+      pr_trans_data::fillGhostOverCoarseFineBoundaries<2>(a_data_fine,
+                                                          a_data_coar,
+                                                          domain_coar,
+                                                          ref_pt,
+                                                          reflect_sign_lo,
+                                                          reflect_sign_hi);
+      return;
+    }
+
+
     ///For this one, the derived class may assume all ghost cells have been set correctly
     virtual void 
     applyOperator(pr_lbd         & a_lph,
@@ -226,7 +264,6 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOutsideDomain(pr_lbd          & a_phi,
                                const ch_dom    & a_domain)
     {
-      typedef Proto_Transition::DataUtilities<1> pr_trans_data;
       pr_dom domain = ProtoCh::getProtoDomain(a_domain);
       pr_box dombox = domain.box();
       for(int idir = 0; idir < DIM; idir++)

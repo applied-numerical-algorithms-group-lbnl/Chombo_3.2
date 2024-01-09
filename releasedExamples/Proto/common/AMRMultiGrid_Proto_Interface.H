@@ -270,14 +270,6 @@ namespace PrCh_AMR_Elliptic
       a_lhs.setToZero();
     }
 
-    /// amr thing
-    virtual void
-    fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_phiFine, 
-                                         const pr_lbd &  a_phiCoar)
-    {
-      CH_TIME("Base_Proto_AMRLevelOp::fillGhostDataOverCoarseFineInterface");
-      ch_mayday::Error("I think we can leave this until we are doing AMR");
-    }
     
 
   };
