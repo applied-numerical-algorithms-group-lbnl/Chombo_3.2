@@ -1,0 +1,46 @@
+#single level domain decomp
+main.verbosity = 4 # higher number means more verbose output
+main.writePlotFiles = 0 # if 1, write hdf5 plotfiles
+main.mg_type = 0 # 0: correction scheme; 1: FAS MG
+#this is to force it to use slowGSRB
+ResistivityOp.slow_relax_mode = true
+#AMR grid generation parameters
+setupLLCornerGrids.num_cells = NUM_CELLS NUM_CELLS NUM_CELLS 
+setupLLCornerGrids.max_level = MAX_LEVEL
+setupLLCornerGrids.max_box_size = MAX_GRID_SIZE
+setupLLCornerGrids.domain_size = 1.0 1.0 1.0
+setupLLCornerGrids.block_factor = 8
+setupLLCornerGrids.fillRatio = 0.85 
+setupLLCornerGrids.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+setupLLCornerGrids.refine_threshold = 0.025
+setupLLCornerGrids.is_periodic = 0 0 0 
+
+#grids.grids_file = grids.dat #uncomment to read in grids
+
+# Multigrid solver parameters
+solver.num_smooth = NUM_SMOOTH
+solver.num_mg     = NUM_SMOOTH
+solver.num_bottom = NUM_SMOOTH
+solver.num_pre    = NUM_SMOOTH
+solver.num_post   = NUM_SMOOTH
+solver.cycle_type = 1 # FULL=0,VCYCLE=1,FCYCLE=2
+solver.max_iterations = 100
+solver.tolerance  = 1.0e-12
+solver.hang       = 1.0e-10
+#1 gsrb 4586--slowgsrb
+solver.relax_mode = 1 
+PrChUtil_setupSolver.num_smooth = NUM_SMOOTH
+PrChUtil_setupSolver.num_mg     = 1
+PrChUtil_setupSolver.num_bottom = NUM_SMOOTH
+PrChUtil_setupSolver.num_pre = NUM_SMOOTH
+PrChUtil_setupSolver.num_post = NUM_SMOOTH
+
+#lphi = (alpha I + beta div grad ) phi
+solver.alpha =  4.5
+solver.beta  = -0.86
+resistivity_op.eta_value    = 1.
+#bcs for lfaces 1==const neumann, 0 == const dirc
+bc_lo              = 0 0 0   
+bc_hi              = 0 0 0   
+bc_value = 0.0  
+

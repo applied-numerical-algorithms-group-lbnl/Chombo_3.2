@@ -1,0 +1,16 @@
+#!/bin/bash
+#BSUB -nnodes NUM_NODE
+#BSUB -P GEO127
+#BSUB -J NUM_NODE proto
+#BSUB -W 1:59
+#BSUB -o proto.%J
+CH_TIMER=1
+PR_TIMER=1
+EXE=EXECUTABLE_FILE
+INPUT=INPUT_FILE
+PROCS=NUM_PROCS
+CH_OUTPUT_INTERVAL=1024
+date
+jsrun -n $PROCS -a 1 -c 1 -g 1  ./$EXE $INPUT
+echo " dir = $DIR"
+rm core*

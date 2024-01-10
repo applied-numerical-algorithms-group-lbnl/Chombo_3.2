@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH -A geo127
+#SBATCH -t 02:00:00
+#SBATCH -N NUM_NODE
+#SBATCH -J NUM_NODE_node_job
+#SBATCH -e %j.err
+#SBATCH -o %j.out
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=dtgraves@lbl.gov
+export CH_TIMER=1
+export CH_OUTPUT_INTERVAL=16
+
+export OMP_NUM_THREADS=CHOMBO_OMP_NUM_THREADS
+
+input=INPUT_FILE
+ProgName=EXECUTABLE_FILE
+
+
+srun -N NUM_NODE -n NUM_NODE -c CHOMBO_OMP_NUM_THREADS --gpus-per-task=1 --gpu-bind=closest $ProgName $input >& log

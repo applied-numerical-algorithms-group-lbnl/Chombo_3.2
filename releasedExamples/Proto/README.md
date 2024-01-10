@@ -25,6 +25,7 @@
 
 # Directories
 * common holds code used by several examples
+* test_harness holds the machinery to do and compare multiple runs of this stuff.
 * data_transfer tests moving data between proto and Chombo data types.
 * amr_helmoltz uses AMRMultiGrid and Proto_Helmholtz_Op to solve the constant-coefficient Helmholtz equation.
 * _old_helmoltz does the same thing with AMRPoissonOp so the two can be easily compared.

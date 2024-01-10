@@ -1,0 +1,38 @@
+#single level domain decomposition
+main.verbosity = 4 # higher number means more verbose output
+main.iterations = 1 # number of times to do Poisson solve
+main.writePlotFiles = 0 # if 1, write hdf5 plotfiles
+main.mg_type = 0 # 0: correction scheme; 1: FAS MG
+
+setupLLCornerGrids.num_cells = NUM_CELLS NUM_CELLS NUM_CELLS 
+setupLLCornerGrids.max_level = MAX_LEVEL
+setupLLCornerGrids.max_box_size = MAX_GRID_SIZE
+setupLLCornerGrids.domain_size = 1.0 1.0 1.0
+setupLLCornerGrids.block_factor = 8
+setupLLCornerGrids.fillRatio = 0.85 
+setupLLCornerGrids.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+setupLLCornerGrids.refine_threshold = 0.025
+setupLLCornerGrids.is_periodic = 0 0 0 
+
+#grids.grids_file = grids.dat #uncomment to read in grids
+
+# Multigrid solver parameters
+PrChUtil_setupSolver.num_smooth = NUM_SMOOTH
+PrChUtil_setupSolver.num_mg     = 1
+PrChUtil_setupSolver.num_bottom = NUM_SMOOTH
+PrChUtil_setupSolver.num_pre = NUM_SMOOTH
+PrChUtil_setupSolver.num_post = NUM_SMOOTH
+PrChUtil_setupSolver.cycle_type = 0 # FULL=0,VCYCLE=1,FCYCLE=2
+PrChUtil_setupSolver.max_iterations = 100
+PrChUtil_setupSolver.tolerance  = 1.0e-12
+PrChUtil_setupSolver.hang       = 1.0e-10
+
+#bcs for lfaces 1==const neumann, 0 == const dirc
+solver.domain_bc = "Dirichlet"
+
+solver.alpha =  4.5
+solver.beta  =   -0.86
+
+resistivity_op.eta_value    = 1.
+resistivity_op.lambda_value = 1.
+resistivity_op.acoef_value  = 1. 
