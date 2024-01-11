@@ -269,6 +269,7 @@ int main(int argc, char* argv[])
   char* inFile = argv[1];
   Chombo::ParmParse pp(argc-2,argv+2,NULL,inFile);
 
+  Chombo::pout() << "Running old_conductivity for DIM= " <<  Chombo::SpaceDim << endl;
   int status = Chombo::local_test_harness();
 
 #ifdef CH_MPI

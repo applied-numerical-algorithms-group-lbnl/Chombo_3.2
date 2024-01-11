@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
     }
     char* in_file = argv[1];
     Chombo::ParmParse  pp(argc-2,argv+2,NULL,in_file);
-
+    Chombo::pout() << "Running amr_helmholtz for DIM= " <<  Chombo::SpaceDim << endl;
     int solverStatus = Chombo::local_test_harness::runSolver();
     status += solverStatus;
   }

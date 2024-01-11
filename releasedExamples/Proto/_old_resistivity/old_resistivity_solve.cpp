@@ -226,6 +226,7 @@ int main(int argc, char* argv[])
   }
 
   char* inFile = argv[1];
+  Chombo::pout() << "Running old_resistivity for DIM= " <<  Chombo::SpaceDim << endl;
   Chombo::ParmParse pp(argc-2,argv+2,NULL,inFile);
 
   int status = Chombo::local_test_harness();

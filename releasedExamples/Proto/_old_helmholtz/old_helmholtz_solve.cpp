@@ -285,6 +285,7 @@ int main(int argc, char* argv[])
     char* in_file = argv[1];
     ParmParse  pp(argc-2,argv+2,NULL,in_file);
 
+    Chombo::pout() << "Running old_helmholtz for DIM= " <<  Chombo::SpaceDim << endl;
     int solverStatus = runSolver();
     status += solverStatus;
   }
