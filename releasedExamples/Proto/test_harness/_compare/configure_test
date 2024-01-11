@@ -21,22 +21,22 @@ args = parser.parse_args()
 print(args)
 homestr = os.getcwd();
 print ("homedir = " + homestr)
-neartopstr = homestr + "/_" +args.prefix
+neartop_directory = homestr + "/_" +args.prefix
 strtoday =str(today.month) + "_" + str(today.day) + "_" + str(today.year)
-topstr = neartopstr + "_" + strtoday
-print ("topstr = " + topstr)
-if not os.path.exists(topstr):
-    printstr = "making directory " + topstr
+top_directory = neartop_directory + "_" + strtoday
+print ("top_directory = " + top_directory)
+if not os.path.exists(top_directory):
+    printstr = "making directory " + top_directory
     print (printstr)
-    os.mkdir(topstr)
+    os.mkdir(top_directory)
+    
 i_min_case = 0
 i_max_case = 1
-print ("changing directory to " + topstr)
-os.chdir(topstr);
-operators=['helmholtz'
-           'conductivity'
-           'viscous_tensor'
-           'resistivity']
+
+operators=["helmholtz"
+           "conductivity"
+           "viscous_tensor"
+           "resistivity"]
 
 # loop through cases to run
 i_case = i_min_case
@@ -63,13 +63,57 @@ while i_case <= i_max_case:
             i_ncells = args.min_num_cells
             while i_ncells <=  args.max_num_cells:
                 str_config = "_case_" + str(i_case) + "_" + str(i_dim) + "_" + opt_status + "_" + deb_status + "_nx_" + str(i_ncells)
-                print (str_config)
-                config_directory = str_config
+                printstr = "configuration string = " + str_config
+                print (printstr)
+                config_directory = top_directory + "/" + str_config
+                printstr =  "configuration directory = " + config_directory
+                print(printstr)
                 if not os.path.exists(config_directory):
                     printstr = "making directory " + config_directory
                     print (printstr)
                     os.mkdir(config_directory)
 
+                i_opera = 0
+                while i_opera <= 3:
+                    op_str = "4586"
+                    if(i_opera == 0):
+                        op_str = "helmholtz"
+                    if(i_opera == 1):
+                        op_str = "conductivity"
+                    if(i_opera == 2):
+                        op_str = "viscous_tensor"
+                    if(i_opera == 3):
+                        op_str = "resistivity"
+
+                    old_directory = config_directory + "/_old_" + op_str
+                    amr_directory = config_directory +  "/amr_" + op_str
+                    printstr = "old_directory = " + old_directory
+                    print (printstr)
+                    printstr = "amr directory =  " + amr_directory
+                    print (printstr)
+                    if not os.path.exists(old_directory):
+                        os.mkdir(old_directory)
+                    if not os.path.exists(amr_directory):
+                        os.mkdir(amr_directory)
+                    # here goes nothing
+                    exec_directory_old = homestr + "/../../_old_" + op_str
+                    printstr = "exec_directory_old = " + exec_directory_old
+                    print(printstr)
+                    exec_directory_amr = homestr + "/../../amr_" + op_str
+                    printstr = "exec_directory_amr = " + exec_directory_amr
+                    print(printstr)
+                    command_old = "cd " + exec_directory_old + "; make main; mv main.exe " + old_directory
+                    command_amr = "cd " + exec_directory_old + "; make main; mv main.exe " + amr_directory
+                    printstr = "command_old = " + command_old
+                    print(printstr)
+                    os.system(command_old)
+                    printstr = "command_amr = " + command_amr
+                    print(printstr)
+                    os.system(command_amr)
+                    i_opera = i_opera + 1
+                    # end loop over operators
+                    
+                    
                 i_ncells = 2*i_ncells
                 # end loop over values of nx
                 
