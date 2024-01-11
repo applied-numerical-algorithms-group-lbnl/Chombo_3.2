@@ -11,16 +11,11 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--include_2d ', type=bool, help='Do examples with 2d? [True]'  ,default=True)
-parser.add_argument('--include_3d ', type=bool, help='Do examples with 3d? [True]'  ,default=True)
-parser.add_argument('--include_debug ', type=bool, help='Do examples with DEBUG=TRUE? [True]'  ,default=True)
-parser.add_argument('--include_opt ', type=bool, help='Do examples with OPT=TRUE? [True]'  ,default=True)
 parser.add_argument('--min_num_cells', type=int, help='Smallest problem domain size to set up [64].'  ,default='64')
 parser.add_argument('--max_num_cells', type=int, help='Largest  problem domain size to set up [64].'  ,default='64')
-parser.add_argument('--max_weight_power', type=int, help='weight power [5]'   ,default='5')
 parser.add_argument('--input_template_dir', type=str, help='Directory of input file templates [../_input_templates].' ,default="../_input_templates")
 parser.add_argument('--batch', type=str, help='batch file template'   ,default="_batch_templates/serial.batch")
-parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_compare")
+parser.add_argument('--prefix', type=str, help='name of test["_prch_compare"]',default="prch_compare")
 
 args = parser.parse_args()
 print(args)
@@ -28,99 +23,63 @@ homestr = os.getcwd();
 print ("homedir = " + homestr)
 neartopstr = homestr + "/_" +args.prefix
 strtoday =str(today.month) + "_" + str(today.day) + "_" + str(today.year)
-
-
-topstr = neartopstr +"_" + strtoday
+topstr = neartopstr + "_" + strtoday
 print ("topstr = " + topstr)
-
 if not os.path.exists(topstr):
     printstr = "making directory " + topstr
     print (printstr)
     os.mkdir(topstr)
-
+i_min_case = 0
+i_max_case = 1
 print ("changing directory to " + topstr)
 os.chdir(topstr);
-#we are now in directory _compare_date_...
-HERE NEED A BETTER ORGANIZATION
-submitstr = "submit."  + args.prefix + ".jobs"
-r = open(submitstr,'w')
-r.write('#/usr/bin/csh\n')
+operators=['helmholtz'
+           'conductivity'
+           'viscous_tensor'
+           'resistivity']
 
-max_taylor = args.max_taylor_order
-max_weight = args.max_weight_power
-taylor_P = 1
+# loop through cases to run
+i_case = i_min_case
+while i_case <= i_max_case:
+    i_dim = 2
+    # loop through dimensions
+    while i_dim <= 3:
+        #loop through opt     
+        i_opt = 0
+        while i_opt <= 1:
+            #I hesitate to use = when directories will be made
+            #This also allows the directory name to be less shouty
+            opt_status = "opt_false"
+            opt_gmake  = "OPT=FALSE"
+            deb_status = "debug_true"
+            deb_gmake  = "DEBUG=TRUE"
+            
+            if(i_opt == 1):
+                opt_status = "opt_high"
+                opt_gmake  = "OPT=HIGH"
+                deb_status = "debug_false"
+                deb_gmake  = "DEBUG=FALSE"
 
-submitstr = "submit."  + args.prefix + ".jobs"
-subfile = open(submitstr,'w')
-subfile.write('#/usr/bin/csh\n')
-inputfilebase = os.path.basename(args.input)
-batchfilebase = os.path.basename(args.batch)
-executablename  = "../../../main.exe"
+            i_ncells = args.min_num_cells
+            while i_ncells <=  args.max_num_cells:
+                str_config = "_case_" + str(i_case) + "_" + str(i_dim) + "_" + opt_status + "_" + deb_status + "_nx_" + str(i_ncells)
+                print (str_config)
+                config_directory = str_config
+                if not os.path.exists(config_directory):
+                    printstr = "making directory " + config_directory
+                    print (printstr)
+                    os.mkdir(config_directory)
 
-inputtemplatename = homestr + "/" + args.input
-batchtemplatename = homestr + "/" + args.batch
-while taylor_P <= max_taylor:
-    weight_P = 1
-    while weight_P <= max_weight:
+                i_ncells = 2*i_ncells
+                # end loop over values of nx
+                
+            i_opt = i_opt + 1
+            # end loop over values of i_opt
 
-        f_inputtemplate = open(inputtemplatename,'r')
-        f_batchtemplate = open(batchtemplatename,'r')
-        
-        configstr = "_T" + str(taylor_P) + "__W" + str(weight_P)
-        print (configstr);
 
-        print ("changing directory to " + homestr)
-        os.chdir(homestr);
+        i_dim = i_dim + 1
+        # end loop over values of i_dim
 
-        print ("changing directory to " + topstr)
-        os.chdir(topstr);
-
-        dir_str = configstr
-        
-        batchfilename = batchfilebase + str(weight_P) + str(taylor_P)
-        commstr = "cd " + dir_str  + "; source " + batchfilename + "; cd .. \n"
-        echostr = "echo \" " + commstr + " \" "
-        subfile.write(echostr)
-        subfile.write(commstr)
-
-        if not os.path.exists(dir_str):
-            printstr = "making directory " + dir_str
-            print (printstr)
-            os.mkdir(dir_str)
-        
-        print ("changing directory to " + dir_str)
-        os.chdir(dir_str)
-
-        inputfilename = inputfilebase + str(weight_P) + str(taylor_P)
-        print ("processing input file " + inputfilename)
-        f_inp = open(inputfilename,'w')
-        
-        for inputstr in f_inputtemplate:
-            t1str = inputstr;
-            t2str = t1str.replace("TAYLOR_MAX", str(taylor_P))
-            t3str = t2str.replace("WGT_POWER",  str(weight_P))
-            f_inp.write(t3str)
-        
-        f_inp.close()
-        
-        print ("processing batch file " + batchfilename)
-        f_bat = open(batchfilename,'w')
-        for batchstr in f_batchtemplate:
-            t1str = batchstr
-            t2str = t1str.replace("INPUT_FILE", inputfilename)
-            t3str = t2str.replace("EXECUTABLE_FILE", executablename)
-            f_bat.write(t3str)
-
-        f_bat.close()
-        f_inputtemplate.close()
-        f_batchtemplate.close()
-        
-        weight_P +=  1
-#       end inner scope        
-    taylor_P += 1
-#   end outer scope
-
-print("out of loop")
-subfile.close();
-
+    i_case = i_case + 1
+    # end loop over values of i_case
     
