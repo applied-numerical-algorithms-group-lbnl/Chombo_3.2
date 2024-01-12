@@ -166,8 +166,8 @@ namespace Chombo
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
-        phi_ch[lev] = new ch_ldf(levelGrids, 1, ghost);
-        rhs_ch[lev] = new ch_ldf(levelGrids, 1, ghost);
+        phi_ch[lev] = new ch_ldf(levelGrids, 1, ivghost);
+        rhs_ch[lev] = new ch_ldf(levelGrids, 1, ivghost);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );

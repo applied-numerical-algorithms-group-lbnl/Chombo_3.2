@@ -11,11 +11,10 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--min_num_cells', type=int, help='Smallest problem domain size to set up [64].'  ,default='64')
-parser.add_argument('--max_num_cells', type=int, help='Largest  problem domain size to set up [64].'  ,default='64')
 parser.add_argument('--input_template_dir', type=str, help='Directory of input file templates [../_input_templates].' ,default="../_input_templates")
-parser.add_argument('--batch', type=str, help='batch file template'   ,default="_batch_templates/serial.batch")
-parser.add_argument('--prefix', type=str, help='name of test["_prch_compare"]',default="prch_compare")
+parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/serial.batch")
+parser.add_argument('--num_proc', type=int, help='number of processors for each run'   ,default='1')
+parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_compare")
 
 args = parser.parse_args()
 print(args)
@@ -29,25 +28,38 @@ if not os.path.exists(top_directory):
     printstr = "making directory " + top_directory
     print (printstr)
     os.mkdir(top_directory)
-    
+
+batch_template = homestr + "/" + args.batch
+run_file_name = top_directory + "/run_all.sh"
+f_run_all = open(batch_template,'w')
+f_run_all.write('#/usr/bin/csh\n')
+
 i_min_case = 0
 i_max_case = 1
 
-operators=["helmholtz"
-           "conductivity"
-           "viscous_tensor"
-           "resistivity"]
+batch_root = "batch_4586.sh"
+#this stuff is varied in configure_scaling codes.
+#For this particular test, the cases have nx and other stuff fixed.
+#there is no input template here.  So lets leave off nx
+#nproc = 1
+#nx = nx_min
 
 # loop through cases to run
+#should be min case
+#  set to max_case to make a short test
 i_case = i_min_case
 while i_case <= i_max_case:
     i_dim = 2
     # loop through dimensions
+    #should be <=
+    #  set to < for short test
     while i_dim <= 3:
         #loop through opt     
         i_opt = 0
+        #should <=
+        #  set to < for short test
         while i_opt <= 1:
-            #I hesitate to use = when directories will be made
+            #I hesitate to use the char '=' in directory names
             #This also allows the directory name to be less shouty
             opt_status = "opt_false"
             opt_gmake  = "OPT=FALSE"
@@ -60,71 +72,97 @@ while i_case <= i_max_case:
                 deb_status = "debug_false"
                 deb_gmake  = "DEBUG=FALSE"
 
-            i_ncells = args.min_num_cells
-            while i_ncells <=  args.max_num_cells:
-                str_config = "_case_" + str(i_case) + "_" + str(i_dim) + "_" + opt_status + "_" + deb_status + "_nx_" + str(i_ncells)
-                printstr = "configuration string = " + str_config
+
+            str_config = "_case_" + str(i_case) + "_" + str(i_dim) + "_" + opt_status + "_" + deb_status 
+            printstr = "configuration string = " + str_config
+            print (printstr)
+            config_directory = top_directory + "/" + str_config
+            printstr =  "configuration directory = " + config_directory
+            print(printstr)
+            if not os.path.exists(config_directory):
+                printstr = "making directory " + config_directory
                 print (printstr)
-                config_directory = top_directory + "/" + str_config
-                printstr =  "configuration directory = " + config_directory
+                os.mkdir(config_directory)
+
+            #should be 0
+            #set to 3 for a short test
+            i_opera = 0
+            while i_opera <= 3:
+                #(inner loop)
+                op_str = "4586"
+                if(i_opera == 0):
+                    op_str = "conductivity"
+                if(i_opera == 1):
+                    op_str = "helmholtz"
+                if(i_opera == 2):
+                    op_str = "viscous_tensor"
+                if(i_opera == 3):
+                    op_str = "resistivity"
+
+                old_directory = config_directory + "/_old_" + op_str
+                amr_directory = config_directory +  "/amr_" + op_str
+                printstr = "old_directory = " + old_directory
+                print (printstr)
+                printstr = "amr directory =  " + amr_directory
+                print (printstr)
+                if not os.path.exists(old_directory):
+                    os.mkdir(old_directory)
+                if not os.path.exists(amr_directory):
+                    os.mkdir(amr_directory)
+                # create executables and copy them over
+                # copy the right copy_n.inputs over
+                # make a batch file 
+                exec_directory_old = homestr + "/../../_old_" + op_str
+                printstr = "exec_directory_old = " + exec_directory_old
                 print(printstr)
-                if not os.path.exists(config_directory):
-                    printstr = "making directory " + config_directory
-                    print (printstr)
-                    os.mkdir(config_directory)
+                exec_directory_amr = homestr + "/../../amr_" + op_str
+                input_name = "case_" + str(i_case) + ".inputs"
+                printstr = "exec_directory_amr = " + exec_directory_amr + ", input_name = " + input_name
+                print(printstr)
+                command_old = "cd " + exec_directory_old + "; make main; mv main.exe " + old_directory + "; cp _inputs/" + input_name + " " + old_directory
+                command_amr = "cd " + exec_directory_amr + "; make main; mv main.exe " + amr_directory + "; cp _inputs/" + input_name + " " + amr_directory
+                printstr_old = "command_old = " + command_old
+                printstr_amr = "command_amr = " + command_amr
+                print(printstr_old)
+                print(printstr_amr)
 
-                i_opera = 0
-                while i_opera <= 3:
-                    op_str = "4586"
-                    if(i_opera == 0):
-                        op_str = "helmholtz"
-                    if(i_opera == 1):
-                        op_str = "conductivity"
-                    if(i_opera == 2):
-                        op_str = "viscous_tensor"
-                    if(i_opera == 3):
-                        op_str = "resistivity"
+                os.system(command_old)
+                os.system(command_amr)
+                f_batchtemplate = open(batch_template,'r')
+                batch_file_old = old_directory + "/" +  batch_root
+                batch_file_amr = amr_directory + "/" +  batch_root
+                printstr_old = "batch_file_old = " + batch_file_old
+                printstr_amr = "batch_file_amr = " + batch_file_amr
+                print(printstr_old)
+                print(printstr_amr)
+                #exit()
+                f_batch_old = open(batch_file_old, 'w')
+                f_batch_amr = open(batch_file_amr, 'w')
+                for batchster in f_batchtemplate:
+                    t1str = batchster;
+                    t2str = t1str.replace("NUM_PROCS", str("1"))
+                    t3str = t2str.replace("EXECUTABLE_FILE", "main.exe")
+                    t4str = t3str.replace("INPUT_FILE", input_name)
+                    f_batch_old.write(t4str)
+                    f_batch_amr.write(t4str)
+                f_batch_old.close()
+                f_batch_amr.close()
+                f_batchtemplate.close()
+                batch_comm_amr = "\n source " + batch_file_amr + "\n" 
+                batch_comm_old = "\n source " + batch_file_old + "\n" 
+                f_run_all.write(batch_comm_amr);
+                f_run_all.write(batch_comm_old);
 
-                    old_directory = config_directory + "/_old_" + op_str
-                    amr_directory = config_directory +  "/amr_" + op_str
-                    printstr = "old_directory = " + old_directory
-                    print (printstr)
-                    printstr = "amr directory =  " + amr_directory
-                    print (printstr)
-                    if not os.path.exists(old_directory):
-                        os.mkdir(old_directory)
-                    if not os.path.exists(amr_directory):
-                        os.mkdir(amr_directory)
-                    # here goes nothing
-                    exec_directory_old = homestr + "/../../_old_" + op_str
-                    printstr = "exec_directory_old = " + exec_directory_old
-                    print(printstr)
-                    exec_directory_amr = homestr + "/../../amr_" + op_str
-                    printstr = "exec_directory_amr = " + exec_directory_amr
-                    input_name = "case_" + str(i_case) + ".inputs"
-                    print(printstr)
-                    command_old = "cd " + exec_directory_old + "; make main; mv main.exe " + old_directory + "; cp _inputs/" + input_name + " " + old_directory
-                    command_amr = "cd " + exec_directory_old + "; make main; mv main.exe " + amr_directory + "; cp _inputs/" + input_name + " " + amr_directory
-                    printstr = "command_old = " + command_old
-                    print(printstr)
-                    os.system(command_old)
-                    printstr = "command_amr = " + command_amr
-                    print(printstr)
-                    os.system(command_amr)
-                    i_opera = i_opera + 1
-                    # end loop over operators
+                i_opera = i_opera + 1
+                # end loop over operators
                     
-                    
-                i_ncells = 2*i_ncells
-                # end loop over values of nx
-                
             i_opt = i_opt + 1
             # end loop over values of i_opt
 
-
         i_dim = i_dim + 1
         # end loop over values of i_dim
-
+            
     i_case = i_case + 1
     # end loop over values of i_case
-    
+
+f_run_all.close()

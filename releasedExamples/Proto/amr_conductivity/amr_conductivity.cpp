@@ -250,7 +250,7 @@ int main(int argc, char* argv[])
   }
   char* in_file = argv[1];
   Chombo::ParmParse  pp(argc-2,argv+2,NULL,in_file);
-  Chombo::pout() << "Running amr_conductivity for DIM= " <<  SpaceDim << endl;
+  Chombo::pout() << "Running amr_conductivity for DIM= " <<  Chombo::SpaceDim << endl;
   int status = Chombo::local_test_harness::runSolver();
   
 #ifdef CH_MPI
