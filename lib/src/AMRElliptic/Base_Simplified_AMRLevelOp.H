@@ -237,6 +237,8 @@ public:
     fillGhostDataOutsideDomain(        castphi, domain);
     fillGhostDataOverFineFineInterface(castphi);
     applyOperator(a_lphMedi, a_phiMedi);
+    //finer level should always be defined if you got here.
+    this->refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
   }
 
  
@@ -307,7 +309,6 @@ public:
 
   /// Restrict fine data to coarse data using volume-weighted averaging.   
   /**
-     Dad joke:
      Restrict is a c++ keyword, so we are restricted from naming a function restrict.
      To avoid this restriction, I named the function restriction instead of restrict.
   **/
@@ -324,11 +325,11 @@ public:
   refluxFineCorrection(level_data_type       &  a_lphCoar,
                        const level_data_type &  a_phiFine, 
                        const level_data_type &  a_phiCoar,
-                       ch_amrlevelop*   a_finerOp)
-  {
-    ch_mayday::Error("Doh! not implemented");
-  }
-
+                       ch_amrlevelop*   a_finerOp)=0;
+//  {
+//    ch_mayday::Error("Doh! not implemented");
+//  }
+//
 }; // end class Base_Simplified_AMRLevelOp
 
 #include "NamespaceFooter.H"

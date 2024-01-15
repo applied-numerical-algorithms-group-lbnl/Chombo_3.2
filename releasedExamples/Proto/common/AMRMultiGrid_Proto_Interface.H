@@ -50,13 +50,12 @@
      (1) applyOperator
      (2) relax 
      (3) fillGhostCellsOutsideDomain
-     (4) refluxFineCorrection
+     (4) getFlux
      (5) refToCoarser.
 
      Some of these could be reasonably hardwired (force gsrb, first
      order prolongation, etc.), If this gets reused enough, we can
      do that. But for now, five shall be the number (and 5 << 83).  
-     (4) and (5) can be delayed because they are amr things.
 
      An important design point here is that both base classes have no
      data.  I prefer base classes to just be base classes with all
@@ -71,8 +70,9 @@ namespace PrCh_AMR_Elliptic
   class Base_Proto_AMRLevelOp: public Chombo::Base_Simplified_AMRLevelOp<Proto::LevelBoxData<double, ncomp> >
   {
   public:
+    typedef Chombo::Base_Simplified_AMRLevelOp< Proto::LevelBoxData<double, ncomp> >    ch_simple_op;
+    typedef Chombo::AMRLevelOp<                 Proto::LevelBoxData<double, ncomp> >    ch_amrlevelop;
     typedef                                     Proto::LevelBoxData<double, ncomp  >    pr_lbd;
-    typedef Chombo::Base_Simplified_AMRLevelOp< Proto::LevelBoxData<double, ncomp> >    ch_amrlevelop;
     typedef                                    Chombo::Box                              ch_box;
     typedef                                    Chombo::MayDay                           ch_mayday;
     typedef                                    Chombo::ProblemDomain                    ch_dom;
@@ -80,7 +80,7 @@ namespace PrCh_AMR_Elliptic
     typedef                                     Proto::Point                            pr_pt;
     
     ///This class has no data.  
-    Base_Proto_AMRLevelOp():ch_amrlevelop() {}
+    Base_Proto_AMRLevelOp():ch_simple_op() {}
 
     ///This class has no data
     virtual ~Base_Proto_AMRLevelOp(){}
@@ -270,6 +270,15 @@ namespace PrCh_AMR_Elliptic
       a_lhs.setToZero();
     }
 
+    /// amr thing
+    virtual void
+    refluxFineCorrection(pr_lbd       &  a_lphCoar,
+                         const pr_lbd &  a_phiFine, 
+                         const pr_lbd &  a_phiCoar,
+                         ch_amrlevelop*  a_finerOp)
+    {
+      ch_mayday::Error("Doh! not implemented");
+    }
     
 
   };
