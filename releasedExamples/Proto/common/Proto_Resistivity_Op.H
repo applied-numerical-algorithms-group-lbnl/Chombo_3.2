@@ -882,6 +882,22 @@ namespace PrCh_AMR_Elliptic
     {
       return m_refToCoar;
     }
+    ///fill in the values. memory is already allocated
+    virtual void getFlux(pr_box_data& a_flux,
+                         pr_box     & a_face_box,
+                         int a_idir,
+                         int a_ibox)
+    {
+      ch_mayday::Error("get flux not implemented for resistivity");
+    }
+
+    ///
+    Proto::Array<double, DIM> getDxArray()
+    {
+      Proto::Array<double, DIM> retval;
+      retval.fill(m_dx);
+      return retval;
+    }
   }; ///end class Proto_Resistivity_Op
 
   class Proto_Resistivity_Op_Factory: public ch_amrlevelop_fact_three

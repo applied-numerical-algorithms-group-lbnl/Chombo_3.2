@@ -1,5 +1,6 @@
 #include "Base_Simplified_AMRLevelOp.H"
 #include "ProtoInterface.H"
+#include "Proto.H"
 
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
@@ -33,7 +34,7 @@
    (1) Base_Simplified_AMRLevelOp provides reasonable defaults for many of these functions (independent of the proto interface).
    (2) Base_Proto_AMRLevelOp uses the proto interface to further winnow away at 83.
      
-   In the end, all operators have to implement 7 functions.
+   In the end, all operators have to implement 5 functions.
 **/
   ///
   /**
@@ -78,6 +79,9 @@ namespace PrCh_AMR_Elliptic
     typedef                                    Chombo::ProblemDomain                    ch_dom;
     typedef                                     Proto::ProblemDomain                    pr_dom;
     typedef                                     Proto::Point                            pr_pt;
+    typedef                                     Proto::BoxData<double, ncomp>           pr_box_data;
+    typedef                                     Proto::Box                              pr_box;
+    typedef                                     Proto::DisjointBoxLayout                pr_dbl;
     
     ///This class has no data.  
     Base_Proto_AMRLevelOp():ch_simple_op() {}
@@ -270,17 +274,83 @@ namespace PrCh_AMR_Elliptic
       a_lhs.setToZero();
     }
 
-    /// amr thing
+    /// 
     virtual void
     refluxFineCorrection(pr_lbd       &  a_lphCoar,
                          const pr_lbd &  a_phiFine, 
                          const pr_lbd &  a_phiCoar,
                          ch_amrlevelop*  a_finerOp)
     {
-      ch_mayday::Error("Doh! not implemented");
-    }
-    
+      Base_Proto_AMRLevelOp* cast_finer_op = dynamic_cast<Base_Proto_AMRLevelOp*>(a_finerOp) ;
+      typedef  Proto::LevelFluxRegister<double, ncomp, Proto::MEMTYPE_DEFAULT> pr_flux_reg;
+      typedef  Proto::Array<double, DIM>                                       pr_array;
 
+      pr_array dxCoar = getDxArray();
+
+      const pr_dbl& dbl_fine = a_phiFine.layout();
+      const pr_dbl& dbl_coar = a_phiCoar.layout();
+      int ref_ratio   = a_finerOp->refToCoarser();
+      pr_pt refrat_pt = pr_pt::Ones(ref_ratio);
+      pr_flux_reg flux_register(dbl_coar, dbl_fine, refrat_pt, dxCoar);
+      ///same as setToZero, I think
+      flux_register.reset(0.);
+      
+      ///begin incrementCoarse bit
+      {
+        auto dit_coar   =  a_phiCoar.begin();
+        for(int ibox = 0; ibox < dit_coar.localSize(); ibox++)
+        {
+          auto valid_coar = dbl_coar[dit_coar[ibox]];
+          for(int idir = 0; idir < DIM; idir++)
+          {
+            pr_box face_box = valid_coar;
+            face_box.m_high[idir] += 1;
+            face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
+            pr_box_data flux(face_box);
+            getFlux(flux, face_box, idir, ibox);
+            double weight = 1; //probably wrong
+            flux_register.incrementCoarse(flux, dit_coar[ibox], weight, idir);
+          }// end loop over directions
+        }  // end loop over coarse boxes
+      }  //   end incrementCoarse bit
+      
+      ///     begin incrementFine bit
+      {
+        auto dit_fine   =  a_phiCoar.begin();
+        for(int ibox = 0; ibox < dit_fine.localSize(); ibox++)
+        {
+          auto valid_fine = dbl_fine[dit_fine[ibox]];
+          for(int idir = 0; idir < DIM; idir++)
+          {
+            pr_box face_box = valid_fine;
+            face_box.m_high[idir] += 1;
+            face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
+            pr_box_data flux(face_box);
+            cast_finer_op->getFlux(flux, face_box, idir, ibox);
+            double weight = 1; //probably wrong
+            flux_register.incrementFine(flux, dit_fine[ibox], weight, idir);
+          }// end loop over directions
+        }  // end loop over coarse boxes
+      }  //   end incrementFine bit
+
+      
+      ///  begin reflux bit   
+      {
+        double weight = 1.; //probably wrong
+        flux_register.reflux(a_lphCoar, weight);
+      }      
+      ///  end reflux bit
+    }    //end function refluxFineCorrection
+      
+
+    ///fill in the values. memory is already allocated
+    virtual void getFlux(pr_box_data& a_flux,
+                         pr_box     & a_face_box,
+                         int a_idir,
+                         int a_ibox) = 0;
+
+    ///
+    virtual Proto::Array<double, DIM> getDxArray() = 0;
   };
 } //end namespace PrCh_AMR_Elliptic
 

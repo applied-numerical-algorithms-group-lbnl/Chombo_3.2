@@ -292,6 +292,23 @@ namespace PrCh_AMR_Elliptic
     {
       return m_refToCoar;
     }
+    
+    ///fill in the values. memory is already allocated
+    virtual void getFlux(pr_box_data& a_flux,
+                         pr_box     & a_face_box,
+                         int a_idir,
+                         int a_ibox)
+    {
+      ch_mayday::Error("get flux not implemented for helmholtz");
+    }
+
+    ///
+    Proto::Array<double, DIM> getDxArray()
+    {
+      Proto::Array<double, DIM> retval;
+      retval.fill(m_dx);
+      return retval;
+    }
   };
 
   class Proto_Helmholtz_Op_Factory: public ch_amrlevelop_factory

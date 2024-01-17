@@ -10,8 +10,6 @@ INPUT = _inputs/standard.inputs
 
 
 include $(CHOMBO_HOME)/mk/Make.example
-XTRACPPFLAGS += -I$(PROTO_HOME)/include/transition
-XTRACXXFLAGS += -I$(PROTO_HOME)/include/transition
 
 pristine:
 	make realclean
