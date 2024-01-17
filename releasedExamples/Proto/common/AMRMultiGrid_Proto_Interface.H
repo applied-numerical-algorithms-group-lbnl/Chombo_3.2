@@ -307,7 +307,7 @@ namespace PrCh_AMR_Elliptic
             face_box.m_high[idir] += 1;
             face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
             pr_box_data flux(face_box);
-            getFlux(flux, face_box, idir, ibox);
+            getFlux(flux, a_phiCoar[dit_coar[ibox]], face_box, idir, ibox);
             double weight = 1; //probably wrong
             flux_register.incrementCoarse(flux, dit_coar[ibox], weight, idir);
           }// end loop over directions
@@ -326,7 +326,7 @@ namespace PrCh_AMR_Elliptic
             face_box.m_high[idir] += 1;
             face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
             pr_box_data flux(face_box);
-            cast_finer_op->getFlux(flux, face_box, idir, ibox);
+            cast_finer_op->getFlux(flux, a_phiFine[dit_fine[ibox]], face_box, idir, ibox);
             double weight = 1; //probably wrong
             flux_register.incrementFine(flux, dit_fine[ibox], weight, idir);
           }// end loop over directions
@@ -343,11 +343,17 @@ namespace PrCh_AMR_Elliptic
     }    //end function refluxFineCorrection
       
 
-    ///fill in the values. memory is already allocated
-    virtual void getFlux(pr_box_data& a_flux,
-                         pr_box     & a_face_box,
-                         int a_idir,
-                         int a_ibox) = 0;
+    ///
+    /**
+       This is the getFlux interface that refluxFineCorrection uses. 
+       Fill in the values over a_face_box (memory is already allocated).
+       ibox is in relation to the operator's grids
+       (so you can find your variable coefficients if you have them).
+     **/
+    virtual void getFlux(pr_box_data       & a_flux,
+                         const pr_box_data & a_phi,
+                         const pr_box      & a_face_box,
+                         int a_face_dir, int a_ibox) = 0;
 
     ///
     virtual Proto::Array<double, DIM> getDxArray() = 0;

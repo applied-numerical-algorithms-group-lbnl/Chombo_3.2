@@ -61,18 +61,19 @@ PROTO_KERNEL_END(gsrbResidF, gsrbResid)
 /// The new cool namespace that everyone wants in on.   
 namespace PrCh_AMR_Elliptic
 {
-  typedef Proto::LevelBoxData<double, 1>    pr_lbd;
-  typedef Proto::Stencil<double>            pr_sten;
-  typedef Proto::InterpStencil<double>      pr_interp_sten;
-  
-  typedef Chombo::Box                       ch_box;
-  typedef  Proto::Box                       pr_box;
-  typedef Chombo::ProblemDomain             ch_dom;
-  typedef Chombo::DisjointBoxLayout         ch_dbl;
-  typedef Chombo::MayDay                    ch_mayday;
-  typedef Chombo::AMRLevelOpFactory<pr_lbd> ch_amrlevelop_factory;
-  typedef Chombo::AMRLevelOp<pr_lbd> ch_amrlevelop;
-  typedef Chombo::MGLevelOp<pr_lbd>  ch_mglevelop;
+  typedef Proto::LevelBoxData<double, 1>     pr_lbd;
+  typedef Proto::Stencil<double>             pr_sten;
+  typedef Proto::InterpStencil<double>       pr_interp_sten;
+
+  typedef  Proto::Shift                      pr_shift;
+  typedef Chombo::Box                        ch_box;
+  typedef  Proto::Box                        pr_box;
+  typedef Chombo::ProblemDomain              ch_dom;
+  typedef Chombo::DisjointBoxLayout          ch_dbl;
+  typedef Chombo::MayDay                     ch_mayday;
+  typedef Chombo::AMRLevelOpFactory<pr_lbd>  ch_amrlevelop_factory;
+  typedef Chombo::AMRLevelOp<pr_lbd>         ch_amrlevelop;
+  typedef Chombo::MGLevelOp<pr_lbd>          ch_mglevelop;
   typedef Proto_Transition::DataUtilities<1> pr_trans_data;
   
   /// 
@@ -293,13 +294,46 @@ namespace PrCh_AMR_Elliptic
       return m_refToCoar;
     }
     
-    ///fill in the values. memory is already allocated
-    virtual void getFlux(pr_box_data& a_flux,
-                         pr_box     & a_face_box,
-                         int a_idir,
-                         int a_ibox)
+    ///
+    /**
+       This is the getFlux interface that refluxFineCorrection uses. 
+       Fill in the values over a_face_box (memory is already allocated).
+       ibox is in relation to the operator's grids.
+       (so you can find your variable coefficients if you have them).
+       For this operator, F =  m_beta*(grad(a_phi))_(a_face_dir)
+     **/
+    virtual void getFlux(pr_box_data       & a_flux,
+                         const pr_box_data & a_phi,
+                         const pr_box      & a_face_box,
+                         int a_face_dir, int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for helmholtz");
+      ///Always.
+      bool initToZero = true; double applyScale = 1.;
+      /**
+         This is the easiest way to explain the shifts.
+         Phi lives on cells, the flux on face_dir faces.
+         In terms of data the two live on boxes shifted by 1/2 e^facedir:
+               ----------------------------------------
+              |      *      |      *      |      *      |
+               ----------------------------------------
+          phi:     i-1             i             i+1
+          flux:             i            i+1           i+1
+
+          So to compute flux_i, we are using phi_i and phi_{i-1},
+       **/
+      
+      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir); //arg must be positive
+      pr_shift left(left_point);
+      pr_shift home(Proto::Point::Zeros());
+
+      pr_sten home_sten(home, m_beta/m_dx);
+      pr_sten left_sten(left, m_beta/m_dx);
+
+      pr_sten home_minus_left = home_sten - left_sten;
+
+      pr_box_data& phicast  = (pr_box_data &) a_phi;
+      home_minus_left.apply(phicast   , a_flux, ///this arg list is src, dst  so a_flux is the output
+                            a_face_box, initToZero, applyScale);
     }
 
     ///

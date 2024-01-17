@@ -503,14 +503,28 @@ namespace PrChDebug
   {
     if(a_data_ptr != NULL)
     {
-      a_data_ptr->print();
+      cout << "pr_dbl size = " << a_data_ptr->size() << endl; 
+      if(a_data_ptr != NULL)
+      {
+        auto dit = a_data_ptr->begin();
+        auto dbl = *a_data_ptr;
+        for(int ibox =  0; ibox < dit.localSize(); ibox++)
+        {
+          cout << dbl[dit[ibox]] << endl;
+        }
+      }
     }
   }
   void dumpLDLayoutPr(pr_lbd_sca* a_data_ptr)
   {
     if(a_data_ptr != NULL)
     {
-      a_data_ptr->layout().print();
+      auto dit = a_data_ptr->begin();
+      auto dbl = a_data_ptr->layout();
+      for(int ibox =  0; ibox < dit.localSize(); ibox++)
+      {
+        cout << dbl[dit[ibox]] << endl;
+      }
     }
   }
   void dumpLDLayoutCh(ch_ldf* a_data_ptr)

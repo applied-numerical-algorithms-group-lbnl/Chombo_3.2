@@ -951,13 +951,19 @@ namespace PrCh_AMR_Elliptic
       return m_refToCoar;
     }
 
-    ///fill in the values. memory is already allocated
-    virtual void getFlux(pr_box_data& a_flux,
-                         pr_box     & a_face_box,
-                         int a_idir,
-                         int a_ibox)
+    ///used in refluxing
+    /**
+       This is the interface that refluxFineCorrection uses. 
+       Fill in the values. memory is already allocated.
+       ibox is in relation to the operator's grids
+       (so you can find your variable coefficients if you have them).
+     **/
+    virtual void getFlux(pr_box_data       & a_flux,
+                         const pr_box_data & a_phi,
+                         const pr_box      & a_face_box,
+                         int a_idir,  int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for viscous_tensor");
+      ch_mayday::Error("get flux not implemented for helmholtz");
     }
 
     ///

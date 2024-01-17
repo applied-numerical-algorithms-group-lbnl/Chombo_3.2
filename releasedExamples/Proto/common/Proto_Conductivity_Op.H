@@ -456,12 +456,12 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///fill in the values. memory is already allocated
-    virtual void getFlux(pr_box_data& a_flux,
-                         pr_box     & a_face_box,
-                         int a_idir,
-                         int a_ibox)
+    virtual void getFlux(pr_box_data       & a_flux,
+                         const pr_box_data & a_phi,
+                         const pr_box      & a_face_box,
+                         int a_idir,  int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for conductivity");
+      ch_mayday::Error("get flux not implemented for helmholtz");
     }
 
     ///
