@@ -1,7 +1,7 @@
 #include "Base_Simplified_AMRLevelOp.H"
 #include "ProtoInterface.H"
+#include "PrChFluxRegister.H"
 #include "Proto.H"
-
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
 
@@ -82,6 +82,10 @@ namespace PrCh_AMR_Elliptic
     typedef                                     Proto::BoxData<double, ncomp>           pr_box_data;
     typedef                                     Proto::Box                              pr_box;
     typedef                                     Proto::DisjointBoxLayout                pr_dbl;
+    typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >     pr_cell_data;
+    typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >     pr_xfac_data;
+    typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >     pr_yfac_data;
+    typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >     pr_zfac_data;
     
     ///This class has no data.  
     Base_Proto_AMRLevelOp():ch_simple_op() {}
@@ -274,6 +278,13 @@ namespace PrCh_AMR_Elliptic
       a_lhs.setToZero();
     }
 
+    virtual 
+    void fillFluxes(shared_ptr<pr_xfac_data> xflux_coar_ptr,
+                    shared_ptr<pr_yfac_data> yflux_coar_ptr,
+                    shared_ptr<pr_zfac_data> zflux_coar_ptr)
+    {
+      ch_mayday::Error("not implemented");
+    }
     /// 
     virtual void
     refluxFineCorrection(pr_lbd       &  a_lphCoar,
@@ -282,19 +293,18 @@ namespace PrCh_AMR_Elliptic
                          ch_amrlevelop*  a_finerOp)
     {
       Base_Proto_AMRLevelOp* cast_finer_op = dynamic_cast<Base_Proto_AMRLevelOp*>(a_finerOp) ;
-      typedef  Proto::LevelFluxRegister<double, ncomp, Proto::MEMTYPE_DEFAULT> pr_flux_reg;
       typedef  Proto::Array<double, DIM>                                       pr_array;
-
       pr_array dxCoar = getDxArray();
 
       const pr_dbl& dbl_fine = a_phiFine.layout();
       const pr_dbl& dbl_coar = a_phiCoar.layout();
       int ref_ratio   = a_finerOp->refToCoarser();
+#if 0      
       pr_pt refrat_pt = pr_pt::Ones(ref_ratio);
+      typedef  Proto::LevelFluxRegister<double, ncomp, Proto::MEMTYPE_DEFAULT> pr_flux_reg;
       pr_flux_reg flux_register(dbl_coar, dbl_fine, refrat_pt, dxCoar);
       ///same as setToZero, I think
       flux_register.reset(0.);
-      
       ///begin incrementCoarse bit
       {
         auto dit_coar   =  a_phiCoar.begin();
@@ -338,7 +348,24 @@ namespace PrCh_AMR_Elliptic
       {
         double weight = 1.; //probably wrong
         flux_register.reflux(a_lphCoar, weight);
-      }      
+      }
+#else
+      typedef PrCh_Tools::FluxRegister<ncomp> pr_ch_flux_reg;
+      pr_ch_flux_reg flux_register(dbl_coar, dbl_fine, ref_ratio);
+
+      shared_ptr<pr_xfac_data> xflux_coar_ptr;
+      shared_ptr<pr_yfac_data> yflux_coar_ptr;
+      shared_ptr<pr_zfac_data> zflux_coar_ptr;
+      shared_ptr<pr_xfac_data> xflux_fine_ptr;
+      shared_ptr<pr_yfac_data> yflux_fine_ptr;
+      shared_ptr<pr_zfac_data> zflux_fine_ptr;
+      cast_finer_op->fillFluxes(  xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
+      this->fillFluxes(           xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
+      flux_register.incrementCoar(xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
+      flux_register.incrementFine(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
+      double weight = 1./dxCoar[0];
+      flux_register.reflux(a_lphCoar, weight);
+#endif      
       ///  end reflux bit
     }    //end function refluxFineCorrection
       

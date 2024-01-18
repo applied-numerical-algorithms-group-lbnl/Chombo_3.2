@@ -64,7 +64,7 @@ namespace PrCh_Lo_Hi_Center
                  const pr_dom  &  a_domain)
   {
     /**
-       This is writting following ViscousTensorOp::loHiCenterFace.
+       This is writteen following ViscousTensorOp::loHiCenterFace.
        The box calculus here is a bit fussy so I am trying
        to keep this as close to the original as possible.
        Proto Box syntax is different in places, however.  They
