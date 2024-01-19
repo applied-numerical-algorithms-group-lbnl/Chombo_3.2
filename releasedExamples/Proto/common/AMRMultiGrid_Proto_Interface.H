@@ -299,57 +299,6 @@ namespace PrCh_AMR_Elliptic
       const pr_dbl& dbl_fine = a_phiFine.layout();
       const pr_dbl& dbl_coar = a_phiCoar.layout();
       int ref_ratio   = a_finerOp->refToCoarser();
-#if 0      
-      pr_pt refrat_pt = pr_pt::Ones(ref_ratio);
-      typedef  Proto::LevelFluxRegister<double, ncomp, Proto::MEMTYPE_DEFAULT> pr_flux_reg;
-      pr_flux_reg flux_register(dbl_coar, dbl_fine, refrat_pt, dxCoar);
-      ///same as setToZero, I think
-      flux_register.reset(0.);
-      ///begin incrementCoarse bit
-      {
-        auto dit_coar   =  a_phiCoar.begin();
-        for(int ibox = 0; ibox < dit_coar.localSize(); ibox++)
-        {
-          auto valid_coar = dbl_coar[dit_coar[ibox]];
-          for(int idir = 0; idir < DIM; idir++)
-          {
-            pr_box face_box = valid_coar;
-            face_box.m_high[idir] += 1;
-            face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
-            pr_box_data flux(face_box);
-            getFlux(flux, a_phiCoar[dit_coar[ibox]], face_box, idir, ibox);
-            double weight = 1; //probably wrong
-            flux_register.incrementCoarse(flux, dit_coar[ibox], weight, idir);
-          }// end loop over directions
-        }  // end loop over coarse boxes
-      }  //   end incrementCoarse bit
-      
-      ///     begin incrementFine bit
-      {
-        auto dit_fine   =  a_phiCoar.begin();
-        for(int ibox = 0; ibox < dit_fine.localSize(); ibox++)
-        {
-          auto valid_fine = dbl_fine[dit_fine[ibox]];
-          for(int idir = 0; idir < DIM; idir++)
-          {
-            pr_box face_box = valid_fine;
-            face_box.m_high[idir] += 1;
-            face_box.recomputeSize();  // required to keep box class data consistent after above shenanigans.
-            pr_box_data flux(face_box);
-            cast_finer_op->getFlux(flux, a_phiFine[dit_fine[ibox]], face_box, idir, ibox);
-            double weight = 1; //probably wrong
-            flux_register.incrementFine(flux, dit_fine[ibox], weight, idir);
-          }// end loop over directions
-        }  // end loop over coarse boxes
-      }  //   end incrementFine bit
-
-      
-      ///  begin reflux bit   
-      {
-        double weight = 1.; //probably wrong
-        flux_register.reflux(a_lphCoar, weight);
-      }
-#else
       typedef PrCh_Tools::FluxRegister<ncomp> pr_ch_flux_reg;
       pr_ch_flux_reg flux_register(dbl_coar, dbl_fine, ref_ratio);
 
@@ -361,11 +310,10 @@ namespace PrCh_AMR_Elliptic
       shared_ptr<pr_zfac_data> zflux_fine_ptr;
       cast_finer_op->fillFluxes(  xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
       this->fillFluxes(           xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
-      flux_register.incrementCoar(xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
-      flux_register.incrementFine(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
-      double weight = 1./dxCoar[0];
-      flux_register.reflux(a_lphCoar, weight);
-#endif      
+      flux_register.setCoarFlux(xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
+      flux_register.setFineFlux(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
+      flux_register.reflux(a_lphCoar, dxCoar);
+
       ///  end reflux bit
     }    //end function refluxFineCorrection
       
@@ -382,8 +330,8 @@ namespace PrCh_AMR_Elliptic
                          const pr_box      & a_face_box,
                          int a_face_dir, int a_ibox) = 0;
 
-    ///
-    virtual Proto::Array<double, DIM> getDxArray() = 0;
+    ///used in refluxing.
+    virtual double getDx() const = 0;
   };
 } //end namespace PrCh_AMR_Elliptic
 

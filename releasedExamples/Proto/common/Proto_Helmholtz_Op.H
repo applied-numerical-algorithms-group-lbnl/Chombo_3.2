@@ -337,11 +337,9 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///
-    Proto::Array<double, DIM> getDxArray()
+    double getDxArray() const
     {
-      Proto::Array<double, DIM> retval;
-      retval.fill(m_dx);
-      return retval;
+      return m_dx;
     }
   };
 

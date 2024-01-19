@@ -49,6 +49,7 @@ namespace Chombo
     typedef         Box                            ch_box;
     typedef         DisjointBoxLayout              ch_dbl;
     typedef  Proto::DisjointBoxLayout              pr_dbl;
+    typedef  Proto::BoxData<double, 1    >         pr_box_data;
     typedef  Proto::LevelBoxData< double, ncomp, Proto::MEMTYPE_DEFAULT, Proto::PR_CELL   >      pr_lbd_cell;
     typedef  Proto::LevelBoxData< double, 1,     Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_0 >      pr_lbd_xfac; 
     typedef  Proto::LevelBoxData< double, 1,     Proto::MEMTYPE_DEFAULT, Proto::PR_FACE_1 >      pr_lbd_yfac; 
@@ -138,6 +139,87 @@ namespace Chombo
       }        
     }
 
+    ///sometimes weird things get more generally useful
+    static pr_sten
+    getStencilFromRefBox(pr_box a_ref_box,
+                         int    a_ref_rat)
+    {
+      return PrChUtilties::getStencilFromRefBox(a_ref_box, a_ref_rat);
+      int numPts = a_ref_box.size();
+      double weight = 1.0/double(numPts);
+      pr_pt src_ref_ratio = pr_pt::Ones(a_ref_rat);
+      pr_pt dst_ref_ratio = pr_pt::Ones(1);
+      pr_pt dst_shift     = pr_pt::Zeros();
+      /**
+         Yes, I know I am setting things on an  empty stencil.
+         Right now, adding a stencil with non unity refinement ratio 
+         to an empty stencil without doing this causes a runtime error.
+         dtg 11-28-2023
+      **/
+      pr_sten whole_sten;
+      whole_sten.srcRatio()  = src_ref_ratio;
+      whole_sten.destRatio() = dst_ref_ratio;
+      for(auto boxit = a_ref_box.begin(); boxit != a_ref_box.end(); ++boxit)
+      {
+        pr_pt ref_pt = *boxit;
+        pr_sten pt_sten(pr_shift(ref_pt), weight, dst_ref_ratio, dst_shift, src_ref_ratio);
+        whole_sten += pt_sten;
+      }
+    
+      return whole_sten;
+    }
+    /// for averaging stuff based in faces 
+    /**
+       set coarse value to arithmetic average of all fine face values.   Only faces in the same facedir plane are used.
+       The valid box is cell centered.
+    **/
+    static void
+    averageDownFace(pr_box_data       & a_coar,
+                    const pr_box_data & a_fine,
+                    const pr_box      & a_coar_valid,
+                    int                 a_ref_rat,
+                    int                 a_face_dir)
+    {
+      pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
+      pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
+      pr_box ref_box = unit_box.refine(pt_ref_rat);
+      // only include faces on the same facedir plane
+      ref_box.m_high[a_face_dir] = 0;
+      ref_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
+      
+      pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
+
+      pr_box_data& fine_cast = (pr_box_data&) a_fine;
+      bool initToZero = true; double applyScale = 1.;
+      pr_box coar_face_valid = a_coar_valid;
+      coar_face_valid.m_high[a_face_dir] += 1;
+      coar_face_valid.recomputeSize();  // required to keep box data consistent after above shenannigans.
+      
+      whole_sten.apply(fine_cast, a_coar, coar_face_valid, initToZero, applyScale);
+
+    }
+    /// for averaging stuff based in cells
+    /**
+       set coarse value to arithmetic average of all fine cell values.
+     **/
+    static void
+    averageDownCell(pr_box_data       & a_coar,
+                    const pr_box_data & a_fine,
+                    const pr_box      & a_coar_valid,
+                    int                 a_ref_rat)
+    {
+      ///this has suddenly gotten more useful
+      PrChUtilities<1>::averageDownCell(a_coar, a_fine, a_coar_valid, a_ref_rat);
+      pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
+      pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
+      pr_box ref_box = unit_box.refine(pt_ref_rat);
+      pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);
+
+      
+      pr_box_data& fine_cast = (pr_box_data&) a_fine;
+      bool initToZero = true; double applyScale = 1.;
+      whole_sten.apply(fine_cast, a_coar, a_coar_valid, initToZero, applyScale);
+    }
     ///
     /**
        For performance reasons, proto requires fixed-size boxes.   
