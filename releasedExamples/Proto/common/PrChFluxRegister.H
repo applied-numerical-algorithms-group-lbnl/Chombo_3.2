@@ -1,5 +1,6 @@
 
 #include "PrChUtilities.H"
+#include "PrChAveraging.H"
 #include "ProtoInterface.H"
 #include "Vector.H"
 
@@ -105,7 +106,7 @@ namespace PrCh_Tools
       m_grids_coar = a_grids_coar;
       m_grids_fine = a_grids_fine;
       m_ref_ratio  = a_ref_ratio;
-      m_grids_cofi = a_grids_fine.coarsen(pr_pr::Ones(a_ref_ratio));
+      m_grids_cofi = a_grids_fine.coarsen(pr_pt::Ones(a_ref_ratio));
       m_xflux_coar = shared_ptr<pr_xfac_data>(new pr_xfac_data(m_grids_coar, pr_pt::Zeros()));
       m_xbuff_coar = shared_ptr<pr_xfac_data>(new pr_xfac_data(m_grids_coar, pr_pt::Zeros()));
       m_xflux_cofi = shared_ptr<pr_xfac_data>(new pr_xfac_data(m_grids_cofi, pr_pt::Zeros()));
@@ -135,28 +136,28 @@ namespace PrCh_Tools
 #endif      
     }
     
-    /// sets cofi buffers = average of fine fluxes
+    /// sets internal cofi buffers = average of fine fluxes
     /***
         cofi_flux = sum(fine_fluxes)/nfine_per_coar
     **/
-    void setFineFlux(shared_ptr<pr_xfac_data> a_xflux_fine_ptr,
-                     shared_ptr<pr_yfac_data> a_yflux_fine_ptr,
-                     shared_ptr<pr_zfac_data> a_zflux_fine_ptr)
+    void setFineFlux(shared_ptr<pr_xfac_data> a_xflux_fine,
+                     shared_ptr<pr_yfac_data> a_yflux_fine,
+                     shared_ptr<pr_zfac_data> a_zflux_fine)
     {
       CH_TIME("PrChFluxRegister::setFineFlux");
-      auto dit   =  a_xflux_fine_ptr->begin();
+      auto dit   =  a_xflux_fine->begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        auto & fine_xfab = (*a_xflux_fine_ptr)[dit[ibox]];
-        auto & cofi_xfab = (*m_xflux_cofi_ptr)[dit[ibox]];
-        auto & fine_yfab = (*a_yflux_fine_ptr)[dit[ibox]];
-        auto & cofi_yfab = (*m_yflux_cofi_ptr)[dit[ibox]];
+        auto & fine_xfab = (*a_xflux_fine)[dit[ibox]];
+        auto & cofi_xfab = (*m_xflux_cofi)[dit[ibox]];
+        auto & fine_yfab = (*a_yflux_fine)[dit[ibox]];
+        auto & cofi_yfab = (*m_yflux_cofi)[dit[ibox]];
 #if DIM==3        
-        auto & fine_zfab = (*a_zflux_fine_ptr)[dit[ibox]];
-        auto & cofi_zfab = (*a_zflux_cofi_ptr)[dit[ibox]];
+        auto & fine_zfab = (*a_zflux_fine)[dit[ibox]];
+        auto & cofi_zfab = (*a_zflux_cofi)[dit[ibox]];
 #endif
         pr_box cofi_valid = m_grids_cofi[dit[ibox]];
-        for(int icomp = 0; icomp < ncomp++)
+        for(int icomp = 0; icomp < ncomp; icomp++)
         {
           pr_box_data_sca xfine_comp = Proto::slice(fine_xfab, icomp);
           pr_box_data_sca xcofi_comp = Proto::slice(cofi_xfab, icomp);
@@ -166,10 +167,10 @@ namespace PrCh_Tools
           pr_box_data_sca zfine_comp = Proto::slice(fine_zfab, icomp);
           pr_box_data_sca zcofi_comp = Proto::slice(cofi_zfab, icomp);
 #endif
-          PrChUtilities<1>::averageDownFace(xcofi_comp, xfine_comp, cofi_valid, m_ref_ratio, 0);
-          PrChUtilities<1>::averageDownFace(ycofi_comp, yfine_comp, cofi_valid, m_ref_ratio, 1);
-#if DIM==3        
-          PrChUtilities<1>::averageDownFace(zcofi_comp, zfine_comp, cofi_valid, m_ref_ratio, 2);
+          PrChTools::AveragingUtilities::averageDownFace(xcofi_comp, xfine_comp, cofi_valid, m_ref_ratio, 0);
+          PrChTools::AveragingUtilities::averageDownFace(ycofi_comp, yfine_comp, cofi_valid, m_ref_ratio, 1);
+#if DIM==3    
+          PrChTools::AveragingUtilities::averageDownFace(zcofi_comp, zfine_comp, cofi_valid, m_ref_ratio, 2);
 #endif
         }
       }
@@ -221,64 +222,63 @@ namespace PrCh_Tools
 #endif      
 
       /**
-         //  Refluxing dance.   Should be able to do all this within the dataiterator loop
-         //  to avoid yet more temporary data.
-         //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
-                Fdiff = Fcofi - Fcoar
-         //  2. Compute reflux divergence D_R= Div(Fdiff) 
-         //     Div(Fdiff) = (1/dxcoar)*sum(i<DIM)(Fdiff_i+1/2 - Fdiff_i-1/2)
-         //  3. a_lph -= Div(Fdiff)
+       //  Refluxing dance.   Should be able to do all this within the dataiterator loop
+       //  to avoid yet more temporary data.
+       //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
+       Fdiff = Fcofi - Fcoar
+       //  2. Compute reflux divergence D_R= Div(Fdiff) 
+       //     Div(Fdiff) = (1/dxcoar)*sum(i<DIM)(Fdiff_i+1/2 - Fdiff_i-1/2)
+       //  3. a_lph -= Div(Fdiff)
        **/
-    }
-
-    auto dit   =  a_soln_coar.begin();
-    for(int ibox = 0; ibox < dit.localSize(); ibox++)
-    {
-      auto & buff_x = (*m_xbuff_coar)[dit[ibox]];
-      auto & flux_x = (*m_xflux_coar)[dit[ibox]];
-      auto & buff_y = (*m_ybuff_coar)[dit[ibox]];
-      auto & flux_y = (*m_yflux_coar)[dit[ibox]];
+      auto dit   =  a_soln_coar.begin();
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        auto & buff_x = (*m_xbuff_coar)[dit[ibox]];
+        auto & flux_x = (*m_xflux_coar)[dit[ibox]];
+        auto & buff_y = (*m_ybuff_coar)[dit[ibox]];
+        auto & flux_y = (*m_yflux_coar)[dit[ibox]];
 #if DIM==3                          
-      auto & buff_z = (*m_zbuff_coar)[dit[ibox]];
-      auto & flux_z = (*m_zbuff_coar)[dit[ibox]];
+        auto & buff_z = (*m_zbuff_coar)[dit[ibox]];
+        auto & flux_z = (*m_zbuff_coar)[dit[ibox]];
 #endif        
 
-      //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
-      buff_x -= flux_x;
-      buff_y -= flux_z;
+        //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
+        buff_x -= flux_x;
+        buff_y -= flux_y;
 #if DIM==3                          
-      buff_z -= flux_z;
+        buff_z -= flux_z;
 #endif      
-      //  2. Compute reflux divergence D_R= Div(Fdiff)
-      pr_box valid_coar = m_grids_coar[dit[ibox]];
-      pr_box_data_ncomp div_reflux(valid_coar);
-      for(int icomp = 0; icomp < ncomp; icomp++)
-      {
-        auto output_comp = Proto::slice(div_reflux, icomp);
+        //  2. Compute reflux divergence D_R= Div(Fdiff)
+        pr_box valid = m_grids_coar[dit[ibox]];
+        pr_box_data_ncomp div_reflux(valid);
+        for(int icomp = 0; icomp < ncomp; icomp++)
+        {
+          auto output_comp = Proto::slice(div_reflux, icomp);
         
-        pr_box_data_sca div_incr(valid_coar);
-        auto xflux_comp = Proto::slice(buff_x, icomp);
-        auto yflux_comp = Proto::slice(buff_y, icomp);
-        auto zflux_comp = Proto::slice(buff_z, icomp);
+          pr_box_data_sca div_incr(valid);
+          auto xflux_comp = Proto::slice(buff_x, icomp);
+          auto yflux_comp = Proto::slice(buff_y, icomp);
+#if DIM==3          
+          auto zflux_comp = Proto::slice(buff_z, icomp);
+#endif          
 
-        //rememeber that this goes src, dst so div_incr is the output
-        div_stencils[0].apply(xflux_comp, div_incr, a_valid, initToZero, applyScale);
-        output_comp+= div_incr;
-        //rememeber that this goes src, dst so div_incr is the output
-        div_stencils[1].apply(yflux_comp, div_incr, a_valid, initToZero, applyScale);
-        output_comp+= div_incr;
+          //rememeber that this goes src, dst so div_incr is the output
+          div_stencils[0].apply(xflux_comp, div_incr, valid, initToZero, applyScale);
+          output_comp+= div_incr;
+          //rememeber that this goes src, dst so div_incr is the output
+          div_stencils[1].apply(yflux_comp, div_incr, valid, initToZero, applyScale);
+          output_comp+= div_incr;
 #if DIM==3        
-        //rememeber that this goes src, dst so div_incr is the output
-        div_stencils[2].apply(zflux_comp, div_incr, a_valid, initToZero, applyScale);
-        output_comp+= div_incr;
+          //rememeber that this goes src, dst so div_incr is the output
+          div_stencils[2].apply(zflux_comp, div_incr, valid, initToZero, applyScale);
+          output_comp+= div_incr;
 #endif              
-      } // end loop over components
+        } // end loop over components
 
-      //  3. a_lph -= Div(Fdiff)
-      a_soln_coar[dit[ibox]] -= div_reflux;
-    } //end loop over boxes
-  }//end function reflux
-        
+        //  3. a_lph -= Div(Fdiff)
+        a_soln_coar[dit[ibox]] -= div_reflux;
+      } //end loop over boxes
+    }//end function reflux
   };
 } //end namespace Pr_Ch_AMR_AMRElliptic
 #endif

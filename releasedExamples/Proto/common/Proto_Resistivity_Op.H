@@ -1015,7 +1015,7 @@ namespace PrCh_AMR_Elliptic
                     const pr_box      & a_coar_valid,
                     int                 a_ref_rat)
     {
-      PrChUtilties<1>::averageDownCell(a_coar, a_fine, a_coar_valid, a_ref_rat);
+      PrChTools::AveragingUtilities::averageDownCell(a_coar, a_fine, a_coar_valid, a_ref_rat);
     }
     /// for averaging stuff based in faces 
     /**
@@ -1029,7 +1029,7 @@ namespace PrCh_AMR_Elliptic
                     int                        a_ref_rat,
                     int                        a_face_dir)
     {
-      PrChUtilties<1>::averageDownFace(a_coar, a_fine, a_coar_valid, a_ref_rat, a_face_dir);
+      PrChTools::AveragingUtilities::averageDownFace(a_coar, a_fine, a_coar_valid, a_ref_rat, a_face_dir);
     }
 
     virtual void

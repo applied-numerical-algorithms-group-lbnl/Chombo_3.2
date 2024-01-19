@@ -337,7 +337,7 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///
-    double getDxArray() const
+    double getDx() const
     {
       return m_dx;
     }

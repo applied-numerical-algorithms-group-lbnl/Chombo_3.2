@@ -293,8 +293,7 @@ namespace PrCh_AMR_Elliptic
                          ch_amrlevelop*  a_finerOp)
     {
       Base_Proto_AMRLevelOp* cast_finer_op = dynamic_cast<Base_Proto_AMRLevelOp*>(a_finerOp) ;
-      typedef  Proto::Array<double, DIM>                                       pr_array;
-      pr_array dxCoar = getDxArray();
+      double  dxCoar = getDx();
 
       const pr_dbl& dbl_fine = a_phiFine.layout();
       const pr_dbl& dbl_coar = a_phiCoar.layout();
@@ -308,8 +307,8 @@ namespace PrCh_AMR_Elliptic
       shared_ptr<pr_xfac_data> xflux_fine_ptr;
       shared_ptr<pr_yfac_data> yflux_fine_ptr;
       shared_ptr<pr_zfac_data> zflux_fine_ptr;
-      cast_finer_op->fillFluxes(  xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
-      this->fillFluxes(           xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
+      cast_finer_op->fillFluxes(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
+      this->fillFluxes(         xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
       flux_register.setCoarFlux(xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
       flux_register.setFineFlux(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
       flux_register.reflux(a_lphCoar, dxCoar);

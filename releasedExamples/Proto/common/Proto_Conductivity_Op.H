@@ -1,6 +1,7 @@
 
 #include "AMRMultiGrid_Proto_Interface.H"
 #include "PrChUtilities.H"
+#include "PrChAveraging.H"
 #include "ProtoInterface.H"
 #include "Vector.H"
 
@@ -590,7 +591,7 @@ namespace PrCh_AMR_Elliptic
                     int                 a_ref_rat)
     {
       ///this has suddenly gotten more useful
-      PrChUtilities<1>::averageDownCell(a_coar, a_fine, a_coar_valid, a_ref_rat);
+      PrChTools::AveragingUtilities::averageDownCell(a_coar, a_fine, a_coar_valid, a_ref_rat);
     }
     /// for averaging stuff based in faces 
     /**
@@ -605,7 +606,7 @@ namespace PrCh_AMR_Elliptic
                     int                 a_face_dir)
     {
       //it got more generally useful
-      PrChUtilities<1>::averageDownFace(a_coar, a_fine, a_coar_valid, a_ref_rat, a_face_dir);
+      PrChTools::AveragingUtilities::averageDownFace(a_coar, a_fine, a_coar_valid, a_ref_rat, a_face_dir);
     }
 
     virtual void
