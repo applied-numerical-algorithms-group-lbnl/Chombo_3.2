@@ -457,14 +457,74 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///fill in the values. memory is already allocated
+    /**
+         This is the easiest way to explain the shifts.
+         Phi lives on cells, the flux on face_dir faces.
+         In terms of data the two live on boxes shifted by 1/2 e^facedir:
+               ----------------------------------------
+              |      *      |      *      |      *      |
+               ----------------------------------------
+          phi:     i-1             i             i+1
+          flux:             i            i+1           i+1
+
+          So to compute flux_i, we are using phi_i and phi_{i-1},
+     **/
     virtual void getFlux(pr_box_data       & a_flux,
                          const pr_box_data & a_phi,
-                         const pr_box      & a_face_box,
-                         int a_idir,  int a_ibox)
+                         const pr_box      & a_valid,
+                         int a_face_dir,  int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for helmholtz");
+      CH_TIME("Pr_Conductivity::getFlux");
+      ///Always.
+      bool initToZero = true; double applyScale = 1.;
+      pr_box face_box = a_valid;
+      pr_box_data& phicast  = (pr_box_data &) a_phi;
+      face_box.m_high[a_face_dir] += 1;
+      face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
+      
+      pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir); //arg must be positive
+      pr_shift left(left_point);
+      pr_shift home(Proto::Point::Zeros());
+
+      pr_sten home_sten(home, m_beta/m_dx);
+      pr_sten left_sten(left, m_beta/m_dx);
+
+      pr_sten home_minus_left = home_sten - left_sten;
+      home_minus_left.apply(phicast   , a_flux, ///this arg list is src, dst  so a_flux is the output
+                            face_box, initToZero, applyScale);
+           
+      pr_box_data*  bcoef_ptr = NULL;
+      bcoef_ptr = getBcoefPtr(a_face_dir, a_ibox) ;
+      a_flux *= (*bcoef_ptr);
+      return;
+
     }
 
+
+    ///getFlux needs this
+    pr_box_data* getBcoefPtr(int a_face_dir, int a_ibox)
+    {
+      pr_box_data* retval = NULL;
+      if(a_face_dir == 0)
+      {
+        auto dit =   m_bco_x->begin();
+        retval = &((*m_bco_x)[dit[a_ibox]]);
+              
+      }
+      else if(a_face_dir == 1)
+      {
+        auto dit =   m_bco_y->begin();
+        retval = &((*m_bco_y)[dit[a_ibox]]);
+      }
+#if DIM==3      
+      else if(a_face_dir == 2)
+      {
+        auto dit =   m_bco_z->begin();
+        retval = &((*m_bco_z)[dit[a_ibox]]);
+      }
+#endif      
+      return retval;
+    }
     /// used in refluxing
     double getDx() const
     {

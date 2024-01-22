@@ -304,7 +304,7 @@ namespace PrCh_AMR_Elliptic
      **/
     virtual void getFlux(pr_box_data       & a_flux,
                          const pr_box_data & a_phi,
-                         const pr_box      & a_face_box,
+                         const pr_box      & a_valid,
                          int a_face_dir, int a_ibox)
     {
       ///Always.
@@ -322,6 +322,10 @@ namespace PrCh_AMR_Elliptic
           So to compute flux_i, we are using phi_i and phi_{i-1},
        **/
       
+      pr_box face_box = a_valid;
+      face_box.m_high[a_face_dir] += 1;
+      face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
+      
       pr_pt left_point = (-1)*pr_pt::Basis(a_face_dir); //arg must be positive
       pr_shift left(left_point);
       pr_shift home(Proto::Point::Zeros());
@@ -333,7 +337,7 @@ namespace PrCh_AMR_Elliptic
 
       pr_box_data& phicast  = (pr_box_data &) a_phi;
       home_minus_left.apply(phicast   , a_flux, ///this arg list is src, dst  so a_flux is the output
-                            a_face_box, initToZero, applyScale);
+                            face_box, initToZero, applyScale);
     }
 
     ///

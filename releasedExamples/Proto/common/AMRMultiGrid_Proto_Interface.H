@@ -234,7 +234,6 @@ namespace PrCh_AMR_Elliptic
                      const pr_lbd        & a_corCoar)
     {
       //borrowed from Phil's levelmultigrid example in proto/example
-      typedef Proto::BoxData<double, ncomp> pr_bd;
       pr_lbd localCor;
       this->createCoarser(   localCor, a_phiMedi, true);
       a_corCoar.copyTo(localCor);
@@ -244,10 +243,9 @@ namespace PrCh_AMR_Elliptic
       auto dit   =  a_phiMedi.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        pr_bd & corfab =   localCor[dit[ibox]];
-        pr_bd & phifab =  a_phiMedi[dit[ibox]];
-
-        pr_bd fineCorr = interp_stencil(corfab);
+        pr_box_data & corfab =   localCor[dit[ibox]];
+        pr_box_data & phifab =  a_phiMedi[dit[ibox]];
+        pr_box_data fineCorr = interp_stencil(corfab);
         phifab += fineCorr;
       }
     }
@@ -278,13 +276,6 @@ namespace PrCh_AMR_Elliptic
       a_lhs.setToZero();
     }
 
-    virtual 
-    void fillFluxes(shared_ptr<pr_xfac_data> xflux_coar_ptr,
-                    shared_ptr<pr_yfac_data> yflux_coar_ptr,
-                    shared_ptr<pr_zfac_data> zflux_coar_ptr)
-    {
-      ch_mayday::Error("not implemented");
-    }
     /// 
     virtual void
     refluxFineCorrection(pr_lbd       &  a_lphCoar,
@@ -301,22 +292,55 @@ namespace PrCh_AMR_Elliptic
       typedef PrCh_Tools::FluxRegister<ncomp> pr_ch_flux_reg;
       pr_ch_flux_reg flux_register(dbl_coar, dbl_fine, ref_ratio);
 
-      shared_ptr<pr_xfac_data> xflux_coar_ptr;
-      shared_ptr<pr_yfac_data> yflux_coar_ptr;
-      shared_ptr<pr_zfac_data> zflux_coar_ptr;
-      shared_ptr<pr_xfac_data> xflux_fine_ptr;
-      shared_ptr<pr_yfac_data> yflux_fine_ptr;
-      shared_ptr<pr_zfac_data> zflux_fine_ptr;
-      cast_finer_op->fillFluxes(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
-      this->fillFluxes(         xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
-      flux_register.setCoarFlux(xflux_coar_ptr, yflux_coar_ptr, zflux_coar_ptr);
-      flux_register.setFineFlux(xflux_fine_ptr, yflux_fine_ptr, zflux_fine_ptr);
+      shared_ptr<pr_xfac_data> xflux_coar(new pr_xfac_data(dbl_coar, pr_pt::Zero()));
+      shared_ptr<pr_yfac_data> yflux_coar(new pr_yfac_data(dbl_coar, pr_pt::Zero()));
+      shared_ptr<pr_xfac_data> xflux_fine(new pr_xfac_data(dbl_fine, pr_pt::Zero()));
+      shared_ptr<pr_yfac_data> yflux_fine(new pr_yfac_data(dbl_fine, pr_pt::Zero()));
+#if DIM==3                                                                      
+      shared_ptr<pr_zfac_data> zflux_coar(new pr_zfac_data(dbl_coar, pr_pt::Zero()));
+      shared_ptr<pr_zfac_data> zflux_fine(new pr_zfac_data(dbl_fine, pr_pt::Zero()));
+#else
+      shared_ptr<pr_zfac_data> zflux_coar, zflux_fine;
+#endif
+      
+      cast_finer_op->fillFluxes(xflux_fine, yflux_fine, zflux_fine, a_phiFine);
+      this->fillFluxes(         xflux_coar, yflux_coar, zflux_coar, a_phiCoar);
+      flux_register.setCoarFlux(xflux_coar, yflux_coar, zflux_coar);
+      flux_register.setFineFlux(xflux_fine, yflux_fine, zflux_fine);
       flux_register.reflux(a_lphCoar, dxCoar);
 
       ///  end reflux bit
     }    //end function refluxFineCorrection
       
 
+    virtual 
+    void fillFluxes(shared_ptr<pr_xfac_data> a_xflux,
+                    shared_ptr<pr_yfac_data> a_yflux,
+                    shared_ptr<pr_zfac_data> a_zflux,
+                    const pr_lbd          &  a_phi)
+    {
+      auto grids =  a_phi.layout();
+      auto dit   =  a_phi.begin();
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        pr_box valid = grids[dit[ibox]];
+        const pr_box_data & phi_fab = a_phi[dit[ibox]];
+        {
+          pr_box_data & xflux_fab =   (*a_xflux)[dit[ibox]];
+          getFlux(xflux_fab, phi_fab, valid, 0, ibox);
+        }
+        {
+          pr_box_data & yflux_fab =   (*a_yflux)[dit[ibox]];
+          getFlux(yflux_fab, phi_fab, valid, 1, ibox);
+        }
+#if DIM==3        
+        {
+          pr_box_data & zflux_fab =   (*a_zflux)[dit[ibox]];
+          getFlux(zflux_fab, phi_fab, valid, 2, ibox);
+        }
+#endif        
+      }
+    }
     ///
     /**
        This is the getFlux interface that refluxFineCorrection uses. 
