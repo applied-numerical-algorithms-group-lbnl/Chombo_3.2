@@ -303,8 +303,8 @@ namespace PrCh_AMR_Elliptic
       shared_ptr<pr_zfac_data> zflux_coar, zflux_fine;
 #endif
       
-      cast_finer_op->fillFluxes(xflux_fine, yflux_fine, zflux_fine, a_phiFine);
       this->fillFluxes(         xflux_coar, yflux_coar, zflux_coar, a_phiCoar);
+      cast_finer_op->fillFluxes(xflux_fine, yflux_fine, zflux_fine, a_phiFine);
       flux_register.setCoarFlux(xflux_coar, yflux_coar, zflux_coar);
       flux_register.setFineFlux(xflux_fine, yflux_fine, zflux_fine);
       flux_register.reflux(a_lphCoar, dxCoar);
@@ -321,6 +321,7 @@ namespace PrCh_AMR_Elliptic
     {
       auto grids =  a_phi.layout();
       auto dit   =  a_phi.begin();
+      int ibreak = 4586; //just for getting gdb to stop in the right place
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
         pr_box valid = grids[dit[ibox]];
@@ -328,15 +329,18 @@ namespace PrCh_AMR_Elliptic
         {
           pr_box_data & xflux_fab =   (*a_xflux)[dit[ibox]];
           getFlux(xflux_fab, phi_fab, valid, 0, ibox);
+          ibreak = 4586; //just for getting gdb to stop in the right place
         }
         {
           pr_box_data & yflux_fab =   (*a_yflux)[dit[ibox]];
           getFlux(yflux_fab, phi_fab, valid, 1, ibox);
+          ibreak = 4586; //just for getting gdb to stop in the right place
         }
 #if DIM==3        
         {
           pr_box_data & zflux_fab =   (*a_zflux)[dit[ibox]];
           getFlux(zflux_fab, phi_fab, valid, 2, ibox);
+          ibreak = 4586; //just for getting gdb to stop in the right place
         }
 #endif        
       }

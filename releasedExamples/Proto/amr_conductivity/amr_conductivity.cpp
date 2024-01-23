@@ -14,6 +14,24 @@
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
 #include "Proto_Conductivity_Op.H"
 #include "DebuggingTools.H"
+/****************/
+PROTO_KERNEL_START 
+
+unsigned int setPhiQuadF(int                     a_pt[DIM],
+                         Proto::Var<double, 1>   a_phi,
+                         double                  a_aco,
+                         double                  a_bco,
+                         double                  a_cco,
+                         double                  a_dx,
+                         int                     a_direction)
+{
+  double xval = a_dx*(double(a_pt[a_direction]) + 0.5);
+  double phival = a_aco*xval*xval + a_bco*xval + a_cco;
+  a_phi(0) = phival;
+  return 0;
+
+}
+PROTO_KERNEL_END(setPhiQuadF, setPhiQuad) 
 
 namespace Chombo
 {
@@ -36,6 +54,8 @@ namespace Chombo
     typedef        DisjointBoxLayout         ch_dbl;
     typedef Proto::DisjointBoxLayout         pr_dbl;
     typedef Proto::Point                     pr_pt;
+    typedef Proto::Box                       pr_box;
+    typedef Proto::BoxData<double, 1>        pr_box_data;
 
     ///
     static void
@@ -82,7 +102,33 @@ namespace Chombo
         (*a_bcoef)[dit[ibox]].setVal(a_bval);
       }
     } //end function defineAndSetCoefficients
-    
+
+    static void
+
+    ///
+    /**
+       Sets initial guess to phi to a polynomial.
+       Does not make much sense outside debugging.
+     **/
+    setInitialPhi(Vector<pr_lbd*>   a_phi_pr,   Vector<double> a_amrDx)
+    {
+      ///phi = a x^2 + b x + c
+      ///this is a debugging thing so I am just going to set them
+      double acoef = 0., bcoef = 1., ccoef = 4.586; int direction = 0;
+      for(int ilev = 0; ilev < a_phi_pr.size(); ilev++)
+      {
+        auto dit   = a_phi_pr[ilev]->begin();
+        auto grids = a_phi_pr[ilev]->layout();
+        double dx = a_amrDx[ilev];
+        for(int ibox = 0; ibox < dit.localSize(); ibox++)
+        {
+          pr_box_data& phi = (*a_phi_pr[ilev])[dit[ibox]];
+          pr_box valid     =             grids[dit[ibox]];
+          Proto::forallInPlace_i(setPhiQuad, valid, phi,
+                                 acoef, bcoef, ccoef, dx, direction);
+        }
+      }
+    }
     ///
     static void
     solveForPhi(Vector<ch_ldf_cell* >   a_phi_ch,
@@ -147,8 +193,16 @@ namespace Chombo
       }
 
       //solve for phi on the device
+#if 0
+      ///standard code where initial guess for phi is zero
       bool zeroInitialGuess = true;  int lbase = 0; int lmax = numLevels-1; bool print = true;
       amr_solver_ptr->solve(phi_pr, rhs_pr, lmax, lbase, zeroInitialGuess, print); 
+#else
+      ///code where I set phi to something I know and so I can look at initial residuals
+      setInitialPhi(phi_pr, a_amrDx);
+      bool zeroInitialGuess = false;  int lbase = 0; int lmax = numLevels-1; bool print = true;
+      amr_solver_ptr->solve(phi_pr, rhs_pr, lmax, lbase, zeroInitialGuess, print);
+#endif      
 
       //get phi back onto the host
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
