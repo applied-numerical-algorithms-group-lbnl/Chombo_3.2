@@ -103,13 +103,84 @@ namespace Chombo
       }
     } //end function defineAndSetCoefficients
 
-    static void
+    ///
+    static int
+    testFluxRegister(Vector<ch_dbl  >&  a_amr_grids,
+                     Vector<ch_dom  >&  a_amr_domains,
+                     Vector<int     >&  a_ref_ratios,
+                     Vector<Real    >&  a_amrDx)
+    {
+      typedef PrCh_Tools::FluxRegister<1> prch_flux_reg;
+      typedef Proto::LevelBoxData<double, 1, Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >   pr_cell_data;
+      typedef Proto::LevelBoxData<double, 1, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >   pr_xfac_data;
+      typedef Proto::LevelBoxData<double, 1, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >   pr_yfac_data;
+      typedef Proto::LevelBoxData<double, 1, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >   pr_zfac_data;
+      ///define the proto versions of the data
+      int numLevels = a_amr_domains.size();
+      vector<shared_ptr< pr_dbl> >    grids_pr(numLevels);
+      for(int ilev = 0; ilev < numLevels; ilev++)
+      {
+        grids_pr[ilev] = PrChUtilities<1>::getProtoLayout(a_amr_grids[ilev]);
+      }
+      
+      /**
+         Outline:
+         1. Define a bunch of fluxes at each level. 
+         2. Set them to constant != 0, 
+         3. Do the reflux dance and check to see if the difference is zero
+      **/
+      double flux_val = 4.586;
+      for(int ilev = 0; ilev < numLevels; ilev++)
+      {
+        if(ilev < (numLevels-1))
+        {
+          pr_dbl& grids_coar = (*grids_pr[ilev  ]);
+          pr_dbl& grids_fine = (*grids_pr[ilev+1]);
+          int ref_ratio = a_ref_ratios[ilev];
+          double dx_coar = a_amrDx[ilev];
+          shared_ptr<pr_cell_data>   solun_incr(new pr_cell_data(grids_coar, pr_pt::Zeros()));
+          shared_ptr<pr_xfac_data>   xflux_coar(new pr_xfac_data(grids_coar, pr_pt::Zeros()));
+          shared_ptr<pr_xfac_data>   xflux_fine(new pr_xfac_data(grids_fine, pr_pt::Zeros()));
+          shared_ptr<pr_yfac_data>   yflux_coar(new pr_yfac_data(grids_coar, pr_pt::Zeros()));
+          shared_ptr<pr_yfac_data>   yflux_fine(new pr_yfac_data(grids_fine, pr_pt::Zeros()));
+#if DIM==3      
+          shared_ptr<pr_zfac_data>   zflux_coar(new pr_zfac_data(grids_coar, pr_pt::Zeros()));
+          shared_ptr<pr_zfac_data>   zflux_fine(new pr_zfac_data(grids_fine, pr_pt::Zeros()));
+#else
+          shared_ptr<pr_zfac_data>   zflux_coar;
+          shared_ptr<pr_zfac_data>   zflux_fine;
+#endif
+          solun_incr->setVal(0.);
+          xflux_coar->setVal(flux_val);
+          xflux_fine->setVal(flux_val);
+          yflux_coar->setVal(flux_val);
+          yflux_fine->setVal(flux_val);
+#if DIM==3         
+          zflux_coar->setVal(flux_val);
+          zflux_fine->setVal(flux_val);
+#endif
+          prch_flux_reg flux_register(grids_coar, grids_fine, ref_ratio);
+          flux_register.setCoarFlux(  xflux_coar, yflux_coar, zflux_coar);
+          flux_register.setFineFlux(  xflux_fine, yflux_fine, zflux_fine);
+          flux_register.reflux(*solun_incr, dx_coar);
+          double remainderNorm = solun_incr->absMax();
+          double tol = 1.0e-10;
+          if(remainderNorm > tol)
+          {
+            pout() << "testFluxRegister: ||remainder|| = " << remainderNorm << ", tol = "<< tol << endl;
+            return -4586;
+          }
+        } //end if ilev < numLevels-1
+      }//   end loop over levels
+      return 0;
+    }//end function testFluxRegister
 
     ///
     /**
        Sets initial guess to phi to a polynomial.
        Does not make much sense outside debugging.
      **/
+    static void
     setInitialPhi(Vector<pr_lbd*>   a_phi_pr,   Vector<double> a_amrDx)
     {
       ///phi = a x^2 + b x + c
@@ -128,9 +199,10 @@ namespace Chombo
                                  acoef, bcoef, ccoef, dx, direction);
         }
       }
+      return;
     }
     ///
-    static void
+    static int
     solveForPhi(Vector<ch_ldf_cell* >   a_phi_ch,
                 Vector<ch_ldf_cell* >   a_rhs_ch,
                 Vector<ch_dbl  >&  a_amr_grids,
@@ -140,7 +212,14 @@ namespace Chombo
     {
       CH_TIME("solveForPhi");
       int numLevels = a_amr_grids.size();
-      
+
+      ///opening act slipped in here because it was convenient
+      int ifluxReg = testFluxRegister(a_amr_grids, a_amr_domains, a_ref_ratios, a_amrDx);
+      if(ifluxReg != 0)
+      {
+        pout() << "solveForPhi: problem in testFluxRegister" << endl;
+        return ifluxReg;
+      }
       ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
       shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());
@@ -216,6 +295,7 @@ namespace Chombo
         delete(phi_pr[ilev]);
         delete(rhs_pr[ilev]);
       }
+      return 0;
     }//end function solveForPhi
   
 
@@ -224,7 +304,7 @@ namespace Chombo
     {
       CH_TIME("runSolver");
 
-
+      
       // set up grids&
       Vector<ch_dbl> amrGrids;
       Vector<ch_dom> amrDomains;
@@ -256,7 +336,12 @@ namespace Chombo
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
-      solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx);
+      int iret = solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx);
+      if(iret != 0)
+      {
+        pout() << "runSolver: solveForPhi returned "  << iret << endl;
+        return iret;
+      }
 
 #ifdef CH_USE_HDF5
       //write the answer to file

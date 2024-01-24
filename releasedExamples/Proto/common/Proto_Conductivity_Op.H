@@ -49,7 +49,7 @@ unsigned int  operaConduF(int                     a_pt[DIM],
 }
 PROTO_KERNEL_END(operaConduF, operaCondu)
 
-///lamdbda = safety/approximate_diagonal
+///lambda = safety/approximate_diagonal
 /**
    
    The true diagonal here is 
