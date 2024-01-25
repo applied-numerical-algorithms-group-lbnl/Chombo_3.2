@@ -160,9 +160,10 @@ namespace Chombo
           zflux_fine->setVal(flux_val);
 #endif
           prch_flux_reg flux_register(grids_coar, grids_fine, ref_ratio);
-          flux_register.setCoarFlux(  xflux_coar, yflux_coar, zflux_coar);
-          flux_register.setFineFlux(  xflux_fine, yflux_fine, zflux_fine);
-          flux_register.reflux(*solun_incr, dx_coar);
+          bool verbose = true;
+          flux_register.setCoarFlux(  xflux_coar, yflux_coar, zflux_coar, verbose);
+          flux_register.setFineFlux(  xflux_fine, yflux_fine, zflux_fine, verbose);
+          flux_register.reflux(*solun_incr, dx_coar, verbose);
           double remainderNorm = solun_incr->absMax();
           double tol = 1.0e-10;
           if(remainderNorm > tol)

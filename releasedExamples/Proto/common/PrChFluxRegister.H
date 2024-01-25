@@ -125,7 +125,8 @@ namespace PrCh_Tools
     ///
     void setCoarFlux(shared_ptr<pr_xfac_data> a_xflux_coar,
                      shared_ptr<pr_yfac_data> a_yflux_coar,
-                     shared_ptr<pr_zfac_data> a_zflux_coar)
+                     shared_ptr<pr_zfac_data> a_zflux_coar,
+                     bool a_verbose)
     {
       
       CH_TIME("PrChFluxRegister::setCoarFlux");
@@ -133,8 +134,17 @@ namespace PrCh_Tools
       a_yflux_coar->copyTo(*m_yflux_coar);
 #if DIM==3      
       a_zflux_coar->copyTo(*m_zflux_coar);
-#endif      
-    }
+#endif
+      if(a_verbose)
+      {
+        Chombo::pout() << " after setCoarFlux: " << endl;
+        Chombo::pout() << " m_xflux_coar->max() = " << m_xflux_coar->max() << " m_xflux_coar->min() = " << m_xflux_coar->min()  << endl;
+        Chombo::pout() << " m_yflux_coar->max() = " << m_yflux_coar->max() << " m_yflux_coar->min() = " << m_yflux_coar->min()  << endl;
+#if DIM==3                                                                                                                     
+        Chombo::pout() << " m_zflux_coar->max() = " << m_zflux_coar->max() << " m_zflux_coar->min() = " << m_zflux_coar->min()  << endl;
+#endif
+      } // end verbosity check
+    }   // end function setCoarFlux
     
     /// sets internal cofi buffers = average of fine fluxes
     /***
@@ -142,7 +152,8 @@ namespace PrCh_Tools
     **/
     void setFineFlux(shared_ptr<pr_xfac_data> a_xflux_fine,
                      shared_ptr<pr_yfac_data> a_yflux_fine,
-                     shared_ptr<pr_zfac_data> a_zflux_fine)
+                     shared_ptr<pr_zfac_data> a_zflux_fine,
+                     bool a_verbose)
     {
       CH_TIME("PrChFluxRegister::setFineFlux");
       auto dit   =  a_xflux_fine->begin();
@@ -172,15 +183,25 @@ namespace PrCh_Tools
 #if DIM==3    
           PrChTools::AveragingUtilities::averageDownFace(zcofi_comp, zfine_comp, cofi_valid, m_ref_ratio, 2);
 #endif
-        }
-      }
-    }
+        } // end loop over components
+      }   // end loop over boxes
+      if(a_verbose)
+      {
+        Chombo::pout() << " after setCoarFlux: " << endl;
+        Chombo::pout() << " m_xflux_cofi->max() = " << m_xflux_cofi->max() << " m_xflux_cofi->min() = " << m_xflux_cofi->min()  << endl;
+        Chombo::pout() << " m_yflux_cofi->max() = " << m_yflux_cofi->max() << " m_yflux_cofi->min() = " << m_yflux_cofi->min()  << endl;
+#if DIM==3                                                                                                                     
+        Chombo::pout() << " m_zflux_cofi->max() = " << m_zflux_cofi->max() << " m_zflux_cofi->min() = " << m_zflux_cofi->min()  << endl;
+#endif
+      }   // end verbosity check
+    }     // end function setFineFlux
 
     /// 
     /**
        // U -= Div(Ave(F_fine) - Fcoar)
      **/
-    void reflux(pr_cell_data & a_soln_coar, const double& a_dx)
+    void reflux(pr_cell_data & a_soln_coar, const double& a_dx, bool a_verbose)
+
     {
       CH_TIME("PrChFluxRegister::reflux");
       
@@ -199,16 +220,38 @@ namespace PrCh_Tools
         pr_sten  righ_sten(righ, weight);
         pr_sten  iph_minu_imh = (righ_sten - home_sten);
         div_stencils[deriv_dir] = iph_minu_imh;
+        if(a_verbose)
+        {
+          Chombo::pout() << "reflux: div_stencils[" << deriv_dir << "] = " << endl;
+          div_stencils[deriv_dir].print();
+        }
       }
       /**
-         // Set buff = flux_coar.   
+         // Stage 1: 
+         //  Set buff = flux_coar.   
       **/
       m_xflux_coar->copyTo(*m_xbuff_coar);
       m_yflux_coar->copyTo(*m_ybuff_coar);
 #if DIM==3                          
       m_zflux_coar->copyTo(*m_zbuff_coar);
 #endif      
+      if(a_verbose)
+      {
+        double max_x = m_xbuff_coar->max(); double min_x = m_xbuff_coar->min();
+        double max_y = m_ybuff_coar->max(); double min_y = m_xbuff_coar->min();
+#if DIM==3                                                                  
+        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min();
+#endif
+        Chombo::pout() << "reflux: After stage 1 (coarse flux only): " << endl;
+        Chombo::pout() <<  " max_x = " << max_x << ", min_x = " << min_x << endl;
+        Chombo::pout() <<  " max_y = " << max_y << ", min_y = " << min_y << endl;
+#if DIM==3                                                               
+        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min;
+        Chombo::pout() <<  " max_z = " << max_z << ", min_z = " << min_z << endl;
+#endif
+      }
       /**
+         //  Stage 2:
          //  Copy over from the flux_cofi
          //  so now buff = f_composite(flux_coar, flux_cofi)
          //    f_composite_i = flux_cofi_i  if i is covered by finer grid
@@ -220,8 +263,24 @@ namespace PrCh_Tools
 #if DIM==3                          
       m_zflux_cofi->copyTo(*m_zbuff_coar);
 #endif      
+      if(a_verbose)
+      {
+        Chombo::pout() << "reflux: After stage 2 (composite coar/cofi): " << endl;
 
-      /**
+        double max_x = m_xbuff_coar->max(); double min_x = m_xbuff_coar->min();
+        double max_y = m_ybuff_coar->max(); double min_y = m_xbuff_coar->min();
+#if DIM==3                                                                  
+        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min();
+#endif
+        Chombo::pout() <<  " max_x = " << max_x << ", min_x = " << min_x << endl;
+        Chombo::pout() <<  " max_y = " << max_y << ", min_y = " << min_y << endl;
+#if DIM==3                                                               
+        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min;
+        Chombo::pout() <<  " max_z = " << max_z << ", min_z = " << min_z << endl;
+#endif
+      }
+
+      /** Stage 3:
        //  Refluxing dance.   Should be able to do all this within the dataiterator loop
        //  to avoid yet more temporary data.
        //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
@@ -230,9 +289,14 @@ namespace PrCh_Tools
        //     Div(Fdiff) = (1/dxcoar)*sum(i<DIM)(Fdiff_i+1/2 - Fdiff_i-1/2)
        //  3. a_lph -= Div(Fdiff)
        **/
+      Chombo::pout() << "reflux stage 3: reflux divergence and increment: " << endl;
+      int ibox_print = 0; ///only print tons of stuff on box this one box
       auto dit   =  a_soln_coar.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
+        ///whether to print stuff for this particular box
+        bool verb_box = a_verbose && (ibox == ibox_print);
+        
         auto & buff_x = (*m_xbuff_coar)[dit[ibox]];
         auto & flux_x = (*m_xflux_coar)[dit[ibox]];
         auto & buff_y = (*m_ybuff_coar)[dit[ibox]];
@@ -242,37 +306,86 @@ namespace PrCh_Tools
         auto & flux_z = (*m_zbuff_coar)[dit[ibox]];
 #endif        
 
+        if(verb_box)
+        {
+          Chombo::pout() << " reflux: Buffers should hold composite coar/cofi flux: " << endl;
+          
+          Chombo::pout() << " buff_x.max() = " << buff_x.max() << ", buff_x.min() = " << buff_x.min() << endl;
+          Chombo::pout() << " buff_y.max() = " << buff_y.max() << ", buff_y.min() = " << buff_y.min() << endl;
+#if DIM==3                                    
+          Chombo::pout() << " buff_z.max() = " << buff_z.max() << ", buff_z.min() = " << buff_z.min() << endl;
+#endif          
+          Chombo::pout() << " flux_x.max() = " << flux_x.max() << ", flux_x.min() = " << flux_x.min() << endl;
+          Chombo::pout() << " flux_y.max() = " << flux_y.max() << ", flux_y.min() = " << flux_y.min() << endl;
+#if DIM==3                                                                                           
+          Chombo::pout() << " flux_z.max() = " << flux_z.max() << ", flux_z.min() = " << flux_z.min() << endl;
+#endif          
+        }
         //  1. Subtract off coarse flux everywhere  to make buff = Fdiff
         buff_x -= flux_x;
         buff_y -= flux_y;
 #if DIM==3                          
         buff_z -= flux_z;
-#endif      
+#endif
+        if(verb_box)
+        {
+          Chombo::pout() << " reflux: Buffers should hold Fdiff = Fcomposite - Fcoar (zero where they match): " << endl;
+          Chombo::pout() << " buff_x.max() = " << buff_x.max() << ", buff_x.min() = " << buff_x.min() << endl;
+          Chombo::pout() << " buff_y.max() = " << buff_y.max() << ", buff_y.min() = " << buff_y.min() << endl;
+#if DIM==3                                    
+          Chombo::pout() << " buff_z.max() = " << buff_z.max() << ", buff_z.min() = " << buff_z.min() << endl;
+#endif          
+        }
+        
         //  2. Compute reflux divergence D_R= Div(Fdiff)
         pr_box valid = m_grids_coar[dit[ibox]];
         pr_box_data_ncomp div_reflux(valid);
+        if(verb_box)
+        {
+          Chombo::pout() << "reflux going into component loop: " << endl;
+          Chombo::pout() << " valid =   " << valid << endl;
+        }
+        ///only printing first component
+        int icomp_print = 0;
         for(int icomp = 0; icomp < ncomp; icomp++)
         {
+          bool verb_comp = verb_box && (icomp == icomp_print);
           auto output_comp = Proto::slice(div_reflux, icomp);
-        
-          pr_box_data_sca div_incr(valid);
+
+          /// the setvals are not strictly necessary
+          pr_box_data_sca div_incr_x(valid);  div_incr_x.setVal(0.);
+          pr_box_data_sca div_incr_y(valid);  div_incr_y.setVal(0.);
+          pr_box_data_sca div_incr_z(valid);  div_incr_z.setVal(0.);
+
           auto xflux_comp = Proto::slice(buff_x, icomp);
           auto yflux_comp = Proto::slice(buff_y, icomp);
 #if DIM==3          
           auto zflux_comp = Proto::slice(buff_z, icomp);
 #endif          
-
           //rememeber that this goes src, dst so div_incr is the output
-          div_stencils[0].apply(xflux_comp, div_incr, valid, initToZero, applyScale);
-          output_comp+= div_incr;
-          //rememeber that this goes src, dst so div_incr is the output
-          div_stencils[1].apply(yflux_comp, div_incr, valid, initToZero, applyScale);
-          output_comp+= div_incr;
+          div_stencils[0].apply(xflux_comp, div_incr_x, valid, initToZero, applyScale);
+          div_stencils[1].apply(yflux_comp, div_incr_y, valid, initToZero, applyScale);
 #if DIM==3        
-          //rememeber that this goes src, dst so div_incr is the output
-          div_stencils[2].apply(zflux_comp, div_incr, valid, initToZero, applyScale);
-          output_comp+= div_incr;
-#endif              
+          div_stencils[2].apply(zflux_comp, div_incr_z, valid, initToZero, applyScale);
+#endif
+          ///initialize divergence to zero then add increment from each direction
+          output_comp.setVal(0.);
+          output_comp += div_incr_x;
+          output_comp += div_incr_y;
+#if DIM==3        
+          output_comp += div_incr_z;
+#endif          
+          if(verb_comp)
+          {
+            Chombo::pout() << " reflux: big incr bit: " << endl;
+
+            Chombo::pout() << " div_incr_x.max() = " << div_incr_x.max()<< " div_incr_x.min() = " << div_incr_x.min()<< endl;
+            Chombo::pout() << " div_incr_y.max() = " << div_incr_y.max()<< " div_incr_y.min() = " << div_incr_y.min()<< endl;
+#if DIM==3                                                                                                           
+            Chombo::pout() << " div_incr_z.max() = " << div_incr_z.max()<< " div_incr_z.min() = " << div_incr_z.min()<< endl;
+#endif                                                                                                               
+            Chombo::pout() << " divergence.max() = " <<output_comp.max()<< " divergence.min() = " <<output_comp.min() << endl;
+          }
         } // end loop over components
 
         //  3. a_lph -= Div(Fdiff)

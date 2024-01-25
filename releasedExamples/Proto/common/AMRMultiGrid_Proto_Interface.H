@@ -305,9 +305,10 @@ namespace PrCh_AMR_Elliptic
       
       this->fillFluxes(         xflux_coar, yflux_coar, zflux_coar, a_phiCoar);
       cast_finer_op->fillFluxes(xflux_fine, yflux_fine, zflux_fine, a_phiFine);
-      flux_register.setCoarFlux(xflux_coar, yflux_coar, zflux_coar);
-      flux_register.setFineFlux(xflux_fine, yflux_fine, zflux_fine);
-      flux_register.reflux(a_lphCoar, dxCoar);
+      bool verbose = false; //turn on for flux register diagnostics
+      flux_register.setCoarFlux(xflux_coar, yflux_coar, zflux_coar, verbose);
+      flux_register.setFineFlux(xflux_fine, yflux_fine, zflux_fine, verbose);
+      flux_register.reflux(a_lphCoar, dxCoar, verbose);
 
       ///  end reflux bit
     }    //end function refluxFineCorrection
