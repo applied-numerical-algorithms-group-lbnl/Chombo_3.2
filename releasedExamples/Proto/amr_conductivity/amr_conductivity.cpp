@@ -221,6 +221,10 @@ namespace Chombo
         pout() << "solveForPhi: problem in testFluxRegister" << endl;
         return ifluxReg;
       }
+      else
+      {
+        pout() << "solveForPhi: testFluxRegister passed" << endl;
+      }
       ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd > ());
       shared_ptr<LinearSolver<pr_lbd>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd > ());

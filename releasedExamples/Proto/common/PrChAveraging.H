@@ -59,7 +59,7 @@ namespace PrChTools
                     int                 a_ref_rat,
                     int                 a_face_dir)
     {
-      pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
+      pr_box unit_box(pr_pt::Zeros(), pr_pt::Zeros());
       pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
       pr_box ref_box = unit_box.refine(pt_ref_rat);
       // only include faces on the same facedir plane
@@ -80,14 +80,14 @@ namespace PrChTools
     /// for averaging stuff based in cells
     /**
        set coarse value to arithmetic average of all fine cell values.
-     **/
+    **/
     static void
     averageDownCell(pr_box_data       & a_coar,
                     const pr_box_data & a_fine,
                     const pr_box      & a_coar_valid,
                     int                 a_ref_rat)
     {
-        pr_box unit_box(pr_pt::Zeros(), pr_pt::Ones());
+      pr_box unit_box(pr_pt::Zeros(), pr_pt::Zeros());
       pr_pt pt_ref_rat = pr_pt::Ones( a_ref_rat);
       pr_box ref_box = unit_box.refine(pt_ref_rat);
       pr_sten whole_sten = getStencilFromRefBox(ref_box, a_ref_rat);

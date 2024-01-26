@@ -167,6 +167,15 @@ namespace PrCh_Tools
         auto & fine_zfab = (*a_zflux_fine)[dit[ibox]];
         auto & cofi_zfab = (*a_zflux_cofi)[dit[ibox]];
 #endif
+      if(a_verbose)
+      {
+        Chombo::pout() << " going into setFineFlux: " << endl;
+        Chombo::pout() << " a_xflux_fine->max() = " << a_xflux_fine->max() << " a_xflux_fine->min() = " << a_xflux_fine->min()  << endl;
+        Chombo::pout() << " a_yflux_fine->max() = " << a_yflux_fine->max() << " a_yflux_fine->min() = " << a_yflux_fine->min()  << endl;
+#if DIM==3        
+        Chombo::pout() << " a_zflux_fine->max() = " << a_zflux_fine->max() << " a_zflux_fine->min() = " << a_zflux_fine->min()  << endl;
+#endif
+      }   // end verbosity check
         pr_box cofi_valid = m_grids_cofi[dit[ibox]];
         for(int icomp = 0; icomp < ncomp; icomp++)
         {
@@ -187,7 +196,7 @@ namespace PrCh_Tools
       }   // end loop over boxes
       if(a_verbose)
       {
-        Chombo::pout() << " after setCoarFlux: " << endl;
+        Chombo::pout() << " after setFineFlux: " << endl;
         Chombo::pout() << " m_xflux_cofi->max() = " << m_xflux_cofi->max() << " m_xflux_cofi->min() = " << m_xflux_cofi->min()  << endl;
         Chombo::pout() << " m_yflux_cofi->max() = " << m_yflux_cofi->max() << " m_yflux_cofi->min() = " << m_yflux_cofi->min()  << endl;
 #if DIM==3                                                                                                                     
@@ -289,7 +298,10 @@ namespace PrCh_Tools
        //     Div(Fdiff) = (1/dxcoar)*sum(i<DIM)(Fdiff_i+1/2 - Fdiff_i-1/2)
        //  3. a_lph -= Div(Fdiff)
        **/
-      Chombo::pout() << "reflux stage 3: reflux divergence and increment: " << endl;
+      if(a_verbose)
+      {
+        Chombo::pout() << "reflux stage 3: reflux divergence and increment: " << endl;
+      }
       int ibox_print = 0; ///only print tons of stuff on box this one box
       auto dit   =  a_soln_coar.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
