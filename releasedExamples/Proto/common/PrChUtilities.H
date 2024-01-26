@@ -156,11 +156,12 @@ namespace Chombo
     
     ///just always tag IntVect::Zero;
     static void
-    setupLLCornerGrids(Vector<ch_dbl>& a_amrGrids,
-                       Vector<ch_dom>& a_amrDomains,
-                       Vector<int>& a_refRatios,
-                       Vector<Real>& a_amrDx,
-                       int& a_max_level)
+    setupGridsWithTagLocation(Vector<ch_dbl>& a_amrGrids,
+                              Vector<ch_dom>& a_amrDomains,
+                              Vector<int>& a_refRatios,
+                              Vector<Real>& a_amrDx,
+                              int& a_max_level,
+                              RealVect  a_tag_location)
     {
       CH_TIME("PrChUtilities::setupLLCornerGrids");
 
@@ -265,9 +266,24 @@ namespace Chombo
           old_meshes[lev] = Vector<Box>(1, whole_dom);
         }
 
-        //just always tag IntVect::Zero;
-        IntVectSet taglev(IntVect::Zero);
-        Vector<IntVectSet> tags(maxNumLevels, taglev);
+        double base_dx = a_amrDx[0];
+        IntVect base_tag;
+        for(int idir = 0; idir < DIM; idir++)
+        {
+          double tag_loc = a_tag_location[idir]/base_dx;
+          base_tag[idir] = int(tag_loc);
+        }
+
+        IntVect tag_lev_pt = base_tag;
+        Vector<IntVectSet>  tags(maxNumLevels);
+        for(int ilev = 0; ilev < maxNumLevels; ilev++)
+        {
+          tags[ilev] = IntVectSet(tag_lev_pt);
+          if(ilev < (maxNumLevels-1))
+          {
+            tag_lev_pt *= a_refRatios[ilev];
+          }
+        }
         Vector<Vector<Box> > new_meshes;
 
         meshGen.regrid(new_meshes, tags,  0, a_max_level,  old_meshes);
@@ -285,8 +301,18 @@ namespace Chombo
           }
         }
       }
-    } //end setupLLCornerGrids
+    } //end setupGridsWithTagLocation
     
+    ///just always tag IntVect::Zero;
+    static void
+    setupLLCornerGrids(Vector<ch_dbl>& a_amrGrids,
+                       Vector<ch_dom>& a_amrDomains,
+                       Vector<int>& a_refRatios,
+                       Vector<Real>& a_amrDx,
+                       int& a_max_level)
+    {
+      setupGridsWithTagLocation(a_amrGrids, a_amrDomains, a_refRatios, a_amrDx, a_max_level, RealVect::Zero);
+    }
     ///Gets the data pointers from fabs.
     static vector<double*>
     getRawHostData(const ch_ldf_cell     & a_host_data) 

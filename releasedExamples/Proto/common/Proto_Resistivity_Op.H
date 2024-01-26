@@ -884,12 +884,34 @@ namespace PrCh_AMR_Elliptic
     }
 
     ///fill in the values. memory is already allocated
-    virtual void getFlux(pr_box_data       & a_flux,
-                         const pr_box_data & a_phi,
-                         const pr_box      & a_face_box,
-                         int a_idir,  int a_ibox)
+    virtual void getFlux(pr_box_data_three       & a_flux,
+                         const pr_box_data_three & a_phi,
+                         const pr_box            & a_face_box,
+                         int a_face_dir,  int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for resistivity");
+      auto dit   = m_eta_x->begin();
+      pr_box                 valid =   m_grids[dit[a_ibox]];
+      pr_box_data_thrdim &   grad =  (*m_grad)[dit[a_ibox]];
+      pr_box_data_sca * eta_ptr = NULL;
+      if(a_face_dir == 0)
+      {
+        eta_ptr = &( (*m_eta_x)[dit[a_ibox]] );
+      }
+      else if(a_face_dir == 1)
+      {
+        eta_ptr = &( (*m_eta_y)[dit[a_ibox]] );
+      }
+#if DIM==3
+      else if(a_face_dir == 2)
+      {
+        eta_ptr = &( (*m_eta_z)[dit[a_ibox]] );
+      }
+#endif
+      else
+      {
+        ch_mayday::Error("Proto_Resistivity_Op::getFlux: bogus face_dir");
+      }
+      getFlux(a_flux, a_phi, *eta_ptr, grad, valid, a_face_dir);
     }
 
     ///used in refluxing

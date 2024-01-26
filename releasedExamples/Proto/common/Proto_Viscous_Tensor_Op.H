@@ -961,9 +961,38 @@ namespace PrCh_AMR_Elliptic
     virtual void getFlux(pr_box_data       & a_flux,
                          const pr_box_data & a_phi,
                          const pr_box      & a_face_box,
-                         int a_idir,  int a_ibox)
+                         int a_face_dir,  int a_ibox)
     {
-      ch_mayday::Error("get flux not implemented for helmholtz");
+      shared_ptr<pr_cell_data_sca>  m_acoef;
+      
+      auto dit   = m_acoef->begin();
+      pr_box            valid =   m_grids[dit[a_ibox]];
+      pr_box_data_ten &  grad = (*m_grad)[dit[a_ibox]];
+      pr_box_data_sca * eta_ptr = NULL;
+      pr_box_data_sca * lam_ptr = NULL;
+      if(a_face_dir == 0)
+      {
+        eta_ptr = &( (*m_eta_x)[dit[a_ibox]] );
+        lam_ptr = &( (*m_lam_x)[dit[a_ibox]] );
+      }
+      else if(a_face_dir == 1)
+      {
+        eta_ptr = &( (*m_eta_y)[dit[a_ibox]] );
+        lam_ptr = &( (*m_lam_y)[dit[a_ibox]] );
+      }
+#if DIM==3
+      else if(a_face_dir == 2)
+      {
+        eta_ptr = &( (*m_eta_z)[dit[a_ibox]] );
+        lam_ptr = &( (*m_lam_z)[dit[a_ibox]] );
+      }
+#endif
+      else
+      {
+        ch_mayday::Error("Proto_VTO::getFlux: bogus face_dir");
+      }
+
+      getFluxDotNormal(a_flux,a_phi, *eta_ptr, *lam_ptr, grad, valid, a_face_dir);
     }
 
     ///

@@ -214,7 +214,15 @@ namespace Chombo
     Vector<Real> amrDx;
     int finestLevel;
 
-    PrChUtilities<1>::setupLLCornerGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
+    RealVect tag_location;
+    ParmParse pp("test_harness");
+    Vector<Real> tag_location_vec(DIM);
+    pp.getarr("grid_tag_location", tag_location_vec, 0, DIM);
+    for(int idir = 0; idir < DIM; idir++)
+    {
+      tag_location[idir] = tag_location_vec[idir];
+    }
+    PrChUtilities<1>::setupGridsWithTagLocation(amrGrids, amrDomains, refRatios, amrDx, finestLevel, tag_location);
     for(int ilev = 0; ilev < amrGrids.size(); ilev++)
     {
       pout() << "ilev = " << ilev << ", grids = " << endl;
