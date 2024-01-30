@@ -27,7 +27,7 @@
 #include "BoxIterator.H"
 #include "CONSTANTS.H"
 #include "memusage.H"
-
+#include "VTODebuggingTools.H"
 #include "UsingNamespace.H"
 
 int s_verbosity = 1;
@@ -697,11 +697,8 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                               // use mag(undivided gradient)
                               IntVect hi = iv + BASISV(dir);
                               IntVect lo = iv - BASISV(dir);
-                              for (int comp=0; comp<gradFab.nComp(); comp++)
-                                {
-                                  thisGrad = rhsFab(hi,comp) - rhsFab(lo,comp);
-                                  gradFab(iv,comp) += (thisGrad*thisGrad);
-                                }
+                              thisGrad = rhsFab(hi,dir) - rhsFab(lo,dir);
+                              gradFab(iv, dir) = (thisGrad*thisGrad);
                             } // end loop over directions
                         } // end loop over cells
 
@@ -713,7 +710,8 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                           IntVect iv = bit();
                           for (int comp=0; comp<gradFab.nComp(); comp++)
                             {
-                              if (gradFab(iv,comp) > threshSqr)
+                              double gradval = gradFab(iv,comp);
+                              if (gradval > threshSqr)
                                 {
                                   levelTags |= iv;
                                 }
