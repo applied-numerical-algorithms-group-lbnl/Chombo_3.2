@@ -227,30 +227,67 @@ namespace Chombo
 
 
     /**
-       crude blob code
-       if(rad^2 < a_rad^2) rhs= a_value;
-       else rhs = 0;
+       This is from AMRPoisson/execViscousTensor example (the Gaussian blob case).
      **/
     static double
-    rhs_blob(const IntVect& a_loc, double a_dx, double a_cent_loc, double a_rad_sq, double a_value)
+    rhs_blob(const IntVect& a_cell, double a_dx)
     {
-      double dist_sq = 0;
+      //old code:
+      //       int numGaussians = 3;
+      //        Vector<RealVect> center(numGaussians,RealVect::Zero);
+      //        Vector<Real> scale(numGaussians, 1.0);
+      //        Vector<Real> strength(numGaussians, 1.0);
+      //doing this with POD for port.
+#define BLOB_NUM_GAUSS 3
+      double    cente[BLOB_NUM_GAUSS][DIM];
+      double    scale[BLOB_NUM_GAUSS];
+      double    stren[BLOB_NUM_GAUSS];
+      ///Gaussian 0
+      stren[0]    = 1.0;
+      scale[0]    = 1.0e-2;
+      cente[0][0] = 0.25;
+      cente[0][1] = 0.25;
+#if DIM==3      
+      cente[0][2] = 0.25;
+#endif      
+      ///Gaussian 1
+      stren[1] = 3.0;
+      scale[1] = 1.0e-2;
+      cente[1][0] = 0.50;
+      cente[1][1] = 0.75;
+#if DIM==3      
+      cente[1][2] = 0.75;
+#endif
+      ///Gaussian 2
+      stren[2] = 2.0;
+      scale[2] = 1.0e-2;
+      cente[2][0] = 0.75; 
+      cente[2][1] = 0.50; 
+      cente[2][2] = 0.50; 
+
+      double x_loc[DIM];
       for(int idir = 0; idir < DIM; idir++)
       {
-        double x_loc       = a_dx*(double(a_loc[idir]) + 0.5);
-        double x_minus_xno = x_loc - a_cent_loc;
-        dist_sq += (x_minus_xno)*(x_minus_xno);
+        x_loc[idir] = a_dx*(double(a_cell[idir]) + 0.5);
       }
-      double retval = 4586.;
-      if(dist_sq < a_rad_sq)
+
+      double retval = 4586;
+      retval = 0; // this is additive so 0 is important
+      for(int igauss = 0; igauss < BLOB_NUM_GAUSS; igauss++)
       {
-        retval = a_value;
-      }
-      else
-      {
-        retval = 0.;
-      }
+        double dist[DIM];
+        double rad_sq = 0;
+        for(int idir = 0; idir < DIM; idir++)
+        {
+          dist[idir] = x_loc[idir] - cente[igauss][idir];
+          rad_sq += dist[idir]*dist[idir];
+        }
+
+        double val = stren[igauss]*exp(-rad_sq/scale[igauss]);
+        retval += val;
+      }   // end loop over Gaussians
       return retval;     
+#undef BLOB_NUM_GAUSS 
     }
              
     /********/
@@ -259,9 +296,6 @@ namespace Chombo
            Vector<Real>                            a_amrDx)
     {
       
-      double cent_loc = 0.5;
-      double rad_sq   = 0.001;
-      double rhs_val  = 0.2;
       for(int ilev = 0; ilev < a_rhs.size(); ilev++)
       {
         auto& rhs_lev = *(a_rhs[ilev]);
@@ -273,7 +307,7 @@ namespace Chombo
           for(BoxIterator bit(rhs_box); bit.ok(); ++bit)
           {
             IntVect iv = bit();
-            double rhsval = rhs_blob(iv, dx, cent_loc, rad_sq, rhs_val);
+            double rhsval = rhs_blob(iv, dx);
             for(int ivar = 0; ivar < rhs_fab.nComp(); ivar++)
             {
               rhs_fab(iv, ivar) = rhsval;
@@ -283,6 +317,253 @@ namespace Chombo
       }       //end loop over levels
       return;
     }///end function setRHS
+
+    ///
+    /**
+       From releasedExamples/AMRPoisson/execViscousTensor
+    **/
+    static void
+    setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
+               Vector<ProblemDomain>& a_amrDomains,
+               Vector<int>& a_refRatios,
+               Vector<Real>& a_amrDx,
+               int& a_finestLevel)
+    {
+      a_finestLevel = 0;
+      ParmParse ppGrids("setupGrids");
+
+      // get grid generation parameters
+      int maxLevel, maxBoxSize, blockFactor;
+      Real fillRatio;
+
+      ppGrids.get("max_level", maxLevel);
+
+      ppGrids.get("max_box_size",maxBoxSize);
+
+      ppGrids.get("block_factor", blockFactor);
+
+      ppGrids.get("fillRatio", fillRatio);
+
+      // note that there only need to be numLevels-1 refinement ratios
+      a_refRatios.resize(maxLevel);
+      ppGrids.getarr("ref_ratio", a_refRatios, 0, maxLevel);
+
+      Vector<int>  is_periodic_int;
+      bool is_periodic[SpaceDim];
+      ppGrids.getarr("is_periodic", is_periodic_int, 0, SpaceDim);
+      for (int dir=0; dir<SpaceDim; dir++)
+      {
+        is_periodic[dir] = (is_periodic_int[dir] == 1);
+      }
+
+      IntVect numCells;
+      Vector<int> incells(SpaceDim);
+      ppGrids.getarr("num_cells", incells, 0, SpaceDim);
+      numCells = IntVect(D_DECL6(incells[0],incells[1],incells[2],
+                                 incells[3],incells[4],incells[5]) );
+
+      RealVect domainSize = RealVect::Unit;
+      if (ppGrids.contains("domain_size"))
+      {
+        Vector<Real> insize(SpaceDim);
+        ppGrids.getarr("domain_size", insize, 0, SpaceDim);
+        domainSize = RealVect(D_DECL6(insize[0],insize[1],insize[2],
+                                      insize[3],insize[4],insize[5]) );
+      }
+
+      // resize dataholders
+      int maxNumLevels = maxLevel +1;
+      a_amrGrids.resize(maxNumLevels);
+      a_amrDomains.resize(maxNumLevels);
+      a_amrDx.resize(maxNumLevels,-1);
+      a_finestLevel = 0;
+
+      // assumes dx=dy=dz
+      a_amrDx[0] = domainSize[0]/numCells[0];
+
+      IntVect domLo = IntVect::Zero;
+      IntVect domHi  = numCells - IntVect::Unit;
+
+      ProblemDomain baseDomain(domLo, domHi, is_periodic);
+      a_amrDomains[0] = baseDomain;
+
+      // set up refined domains, etc
+      for (int lev=1; lev<= maxLevel; lev++)
+      {
+        a_amrDomains[lev] = a_amrDomains[lev-1];
+        a_amrDomains[lev].refine(a_refRatios[lev-1]);
+        a_amrDx[lev] = a_amrDx[lev-1]/a_refRatios[lev-1];
+      }
+
+      Vector<Vector<Box> > vectBoxes(maxLevel+1);
+
+      // local scope. for base-level grid generation
+      {
+        // generate base level grids
+
+        domainSplit(baseDomain, vectBoxes[0], maxBoxSize, blockFactor);
+
+        Vector<int> procAssign(vectBoxes[0].size(), 0);
+
+        LoadBalance(procAssign, vectBoxes[0]);
+
+        DisjointBoxLayout baseGrids(vectBoxes[0], procAssign, baseDomain);
+
+        a_amrGrids[0] = baseGrids;
+      }
+
+
+      if (maxLevel > 0)
+      {
+        // tag on grad(rhs)
+        int bufferSize = 1;
+        BRMeshRefine meshGen(a_amrDomains[0],
+                             a_refRatios,
+                             fillRatio,
+                             blockFactor,
+                             bufferSize,
+                             maxBoxSize);
+
+        // to be used by MeshRefine...
+        Vector<Vector<Box> > oldMeshes(maxLevel+1);
+        oldMeshes[0] = vectBoxes[0];
+        for (int lev=1; lev<oldMeshes.size(); lev++)
+        {
+          oldMeshes[lev].push_back(a_amrDomains[lev].domainBox());
+        }
+
+        Real refineThresh;
+        ppGrids.get("refine_threshold", refineThresh);
+
+        Real threshSqr = refineThresh*refineThresh;
+
+        bool moreLevels = true;
+        while (moreLevels)
+        {
+          // tag based on grad(rhs)
+          // first need to allocate RHS
+          Vector<RefCountedPtr<ch_ldf_cell> > tempRHS(a_finestLevel+1);
+          for (int lev=0; lev<= a_finestLevel; lev++)
+          {
+            // note that we add a ghost cell to simplify gradients
+            tempRHS[lev] = RefCountedPtr<ch_ldf_cell>(new ch_ldf_cell(a_amrGrids[lev],
+                                                                      SpaceDim,
+                                                                      IntVect::Unit));
+          }
+
+          double max_grad_sq = 0;
+          setRHS(tempRHS, a_amrDx);
+          Vector<IntVectSet> tags(a_finestLevel+1);
+          for (int lev=0; lev<a_finestLevel+1; lev++)
+          {
+            const DisjointBoxLayout& levelGrids = a_amrGrids[lev];
+            const LevelData<FArrayBox>& levelRHS = *tempRHS[lev];
+            IntVectSet& levelTags = tags[lev];
+
+            // compute mag(gradient)
+            DataIterator dit = levelGrids.dataIterator();
+            for (dit.begin(); dit.ok(); ++dit)
+            {
+              const FArrayBox& rhsFab = levelRHS[dit];
+              // local storage foer gradient
+              FArrayBox gradFab(levelGrids[dit],SpaceDim);
+              gradFab.setVal(0.0);
+              Real thisGrad;
+
+              BoxIterator bit(levelGrids[dit]);
+              for (bit.begin(); bit.ok(); ++bit)
+              {
+                IntVect iv=bit();
+                //
+                double sum_grad_sq = 0; //
+                for (int dir=0; dir<SpaceDim; dir++)
+                {
+                  // use mag(undivided gradient)
+                  IntVect hi = iv + BASISV(dir);
+                  IntVect lo = iv - BASISV(dir);
+                  thisGrad = rhsFab(hi,dir) - rhsFab(lo,dir);
+                  gradFab(iv, dir) = (thisGrad*thisGrad);
+                  sum_grad_sq += (thisGrad*thisGrad);
+                }
+                if(sum_grad_sq > max_grad_sq)
+                {
+                  max_grad_sq = sum_grad_sq;
+                }
+              } // end loop over cells
+
+              //gradFab now has mag(grad*dx)^2
+
+              // tag where mag(gradient) > tolerance^2
+              for (bit.begin(); bit.ok(); ++bit)
+              {
+                IntVect iv = bit();
+                for (int comp=0; comp<gradFab.nComp(); comp++)
+                {
+                  double gradval = gradFab(iv, comp);
+                  if (gradval > threshSqr)
+                  {
+                    levelTags |= iv;
+                  }
+                } // end loop over grad comps
+              } // end loop over cells
+            } // end loop over grids on this level
+
+          } // end loop over levels
+          Chombo::pout() << "max sum(rhs gradient) on this proc = "  << max_grad_sq << endl;
+
+
+          // call meshRefine.
+          for (int lev=1; lev<=a_finestLevel; lev++)
+          {
+            oldMeshes[lev] = vectBoxes[lev];
+          }
+
+          int topLevel = a_finestLevel;
+          int newFinestLevel =  meshGen.regrid(vectBoxes,
+                                               tags,
+                                               0,
+                                               topLevel,
+                                               oldMeshes);
+
+
+          // define new grids if necessary and test to see if we're done
+          if (newFinestLevel > a_finestLevel)
+          {
+            a_finestLevel = newFinestLevel;
+
+            // setup new grid hierarchy
+            for (int lev=1; lev<=a_finestLevel; lev++)
+            {
+              Vector<int> procAssign(vectBoxes[lev].size(),0);
+              LoadBalance(procAssign, vectBoxes[lev]);
+              DisjointBoxLayout levelGrids(vectBoxes[lev],
+                                           procAssign,
+                                           a_amrDomains[lev]);
+              a_amrGrids[lev] = levelGrids;
+            }
+          }
+          else
+          {
+            moreLevels = false;
+          }
+
+          if (a_finestLevel == maxLevel)
+          {
+            moreLevels = false;
+          }
+
+        } // end while (moreLevels)
+
+      }
+
+      // fill in remaining levels with empty DisjointBoxLayouts
+      if(maxLevel != (a_finestLevel+1))
+      {
+        MayDay::Error("I think underrefining will not work here");
+      }
+
+    }
+    
     static  int
     local_test_harness()
     {
@@ -299,15 +580,8 @@ namespace Chombo
       Vector<Real> amrDx;
       int finestLevel;
 
-      RealVect tag_location;
       ParmParse pp("test_harness");
-      Vector<Real> tag_location_vec(DIM);
-      pp.getarr("grid_tag_location", tag_location_vec, 0, DIM);
-      for(int idir = 0; idir < DIM; idir++)
-      {
-        tag_location[idir] = tag_location_vec[idir];
-      }
-      PrChUtilities<1>::setupGridsWithTagLocation(amrGrids, amrDomains, refRatios, amrDx, finestLevel, tag_location);
+      setupGrids(amrGrids, amrDomains, refRatios, amrDx, finestLevel);
       for(int ilev = 0; ilev < amrGrids.size(); ilev++)
       {
         pout() << "ilev = " << ilev << ", grids = " << endl;

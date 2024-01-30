@@ -4,17 +4,6 @@ main.writePlotFiles = 0 # if 1, write hdf5 plotfiles
 main.mg_type = 0 # 0: correction scheme; 1: FAS MG
 ViscousTensorOp.slow_relax_mode = true
 #AMR grid generation parameters
-setupLLCornerGrids.num_cells = 128 128 128
-setupLLCornerGrids.max_level = 1 
-setupLLCornerGrids.max_box_size = 64
-setupLLCornerGrids.domain_size = 1.0 1.0 1.0
-setupLLCornerGrids.block_factor = 8
-setupLLCornerGrids.fillRatio = 0.85 
-setupLLCornerGrids.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-setupLLCornerGrids.refine_threshold = 0.025
-setupLLCornerGrids.is_periodic = 0 0 0 
-
-#grids.grids_file = grids.dat #uncomment to read in grids
 
 # Multigrid solver parameters
 solver.bottom_flag = "relax"
@@ -33,8 +22,8 @@ solver.hang       = 1.0e-10
 solver.relax_mode = 1 
 
 #lphi = (alpha I + beta div grad ) phi
-solver.alpha =  4.5
-solver.beta  = -0.86
+solver.alpha =  0.0
+solver.beta  = 1.0
 viscous_op.eta_value    = 1.
 viscous_op.lambda_value = 1.
 viscous_op.acoef_value  = 1. 
@@ -43,4 +32,14 @@ bc_lo              = 0 0 0
 bc_hi              = 0 0 0   
 bc_value = 0.0  
 
-test_harness.grid_tag_location = 0.5 0.5 0.5
+setupGrids.max_level          = 1
+setupGrids.domain_size      = 1.0 1.0 1.0
+setupGrids.refine_threshold = 0.85
+setupGrids.max_box_size         = 16
+setupGrids.block_factor = 8
+setupGrids.fillRatio         = 0.5  
+setupGrids.is_periodic           = 0 0 0
+setupGrids.ref_ratio          = 2 2 2 2 2 2 2 2  
+setupGrids.num_cells             = 32 32 32
+
+main.verbosity            = 2          #if this is == 1, verbose is true

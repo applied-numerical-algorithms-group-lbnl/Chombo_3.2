@@ -97,6 +97,36 @@ namespace Chombo
         }      //end loop over sides
       }        //end if the data has ghost cells outside domain
     }          //end function ParseBC
+
+    ///
+    static void
+    NoSlipBC(FArrayBox& a_state,
+            const Box& a_valid,
+            const ProblemDomain& a_domain,
+            Real a_dx,
+            bool a_homogeneous)
+    {
+      if (!a_domain.domainBox().contains(a_state.box()))
+      {
+        Box valid = a_valid;
+        for(SideIterator sit; sit.ok(); ++sit)
+        {
+          Side::LoHiSide  side = sit();
+          for (int face_dir=0; face_dir < SpaceDim; face_dir++)
+          {
+            Box ghostBox = adjCellBox(valid, face_dir, sit(), 1);
+            if (!a_domain.domainBox().contains(ghostBox))
+            {
+              NoSlipVectorBC(a_state,
+                             valid,
+                             a_dx,
+                             face_dir,
+                             side);
+            }  //end if there are cells outside domain on this side
+          }    //end loop over face directions
+        }      //end loop over sides
+      }        //end if the data has ghost cells outside domain
+    }          //end function ParseBC
     ///
     static  RealVect
     cellLocation(const IntVect & a_iv,
@@ -172,7 +202,7 @@ namespace Chombo
                                       a_params.m_refRatio,
                                       a_params.m_coarsestDomain,
                                       a_params.m_coarsestDx,
-                                      &ParseBC));
+                                      &NoSlipBC));
 
       AMRLevelOpFactory<LevelData<FArrayBox> >* base_ptr
         = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(  derived_ptr);
