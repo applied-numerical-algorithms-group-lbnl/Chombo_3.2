@@ -847,7 +847,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> >& a_amrSolver,
   Real normThresh = 1.0e-30;
   a_amrSolver.setSolverParameters(numSmooth, numSmooth, numSmooth,
                                numMG, maxIter, eps, hang, normThresh);
-  a_amrSolver.m_verbosity = s_verbosity-1;
+  a_amrSolver.m_verbosity = 3;
 
 }
 

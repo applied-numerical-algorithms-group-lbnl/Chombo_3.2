@@ -24,6 +24,12 @@ INPUT = regression.inputs
 # shared code for building example programs
 include $(CHOMBO_HOME)/mk/Make.example
 
-# application-specific variables
 
-# application-specific targets
+pristine:
+	make realclean
+	cd $(CHOMBO_HOME); make realclean
+
+main:
+	make realclean
+	make all
+	mv $(ebase)*.ex main.exe

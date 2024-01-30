@@ -45,7 +45,7 @@
    // The usage pattern here is:
    // setFineFlux({fine_fluxes});  //set m_cofi_flux = Ave(fine_fluxes) 
    // setCoarFlux({coar_fluxes});  //set m_coar_flux =     coar_fluxes
-   // reflux(solution, dx);        // solution -= (1/dx)(Div(cofi_flux - coar_flux))
+   // reflux(solution, dx);        // solution += (1/dx)(Div(cofi_flux - coar_flux))
    // Where there are no fine fluxes cofi_flux==coar_flux
 **/
 namespace PrCh_Tools
@@ -207,7 +207,7 @@ namespace PrCh_Tools
 
     /// 
     /**
-       // U -= Div(Ave(F_fine) - Fcoar)
+       // U += Div(Ave(F_fine) - Fcoar)
      **/
     void reflux(pr_cell_data & a_soln_coar, const double& a_dx, bool a_verbose)
 
@@ -296,7 +296,7 @@ namespace PrCh_Tools
        Fdiff = Fcofi - Fcoar
        //  2. Compute reflux divergence D_R= Div(Fdiff) 
        //     Div(Fdiff) = (1/dxcoar)*sum(i<DIM)(Fdiff_i+1/2 - Fdiff_i-1/2)
-       //  3. a_lph -= Div(Fdiff)
+       //  3. a_lph += Div(Fdiff)
        **/
       if(a_verbose)
       {
@@ -400,8 +400,8 @@ namespace PrCh_Tools
           }
         } // end loop over components
 
-        //  3. a_lph -= Div(Fdiff)
-        a_soln_coar[dit[ibox]] -= div_reflux;
+        //  3. a_lph += Div(Fdiff)
+        a_soln_coar[dit[ibox]] += div_reflux;
       } //end loop over boxes
     }//end function reflux
   };

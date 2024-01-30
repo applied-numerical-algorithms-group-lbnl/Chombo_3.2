@@ -225,20 +225,63 @@ namespace Chombo
       }       // end loop over levels
     }//.end function setBCoef
 
+
+    /**
+       crude blob code
+       if(rad^2 < a_rad^2) rhs= a_value;
+       else rhs = 0;
+     **/
+    static double
+    rhs_blob(const IntVect& a_loc, double a_dx, double a_cent_loc, double a_rad_sq, double a_value)
+    {
+      double dist_sq = 0;
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        double x_loc       = a_dx*(double(a_loc[idir]) + 0.5);
+        double x_minus_xno = x_loc - a_cent_loc;
+        dist_sq += (x_minus_xno)*(x_minus_xno);
+      }
+      double retval = 4586.;
+      if(dist_sq < a_rad_sq)
+      {
+        retval = a_value;
+      }
+      else
+      {
+        retval = 0.;
+      }
+      return retval;     
+    }
+             
     /********/
     static void
     setRHS(Vector< RefCountedPtr<ch_ldf_cell > >   a_rhs,
-           Real                                    a_value)
+           Vector<Real>                            a_amrDx)
     {
+      
+      double cent_loc = 0.5;
+      double rad_sq   = 0.001;
+      double rhs_val  = 0.2;
       for(int ilev = 0; ilev < a_rhs.size(); ilev++)
       {
         auto& rhs_lev = *(a_rhs[ilev]);
+        double dx = a_amrDx[ilev];
         for (DataIterator dit = rhs_lev.dataIterator(); dit.ok(); ++dit)
         {
-          FArrayBox& thisRHS = rhs_lev[dit()];
-          thisRHS.setVal(a_value);
-        }
-      }
+          FArrayBox& rhs_fab = rhs_lev[dit()];
+          Box        rhs_box = rhs_fab.box();
+          for(BoxIterator bit(rhs_box); bit.ok(); ++bit)
+          {
+            IntVect iv = bit();
+            double rhsval = rhs_blob(iv, dx, cent_loc, rad_sq, rhs_val);
+            for(int ivar = 0; ivar < rhs_fab.nComp(); ivar++)
+            {
+              rhs_fab(iv, ivar) = rhsval;
+            } //end loop over variables
+          }   //end loop over cells
+        }     //end loop over boxes    
+      }       //end loop over levels
+      return;
     }///end function setRHS
     static  int
     local_test_harness()
@@ -276,7 +319,7 @@ namespace Chombo
     
 
       defineData(phi, rhs, aCoef, eta, lambda,  amrGrids);
-      setRHS(rhs, 1.0);
+      setRHS(rhs, amrDx);
       setACoef(aCoef, param);
       setEtaAndLambda(eta, lambda, param);
 
