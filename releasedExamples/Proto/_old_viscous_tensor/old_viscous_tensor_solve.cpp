@@ -435,8 +435,6 @@ namespace Chombo
         Real refineThresh;
         ppGrids.get("refine_threshold", refineThresh);
 
-        Real threshSqr = refineThresh*refineThresh;
-
         bool moreLevels = true;
         while (moreLevels)
         {
@@ -451,66 +449,15 @@ namespace Chombo
                                                                       IntVect::Unit));
           }
 
-          double max_grad_sq = 0;
           setRHS(tempRHS, a_amrDx);
           Vector<IntVectSet> tags(a_finestLevel+1);
           for (int lev=0; lev<a_finestLevel+1; lev++)
           {
-            const DisjointBoxLayout& levelGrids = a_amrGrids[lev];
-            const LevelData<FArrayBox>& levelRHS = *tempRHS[lev];
+
             IntVectSet& levelTags = tags[lev];
-
-            // compute mag(gradient)
-            DataIterator dit = levelGrids.dataIterator();
-            for (dit.begin(); dit.ok(); ++dit)
-            {
-              const FArrayBox& rhsFab = levelRHS[dit];
-              // local storage foer gradient
-              FArrayBox gradFab(levelGrids[dit],SpaceDim);
-              gradFab.setVal(0.0);
-              Real thisGrad;
-
-              BoxIterator bit(levelGrids[dit]);
-              for (bit.begin(); bit.ok(); ++bit)
-              {
-                IntVect iv=bit();
-                //
-                double sum_grad_sq = 0; //
-                for (int dir=0; dir<SpaceDim; dir++)
-                {
-                  // use mag(undivided gradient)
-                  IntVect hi = iv + BASISV(dir);
-                  IntVect lo = iv - BASISV(dir);
-                  thisGrad = rhsFab(hi,dir) - rhsFab(lo,dir);
-                  gradFab(iv, dir) = (thisGrad*thisGrad);
-                  sum_grad_sq += (thisGrad*thisGrad);
-                }
-                if(sum_grad_sq > max_grad_sq)
-                {
-                  max_grad_sq = sum_grad_sq;
-                }
-              } // end loop over cells
-
-              //gradFab now has mag(grad*dx)^2
-
-              // tag where mag(gradient) > tolerance^2
-              for (bit.begin(); bit.ok(); ++bit)
-              {
-                IntVect iv = bit();
-                for (int comp=0; comp<gradFab.nComp(); comp++)
-                {
-                  double gradval = gradFab(iv, comp);
-                  if (gradval > threshSqr)
-                  {
-                    levelTags |= iv;
-                  }
-                } // end loop over grad comps
-              } // end loop over cells
-            } // end loop over grids on this level
-
+            IntVectSet ivsZero(IntVect::Zero);
+            levelTags = ivsZero;
           } // end loop over levels
-          Chombo::pout() << "max sum(rhs gradient) on this proc = "  << max_grad_sq << endl;
-
 
           // call meshRefine.
           for (int lev=1; lev<=a_finestLevel; lev++)
@@ -555,13 +502,6 @@ namespace Chombo
         } // end while (moreLevels)
 
       }
-
-      // fill in remaining levels with empty DisjointBoxLayouts
-      if(maxLevel != (a_finestLevel+1))
-      {
-        MayDay::Error("I think underrefining will not work here");
-      }
-
     }
     
     static  int

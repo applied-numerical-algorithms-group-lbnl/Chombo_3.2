@@ -1174,7 +1174,7 @@ fancyFastRelax(LevelData<FArrayBox>&       a_phi,
   if (m_relaxTolerance > TINY_NORM)
     m_levelOps.create(prevPhi, a_rhs);
 
-  // do first red, then black passes
+  // loop through colors
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
   int whichIter = 0;
   bool done = false;
@@ -1221,7 +1221,7 @@ fancyFastRelax(LevelData<FArrayBox>&       a_phi,
                                 CHF_CONST_INT(m_ncomp));
                 }
             }
-        } // end loop through red-black
+        } // end loop through colors
 
       //slc : if we have done at least some smooths, give up if they
       //      are no longer changing the solution much. This is not
@@ -1240,6 +1240,55 @@ fancyFastRelax(LevelData<FArrayBox>&       a_phi,
     }
 }
 
+/***/
+void
+ViscousTensorOp::
+debugRelax(LevelData<FArrayBox>&       a_phi,
+           const LevelData<FArrayBox>& a_rhs,
+           int a_iterations)
+{
+  CH_TIME("ViscousTensorOp::debugRelax");
+
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  LevelData<FArrayBox> lphi, resid;
+  m_levelOps.create(lphi , a_rhs);
+  m_levelOps.create(resid, a_rhs);
+
+  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
+
+  for(int iiter = 0; iiter < a_iterations; iiter++)
+  {
+    for (int iredblack = 0; iredblack <= 1; iredblack++)
+    {
+      // this calls exchange whether or not there is a coarse level
+      homogeneousCFInterp(a_phi);
+      residual(resid, a_phi, a_rhs);
+      DataIterator dit = dbl.dataIterator();
+      for (int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        Box valid = dbl.get(dit[ibox]);
+        for(BoxIterator boxit(valid); boxit.ok(); ++boxit)
+        {
+          IntVect iv = boxit();
+          int iv_rb  = (iv.sum())%2; 
+          if(iv_rb == iredblack)
+          {
+            for(int ivar = 0; ivar < SpaceDim; ivar++)
+            {
+              double lamval = m_relaxCoef[dit[ibox]](iv, 0);
+              double resval =       resid[dit[ibox]](iv, ivar);
+              a_phi[dit[ibox]](iv, ivar) += lamval*resval;
+            }  //end loop over components
+          }    //end if(this cells is on the color)
+        }      //end loop over cells
+      }        //end loop over boxes
+    }          //end loop over red/black
+  }            //end loop over iterations
+}              //end function debugRelax
 
 /**
     Used for debugging other things
@@ -1273,6 +1322,7 @@ slowGSRB(LevelData<FArrayBox>&       a_phi,
     for (int iredblack = 0; iredblack <= 1; iredblack++)
     {
 
+      homogeneousCFInterp(a_phi);
       residual(resid, a_phi, a_rhs);
       for(int ibox = 0; ibox < nbox; ibox++)
       {
@@ -1307,11 +1357,16 @@ relax(LevelData<FArrayBox>&       a_phi,
   pp.query("slow_relax_mode", slow_relax_mode);
   if(slow_relax_mode)
   {
+    ///  Bog standard gsrb.  used for debugging other things
     slowGSRB(a_phi, a_rhs, a_iterations);
   }
   else
   {
-    //used for debugging other things
+    /**
+        Multi-color relaxation.   
+        Because a great deal of care was taken to not
+        call exchange too often,  it really is faster.
+     **/
     fancyFastRelax(a_phi, a_rhs, a_iterations);
   }
 }

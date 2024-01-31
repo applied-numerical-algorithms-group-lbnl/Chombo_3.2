@@ -651,7 +651,6 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
           Real refineThresh;
           ppGrids.get("refine_threshold", refineThresh);
 
-          Real threshSqr = refineThresh*refineThresh;
 
           bool moreLevels = true;
           while (moreLevels)
@@ -674,10 +673,14 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
 
               for (int lev=0; lev<a_finestLevel+1; lev++)
                 {
+                  IntVectSet& levelTags = tags[lev];
+#if 1
+                  IntVectSet  ivsZero(IntVect::Zero);
+                  levelTags = ivsZero;
+#else                  
+                  Real threshSqr = refineThresh*refineThresh;
                   const DisjointBoxLayout& levelGrids = a_amrGrids[lev];
                   const LevelData<FArrayBox>& levelRHS = *tempRHS[lev];
-                  IntVectSet& levelTags = tags[lev];
-
                   // compute mag(gradient)
                   DataIterator dit = levelGrids.dataIterator();
                   for (dit.begin(); dit.ok(); ++dit)
@@ -718,9 +721,9 @@ setupGrids(Vector<DisjointBoxLayout>& a_amrGrids,
                             } // end loop over grad comps
                         } // end loop over cells
                     } // end loop over grids on this level
+#endif
 
                 } // end loop over levels
-
 
               // call meshRefine.
               for (int lev=1; lev<=a_finestLevel; lev++)

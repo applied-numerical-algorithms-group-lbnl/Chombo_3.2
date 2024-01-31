@@ -282,6 +282,10 @@ public:
   void  fancyFastRelax(LevelData<FArrayBox>&       a_phi,
                        const LevelData<FArrayBox>& a_rhs,
                        int a_iterations);
+  ///
+  void  debugRelax(LevelData<FArrayBox>&       a_phi,
+                   const LevelData<FArrayBox>& a_rhs,
+                   int a_iterations);
   
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,
