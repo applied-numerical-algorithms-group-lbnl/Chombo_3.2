@@ -126,6 +126,10 @@ namespace PrCh_AMR_Elliptic
       CH_TIME("Base_Proto_AMRLevelOp::copyTo");
       a_src.copyTo(a_dst);
     }
+
+    ///
+    virtual void
+    homogeneousCFInterp(pr_lbd & a_phi)  = 0;
     
     ///
     virtual

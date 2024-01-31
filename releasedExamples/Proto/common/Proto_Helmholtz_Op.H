@@ -166,6 +166,12 @@ namespace PrCh_AMR_Elliptic
       }
     }
     
+    ///
+    virtual void
+    homogeneousCFInterp(pr_lbd & a_phi)
+    {
+      Proto_Transition::DataUtilities<1>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
+    }
     /// amr thing
     virtual void
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 

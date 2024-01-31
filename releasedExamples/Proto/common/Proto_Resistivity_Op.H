@@ -195,6 +195,12 @@ namespace PrCh_AMR_Elliptic
     {
     }
 
+    ///
+    virtual void
+    homogeneousCFInterp(pr_cell_data_three & a_phi)
+    {
+      Proto_Transition::DataUtilities<3>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
+    }
     shared_ptr<pr_xfac_data_scalar>  m_eta_x;
     shared_ptr<pr_yfac_data_scalar>  m_eta_y;
     shared_ptr<pr_zfac_data_scalar>  m_eta_z;
