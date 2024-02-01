@@ -1,17 +1,13 @@
-#/usr/bin/csh
+#!/bin/csh
 
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_0_2_opt_false_debug_true/amr_conductivity/batch_4586.sh
+setenv CH_TIMER 1
+setenv CH_OUTPUT_INTERVAL 1
+setenv OMP_NUM_THREADS 1
 
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_0_2_opt_false_debug_true/_old_conductivity/batch_4586.sh
+setenv input INPUT_FILE
+setenv ProgName EXECUTABLE_FILE
 
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_0_2_opt_false_debug_true/amr_helmholtz/batch_4586.sh
+module unload petsc hdf5
+module load petsc/parallel hdf5/parallel
 
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_0_2_opt_false_debug_true/_old_helmholtz/batch_4586.sh
-
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_1_2_opt_false_debug_true/amr_conductivity/batch_4586.sh
-
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_1_2_opt_false_debug_true/_old_conductivity/batch_4586.sh
-
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_1_2_opt_false_debug_true/amr_helmholtz/batch_4586.sh
-
- source /home/graves/_git_chombo_3.2/Chombo_3.2/releasedExamples/Proto/test_harness/_compare/_prch_compare_1_26_2024/_case_1_2_opt_false_debug_true/_old_helmholtz/batch_4586.sh
+$ProgName $input >& pout.serial

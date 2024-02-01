@@ -30,19 +30,16 @@ if not os.path.exists(top_directory):
     os.mkdir(top_directory)
 
 batch_template = homestr + "/" + args.batch
-run_file_name = top_directory + "/run_all.sh"
-f_run_all = open(batch_template,'w')
+configure_log_name = top_directory + "/configure_test.log"
+run_all_file_name = top_directory + "/run_all.sh"
+f_run_all       = open( run_all_file_name,'w')
+f_configure_log = open(configure_log_name,'w')
 f_run_all.write('#/usr/bin/csh\n')
 
 i_min_case = 0
 i_max_case = 1
 
 batch_root = "batch_4586.sh"
-#this stuff is varied in configure_scaling codes.
-#For this particular test, the cases have nx and other stuff fixed.
-#there is no input template here.  So lets leave off nx
-#nproc = 1
-#nx = nx_min
 
 # loop through cases to run
 #should be min case
@@ -54,11 +51,12 @@ while i_case <= i_max_case:
     #should be <=
     #  set to < for short test
     while i_dim <= 3:
-        #loop through opt     
-        i_opt = 0
-        #should <=
-        #  set to < for short test
+        #loop through opt
+        #should be 0
+        #  set to 1 for short test
+        i_opt = 1
         while i_opt <= 1:
+
             #I hesitate to use the char '=' in directory names
             #This also allows the directory name to be less shouty
             opt_status = "opt_false"
@@ -73,15 +71,21 @@ while i_case <= i_max_case:
                 deb_gmake  = "DEBUG=FALSE"
 
 
-            str_config = "_case_" + str(i_case) + "_" + str(i_dim) + "_" + opt_status + "_" + deb_status 
+            str_config = "_case_" + str(i_case) + "_dim_" + str(i_dim) + "_" + opt_status + "_" + deb_status 
+            run_case_file_name = top_directory + "/run_" + str_config + ".sh"
+            f_run_case = open(run_case_file_name,'w')
+            f_run_case.write('#/usr/bin/csh\n')
             printstr = "configuration string = " + str_config
             print (printstr)
+            f_configure_log.write(printstr + "\n")
             config_directory = top_directory + "/" + str_config
             printstr =  "configuration directory = " + config_directory
             print(printstr)
+            f_configure_log.write(printstr + "\n")
             if not os.path.exists(config_directory):
                 printstr = "making directory " + config_directory
                 print (printstr)
+                f_configure_log.write(printstr + "\n")
                 os.mkdir(config_directory)
 
             #should be 0
@@ -103,8 +107,10 @@ while i_case <= i_max_case:
                 amr_directory = config_directory +  "/amr_" + op_str
                 printstr = "old_directory = " + old_directory
                 print (printstr)
+                f_configure_log.write(printstr + "\n")
                 printstr = "amr directory =  " + amr_directory
                 print (printstr)
+                f_configure_log.write(printstr + "\n")
                 if not os.path.exists(old_directory):
                     os.mkdir(old_directory)
                 if not os.path.exists(amr_directory):
@@ -114,17 +120,21 @@ while i_case <= i_max_case:
                 # make a batch file 
                 exec_directory_old = homestr + "/../../_old_" + op_str
                 printstr = "exec_directory_old = " + exec_directory_old
+                f_configure_log.write(printstr + "\n")
                 print(printstr)
                 exec_directory_amr = homestr + "/../../amr_" + op_str
                 input_name = "case_" + str(i_case) + ".inputs"
                 printstr = "exec_directory_amr = " + exec_directory_amr + ", input_name = " + input_name
                 print(printstr)
+                f_configure_log.write(printstr + "\n")
                 command_old = "cd " + exec_directory_old + "; make main; mv main.exe " + old_directory + "; cp _inputs/" + input_name + " " + old_directory
                 command_amr = "cd " + exec_directory_amr + "; make main; mv main.exe " + amr_directory + "; cp _inputs/" + input_name + " " + amr_directory
                 printstr_old = "command_old = " + command_old
                 printstr_amr = "command_amr = " + command_amr
                 print(printstr_old)
                 print(printstr_amr)
+                f_configure_log.write(printstr_old + "\n")
+                f_configure_log.write(printstr_amr + "\n")
 
                 os.system(command_old)
                 os.system(command_amr)
@@ -135,6 +145,8 @@ while i_case <= i_max_case:
                 printstr_amr = "batch_file_amr = " + batch_file_amr
                 print(printstr_old)
                 print(printstr_amr)
+                f_configure_log.write(printstr_old + "\n")
+                f_configure_log.write(printstr_amr + "\n")
                 #exit()
                 f_batch_old = open(batch_file_old, 'w')
                 f_batch_amr = open(batch_file_amr, 'w')
@@ -148,14 +160,19 @@ while i_case <= i_max_case:
                 f_batch_old.close()
                 f_batch_amr.close()
                 f_batchtemplate.close()
-                batch_comm_amr = "\n source " + batch_file_amr + "\n" 
-                batch_comm_old = "\n source " + batch_file_old + "\n" 
+
+                batch_comm_old = "\n pushd " +  old_directory + "; source " + batch_root + "; popd \n;"
+                batch_comm_amr = "\n pushd " +  amr_directory + "; source " + batch_root + "; popd \n;"
                 f_run_all.write(batch_comm_amr);
                 f_run_all.write(batch_comm_old);
+                f_run_case.write(batch_comm_amr);
+                f_run_case.write(batch_comm_old);
+
 
                 i_opera = i_opera + 1
                 # end loop over operators
                     
+            f_run_case.close()
             i_opt = i_opt + 1
             # end loop over values of i_opt
 
@@ -165,4 +182,14 @@ while i_case <= i_max_case:
     i_case = i_case + 1
     # end loop over values of i_case
 
+printstr =     "end of loop"
+print(printstr)
+f_configure_log.write(printstr + "\n")
+printstr =     "closing run all"
+print(printstr)
+f_configure_log.write(printstr + "\n")
 f_run_all.close()
+printstr =     "closing this log and leaving"
+print(printstr)
+f_configure_log.write(printstr + "\n")
+
