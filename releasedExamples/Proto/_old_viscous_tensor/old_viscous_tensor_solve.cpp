@@ -226,69 +226,6 @@ namespace Chombo
     }//.end function setBCoef
 
 
-    /**
-       This is from AMRPoisson/execViscousTensor example (the Gaussian blob case).
-     **/
-    static double
-    rhs_blob(const IntVect& a_cell, double a_dx)
-    {
-      //old code:
-      //       int numGaussians = 3;
-      //        Vector<RealVect> center(numGaussians,RealVect::Zero);
-      //        Vector<Real> scale(numGaussians, 1.0);
-      //        Vector<Real> strength(numGaussians, 1.0);
-      //doing this with POD for port.
-#define BLOB_NUM_GAUSS 3
-      double    cente[BLOB_NUM_GAUSS][DIM];
-      double    scale[BLOB_NUM_GAUSS];
-      double    stren[BLOB_NUM_GAUSS];
-      ///Gaussian 0
-      stren[0]    = 1.0;
-      scale[0]    = 1.0e-2;
-      cente[0][0] = 0.25;
-      cente[0][1] = 0.25;
-#if DIM==3      
-      cente[0][2] = 0.25;
-#endif      
-      ///Gaussian 1
-      stren[1] = 3.0;
-      scale[1] = 1.0e-2;
-      cente[1][0] = 0.50;
-      cente[1][1] = 0.75;
-#if DIM==3      
-      cente[1][2] = 0.75;
-#endif
-      ///Gaussian 2
-      stren[2] = 2.0;
-      scale[2] = 1.0e-2;
-      cente[2][0] = 0.75; 
-      cente[2][1] = 0.50; 
-      cente[2][2] = 0.50; 
-
-      double x_loc[DIM];
-      for(int idir = 0; idir < DIM; idir++)
-      {
-        x_loc[idir] = a_dx*(double(a_cell[idir]) + 0.5);
-      }
-
-      double retval = 4586;
-      retval = 0; // this is additive so 0 is important
-      for(int igauss = 0; igauss < BLOB_NUM_GAUSS; igauss++)
-      {
-        double dist[DIM];
-        double rad_sq = 0;
-        for(int idir = 0; idir < DIM; idir++)
-        {
-          dist[idir] = x_loc[idir] - cente[igauss][idir];
-          rad_sq += dist[idir]*dist[idir];
-        }
-
-        double val = stren[igauss]*exp(-rad_sq/scale[igauss]);
-        retval += val;
-      }   // end loop over Gaussians
-      return retval;     
-#undef BLOB_NUM_GAUSS 
-    }
              
     /********/
     static void
@@ -299,20 +236,10 @@ namespace Chombo
       for(int ilev = 0; ilev < a_rhs.size(); ilev++)
       {
         auto& rhs_lev = *(a_rhs[ilev]);
-        double dx = a_amrDx[ilev];
         for (DataIterator dit = rhs_lev.dataIterator(); dit.ok(); ++dit)
         {
           FArrayBox& rhs_fab = rhs_lev[dit()];
-          Box        rhs_box = rhs_fab.box();
-          for(BoxIterator bit(rhs_box); bit.ok(); ++bit)
-          {
-            IntVect iv = bit();
-            double rhsval = rhs_blob(iv, dx);
-            for(int ivar = 0; ivar < rhs_fab.nComp(); ivar++)
-            {
-              rhs_fab(iv, ivar) = rhsval;
-            } //end loop over variables
-          }   //end loop over cells
+          rhs_fab.setVal(1.);
         }     //end loop over boxes    
       }       //end loop over levels
       return;
@@ -435,21 +362,6 @@ namespace Chombo
         Real refineThresh;
         ppGrids.get("refine_threshold", refineThresh);
 
-        bool moreLevels = true;
-        while (moreLevels)
-        {
-          // tag based on grad(rhs)
-          // first need to allocate RHS
-          Vector<RefCountedPtr<ch_ldf_cell> > tempRHS(a_finestLevel+1);
-          for (int lev=0; lev<= a_finestLevel; lev++)
-          {
-            // note that we add a ghost cell to simplify gradients
-            tempRHS[lev] = RefCountedPtr<ch_ldf_cell>(new ch_ldf_cell(a_amrGrids[lev],
-                                                                      SpaceDim,
-                                                                      IntVect::Unit));
-          }
-
-          setRHS(tempRHS, a_amrDx);
           Vector<IntVectSet> tags(a_finestLevel+1);
           for (int lev=0; lev<a_finestLevel+1; lev++)
           {
@@ -473,34 +385,18 @@ namespace Chombo
                                                oldMeshes);
 
 
-          // define new grids if necessary and test to see if we're done
-          if (newFinestLevel > a_finestLevel)
+          a_finestLevel = newFinestLevel;
+
+          // setup new grid hierarchy
+          for (int lev=1; lev<=a_finestLevel; lev++)
           {
-            a_finestLevel = newFinestLevel;
-
-            // setup new grid hierarchy
-            for (int lev=1; lev<=a_finestLevel; lev++)
-            {
-              Vector<int> procAssign(vectBoxes[lev].size(),0);
-              LoadBalance(procAssign, vectBoxes[lev]);
-              DisjointBoxLayout levelGrids(vectBoxes[lev],
-                                           procAssign,
-                                           a_amrDomains[lev]);
-              a_amrGrids[lev] = levelGrids;
-            }
+            Vector<int> procAssign(vectBoxes[lev].size(),0);
+            LoadBalance(procAssign, vectBoxes[lev]);
+            DisjointBoxLayout levelGrids(vectBoxes[lev],
+                                         procAssign,
+                                         a_amrDomains[lev]);
+            a_amrGrids[lev] = levelGrids;
           }
-          else
-          {
-            moreLevels = false;
-          }
-
-          if (a_finestLevel == maxLevel)
-          {
-            moreLevels = false;
-          }
-
-        } // end while (moreLevels)
-
       }
     }
     

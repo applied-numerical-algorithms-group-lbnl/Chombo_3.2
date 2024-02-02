@@ -970,8 +970,6 @@ namespace PrCh_AMR_Elliptic
                          const pr_box      & a_face_box,
                          int a_face_dir,  int a_ibox)
     {
-      shared_ptr<pr_cell_data_sca>  m_acoef;
-      
       auto dit   = m_acoef->begin();
       pr_box            valid =   m_grids[dit[a_ibox]];
       pr_box_data_ten &  grad = (*m_grad)[dit[a_ibox]];
