@@ -1019,6 +1019,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   m_bottomSolver->setConvergenceMetrics(m_initial_rnorm, m_bottomSolverEpsCushion*m_eps);
 
   int iter=0;
+  pout() << "AMRMultiGrid::solveNoInitResid: initial residual norm = " << rnorm << std::endl;
   if (m_verbosity >= 2) ////
     {
       pout()    << setw(12)
@@ -1129,6 +1130,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     {
       pout() << "    AMRMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm << std::endl;
     }
+  pout() << "    AMRMultiGrid::solveNoInitResid: final residual norm = " << rnorm << std::endl;
   if (m_verbosity > 1)
     {
       if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T
