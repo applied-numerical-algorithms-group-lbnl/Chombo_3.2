@@ -165,7 +165,7 @@ namespace PrCh_Tools
         auto & cofi_yfab = (*m_yflux_cofi)[dit[ibox]];
 #if DIM==3        
         auto & fine_zfab = (*a_zflux_fine)[dit[ibox]];
-        auto & cofi_zfab = (*a_zflux_cofi)[dit[ibox]];
+        auto & cofi_zfab = (*m_zflux_cofi)[dit[ibox]];
 #endif
       if(a_verbose)
       {
@@ -255,7 +255,6 @@ namespace PrCh_Tools
         Chombo::pout() <<  " max_x = " << max_x << ", min_x = " << min_x << endl;
         Chombo::pout() <<  " max_y = " << max_y << ", min_y = " << min_y << endl;
 #if DIM==3                                                               
-        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min;
         Chombo::pout() <<  " max_z = " << max_z << ", min_z = " << min_z << endl;
 #endif
       }
@@ -284,7 +283,6 @@ namespace PrCh_Tools
         Chombo::pout() <<  " max_x = " << max_x << ", min_x = " << min_x << endl;
         Chombo::pout() <<  " max_y = " << max_y << ", min_y = " << min_y << endl;
 #if DIM==3                                                               
-        double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min;
         Chombo::pout() <<  " max_z = " << max_z << ", min_z = " << min_z << endl;
 #endif
       }
