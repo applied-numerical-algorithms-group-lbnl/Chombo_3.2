@@ -224,7 +224,7 @@ namespace Chombo
                                     a_params.m_refRatio,
                                     a_params.m_coarsestDomain,
                                     a_params.m_coarsestDx,
-                                    &ParseBC));
+                                    &NoSlipBC));
 
       AMRLevelOpFactory<LevelData<FArrayBox> >* base_ptr
         = static_cast<AMRLevelOpFactory<LevelData<FArrayBox> >*>(  derived_ptr);
