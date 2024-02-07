@@ -212,6 +212,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     homogeneousCFInterp(pr_lbd & a_phi)
     {
+      CH_TIME("Proto_Conductivity::homogeneousCFInterp");
       Proto_Transition::DataUtilities<1>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
     }
     
@@ -220,6 +221,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
                                          const pr_lbd &  a_data_coar)
     {
+      CH_TIME("Proto_Conductivity::fillGhostDataOverCoarseFineInterface");
       int   reflect_sign_lo[DIM];
       int   reflect_sign_hi[DIM];  
       for(int idir = 0; idir < DIM; idir++)
@@ -236,7 +238,7 @@ namespace PrCh_AMR_Elliptic
         }
         else
         {
-          ch_mayday::Error("Proto_Helmholtz_Op::fillCFGhost: unrecognized bc string");
+          ch_mayday::Error("Proto_Conductivity_Op::fillCFGhost: unrecognized bc string");
         }
       }
       typedef Proto_Transition::DataUtilities<1> pr_trans_data;
@@ -266,6 +268,7 @@ namespace PrCh_AMR_Elliptic
          double    a_aco,
          double    a_bco) 
     {
+      CH_TIME("Proto_Helmholtz::axby");
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook

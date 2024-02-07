@@ -1130,7 +1130,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     {
       pout() << "    AMRMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm << std::endl;
     }
-  pout() << "    AMRMultiGrid::solveNoInitResid: final residual norm = " << rnorm << std::endl;
+  pout() << "    AMRMultiGrid::solveNoInitResid: final residual norm = " << rnorm << " after "<< iter << " iterations."<< std::endl;
   if (m_verbosity > 1)
     {
       if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T

@@ -152,6 +152,7 @@ namespace PrCh_AMR_Elliptic
          double    a_aco,
          double    a_bco) 
     {
+      CH_TIME("Proto_Helmholtz::axby");
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook
@@ -177,6 +178,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
                                          const pr_lbd &  a_data_coar)
     {
+      CH_TIME("Proto_Helmholtz::fillGhostDataOverCoarseFineInterface");
       int   reflect_sign_lo[DIM];
       int   reflect_sign_hi[DIM];  
       for(int idir = 0; idir < DIM; idir++)
@@ -234,7 +236,7 @@ namespace PrCh_AMR_Elliptic
           const pr_lbd & a_rhs,
           int a_iterations)
     {
-      
+      CH_TIME("Proto_Helmholtz::relax");
       pr_lbd resid;
       create(resid, a_rhs);
       auto grids =  a_rhs.layout();
@@ -265,12 +267,14 @@ namespace PrCh_AMR_Elliptic
     /// domain boundary conditions.
     /** 
         Anything can be hidden in a string, so the interface is general enough.
+      CH_TIME("Proto_Helmholtz::fillGhostDataOutsideDomain");
         For now, we shall restrict ourselves to the big two: Neumann and Dirichlet.
     **/
     virtual void
     fillGhostDataOutsideDomain(pr_lbd          & a_phi,
                                const ch_dom    & a_domain)
     {
+      CH_TIME("Proto_Helmholtz::fillGhostDataOutsideDomain");
       pr_dom domain = ProtoCh::getProtoDomain(a_domain);
       pr_box dombox = domain.box();
       for(int idir = 0; idir < DIM; idir++)
@@ -313,6 +317,7 @@ namespace PrCh_AMR_Elliptic
                          const pr_box      & a_valid,
                          int a_face_dir, int a_ibox)
     {
+      CH_TIME("Proto_Helmholtz::getFlux");
       ///Always.
       bool initToZero = true; double applyScale = 1.;
       /**

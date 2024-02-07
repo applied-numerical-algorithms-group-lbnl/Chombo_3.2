@@ -321,6 +321,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     homogeneousCFInterp(pr_lbd & a_phi)
     {
+      CH_TIME("Proto_Viscous_Tensor::homogeneousCFInterp");
       Proto_Transition::DataUtilities<DIM>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
     }
     
@@ -329,6 +330,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
                                          const pr_lbd &  a_data_coar)
     {
+      CH_TIME("Proto_Viscous_Tensor::fillDataOverCoarseFineInterface");
       int   reflect_sign_lo[DIM];
       int   reflect_sign_hi[DIM];  
       for(int idir = 0; idir < DIM; idir++)
@@ -345,7 +347,7 @@ namespace PrCh_AMR_Elliptic
         }
         else
         {
-          ch_mayday::Error("Proto_Helmholtz_Op::fillCFGhost: unrecognized bc string");
+          ch_mayday::Error("Proto_Viscous_Tensor_Op::fillCFGhost: unrecognized bc string");
         }
       }
       typedef Proto_Transition::DataUtilities<DIM> pr_trans_data;
@@ -373,6 +375,7 @@ namespace PrCh_AMR_Elliptic
          double    a_aco,
          double    a_bco) 
     {
+      CH_TIME("Proto_Viscous_Tensor::axby");
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook
@@ -390,6 +393,7 @@ namespace PrCh_AMR_Elliptic
     ///
     void defineAuxilliaries()
     {
+      CH_TIME("Proto_Viscous_Tensor::defineAuxilliaries");
       m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
       m_grad    = shared_ptr<pr_cell_data_ten>(new pr_cell_data_ten(m_grids, pr_pt::Ones(1) ));
     }
@@ -445,6 +449,7 @@ namespace PrCh_AMR_Elliptic
                       const pr_box_data_vec   &  a_phi,
                       pr_box                     a_valid)
     {
+      CH_TIME("Proto_Viscous_Tensor::computeCCGradient");
       //always.
       bool initToZero = true; double applyScale = 1.;
       
@@ -479,6 +484,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     computeCCGradient(const pr_cell_data_vec   & a_phi)
     {
+      CH_TIME("Proto_Viscous_Tensor::computeCCGradientLevel");
       auto dit   = a_phi.begin();
       auto dbl   = a_phi.layout();
       
@@ -662,6 +668,7 @@ namespace PrCh_AMR_Elliptic
                       const pr_box             & a_valid,
                       const int                & a_face_dir)
     {
+      CH_TIME("Proto_Viscous_Tensor::getFaceDivAndGrad");
 
       pr_dom domain = m_grids.domain();
       ///first divergence 
@@ -763,6 +770,7 @@ namespace PrCh_AMR_Elliptic
                      const pr_box              & a_valid,
                      const int                 & a_face_dir)
     {
+      CH_TIME("Proto_Viscous_Tensor::getFluxDotNormal");
 
       //get face centered velocity divergence
       pr_box flux_box = a_valid;
@@ -970,6 +978,7 @@ namespace PrCh_AMR_Elliptic
                          const pr_box      & a_face_box,
                          int a_face_dir,  int a_ibox)
     {
+      CH_TIME("Proto_Viscous_Tensor::getFlux");
       auto dit   = m_acoef->begin();
       pr_box            valid =   m_grids[dit[a_ibox]];
       pr_box_data_ten &  grad = (*m_grad)[dit[a_ibox]];

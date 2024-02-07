@@ -1,0 +1,1940 @@
+-----------
+Timer report 0 (415 timers)
+--------------
+---------------------------------------------------------
+[0]main 8.08230 1
+    99.8%    8.06951        1 AMRMultiGrid::solve [1] f=0
+     0.1%    0.00544        1 AMRMultiGrid::define [171] f=0
+     0.0%    0.00396        2 WriteAMRHierarchyHDF5 [187] f=0
+     0.0%    0.00056        1 ~AMRMultiGrid [260] f=0
+     0.0%    0.00024        1 PrChUtilities::setupLLCornerGrids [286] f=0
+     0.0%    0.00009        6 ~LayoutData [310] f=0
+     0.0%    0.00000        8 ~Copier [394] f=0
+     0.0%    0.00000        4 PrChUtilities::getRawVectorCh [396] f=0
+     0.0%    0.00000        6 ~BoxLayoutData [406] f=0
+     0.0%    0.00000        6 ~LevelData [407] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[1]AMRMultiGrid::solve 8.06951 1
+    100.0%    8.06941        1 AMRMultiGrid::solveNoInit [2] f=0
+     0.0%    0.00010        1 AMRMultiGrid::init [308] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [411] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]AMRMultiGrid::solveNoInit 8.06941 1
+    100.0%    8.06938        1 AMRMultiGrid::solveNo-InitResid [3] f=0
+     0.0%    0.00002        1 LevelData<T>::define(dbl,comps,ghost,factory) [339] f=0
+     0.0%    0.00000        1 ~LayoutData [369] f=0
+     0.0%    0.00000        1 ~Copier [408] f=0
+     0.0%    0.00000        1 ~LevelData [410] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [414] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solveNo-InitResid 8.06938 1
+    96.3%    7.76694       63 AMRMultiGrid::AMRVcycle [4] f=0
+     3.5%    0.28277       63 AMRMultiGrid::computeAMRResidual [42] f=0
+     0.1%    0.00460        1 Initial AMR Residual [182] f=0
+     0.0%    0.00072        1 uberCorrection [242] f=0
+     0.0%    0.00012        1 ~LayoutData [301] f=0
+     0.0%    0.00000        1 ~Copier [379] f=0
+     0.0%    0.00000        1 ~LevelData [409] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [413] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::AMRVcycle 7.76694 63
+    99.9%    7.75548       63 Multigrid::oneCycle [5] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[5]Multigrid::oneCycle 7.75548 63
+    100.0%    7.75545       63 Multigrid::cycle [6] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[6]Multigrid::cycle 7.75545 63
+    61.5%    4.76757      126 ViscousTensorOp::relax [7] f=0
+    32.4%    2.51591       63 Multigrid::cycle [12] f=0
+     4.0%    0.30972       63 ViscousTensorOp::restrictResidual [39] f=0
+     2.1%    0.16108       63 ViscousTensorOp::prolongIncrement [55] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[7]ViscousTensorOp::relax 4.76757 126
+    96.4%    4.59537     1008 ViscousTensorOp::residual [8] f=0
+     2.3%    0.11042     8064 FORT_GSRBSANELYVEC [61] f=0
+     0.8%    0.04019     1008 LevelData::exchange (exchange + copier) [85] f=0
+     0.1%    0.00365      126 ~LayoutData [192] f=0
+     0.0%    0.00159      126 LevelData<T>::define(dbl,comps,ghost,factory) [217] f=0
+     0.0%    0.00004      126 ~Copier [321] f=0
+     0.0%    0.00000      126 ~LevelData [371] f=0
+     0.0%    0.00000      126 ~BoxLayoutData [374] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[8]ViscousTensorOp::residual 4.59537 1008
+    97.8%    4.49224     1008 ViscousTensorOp::applyOp [9] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[9]ViscousTensorOp::applyOp 4.49224 1008
+    86.1%    3.86579     1008 ViscousTensorOp::computeOperatorNoBCs [10] f=0
+    12.1%    0.54341     1008 ViscousTensorOp::fillGrad [29] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[10]ViscousTensorOp::computeOperatorNoBCs 3.86579 1008
+    82.3%    3.18043    24192 ViscousTensorOp::getflux [11] f=0
+     9.8%    0.37760    24192 FORT_ADDDIVFLUXDIRVTOP [36] f=0
+    92.0%                  Total 
+---------------------------------------------------------
+[11]ViscousTensorOp::getflux 3.18043 24192
+    29.7%    0.94428   217728 FORT_GETFACEGRADVTOP [17] f=0
+    26.3%    0.83570    24192 ViscousTensorOp::getFluxFromDivAndGrad [21] f=0
+    11.3%    0.35847    72576 FORT_FACEDIVINCRVTOP [38] f=0
+    67.2%                  Total 
+---------------------------------------------------------
+[12]Multigrid::cycle 2.51591 63
+    68.4%    1.71996       63 Multigrid::cycle [13] f=0
+    28.9%    0.72805      126 ViscousTensorOp::relax [24] f=0
+     1.8%    0.04587       63 ViscousTensorOp::restrictResidual [80] f=0
+     0.9%    0.02164       63 ViscousTensorOp::prolongIncrement [118] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[13]Multigrid::cycle 1.71996 63
+    82.9%    1.42586       63 Multigrid::cycle [14] f=0
+    15.6%    0.26872      126 ViscousTensorOp::relax [46] f=0
+     1.2%    0.02150       63 ViscousTensorOp::restrictResidual [119] f=0
+     0.2%    0.00366       63 ViscousTensorOp::prolongIncrement [191] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[14]Multigrid::cycle 1.42586 63
+    100.0%    1.42586       63 Multigrid::cycle:bottom-solve [15] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[15]Multigrid::cycle:bottom-solve 1.42586 63
+    93.5%    1.33353       63 RelaxSolver::solve [16] f=0
+     6.5%    0.09230       63 ViscousTensorOp::relax [63] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[16]RelaxSolver::solve 1.33353 63
+    67.3%    0.89778     2520 ViscousTensorOp::preCond [18] f=0
+    32.3%    0.43015     2583 ViscousTensorOp::residual [31] f=0
+     0.0%    0.00022      126 LevelData<T>::define(dbl,comps,ghost,factory) [287] f=0
+     0.0%    0.00006      126 ~LayoutData [318] f=0
+     0.0%    0.00001      126 ~Copier [343] f=0
+     0.0%    0.00000      126 ~LevelData [377] f=0
+     0.0%    0.00000      126 ~BoxLayoutData [380] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[17]FORT_GETFACEGRADVTOP 0.94428 217728
+---------------------------------------------------------
+[18]ViscousTensorOp::preCond 0.89778 2520
+    100.0%    0.89762     2520 ViscousTensorOp::relax [19] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[19]ViscousTensorOp::relax 0.89762 2520
+    93.6%    0.83975     5040 ViscousTensorOp::residual [20] f=0
+     1.6%    0.01474     5040 LevelData::exchange (exchange + copier) [128] f=0
+     0.5%    0.00479    40320 FORT_GSRBSANELYVEC [179] f=0
+     0.2%    0.00200     2520 LevelData<T>::define(dbl,comps,ghost,factory) [211] f=0
+     0.1%    0.00066     2520 ~LayoutData [244] f=0
+     0.0%    0.00003     2520 ~Copier [327] f=0
+     0.0%    0.00003     2520 ~BoxLayoutData [329] f=0
+     0.0%    0.00003     2520 ~LevelData [330] f=0
+    96.0%                  Total 
+---------------------------------------------------------
+[20]ViscousTensorOp::residual 0.83975 5040
+    99.4%    0.83495     5040 ViscousTensorOp::applyOp [22] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[21]ViscousTensorOp::getFluxFromDivAndGrad 0.83570 24192
+    48.3%    0.40353    72576 FORT_ADDGRADTOFLUXVTOP [33] f=0
+    48.3%                  Total 
+---------------------------------------------------------
+[22]ViscousTensorOp::applyOp 0.83495 5040
+    90.9%    0.75889     5040 ViscousTensorOp::computeOperatorNoBCs [23] f=0
+     7.2%    0.05991     5040 ViscousTensorOp::fillGrad [72] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[23]ViscousTensorOp::computeOperatorNoBCs 0.75889 5040
+    95.0%    0.72079   120960 ViscousTensorOp::getflux [25] f=0
+     1.6%    0.01231   120960 FORT_ADDDIVFLUXDIRVTOP [140] f=0
+    96.6%                  Total 
+---------------------------------------------------------
+[24]ViscousTensorOp::relax 0.72805 126
+    95.7%    0.69650     1008 ViscousTensorOp::residual [26] f=0
+     2.0%    0.01491     8064 FORT_GSRBSANELYVEC [126] f=0
+     1.3%    0.00954     1008 LevelData::exchange (exchange + copier) [146] f=0
+     0.0%    0.00036      126 LevelData<T>::define(dbl,comps,ghost,factory) [273] f=0
+     0.0%    0.00013      126 ~LayoutData [300] f=0
+     0.0%    0.00000      126 ~Copier [358] f=0
+     0.0%    0.00000      126 ~LevelData [376] f=0
+     0.0%    0.00000      126 ~BoxLayoutData [381] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[25]ViscousTensorOp::getflux 0.72079 120960
+    11.3%    0.08114  1088640 FORT_GETFACEGRADVTOP [67] f=0
+     6.9%    0.04958   120960 ViscousTensorOp::getFluxFromDivAndGrad [78] f=0
+     5.0%    0.03615   362880 FORT_FACEDIVINCRVTOP [89] f=0
+    23.2%                  Total 
+---------------------------------------------------------
+[26]ViscousTensorOp::residual 0.69650 1008
+    98.0%    0.68286     1008 ViscousTensorOp::applyOp [27] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[27]ViscousTensorOp::applyOp 0.68286 1008
+    84.3%    0.57566     1008 ViscousTensorOp::computeOperatorNoBCs [28] f=0
+    12.5%    0.08563     1008 ViscousTensorOp::fillGrad [66] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[28]ViscousTensorOp::computeOperatorNoBCs 0.57566 1008
+    87.1%    0.50148    24192 ViscousTensorOp::getflux [30] f=0
+     8.4%    0.04849    24192 FORT_ADDDIVFLUXDIRVTOP [79] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[29]ViscousTensorOp::fillGrad 0.54341 1008
+    72.7%    0.39500    72576 FORT_CELLGRADVTOP [34] f=0
+    20.9%    0.11338     1008 LevelData::exchange (exchange + copier) [57] f=0
+     5.9%    0.03215     1008 exchange [93] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[30]ViscousTensorOp::getflux 0.50148 24192
+    29.3%    0.14690   217728 FORT_GETFACEGRADVTOP [56] f=0
+    20.7%    0.10383    24192 ViscousTensorOp::getFluxFromDivAndGrad [62] f=0
+    11.7%    0.05869    72576 FORT_FACEDIVINCRVTOP [75] f=0
+    61.7%                  Total 
+---------------------------------------------------------
+[31]ViscousTensorOp::residual 0.43015 2583
+    99.4%    0.42767     2583 ViscousTensorOp::applyOp [32] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[32]ViscousTensorOp::applyOp 0.42767 2583
+    90.9%    0.38858     2583 ViscousTensorOp::computeOperatorNoBCs [35] f=0
+     7.2%    0.03081     2583 ViscousTensorOp::fillGrad [97] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[33]FORT_ADDGRADTOFLUXVTOP 0.40353 72576
+---------------------------------------------------------
+[34]FORT_CELLGRADVTOP 0.39500 72576
+---------------------------------------------------------
+[35]ViscousTensorOp::computeOperatorNoBCs 0.38858 2583
+    95.0%    0.36904    61992 ViscousTensorOp::getflux [37] f=0
+     1.6%    0.00634    61992 FORT_ADDDIVFLUXDIRVTOP [170] f=0
+    96.6%                  Total 
+---------------------------------------------------------
+[36]FORT_ADDDIVFLUXDIRVTOP 0.37760 24192
+---------------------------------------------------------
+[37]ViscousTensorOp::getflux 0.36904 61992
+    11.2%    0.04149   557928 FORT_GETFACEGRADVTOP [84] f=0
+     6.9%    0.02529    61992 ViscousTensorOp::getFluxFromDivAndGrad [107] f=0
+     5.0%    0.01853   185976 FORT_FACEDIVINCRVTOP [122] f=0
+    23.1%                  Total 
+---------------------------------------------------------
+[38]FORT_FACEDIVINCRVTOP 0.35847 72576
+---------------------------------------------------------
+[39]ViscousTensorOp::restrictResidual 0.30972 63
+    94.0%    0.29123       63 ViscousTensorOp::residualNoExchange [40] f=0
+     3.9%    0.01207      504 FORT_RESTRICTRESVTOP [141] f=0
+     0.7%    0.00230       63 LevelData::exchange (exchange + copier) [203] f=0
+     0.5%    0.00147       63 ~LayoutData [228] f=0
+     0.2%    0.00060       63 LevelData<T>::define(dbl,comps,ghost,factory) [250] f=0
+     0.0%    0.00002       63 ~Copier [335] f=0
+     0.0%    0.00000       63 ~LevelData [385] f=0
+     0.0%    0.00000       63 ~BoxLayoutData [390] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[40]ViscousTensorOp::residualNoExchange 0.29123 63
+    97.8%    0.28480       63 ViscousTensorOp::applyOpNoExchange [41] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[41]ViscousTensorOp::applyOpNoExchange 0.28480 63
+    86.9%    0.24757       63 ViscousTensorOp::computeOperatorNoBCs [49] f=0
+    11.3%    0.03209       63 ViscousTensorOp::fillGradNoExchange [94] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[42]AMRMultiGrid::computeAMRResidual 0.28277 63
+    98.5%    0.27866       63 AMRMultiGrid<T>::computeAMRResidualLevel [43] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[43]AMRMultiGrid<T>::computeAMRResidualLevel 0.27866 63
+    100.0%    0.27863       63 ViscousTensorOp::residual [44] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[44]ViscousTensorOp::residual 0.27863 63
+    97.5%    0.27154       63 ViscousTensorOp::applyOp [45] f=0
+    97.5%                  Total 
+---------------------------------------------------------
+[45]ViscousTensorOp::applyOp 0.27154 63
+    85.1%    0.23105       63 ViscousTensorOp::computeOperatorNoBCs [50] f=0
+    12.8%    0.03465       63 ViscousTensorOp::fillGrad [91] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[46]ViscousTensorOp::relax 0.26872 126
+    94.6%    0.25414     1008 ViscousTensorOp::residual [47] f=0
+     1.9%    0.00508     1008 LevelData::exchange (exchange + copier) [173] f=0
+     1.1%    0.00300     8064 FORT_GSRBSANELYVEC [196] f=0
+     0.1%    0.00032      126 LevelData<T>::define(dbl,comps,ghost,factory) [274] f=0
+     0.0%    0.00007      126 ~LayoutData [314] f=0
+     0.0%    0.00000      126 ~Copier [370] f=0
+     0.0%    0.00000      126 ~BoxLayoutData [378] f=0
+     0.0%    0.00000      126 ~LevelData [382] f=0
+    97.7%                  Total 
+---------------------------------------------------------
+[47]ViscousTensorOp::residual 0.25414 1008
+    98.7%    0.25078     1008 ViscousTensorOp::applyOp [48] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[48]ViscousTensorOp::applyOp 0.25078 1008
+    87.2%    0.21863     1008 ViscousTensorOp::computeOperatorNoBCs [51] f=0
+     9.9%    0.02473     1008 ViscousTensorOp::fillGrad [113] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[49]ViscousTensorOp::computeOperatorNoBCs 0.24757 63
+    81.0%    0.20058     1512 ViscousTensorOp::getflux [52] f=0
+     9.5%    0.02352     1512 FORT_ADDDIVFLUXDIRVTOP [115] f=0
+    90.5%                  Total 
+---------------------------------------------------------
+[50]ViscousTensorOp::computeOperatorNoBCs 0.23105 63
+    81.7%    0.18867     1512 ViscousTensorOp::getflux [54] f=0
+    10.2%    0.02353     1512 FORT_ADDDIVFLUXDIRVTOP [114] f=0
+    91.8%                  Total 
+---------------------------------------------------------
+[51]ViscousTensorOp::computeOperatorNoBCs 0.21863 1008
+    91.5%    0.20012    24192 ViscousTensorOp::getflux [53] f=0
+     3.7%    0.00803    24192 FORT_ADDDIVFLUXDIRVTOP [156] f=0
+    95.2%                  Total 
+---------------------------------------------------------
+[52]ViscousTensorOp::getflux 0.20058 1512
+    29.4%    0.05901    13608 FORT_GETFACEGRADVTOP [74] f=0
+    26.7%    0.05360     1512 ViscousTensorOp::getFluxFromDivAndGrad [76] f=0
+    11.2%    0.02249     4536 FORT_FACEDIVINCRVTOP [117] f=0
+    67.4%                  Total 
+---------------------------------------------------------
+[53]ViscousTensorOp::getflux 0.20012 24192
+    17.2%    0.03433   217728 FORT_GETFACEGRADVTOP [92] f=0
+    12.4%    0.02477    24192 ViscousTensorOp::getFluxFromDivAndGrad [112] f=0
+     7.5%    0.01509    72576 FORT_FACEDIVINCRVTOP [125] f=0
+    37.1%                  Total 
+---------------------------------------------------------
+[54]ViscousTensorOp::getflux 0.18867 1512
+    31.4%    0.05921    13608 FORT_GETFACEGRADVTOP [73] f=0
+    23.0%    0.04330     1512 ViscousTensorOp::getFluxFromDivAndGrad [81] f=0
+    11.9%    0.02253     4536 FORT_FACEDIVINCRVTOP [116] f=0
+    66.3%                  Total 
+---------------------------------------------------------
+[55]ViscousTensorOp::prolongIncrement 0.16108 63
+    40.1%    0.06464      504 FORT_PROLONGVTOP [71] f=0
+     1.3%    0.00215     1512 FORT_SLOPESVTOP [210] f=0
+     0.9%    0.00141     3024 FORT_LINEAREXTRAPVTOP [230] f=0
+     0.4%    0.00058       63 LevelData::exchange (exchange + copier) [254] f=0
+    42.7%                  Total 
+---------------------------------------------------------
+[56]FORT_GETFACEGRADVTOP 0.14690 217728
+---------------------------------------------------------
+[57]LevelData::exchange (exchange + copier) 0.11338 1008
+    99.9%    0.11328     1008 LevelData::exchange (actual exchange) [58] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[58]LevelData::exchange (actual exchange) 0.11328 1008
+    99.9%    0.11318     1008 exchange [59] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[59]exchange 0.11318 1008
+    99.9%    0.11308     1008 local copying [60] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[60]local copying 0.11308 1008
+---------------------------------------------------------
+[61]FORT_GSRBSANELYVEC 0.11042 8064
+---------------------------------------------------------
+[62]ViscousTensorOp::getFluxFromDivAndGrad 0.10383 24192
+    72.9%    0.07570    72576 FORT_ADDGRADTOFLUXVTOP [69] f=0
+    72.9%                  Total 
+---------------------------------------------------------
+[63]ViscousTensorOp::relax 0.09230 63
+    94.1%    0.08684      504 ViscousTensorOp::residual [64] f=0
+     1.7%    0.00155      504 LevelData::exchange (exchange + copier) [223] f=0
+     0.6%    0.00054     4032 FORT_GSRBSANELYVEC [261] f=0
+     0.1%    0.00008       63 LevelData<T>::define(dbl,comps,ghost,factory) [312] f=0
+     0.0%    0.00002       63 ~LayoutData [331] f=0
+     0.0%    0.00000       63 ~Copier [383] f=0
+     0.0%    0.00000       63 ~BoxLayoutData [388] f=0
+     0.0%    0.00000       63 ~LevelData [391] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[64]ViscousTensorOp::residual 0.08684 504
+    99.4%    0.08634      504 ViscousTensorOp::applyOp [65] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[65]ViscousTensorOp::applyOp 0.08634 504
+    90.4%    0.07801      504 ViscousTensorOp::computeOperatorNoBCs [68] f=0
+     7.7%    0.00665      504 ViscousTensorOp::fillGrad [167] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[66]ViscousTensorOp::fillGrad 0.08563 1008
+    58.2%    0.04980    72576 FORT_CELLGRADVTOP [77] f=0
+    29.7%    0.02543     1008 LevelData::exchange (exchange + copier) [103] f=0
+    10.3%    0.00883     1008 exchange [151] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[67]FORT_GETFACEGRADVTOP 0.08114 1088640
+---------------------------------------------------------
+[68]ViscousTensorOp::computeOperatorNoBCs 0.07801 504
+    94.9%    0.07404    12096 ViscousTensorOp::getflux [70] f=0
+     1.6%    0.00125    12096 FORT_ADDDIVFLUXDIRVTOP [235] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[69]FORT_ADDGRADTOFLUXVTOP 0.07570 72576
+---------------------------------------------------------
+[70]ViscousTensorOp::getflux 0.07404 12096
+    11.3%    0.00834   108864 FORT_GETFACEGRADVTOP [155] f=0
+     7.0%    0.00518    12096 ViscousTensorOp::getFluxFromDivAndGrad [172] f=0
+     5.0%    0.00370    36288 FORT_FACEDIVINCRVTOP [189] f=0
+    23.3%                  Total 
+---------------------------------------------------------
+[71]FORT_PROLONGVTOP 0.06464 504
+---------------------------------------------------------
+[72]ViscousTensorOp::fillGrad 0.05991 5040
+    43.2%    0.02588     5040 LevelData::exchange (exchange + copier) [99] f=0
+    24.7%    0.01477   362880 FORT_CELLGRADVTOP [127] f=0
+    21.6%    0.01297     5040 exchange [137] f=0
+    89.5%                  Total 
+---------------------------------------------------------
+[73]FORT_GETFACEGRADVTOP 0.05921 13608
+---------------------------------------------------------
+[74]FORT_GETFACEGRADVTOP 0.05901 13608
+---------------------------------------------------------
+[75]FORT_FACEDIVINCRVTOP 0.05869 72576
+---------------------------------------------------------
+[76]ViscousTensorOp::getFluxFromDivAndGrad 0.05360 1512
+    47.3%    0.02533     4536 FORT_ADDGRADTOFLUXVTOP [105] f=0
+    47.3%                  Total 
+---------------------------------------------------------
+[77]FORT_CELLGRADVTOP 0.04980 72576
+---------------------------------------------------------
+[78]ViscousTensorOp::getFluxFromDivAndGrad 0.04958 120960
+    55.1%    0.02734   362880 FORT_ADDGRADTOFLUXVTOP [98] f=0
+    55.1%                  Total 
+---------------------------------------------------------
+[79]FORT_ADDDIVFLUXDIRVTOP 0.04849 24192
+---------------------------------------------------------
+[80]ViscousTensorOp::restrictResidual 0.04587 63
+    93.3%    0.04278       63 ViscousTensorOp::residualNoExchange [82] f=0
+     3.7%    0.00169      504 FORT_RESTRICTRESVTOP [216] f=0
+     1.3%    0.00059       63 LevelData::exchange (exchange + copier) [251] f=0
+     0.3%    0.00012       63 LevelData<T>::define(dbl,comps,ghost,factory) [302] f=0
+     0.1%    0.00006       63 ~LayoutData [317] f=0
+     0.0%    0.00000       63 ~Copier [384] f=0
+     0.0%    0.00000       63 ~BoxLayoutData [392] f=0
+     0.0%    0.00000       63 ~LevelData [395] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[81]ViscousTensorOp::getFluxFromDivAndGrad 0.04330 1512
+    57.9%    0.02505     4536 FORT_ADDGRADTOFLUXVTOP [109] f=0
+    57.9%                  Total 
+---------------------------------------------------------
+[82]ViscousTensorOp::residualNoExchange 0.04278 63
+    98.0%    0.04194       63 ViscousTensorOp::applyOpNoExchange [83] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[83]ViscousTensorOp::applyOpNoExchange 0.04194 63
+    85.6%    0.03589       63 ViscousTensorOp::computeOperatorNoBCs [90] f=0
+    11.2%    0.00470       63 ViscousTensorOp::fillGradNoExchange [181] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[84]FORT_GETFACEGRADVTOP 0.04149 557928
+---------------------------------------------------------
+[85]LevelData::exchange (exchange + copier) 0.04019 1008
+    99.6%    0.04001     1008 LevelData::exchange (actual exchange) [86] f=0
+     0.0%    0.00001        1 LevelData::exchange (defining copier) [347] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[86]LevelData::exchange (actual exchange) 0.04001 1008
+    99.7%    0.03987     1008 exchange [87] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[87]exchange 0.03987 1008
+    99.7%    0.03975     1008 local copying [88] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[88]local copying 0.03975 1008
+---------------------------------------------------------
+[89]FORT_FACEDIVINCRVTOP 0.03615 362880
+---------------------------------------------------------
+[90]ViscousTensorOp::computeOperatorNoBCs 0.03589 63
+    87.2%    0.03129     1512 ViscousTensorOp::getflux [96] f=0
+     8.4%    0.00302     1512 FORT_ADDDIVFLUXDIRVTOP [195] f=0
+    95.6%                  Total 
+---------------------------------------------------------
+[91]ViscousTensorOp::fillGrad 0.03465 63
+    71.6%    0.02480     4536 FORT_CELLGRADVTOP [111] f=0
+    21.5%    0.00746       63 LevelData::exchange (exchange + copier) [158] f=0
+     6.3%    0.00219       63 exchange [208] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[92]FORT_GETFACEGRADVTOP 0.03433 217728
+---------------------------------------------------------
+[93]exchange 0.03215 1008
+    99.7%    0.03204     1008 local copying [95] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[94]ViscousTensorOp::fillGradNoExchange 0.03209 63
+    77.4%    0.02485     4536 FORT_CELLGRADVTOP [110] f=0
+    22.1%    0.00708       63 LevelData::exchange (exchange + copier) [162] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[95]local copying 0.03204 1008
+---------------------------------------------------------
+[96]ViscousTensorOp::getflux 0.03129 1512
+    29.2%    0.00915    13608 FORT_GETFACEGRADVTOP [150] f=0
+    20.6%    0.00644     1512 ViscousTensorOp::getFluxFromDivAndGrad [169] f=0
+    11.7%    0.00366     4536 FORT_FACEDIVINCRVTOP [190] f=0
+    61.5%                  Total 
+---------------------------------------------------------
+[97]ViscousTensorOp::fillGrad 0.03081 2583
+    43.2%    0.01329     2583 LevelData::exchange (exchange + copier) [133] f=0
+    24.6%    0.00756   185976 FORT_CELLGRADVTOP [157] f=0
+    21.8%    0.00673     2583 exchange [166] f=0
+    89.6%                  Total 
+---------------------------------------------------------
+[98]FORT_ADDGRADTOFLUXVTOP 0.02734 362880
+---------------------------------------------------------
+[99]LevelData::exchange (exchange + copier) 0.02588 5040
+    99.4%    0.02573     5040 LevelData::exchange (actual exchange) [100] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[100]LevelData::exchange (actual exchange) 0.02573 5040
+    99.5%    0.02561     5040 exchange [101] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[101]exchange 0.02561 5040
+    99.4%    0.02545     5040 local copying [102] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[102]local copying 0.02545 5040
+---------------------------------------------------------
+[103]LevelData::exchange (exchange + copier) 0.02543 1008
+    99.7%    0.02537     1008 LevelData::exchange (actual exchange) [104] f=0
+     0.0%    0.00000        1 LevelData::exchange (defining copier) [360] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[104]LevelData::exchange (actual exchange) 0.02537 1008
+    99.8%    0.02532     1008 exchange [106] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[105]FORT_ADDGRADTOFLUXVTOP 0.02533 4536
+---------------------------------------------------------
+[106]exchange 0.02532 1008
+    99.8%    0.02527     1008 local copying [108] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[107]ViscousTensorOp::getFluxFromDivAndGrad 0.02529 61992
+    55.4%    0.01400   185976 FORT_ADDGRADTOFLUXVTOP [129] f=0
+    55.4%                  Total 
+---------------------------------------------------------
+[108]local copying 0.02527 1008
+---------------------------------------------------------
+[109]FORT_ADDGRADTOFLUXVTOP 0.02505 4536
+---------------------------------------------------------
+[110]FORT_CELLGRADVTOP 0.02485 4536
+---------------------------------------------------------
+[111]FORT_CELLGRADVTOP 0.02480 4536
+---------------------------------------------------------
+[112]ViscousTensorOp::getFluxFromDivAndGrad 0.02477 24192
+    64.2%    0.01591    72576 FORT_ADDGRADTOFLUXVTOP [124] f=0
+    64.2%                  Total 
+---------------------------------------------------------
+[113]ViscousTensorOp::fillGrad 0.02473 1008
+    40.5%    0.01002     1008 LevelData::exchange (exchange + copier) [142] f=0
+    34.2%    0.00847    72576 FORT_CELLGRADVTOP [154] f=0
+    19.5%    0.00483     1008 exchange [177] f=0
+    94.3%                  Total 
+---------------------------------------------------------
+[114]FORT_ADDDIVFLUXDIRVTOP 0.02353 1512
+---------------------------------------------------------
+[115]FORT_ADDDIVFLUXDIRVTOP 0.02352 1512
+---------------------------------------------------------
+[116]FORT_FACEDIVINCRVTOP 0.02253 4536
+---------------------------------------------------------
+[117]FORT_FACEDIVINCRVTOP 0.02249 4536
+---------------------------------------------------------
+[118]ViscousTensorOp::prolongIncrement 0.02164 63
+    40.7%    0.00881      504 FORT_PROLONGVTOP [152] f=0
+     2.5%    0.00053     3024 FORT_LINEAREXTRAPVTOP [262] f=0
+     2.0%    0.00044     1512 FORT_SLOPESVTOP [267] f=0
+     1.4%    0.00031       63 LevelData::exchange (exchange + copier) [275] f=0
+    46.6%                  Total 
+---------------------------------------------------------
+[119]ViscousTensorOp::restrictResidual 0.02150 63
+    94.3%    0.02026       63 ViscousTensorOp::residualNoExchange [120] f=0
+     1.4%    0.00031       63 LevelData::exchange (exchange + copier) [276] f=0
+     1.4%    0.00030      504 FORT_RESTRICTRESVTOP [284] f=0
+     0.5%    0.00012       63 LevelData<T>::define(dbl,comps,ghost,factory) [303] f=0
+     0.1%    0.00003       63 ~LayoutData [328] f=0
+     0.0%    0.00000       63 ~Copier [373] f=0
+     0.0%    0.00000       63 ~LevelData [389] f=0
+     0.0%    0.00000       63 ~BoxLayoutData [393] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[120]ViscousTensorOp::residualNoExchange 0.02026 63
+    98.9%    0.02005       63 ViscousTensorOp::applyOpNoExchange [121] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[121]ViscousTensorOp::applyOpNoExchange 0.02005 63
+    91.5%    0.01835       63 ViscousTensorOp::computeOperatorNoBCs [123] f=0
+     6.1%    0.00123       63 ViscousTensorOp::fillGradNoExchange [236] f=0
+    97.7%                  Total 
+---------------------------------------------------------
+[122]FORT_FACEDIVINCRVTOP 0.01853 185976
+---------------------------------------------------------
+[123]ViscousTensorOp::computeOperatorNoBCs 0.01835 63
+    70.4%    0.01292     1512 ViscousTensorOp::getflux [138] f=0
+     2.8%    0.00051     1512 FORT_ADDDIVFLUXDIRVTOP [264] f=0
+    73.2%                  Total 
+---------------------------------------------------------
+[124]FORT_ADDGRADTOFLUXVTOP 0.01591 72576
+---------------------------------------------------------
+[125]FORT_FACEDIVINCRVTOP 0.01509 72576
+---------------------------------------------------------
+[126]FORT_GSRBSANELYVEC 0.01491 8064
+---------------------------------------------------------
+[127]FORT_CELLGRADVTOP 0.01477 362880
+---------------------------------------------------------
+[128]LevelData::exchange (exchange + copier) 0.01474 5040
+    94.6%    0.01395     5040 LevelData::exchange (actual exchange) [130] f=0
+     3.5%    0.00051       63 LevelData::exchange (defining copier) [265] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[129]FORT_ADDGRADTOFLUXVTOP 0.01400 185976
+---------------------------------------------------------
+[130]LevelData::exchange (actual exchange) 0.01395 5040
+    99.0%    0.01380     5040 exchange [131] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[131]exchange 0.01380 5040
+    98.9%    0.01365     5040 local copying [132] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[132]local copying 0.01365 5040
+---------------------------------------------------------
+[133]LevelData::exchange (exchange + copier) 0.01329 2583
+    99.0%    0.01316     2583 LevelData::exchange (actual exchange) [134] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[134]LevelData::exchange (actual exchange) 0.01316 2583
+    99.3%    0.01307     2583 exchange [135] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[135]exchange 0.01307 2583
+    99.4%    0.01299     2583 local copying [136] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[136]local copying 0.01299 2583
+---------------------------------------------------------
+[137]exchange 0.01297 5040
+    98.8%    0.01282     5040 local copying [139] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[138]ViscousTensorOp::getflux 0.01292 1512
+    17.0%    0.00220    13608 FORT_GETFACEGRADVTOP [207] f=0
+    12.2%    0.00157     1512 ViscousTensorOp::getFluxFromDivAndGrad [220] f=0
+     7.6%    0.00098     4536 FORT_FACEDIVINCRVTOP [239] f=0
+    36.8%                  Total 
+---------------------------------------------------------
+[139]local copying 0.01282 5040
+---------------------------------------------------------
+[140]FORT_ADDDIVFLUXDIRVTOP 0.01231 120960
+---------------------------------------------------------
+[141]FORT_RESTRICTRESVTOP 0.01207 504
+---------------------------------------------------------
+[142]LevelData::exchange (exchange + copier) 0.01002 1008
+    99.3%    0.00994     1008 LevelData::exchange (actual exchange) [143] f=0
+     0.0%    0.00000        1 LevelData::exchange (defining copier) [363] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[143]LevelData::exchange (actual exchange) 0.00994 1008
+    99.7%    0.00991     1008 exchange [144] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[144]exchange 0.00991 1008
+    99.7%    0.00988     1008 local copying [145] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[145]local copying 0.00988 1008
+---------------------------------------------------------
+[146]LevelData::exchange (exchange + copier) 0.00954 1008
+    99.1%    0.00946     1008 LevelData::exchange (actual exchange) [147] f=0
+     0.1%    0.00001        1 LevelData::exchange (defining copier) [348] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[147]LevelData::exchange (actual exchange) 0.00946 1008
+    99.6%    0.00942     1008 exchange [148] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[148]exchange 0.00942 1008
+    99.5%    0.00937     1008 local copying [149] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[149]local copying 0.00937 1008
+---------------------------------------------------------
+[150]FORT_GETFACEGRADVTOP 0.00915 13608
+---------------------------------------------------------
+[151]exchange 0.00883 1008
+    99.5%    0.00878     1008 local copying [153] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[152]FORT_PROLONGVTOP 0.00881 504
+---------------------------------------------------------
+[153]local copying 0.00878 1008
+---------------------------------------------------------
+[154]FORT_CELLGRADVTOP 0.00847 72576
+---------------------------------------------------------
+[155]FORT_GETFACEGRADVTOP 0.00834 108864
+---------------------------------------------------------
+[156]FORT_ADDDIVFLUXDIRVTOP 0.00803 24192
+---------------------------------------------------------
+[157]FORT_CELLGRADVTOP 0.00756 185976
+---------------------------------------------------------
+[158]LevelData::exchange (exchange + copier) 0.00746 63
+    99.8%    0.00745       63 LevelData::exchange (actual exchange) [159] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[159]LevelData::exchange (actual exchange) 0.00745 63
+    99.7%    0.00743       63 exchange [160] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[160]exchange 0.00743 63
+    99.8%    0.00741       63 local copying [161] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[161]local copying 0.00741 63
+---------------------------------------------------------
+[162]LevelData::exchange (exchange + copier) 0.00708 63
+    99.9%    0.00708       63 LevelData::exchange (actual exchange) [163] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[163]LevelData::exchange (actual exchange) 0.00708 63
+    99.8%    0.00706       63 exchange [164] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[164]exchange 0.00706 63
+    99.9%    0.00705       63 local copying [165] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[165]local copying 0.00705 63
+---------------------------------------------------------
+[166]exchange 0.00673 2583
+    98.8%    0.00665     2583 local copying [168] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[167]ViscousTensorOp::fillGrad 0.00665 504
+    41.1%    0.00273      504 LevelData::exchange (exchange + copier) [198] f=0
+    26.9%    0.00179    36288 FORT_CELLGRADVTOP [215] f=0
+    21.2%    0.00141      504 exchange [229] f=0
+    89.2%                  Total 
+---------------------------------------------------------
+[168]local copying 0.00665 2583
+---------------------------------------------------------
+[169]ViscousTensorOp::getFluxFromDivAndGrad 0.00644 1512
+    73.3%    0.00472     4536 FORT_ADDGRADTOFLUXVTOP [180] f=0
+    73.3%                  Total 
+---------------------------------------------------------
+[170]FORT_ADDDIVFLUXDIRVTOP 0.00634 61992
+---------------------------------------------------------
+[171]AMRMultiGrid::define 0.00544 1
+    34.5%    0.00188        1 MultiGrid::define [213] f=0
+    16.3%    0.00088       24 FORT_DECRINVRELCOEFVTOP [240] f=0
+     6.6%    0.00036       96 CFIVS::define(slow) [272] f=0
+     4.4%    0.00024        8 FORT_INVERTLAMBDAVTOP [285] f=0
+     1.9%    0.00010        2 LevelData<T>::define(dbl,comps,ghost,factory) [307] f=0
+     1.0%    0.00005        1 Copier::define [319] f=0
+     0.0%    0.00000        2 ~Copier [403] f=0
+    64.6%                  Total 
+---------------------------------------------------------
+[172]ViscousTensorOp::getFluxFromDivAndGrad 0.00518 12096
+    54.7%    0.00284    36288 FORT_ADDGRADTOFLUXVTOP [197] f=0
+    54.7%                  Total 
+---------------------------------------------------------
+[173]LevelData::exchange (exchange + copier) 0.00508 1008
+    98.6%    0.00502     1008 LevelData::exchange (actual exchange) [174] f=0
+     0.1%    0.00001        1 LevelData::exchange (defining copier) [356] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[174]LevelData::exchange (actual exchange) 0.00502 1008
+    99.0%    0.00496     1008 exchange [175] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[175]exchange 0.00496 1008
+    99.2%    0.00493     1008 local copying [176] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[176]local copying 0.00493 1008
+---------------------------------------------------------
+[177]exchange 0.00483 1008
+    99.3%    0.00479     1008 local copying [178] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[178]local copying 0.00479 1008
+---------------------------------------------------------
+[179]FORT_GSRBSANELYVEC 0.00479 40320
+---------------------------------------------------------
+[180]FORT_ADDGRADTOFLUXVTOP 0.00472 4536
+---------------------------------------------------------
+[181]ViscousTensorOp::fillGradNoExchange 0.00470 63
+    64.3%    0.00302     4536 FORT_CELLGRADVTOP [194] f=0
+    33.6%    0.00158       63 LevelData::exchange (exchange + copier) [218] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[182]Initial AMR Residual 0.00460 1
+    100.0%    0.00460        1 AMRMultiGrid::computeAMRResidual [183] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[183]AMRMultiGrid::computeAMRResidual 0.00460 1
+    98.6%    0.00454        1 AMRMultiGrid<T>::computeAMRResidualLevel [184] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[184]AMRMultiGrid<T>::computeAMRResidualLevel 0.00454 1
+    100.0%    0.00454        1 ViscousTensorOp::residual [185] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[185]ViscousTensorOp::residual 0.00454 1
+    97.3%    0.00442        1 ViscousTensorOp::applyOp [186] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[186]ViscousTensorOp::applyOp 0.00442 1
+    84.3%    0.00372        1 ViscousTensorOp::computeOperatorNoBCs [188] f=0
+    13.7%    0.00060        1 ViscousTensorOp::fillGrad [249] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[187]WriteAMRHierarchyHDF5 0.00396 2
+    61.3%    0.00243        2 WriteFile [202] f=0
+    33.3%    0.00132        2 CreateFile [234] f=0
+     4.8%    0.00019        2 CloseFile [288] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[188]ViscousTensorOp::computeOperatorNoBCs 0.00372 1
+    83.8%    0.00312       24 ViscousTensorOp::getflux [193] f=0
+    10.4%    0.00039       24 FORT_ADDDIVFLUXDIRVTOP [270] f=0
+    94.3%                  Total 
+---------------------------------------------------------
+[189]FORT_FACEDIVINCRVTOP 0.00370 36288
+---------------------------------------------------------
+[190]FORT_FACEDIVINCRVTOP 0.00366 4536
+---------------------------------------------------------
+[191]ViscousTensorOp::prolongIncrement 0.00366 63
+    36.4%    0.00133      504 FORT_PROLONGVTOP [232] f=0
+     8.3%    0.00030     3024 FORT_LINEAREXTRAPVTOP [279] f=0
+     4.9%    0.00018       63 LevelData::exchange (exchange + copier) [289] f=0
+     4.3%    0.00016     1512 FORT_SLOPESVTOP [295] f=0
+    54.0%                  Total 
+---------------------------------------------------------
+[192]~LayoutData 0.00365 126
+---------------------------------------------------------
+[193]ViscousTensorOp::getflux 0.00312 24
+    33.3%    0.00104      216 FORT_GETFACEGRADVTOP [237] f=0
+    27.9%    0.00087       24 ViscousTensorOp::getFluxFromDivAndGrad [241] f=0
+    12.2%    0.00038       72 FORT_FACEDIVINCRVTOP [271] f=0
+    73.3%                  Total 
+---------------------------------------------------------
+[194]FORT_CELLGRADVTOP 0.00302 4536
+---------------------------------------------------------
+[195]FORT_ADDDIVFLUXDIRVTOP 0.00302 1512
+---------------------------------------------------------
+[196]FORT_GSRBSANELYVEC 0.00300 8064
+---------------------------------------------------------
+[197]FORT_ADDGRADTOFLUXVTOP 0.00284 36288
+---------------------------------------------------------
+[198]LevelData::exchange (exchange + copier) 0.00273 504
+    99.0%    0.00270      504 LevelData::exchange (actual exchange) [199] f=0
+     0.1%    0.00000        1 LevelData::exchange (defining copier) [361] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[199]LevelData::exchange (actual exchange) 0.00270 504
+    99.4%    0.00269      504 exchange [200] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[200]exchange 0.00269 504
+    99.4%    0.00267      504 local copying [201] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[201]local copying 0.00267 504
+---------------------------------------------------------
+[202]WriteFile 0.00243 2
+    80.8%    0.00196        2 Write Level [212] f=0
+    80.8%                  Total 
+---------------------------------------------------------
+[203]LevelData::exchange (exchange + copier) 0.00230 63
+    99.8%    0.00230       63 LevelData::exchange (actual exchange) [204] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[204]LevelData::exchange (actual exchange) 0.00230 63
+    99.5%    0.00229       63 exchange [205] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[205]exchange 0.00229 63
+    99.5%    0.00228       63 local copying [206] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[206]local copying 0.00228 63
+---------------------------------------------------------
+[207]FORT_GETFACEGRADVTOP 0.00220 13608
+---------------------------------------------------------
+[208]exchange 0.00219 63
+    99.7%    0.00219       63 local copying [209] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[209]local copying 0.00219 63
+---------------------------------------------------------
+[210]FORT_SLOPESVTOP 0.00215 1512
+---------------------------------------------------------
+[211]LevelData<T>::define(dbl,comps,ghost,factory) 0.00200 2520
+---------------------------------------------------------
+[212]Write Level 0.00196 2
+    94.3%    0.00185        2 write_Level [214] f=0
+     2.0%    0.00004        2 writeToFile [322] f=0
+     0.5%    0.00001        2 setGroup [344] f=0
+     0.0%    0.00000        2 calc minimum in outputGhost [412] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[213]MultiGrid::define 0.00188 1
+    36.6%    0.00069      144 FORT_AVERAGEFACEHARMONIC [243] f=0
+     6.1%    0.00011      288 CFIVS::define(slow) [304] f=0
+     5.8%    0.00011       72 FORT_DECRINVRELCOEFVTOP [305] f=0
+     5.7%    0.00011        9 LevelData<T>::define(dbl,comps,ghost,factory) [306] f=0
+     4.9%    0.00009        3 CoarseAverage::computeAverages [309] f=0
+     1.3%    0.00002       24 FORT_INVERTLAMBDAVTOP [332] f=0
+     1.1%    0.00002        3 CoarseAverage::define1 [333] f=0
+     0.8%    0.00001        3 Copier::define [340] f=0
+     0.3%    0.00001        6 ~LayoutData [354] f=0
+     0.0%    0.00000        9 ~Copier [400] f=0
+     0.0%    0.00000        6 ~BoxLayoutData [404] f=0
+     0.0%    0.00000        6 ~LevelData [405] f=0
+    62.5%                  Total 
+---------------------------------------------------------
+[214]write_Level 0.00185 2
+    82.4%    0.00152        2 linearize_H5Dwrite [224] f=0
+     9.1%    0.00017        2 WriteAttributes [294] f=0
+     2.8%    0.00005        2 H5S_H5D_offsets_create [320] f=0
+     2.0%    0.00004        2 H5Dcreate [323] f=0
+     0.8%    0.00001        2 WriteOffsets [341] f=0
+     0.8%    0.00001        2 H5S_H5D_offsets_close [342] f=0
+     0.3%    0.00001        2 getOffsets [352] f=0
+     0.3%    0.00001        2 mallocMT_buffers [355] f=0
+     0.3%    0.00000        2 H5Dclose [359] f=0
+     0.2%    0.00000        2 freeMT [367] f=0
+     0.1%    0.00000        2 H5Screate [375] f=0
+     0.1%    0.00000        2 H5Sclose [386] f=0
+     0.0%    0.00000        2 ComputeBufferCapacity [399] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[215]FORT_CELLGRADVTOP 0.00179 36288
+---------------------------------------------------------
+[216]FORT_RESTRICTRESVTOP 0.00169 504
+---------------------------------------------------------
+[217]LevelData<T>::define(dbl,comps,ghost,factory) 0.00159 126
+---------------------------------------------------------
+[218]LevelData::exchange (exchange + copier) 0.00158 63
+    99.7%    0.00158       63 LevelData::exchange (actual exchange) [219] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[219]LevelData::exchange (actual exchange) 0.00158 63
+    99.5%    0.00157       63 exchange [221] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[220]ViscousTensorOp::getFluxFromDivAndGrad 0.00157 1512
+    64.7%    0.00102     4536 FORT_ADDGRADTOFLUXVTOP [238] f=0
+    64.7%                  Total 
+---------------------------------------------------------
+[221]exchange 0.00157 63
+    99.7%    0.00156       63 local copying [222] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[222]local copying 0.00156 63
+---------------------------------------------------------
+[223]LevelData::exchange (exchange + copier) 0.00155 504
+    97.6%    0.00151      504 LevelData::exchange (actual exchange) [225] f=0
+     0.2%    0.00000        1 LevelData::exchange (defining copier) [364] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[224]linearize_H5Dwrite 0.00152 2
+    86.6%    0.00132       16 H5Dwrite [233] f=0
+    11.2%    0.00017       16 linearize [292] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[225]LevelData::exchange (actual exchange) 0.00151 504
+    98.7%    0.00149      504 exchange [226] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[226]exchange 0.00149 504
+    98.7%    0.00147      504 local copying [227] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[227]local copying 0.00147 504
+---------------------------------------------------------
+[228]~LayoutData 0.00147 63
+---------------------------------------------------------
+[229]exchange 0.00141 504
+    98.9%    0.00140      504 local copying [231] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[230]FORT_LINEAREXTRAPVTOP 0.00141 3024
+---------------------------------------------------------
+[231]local copying 0.00140 504
+---------------------------------------------------------
+[232]FORT_PROLONGVTOP 0.00133 504
+---------------------------------------------------------
+[233]H5Dwrite 0.00132 16
+---------------------------------------------------------
+[234]CreateFile 0.00132 2
+---------------------------------------------------------
+[235]FORT_ADDDIVFLUXDIRVTOP 0.00125 12096
+---------------------------------------------------------
+[236]ViscousTensorOp::fillGradNoExchange 0.00123 63
+    50.6%    0.00062       63 LevelData::exchange (exchange + copier) [245] f=0
+    42.5%    0.00052     4536 FORT_CELLGRADVTOP [263] f=0
+    93.1%                  Total 
+---------------------------------------------------------
+[237]FORT_GETFACEGRADVTOP 0.00104 216
+---------------------------------------------------------
+[238]FORT_ADDGRADTOFLUXVTOP 0.00102 4536
+---------------------------------------------------------
+[239]FORT_FACEDIVINCRVTOP 0.00098 4536
+---------------------------------------------------------
+[240]FORT_DECRINVRELCOEFVTOP 0.00088 24
+---------------------------------------------------------
+[241]ViscousTensorOp::getFluxFromDivAndGrad 0.00087 24
+    65.8%    0.00057       72 FORT_ADDGRADTOFLUXVTOP [257] f=0
+    65.8%                  Total 
+---------------------------------------------------------
+[242]uberCorrection 0.00072 1
+     2.7%    0.00002        2 LevelData<T>::define(dbl,comps,ghost,factory) [334] f=0
+     2.7%                  Total 
+---------------------------------------------------------
+[243]FORT_AVERAGEFACEHARMONIC 0.00069 144
+---------------------------------------------------------
+[244]~LayoutData 0.00066 2520
+---------------------------------------------------------
+[245]LevelData::exchange (exchange + copier) 0.00062 63
+    99.5%    0.00062       63 LevelData::exchange (actual exchange) [246] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[246]LevelData::exchange (actual exchange) 0.00062 63
+    99.5%    0.00062       63 exchange [247] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[247]exchange 0.00062 63
+    99.6%    0.00061       63 local copying [248] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[248]local copying 0.00061 63
+---------------------------------------------------------
+[249]ViscousTensorOp::fillGrad 0.00060 1
+    69.9%    0.00042       72 FORT_CELLGRADVTOP [269] f=0
+    23.7%    0.00014        1 LevelData::exchange (exchange + copier) [296] f=0
+     5.7%    0.00003        1 exchange [325] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[250]LevelData<T>::define(dbl,comps,ghost,factory) 0.00060 63
+---------------------------------------------------------
+[251]LevelData::exchange (exchange + copier) 0.00059 63
+    98.8%    0.00059       63 LevelData::exchange (actual exchange) [252] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[252]LevelData::exchange (actual exchange) 0.00059 63
+    98.8%    0.00058       63 exchange [253] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[253]exchange 0.00058 63
+    99.0%    0.00057       63 local copying [256] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[254]LevelData::exchange (exchange + copier) 0.00058 63
+    99.3%    0.00057       63 LevelData::exchange (actual exchange) [255] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[255]LevelData::exchange (actual exchange) 0.00057 63
+    99.0%    0.00057       63 exchange [258] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[256]local copying 0.00057 63
+---------------------------------------------------------
+[257]FORT_ADDGRADTOFLUXVTOP 0.00057 72
+---------------------------------------------------------
+[258]exchange 0.00057 63
+    99.1%    0.00056       63 local copying [259] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[259]local copying 0.00056 63
+---------------------------------------------------------
+[260]~AMRMultiGrid 0.00056 1
+    77.5%    0.00043      128 ~LayoutData [268] f=0
+     1.7%    0.00001       36 ~Copier [346] f=0
+     0.1%    0.00000       32 ~LevelData [397] f=0
+     0.1%    0.00000       32 ~BoxLayoutData [398] f=0
+    79.4%                  Total 
+---------------------------------------------------------
+[261]FORT_GSRBSANELYVEC 0.00054 4032
+---------------------------------------------------------
+[262]FORT_LINEAREXTRAPVTOP 0.00053 3024
+---------------------------------------------------------
+[263]FORT_CELLGRADVTOP 0.00052 4536
+---------------------------------------------------------
+[264]FORT_ADDDIVFLUXDIRVTOP 0.00051 1512
+---------------------------------------------------------
+[265]LevelData::exchange (defining copier) 0.00051 63
+    98.1%    0.00050       63 Copier::define [266] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[266]Copier::define 0.00050 63
+---------------------------------------------------------
+[267]FORT_SLOPESVTOP 0.00044 1512
+---------------------------------------------------------
+[268]~LayoutData 0.00043 128
+---------------------------------------------------------
+[269]FORT_CELLGRADVTOP 0.00042 72
+---------------------------------------------------------
+[270]FORT_ADDDIVFLUXDIRVTOP 0.00039 24
+---------------------------------------------------------
+[271]FORT_FACEDIVINCRVTOP 0.00038 72
+---------------------------------------------------------
+[272]CFIVS::define(slow) 0.00036 96
+---------------------------------------------------------
+[273]LevelData<T>::define(dbl,comps,ghost,factory) 0.00036 126
+---------------------------------------------------------
+[274]LevelData<T>::define(dbl,comps,ghost,factory) 0.00032 126
+---------------------------------------------------------
+[275]LevelData::exchange (exchange + copier) 0.00031 63
+    98.9%    0.00031       63 LevelData::exchange (actual exchange) [277] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[276]LevelData::exchange (exchange + copier) 0.00031 63
+    98.6%    0.00030       63 LevelData::exchange (actual exchange) [278] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[277]LevelData::exchange (actual exchange) 0.00031 63
+    99.2%    0.00030       63 exchange [280] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[278]LevelData::exchange (actual exchange) 0.00030 63
+    99.0%    0.00030       63 exchange [281] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[279]FORT_LINEAREXTRAPVTOP 0.00030 3024
+---------------------------------------------------------
+[280]exchange 0.00030 63
+    99.0%    0.00030       63 local copying [282] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[281]exchange 0.00030 63
+    99.1%    0.00030       63 local copying [283] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[282]local copying 0.00030 63
+---------------------------------------------------------
+[283]local copying 0.00030 63
+---------------------------------------------------------
+[284]FORT_RESTRICTRESVTOP 0.00030 504
+---------------------------------------------------------
+[285]FORT_INVERTLAMBDAVTOP 0.00024 8
+---------------------------------------------------------
+[286]PrChUtilities::setupLLCornerGrids 0.00024 1
+    34.0%    0.00008        1 setupGrids: BaseGridCreation [313] f=0
+    34.0%                  Total 
+---------------------------------------------------------
+[287]LevelData<T>::define(dbl,comps,ghost,factory) 0.00022 126
+---------------------------------------------------------
+[288]CloseFile 0.00019 2
+---------------------------------------------------------
+[289]LevelData::exchange (exchange + copier) 0.00018 63
+    97.4%    0.00018       63 LevelData::exchange (actual exchange) [290] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[290]LevelData::exchange (actual exchange) 0.00018 63
+    98.7%    0.00017       63 exchange [291] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[291]exchange 0.00017 63
+    98.7%    0.00017       63 local copying [293] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[292]linearize 0.00017 16
+---------------------------------------------------------
+[293]local copying 0.00017 63
+---------------------------------------------------------
+[294]WriteAttributes 0.00017 2
+---------------------------------------------------------
+[295]FORT_SLOPESVTOP 0.00016 1512
+---------------------------------------------------------
+[296]LevelData::exchange (exchange + copier) 0.00014 1
+    95.0%    0.00014        1 LevelData::exchange (actual exchange) [297] f=0
+     4.8%    0.00001        1 LevelData::exchange (defining copier) [350] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[297]LevelData::exchange (actual exchange) 0.00014 1
+    99.7%    0.00014        1 exchange [298] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[298]exchange 0.00014 1
+    99.8%    0.00014        1 local copying [299] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[299]local copying 0.00014 1
+---------------------------------------------------------
+[300]~LayoutData 0.00013 126
+---------------------------------------------------------
+[301]~LayoutData 0.00012 1
+---------------------------------------------------------
+[302]LevelData<T>::define(dbl,comps,ghost,factory) 0.00012 63
+---------------------------------------------------------
+[303]LevelData<T>::define(dbl,comps,ghost,factory) 0.00012 63
+---------------------------------------------------------
+[304]CFIVS::define(slow) 0.00011 288
+---------------------------------------------------------
+[305]FORT_DECRINVRELCOEFVTOP 0.00011 72
+---------------------------------------------------------
+[306]LevelData<T>::define(dbl,comps,ghost,factory) 0.00011 9
+---------------------------------------------------------
+[307]LevelData<T>::define(dbl,comps,ghost,factory) 0.00010 2
+---------------------------------------------------------
+[308]AMRMultiGrid::init 0.00010 1
+    63.6%    0.00006        1 MutliGrid::init [315] f=0
+    35.4%    0.00004        2 LevelData<T>::define(dbl,comps,ghost,factory) [324] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[309]CoarseAverage::computeAverages 0.00009 3
+    92.7%    0.00009       24 FORT_AVERAGE [311] f=0
+    92.7%                  Total 
+---------------------------------------------------------
+[310]~LayoutData 0.00009 6
+---------------------------------------------------------
+[311]FORT_AVERAGE 0.00009 24
+---------------------------------------------------------
+[312]LevelData<T>::define(dbl,comps,ghost,factory) 0.00008 63
+---------------------------------------------------------
+[313]setupGrids: BaseGridCreation 0.00008 1
+    20.2%    0.00002        1 LoadBalance:VectorBoxEntry [336] f=0
+    19.1%    0.00002        1 DisjointBoxLayout::computeNeighbors [338] f=0
+    12.3%    0.00001        1 BRMeshRefine::domainSplit [345] f=0
+    51.6%                  Total 
+---------------------------------------------------------
+[314]~LayoutData 0.00007 126
+---------------------------------------------------------
+[315]MutliGrid::init 0.00006 1
+    90.2%    0.00006        6 LevelData<T>::define(dbl,comps,ghost,factory) [316] f=0
+    90.2%                  Total 
+---------------------------------------------------------
+[316]LevelData<T>::define(dbl,comps,ghost,factory) 0.00006 6
+---------------------------------------------------------
+[317]~LayoutData 0.00006 63
+---------------------------------------------------------
+[318]~LayoutData 0.00006 126
+---------------------------------------------------------
+[319]Copier::define 0.00005 1
+---------------------------------------------------------
+[320]H5S_H5D_offsets_create 0.00005 2
+---------------------------------------------------------
+[321]~Copier 0.00004 126
+---------------------------------------------------------
+[322]writeToFile 0.00004 2
+---------------------------------------------------------
+[323]H5Dcreate 0.00004 2
+---------------------------------------------------------
+[324]LevelData<T>::define(dbl,comps,ghost,factory) 0.00004 2
+---------------------------------------------------------
+[325]exchange 0.00003 1
+    99.2%    0.00003        1 local copying [326] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[326]local copying 0.00003 1
+---------------------------------------------------------
+[327]~Copier 0.00003 2520
+---------------------------------------------------------
+[328]~LayoutData 0.00003 63
+---------------------------------------------------------
+[329]~BoxLayoutData 0.00003 2520
+---------------------------------------------------------
+[330]~LevelData 0.00003 2520
+---------------------------------------------------------
+[331]~LayoutData 0.00002 63
+---------------------------------------------------------
+[332]FORT_INVERTLAMBDAVTOP 0.00002 24
+---------------------------------------------------------
+[333]CoarseAverage::define1 0.00002 3
+    81.6%    0.00002        3 LevelData<T>::define(dbl,comps,ghost,factory) [337] f=0
+    81.6%                  Total 
+---------------------------------------------------------
+[334]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 2
+---------------------------------------------------------
+[335]~Copier 0.00002 63
+---------------------------------------------------------
+[336]LoadBalance:VectorBoxEntry 0.00002 1
+     5.5%    0.00000        1 LoadBalance:VectorBoxSimple [387] f=0
+     5.5%                  Total 
+---------------------------------------------------------
+[337]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 3
+---------------------------------------------------------
+[338]DisjointBoxLayout::computeNeighbors 0.00002 1
+---------------------------------------------------------
+[339]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 1
+---------------------------------------------------------
+[340]Copier::define 0.00001 3
+---------------------------------------------------------
+[341]WriteOffsets 0.00001 2
+---------------------------------------------------------
+[342]H5S_H5D_offsets_close 0.00001 2
+---------------------------------------------------------
+[343]~Copier 0.00001 126
+---------------------------------------------------------
+[344]setGroup 0.00001 2
+---------------------------------------------------------
+[345]BRMeshRefine::domainSplit 0.00001 1
+---------------------------------------------------------
+[346]~Copier 0.00001 36
+---------------------------------------------------------
+[347]LevelData::exchange (defining copier) 0.00001 1
+    88.6%    0.00001        1 Copier::define [349] f=0
+    88.6%                  Total 
+---------------------------------------------------------
+[348]LevelData::exchange (defining copier) 0.00001 1
+    90.0%    0.00001        1 Copier::define [351] f=0
+    90.0%                  Total 
+---------------------------------------------------------
+[349]Copier::define 0.00001 1
+---------------------------------------------------------
+[350]LevelData::exchange (defining copier) 0.00001 1
+    81.0%    0.00001        1 Copier::define [353] f=0
+    81.0%                  Total 
+---------------------------------------------------------
+[351]Copier::define 0.00001 1
+---------------------------------------------------------
+[352]getOffsets 0.00001 2
+    35.6%    0.00000        2 offsets.resize [372] f=0
+     4.1%    0.00000       16 dataSize [401] f=0
+     3.4%    0.00000       16 offsets calc [402] f=0
+    43.0%                  Total 
+---------------------------------------------------------
+[353]Copier::define 0.00001 1
+---------------------------------------------------------
+[354]~LayoutData 0.00001 6
+---------------------------------------------------------
+[355]mallocMT_buffers 0.00001 2
+---------------------------------------------------------
+[356]LevelData::exchange (defining copier) 0.00001 1
+    96.5%    0.00000        1 Copier::define [357] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[357]Copier::define 0.00000 1
+---------------------------------------------------------
+[358]~Copier 0.00000 126
+---------------------------------------------------------
+[359]H5Dclose 0.00000 2
+---------------------------------------------------------
+[360]LevelData::exchange (defining copier) 0.00000 1
+    95.2%    0.00000        1 Copier::define [362] f=0
+    95.2%                  Total 
+---------------------------------------------------------
+[361]LevelData::exchange (defining copier) 0.00000 1
+    90.8%    0.00000        1 Copier::define [366] f=0
+    90.8%                  Total 
+---------------------------------------------------------
+[362]Copier::define 0.00000 1
+---------------------------------------------------------
+[363]LevelData::exchange (defining copier) 0.00000 1
+    89.7%    0.00000        1 Copier::define [368] f=0
+    89.7%                  Total 
+---------------------------------------------------------
+[364]LevelData::exchange (defining copier) 0.00000 1
+    96.9%    0.00000        1 Copier::define [365] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[365]Copier::define 0.00000 1
+---------------------------------------------------------
+[366]Copier::define 0.00000 1
+---------------------------------------------------------
+[367]freeMT 0.00000 2
+---------------------------------------------------------
+[368]Copier::define 0.00000 1
+---------------------------------------------------------
+[369]~LayoutData 0.00000 1
+---------------------------------------------------------
+[370]~Copier 0.00000 126
+---------------------------------------------------------
+[371]~LevelData 0.00000 126
+---------------------------------------------------------
+[372]offsets.resize 0.00000 2
+---------------------------------------------------------
+[373]~Copier 0.00000 63
+---------------------------------------------------------
+[374]~BoxLayoutData 0.00000 126
+---------------------------------------------------------
+[375]H5Screate 0.00000 2
+---------------------------------------------------------
+[376]~LevelData 0.00000 126
+---------------------------------------------------------
+[377]~LevelData 0.00000 126
+---------------------------------------------------------
+[378]~BoxLayoutData 0.00000 126
+---------------------------------------------------------
+[379]~Copier 0.00000 1
+---------------------------------------------------------
+[380]~BoxLayoutData 0.00000 126
+---------------------------------------------------------
+[381]~BoxLayoutData 0.00000 126
+---------------------------------------------------------
+[382]~LevelData 0.00000 126
+---------------------------------------------------------
+[383]~Copier 0.00000 63
+---------------------------------------------------------
+[384]~Copier 0.00000 63
+---------------------------------------------------------
+[385]~LevelData 0.00000 63
+---------------------------------------------------------
+[386]H5Sclose 0.00000 2
+---------------------------------------------------------
+[387]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[388]~BoxLayoutData 0.00000 63
+---------------------------------------------------------
+[389]~LevelData 0.00000 63
+---------------------------------------------------------
+[390]~BoxLayoutData 0.00000 63
+---------------------------------------------------------
+[391]~LevelData 0.00000 63
+---------------------------------------------------------
+[392]~BoxLayoutData 0.00000 63
+---------------------------------------------------------
+[393]~BoxLayoutData 0.00000 63
+---------------------------------------------------------
+[394]~Copier 0.00000 8
+---------------------------------------------------------
+[395]~LevelData 0.00000 63
+---------------------------------------------------------
+[396]PrChUtilities::getRawVectorCh 0.00000 4
+---------------------------------------------------------
+[397]~LevelData 0.00000 32
+---------------------------------------------------------
+[398]~BoxLayoutData 0.00000 32
+---------------------------------------------------------
+[399]ComputeBufferCapacity 0.00000 2
+---------------------------------------------------------
+[400]~Copier 0.00000 9
+---------------------------------------------------------
+[401]dataSize 0.00000 16
+---------------------------------------------------------
+[402]offsets calc 0.00000 16
+---------------------------------------------------------
+[403]~Copier 0.00000 2
+---------------------------------------------------------
+[404]~BoxLayoutData 0.00000 6
+---------------------------------------------------------
+[405]~LevelData 0.00000 6
+---------------------------------------------------------
+[406]~BoxLayoutData 0.00000 6
+---------------------------------------------------------
+[407]~LevelData 0.00000 6
+---------------------------------------------------------
+[408]~Copier 0.00000 1
+---------------------------------------------------------
+[409]~LevelData 0.00000 1
+---------------------------------------------------------
+[410]~LevelData 0.00000 1
+---------------------------------------------------------
+[411]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[412]calc minimum in outputGhost 0.00000 2
+---------------------------------------------------------
+[413]~BoxLayoutData 0.00000 1
+---------------------------------------------------------
+[414]~BoxLayoutData 0.00000 1
+=======================================================
+    0.94   217728  FORT_GETFACEGRADVTOP [17]
+    0.40    72576  FORT_ADDGRADTOFLUXVTOP [33]
+    0.40    72576  FORT_CELLGRADVTOP [34]
+    0.38    24192  FORT_ADDDIVFLUXDIRVTOP [36]
+    0.36    72576  FORT_FACEDIVINCRVTOP [38]
+    0.15   217728  FORT_GETFACEGRADVTOP [56]
+    0.11     8064  FORT_GSRBSANELYVEC [61]
+    0.08  1088640  FORT_GETFACEGRADVTOP [67]
+    0.08    72576  FORT_ADDGRADTOFLUXVTOP [69]
+    0.06      504  FORT_PROLONGVTOP [71]
+    0.06    13608  FORT_GETFACEGRADVTOP [73]
+    0.06    13608  FORT_GETFACEGRADVTOP [74]
+    0.06    72576  FORT_FACEDIVINCRVTOP [75]
+    0.05    72576  FORT_CELLGRADVTOP [77]
+    0.05    24192  FORT_ADDDIVFLUXDIRVTOP [79]
+    0.04   557928  FORT_GETFACEGRADVTOP [84]
+    0.04   362880  FORT_FACEDIVINCRVTOP [89]
+    0.03   217728  FORT_GETFACEGRADVTOP [92]
+    0.03   362880  FORT_ADDGRADTOFLUXVTOP [98]
+    0.03     4536  FORT_ADDGRADTOFLUXVTOP [105]
+    0.03     4536  FORT_ADDGRADTOFLUXVTOP [109]
+    0.02     4536  FORT_CELLGRADVTOP [110]
+    0.02     4536  FORT_CELLGRADVTOP [111]
+    0.02     1512  FORT_ADDDIVFLUXDIRVTOP [114]
+    0.02     1512  FORT_ADDDIVFLUXDIRVTOP [115]
+    0.02     4536  FORT_FACEDIVINCRVTOP [116]
+    0.02     4536  FORT_FACEDIVINCRVTOP [117]
+    0.02   185976  FORT_FACEDIVINCRVTOP [122]
+    0.02    72576  FORT_ADDGRADTOFLUXVTOP [124]
+    0.02    72576  FORT_FACEDIVINCRVTOP [125]
+    0.01     8064  FORT_GSRBSANELYVEC [126]
+    0.01   362880  FORT_CELLGRADVTOP [127]
+    0.01   185976  FORT_ADDGRADTOFLUXVTOP [129]
+    0.01   120960  FORT_ADDDIVFLUXDIRVTOP [140]
+    0.01      504  FORT_RESTRICTRESVTOP [141]
+    0.01    13608  FORT_GETFACEGRADVTOP [150]
+    0.01      504  FORT_PROLONGVTOP [152]
+    0.01    72576  FORT_CELLGRADVTOP [154]
+    0.01   108864  FORT_GETFACEGRADVTOP [155]
+    0.01    24192  FORT_ADDDIVFLUXDIRVTOP [156]
+    0.01   185976  FORT_CELLGRADVTOP [157]
+    0.01    61992  FORT_ADDDIVFLUXDIRVTOP [170]
+    0.00    40320  FORT_GSRBSANELYVEC [179]
+    0.00     4536  FORT_ADDGRADTOFLUXVTOP [180]
+    0.00    36288  FORT_FACEDIVINCRVTOP [189]
+    0.00     4536  FORT_FACEDIVINCRVTOP [190]
+    0.00     4536  FORT_CELLGRADVTOP [194]
+    0.00     1512  FORT_ADDDIVFLUXDIRVTOP [195]
+    0.00     8064  FORT_GSRBSANELYVEC [196]
+    0.00    36288  FORT_ADDGRADTOFLUXVTOP [197]
+    0.00    13608  FORT_GETFACEGRADVTOP [207]
+    0.00     1512  FORT_SLOPESVTOP [210]
+    0.00    36288  FORT_CELLGRADVTOP [215]
+    0.00      504  FORT_RESTRICTRESVTOP [216]
+    0.00     3024  FORT_LINEAREXTRAPVTOP [230]
+    0.00      504  FORT_PROLONGVTOP [232]
+    0.00    12096  FORT_ADDDIVFLUXDIRVTOP [235]
+    0.00      216  FORT_GETFACEGRADVTOP [237]
+    0.00     4536  FORT_ADDGRADTOFLUXVTOP [238]
+    0.00     4536  FORT_FACEDIVINCRVTOP [239]
+    0.00       24  FORT_DECRINVRELCOEFVTOP [240]
+    0.00      144  FORT_AVERAGEFACEHARMONIC [243]
+    0.00       72  FORT_ADDGRADTOFLUXVTOP [257]
+    0.00     4032  FORT_GSRBSANELYVEC [261]
+    0.00     3024  FORT_LINEAREXTRAPVTOP [262]
+    0.00     4536  FORT_CELLGRADVTOP [263]
+    0.00     1512  FORT_ADDDIVFLUXDIRVTOP [264]
+    0.00     1512  FORT_SLOPESVTOP [267]
+    0.00       72  FORT_CELLGRADVTOP [269]
+    0.00       24  FORT_ADDDIVFLUXDIRVTOP [270]
+    0.00       72  FORT_FACEDIVINCRVTOP [271]
+    0.00     3024  FORT_LINEAREXTRAPVTOP [279]
+    0.00      504  FORT_RESTRICTRESVTOP [284]
+    0.00        8  FORT_INVERTLAMBDAVTOP [285]
+    0.00     1512  FORT_SLOPESVTOP [295]
+    0.00       72  FORT_DECRINVRELCOEFVTOP [305]
+    0.00       24  FORT_AVERAGE [311]
+    0.00       24  FORT_INVERTLAMBDAVTOP [332]
+     3.78932   46.9%    Total
+=======================================================
+[0] main 8.08230 100.0% 1 0 0 MFlops 
+   [1] AMRMultiGrid::solve 8.06951 99.8% 1 0 0 MFlops 
+      [2] AMRMultiGrid::solveNoInit 8.06941 99.8% 1 0 0 MFlops 
+         [3] AMRMultiGrid::solveNo-InitResid 8.06938 99.8% 1 0 0 MFlops 
+            [4] AMRMultiGrid::AMRVcycle 7.76694 96.1% 63 0 0 MFlops 
+               [5] Multigrid::oneCycle 7.75548 96.0% 63 0 0 MFlops 
+                  [6] Multigrid::cycle 7.75545 96.0% 63 0 0 MFlops 
+                     [7] ViscousTensorOp::relax 4.76757 59.0% 126 0 0 MFlops 
+                        [8] ViscousTensorOp::residual 4.59537 56.9% 1008 0 0 MFlops 
+                           [9] ViscousTensorOp::applyOp 4.49224 55.6% 1008 0 0 MFlops 
+                              [10] ViscousTensorOp::computeOperatorNoBCs 3.86579 47.8% 1008 0 0 MFlops 
+                                 [11] ViscousTensorOp::getflux 3.18043 39.4% 24192 0 0 MFlops 
+                                    [17] FORT_GETFACEGRADVTOP 0.94428 11.7% 217728 0 0 MFlops 
+                                    [21] ViscousTensorOp::getFluxFromDivAndGrad 0.83570 10.3% 24192 0 0 MFlops 
+                                       [33] FORT_ADDGRADTOFLUXVTOP 0.40353  5.0% 72576 0 0 MFlops 
+                                    [38] FORT_FACEDIVINCRVTOP 0.35847  4.4% 72576 0 0 MFlops 
+                                 [36] FORT_ADDDIVFLUXDIRVTOP 0.37760  4.7% 24192 0 0 MFlops 
+                              [29] ViscousTensorOp::fillGrad 0.54341  6.7% 1008 0 0 MFlops 
+                                 [34] FORT_CELLGRADVTOP 0.39500  4.9% 72576 0 0 MFlops 
+                                 [57] LevelData::exchange (exchange + copier) 0.11338  1.4% 1008 0 0 MFlops 
+                                    [58] LevelData::exchange (actual exchange) 0.11328  1.4% 1008 0 0 MFlops 
+                                       [59] exchange 0.11318  1.4% 1008 0 0 MFlops 
+                                          [60] local copying 0.11308  1.4% 1008 0 0 MFlops 
+                                 [93] exchange 0.03215  0.4% 1008 0 0 MFlops 
+                                    [95] local copying 0.03204  0.4% 1008 0 0 MFlops 
+                        [61] FORT_GSRBSANELYVEC 0.11042  1.4% 8064 0 0 MFlops 
+                        [85] LevelData::exchange (exchange + copier) 0.04019  0.5% 1008 0 0 MFlops 
+                           [86] LevelData::exchange (actual exchange) 0.04001  0.5% 1008 0 0 MFlops 
+                              [87] exchange 0.03987  0.5% 1008 0 0 MFlops 
+                                 [88] local copying 0.03975  0.5% 1008 0 0 MFlops 
+                           [347] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                              [349] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                        [192] ~LayoutData 0.00365  0.0% 126 0 0 MFlops 
+                        [217] LevelData<T>::define(dbl,comps,ghost,factory) 0.00159  0.0% 126 0 0 MFlops 
+                        [321] ~Copier 0.00004  0.0% 126 0 0 MFlops 
+                        [371] ~LevelData 0.00000  0.0% 126 0 0 MFlops 
+                        [374] ~BoxLayoutData 0.00000  0.0% 126 0 0 MFlops 
+                     [12] Multigrid::cycle 2.51591 31.1% 63 0 0 MFlops 
+                        [13] Multigrid::cycle 1.71996 21.3% 63 0 0 MFlops 
+                           [14] Multigrid::cycle 1.42586 17.6% 63 0 0 MFlops 
+                              [15] Multigrid::cycle:bottom-solve 1.42586 17.6% 63 0 0 MFlops 
+                                 [16] RelaxSolver::solve 1.33353 16.5% 63 0 0 MFlops 
+                                    [18] ViscousTensorOp::preCond 0.89778 11.1% 2520 0 0 MFlops 
+                                       [19] ViscousTensorOp::relax 0.89762 11.1% 2520 0 0 MFlops 
+                                          [20] ViscousTensorOp::residual 0.83975 10.4% 5040 0 0 MFlops 
+                                             [22] ViscousTensorOp::applyOp 0.83495 10.3% 5040 0 0 MFlops 
+                                                [23] ViscousTensorOp::computeOperatorNoBCs 0.75889  9.4% 5040 0 0 MFlops 
+                                                   [25] ViscousTensorOp::getflux 0.72079  8.9% 120960 0 0 MFlops 
+                                                      [67] FORT_GETFACEGRADVTOP 0.08114  1.0% 1088640 0 0 MFlops 
+                                                      [78] ViscousTensorOp::getFluxFromDivAndGrad 0.04958  0.6% 120960 0 0 MFlops 
+                                                         [98] FORT_ADDGRADTOFLUXVTOP 0.02734  0.3% 362880 0 0 MFlops 
+                                                      [89] FORT_FACEDIVINCRVTOP 0.03615  0.4% 362880 0 0 MFlops 
+                                                   [140] FORT_ADDDIVFLUXDIRVTOP 0.01231  0.2% 120960 0 0 MFlops 
+                                                [72] ViscousTensorOp::fillGrad 0.05991  0.7% 5040 0 0 MFlops 
+                                                   [99] LevelData::exchange (exchange + copier) 0.02588  0.3% 5040 0 0 MFlops 
+                                                      [100] LevelData::exchange (actual exchange) 0.02573  0.3% 5040 0 0 MFlops 
+                                                         [101] exchange 0.02561  0.3% 5040 0 0 MFlops 
+                                                            [102] local copying 0.02545  0.3% 5040 0 0 MFlops 
+                                                   [127] FORT_CELLGRADVTOP 0.01477  0.2% 362880 0 0 MFlops 
+                                                   [137] exchange 0.01297  0.2% 5040 0 0 MFlops 
+                                                      [139] local copying 0.01282  0.2% 5040 0 0 MFlops 
+                                          [128] LevelData::exchange (exchange + copier) 0.01474  0.2% 5040 0 0 MFlops 
+                                             [130] LevelData::exchange (actual exchange) 0.01395  0.2% 5040 0 0 MFlops 
+                                                [131] exchange 0.01380  0.2% 5040 0 0 MFlops 
+                                                   [132] local copying 0.01365  0.2% 5040 0 0 MFlops 
+                                             [265] LevelData::exchange (defining copier) 0.00051  0.0% 63 0 0 MFlops 
+                                                [266] Copier::define 0.00050  0.0% 63 0 0 MFlops 
+                                          [179] FORT_GSRBSANELYVEC 0.00479  0.1% 40320 0 0 MFlops 
+                                          [211] LevelData<T>::define(dbl,comps,ghost,factory) 0.00200  0.0% 2520 0 0 MFlops 
+                                          [244] ~LayoutData 0.00066  0.0% 2520 0 0 MFlops 
+                                          [327] ~Copier 0.00003  0.0% 2520 0 0 MFlops 
+                                          [329] ~BoxLayoutData 0.00003  0.0% 2520 0 0 MFlops 
+                                          [330] ~LevelData 0.00003  0.0% 2520 0 0 MFlops 
+                                    [31] ViscousTensorOp::residual 0.43015  5.3% 2583 0 0 MFlops 
+                                       [32] ViscousTensorOp::applyOp 0.42767  5.3% 2583 0 0 MFlops 
+                                          [35] ViscousTensorOp::computeOperatorNoBCs 0.38858  4.8% 2583 0 0 MFlops 
+                                             [37] ViscousTensorOp::getflux 0.36904  4.6% 61992 0 0 MFlops 
+                                                [84] FORT_GETFACEGRADVTOP 0.04149  0.5% 557928 0 0 MFlops 
+                                                [107] ViscousTensorOp::getFluxFromDivAndGrad 0.02529  0.3% 61992 0 0 MFlops 
+                                                   [129] FORT_ADDGRADTOFLUXVTOP 0.01400  0.2% 185976 0 0 MFlops 
+                                                [122] FORT_FACEDIVINCRVTOP 0.01853  0.2% 185976 0 0 MFlops 
+                                             [170] FORT_ADDDIVFLUXDIRVTOP 0.00634  0.1% 61992 0 0 MFlops 
+                                          [97] ViscousTensorOp::fillGrad 0.03081  0.4% 2583 0 0 MFlops 
+                                             [133] LevelData::exchange (exchange + copier) 0.01329  0.2% 2583 0 0 MFlops 
+                                                [134] LevelData::exchange (actual exchange) 0.01316  0.2% 2583 0 0 MFlops 
+                                                   [135] exchange 0.01307  0.2% 2583 0 0 MFlops 
+                                                      [136] local copying 0.01299  0.2% 2583 0 0 MFlops 
+                                             [157] FORT_CELLGRADVTOP 0.00756  0.1% 185976 0 0 MFlops 
+                                             [166] exchange 0.00673  0.1% 2583 0 0 MFlops 
+                                                [168] local copying 0.00665  0.1% 2583 0 0 MFlops 
+                                    [287] LevelData<T>::define(dbl,comps,ghost,factory) 0.00022  0.0% 126 0 0 MFlops 
+                                    [318] ~LayoutData 0.00006  0.0% 126 0 0 MFlops 
+                                    [343] ~Copier 0.00001  0.0% 126 0 0 MFlops 
+                                    [377] ~LevelData 0.00000  0.0% 126 0 0 MFlops 
+                                    [380] ~BoxLayoutData 0.00000  0.0% 126 0 0 MFlops 
+                                 [63] ViscousTensorOp::relax 0.09230  1.1% 63 0 0 MFlops 
+                                    [64] ViscousTensorOp::residual 0.08684  1.1% 504 0 0 MFlops 
+                                       [65] ViscousTensorOp::applyOp 0.08634  1.1% 504 0 0 MFlops 
+                                          [68] ViscousTensorOp::computeOperatorNoBCs 0.07801  1.0% 504 0 0 MFlops 
+                                             [70] ViscousTensorOp::getflux 0.07404  0.9% 12096 0 0 MFlops 
+                                                [155] FORT_GETFACEGRADVTOP 0.00834  0.1% 108864 0 0 MFlops 
+                                                [172] ViscousTensorOp::getFluxFromDivAndGrad 0.00518  0.1% 12096 0 0 MFlops 
+                                                   [197] FORT_ADDGRADTOFLUXVTOP 0.00284  0.0% 36288 0 0 MFlops 
+                                                [189] FORT_FACEDIVINCRVTOP 0.00370  0.0% 36288 0 0 MFlops 
+                                             [235] FORT_ADDDIVFLUXDIRVTOP 0.00125  0.0% 12096 0 0 MFlops 
+                                          [167] ViscousTensorOp::fillGrad 0.00665  0.1% 504 0 0 MFlops 
+                                             [198] LevelData::exchange (exchange + copier) 0.00273  0.0% 504 0 0 MFlops 
+                                                [199] LevelData::exchange (actual exchange) 0.00270  0.0% 504 0 0 MFlops 
+                                                   [200] exchange 0.00269  0.0% 504 0 0 MFlops 
+                                                      [201] local copying 0.00267  0.0% 504 0 0 MFlops 
+                                                [361] LevelData::exchange (defining copier) 0.00000  0.0% 1 0 0 MFlops 
+                                                   [366] Copier::define 0.00000  0.0% 1 0 0 MFlops 
+                                             [215] FORT_CELLGRADVTOP 0.00179  0.0% 36288 0 0 MFlops 
+                                             [229] exchange 0.00141  0.0% 504 0 0 MFlops 
+                                                [231] local copying 0.00140  0.0% 504 0 0 MFlops 
+                                    [223] LevelData::exchange (exchange + copier) 0.00155  0.0% 504 0 0 MFlops 
+                                       [225] LevelData::exchange (actual exchange) 0.00151  0.0% 504 0 0 MFlops 
+                                          [226] exchange 0.00149  0.0% 504 0 0 MFlops 
+                                             [227] local copying 0.00147  0.0% 504 0 0 MFlops 
+                                       [364] LevelData::exchange (defining copier) 0.00000  0.0% 1 0 0 MFlops 
+                                          [365] Copier::define 0.00000  0.0% 1 0 0 MFlops 
+                                    [261] FORT_GSRBSANELYVEC 0.00054  0.0% 4032 0 0 MFlops 
+                                    [312] LevelData<T>::define(dbl,comps,ghost,factory) 0.00008  0.0% 63 0 0 MFlops 
+                                    [331] ~LayoutData 0.00002  0.0% 63 0 0 MFlops 
+                                    [383] ~Copier 0.00000  0.0% 63 0 0 MFlops 
+                                    [388] ~BoxLayoutData 0.00000  0.0% 63 0 0 MFlops 
+                                    [391] ~LevelData 0.00000  0.0% 63 0 0 MFlops 
+                           [46] ViscousTensorOp::relax 0.26872  3.3% 126 0 0 MFlops 
+                              [47] ViscousTensorOp::residual 0.25414  3.1% 1008 0 0 MFlops 
+                                 [48] ViscousTensorOp::applyOp 0.25078  3.1% 1008 0 0 MFlops 
+                                    [51] ViscousTensorOp::computeOperatorNoBCs 0.21863  2.7% 1008 0 0 MFlops 
+                                       [53] ViscousTensorOp::getflux 0.20012  2.5% 24192 0 0 MFlops 
+                                          [92] FORT_GETFACEGRADVTOP 0.03433  0.4% 217728 0 0 MFlops 
+                                          [112] ViscousTensorOp::getFluxFromDivAndGrad 0.02477  0.3% 24192 0 0 MFlops 
+                                             [124] FORT_ADDGRADTOFLUXVTOP 0.01591  0.2% 72576 0 0 MFlops 
+                                          [125] FORT_FACEDIVINCRVTOP 0.01509  0.2% 72576 0 0 MFlops 
+                                       [156] FORT_ADDDIVFLUXDIRVTOP 0.00803  0.1% 24192 0 0 MFlops 
+                                    [113] ViscousTensorOp::fillGrad 0.02473  0.3% 1008 0 0 MFlops 
+                                       [142] LevelData::exchange (exchange + copier) 0.01002  0.1% 1008 0 0 MFlops 
+                                          [143] LevelData::exchange (actual exchange) 0.00994  0.1% 1008 0 0 MFlops 
+                                             [144] exchange 0.00991  0.1% 1008 0 0 MFlops 
+                                                [145] local copying 0.00988  0.1% 1008 0 0 MFlops 
+                                          [363] LevelData::exchange (defining copier) 0.00000  0.0% 1 0 0 MFlops 
+                                             [368] Copier::define 0.00000  0.0% 1 0 0 MFlops 
+                                       [154] FORT_CELLGRADVTOP 0.00847  0.1% 72576 0 0 MFlops 
+                                       [177] exchange 0.00483  0.1% 1008 0 0 MFlops 
+                                          [178] local copying 0.00479  0.1% 1008 0 0 MFlops 
+                              [173] LevelData::exchange (exchange + copier) 0.00508  0.1% 1008 0 0 MFlops 
+                                 [174] LevelData::exchange (actual exchange) 0.00502  0.1% 1008 0 0 MFlops 
+                                    [175] exchange 0.00496  0.1% 1008 0 0 MFlops 
+                                       [176] local copying 0.00493  0.1% 1008 0 0 MFlops 
+                                 [356] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                    [357] Copier::define 0.00000  0.0% 1 0 0 MFlops 
+                              [196] FORT_GSRBSANELYVEC 0.00300  0.0% 8064 0 0 MFlops 
+                              [274] LevelData<T>::define(dbl,comps,ghost,factory) 0.00032  0.0% 126 0 0 MFlops 
+                              [314] ~LayoutData 0.00007  0.0% 126 0 0 MFlops 
+                              [370] ~Copier 0.00000  0.0% 126 0 0 MFlops 
+                              [378] ~BoxLayoutData 0.00000  0.0% 126 0 0 MFlops 
+                              [382] ~LevelData 0.00000  0.0% 126 0 0 MFlops 
+                           [119] ViscousTensorOp::restrictResidual 0.02150  0.3% 63 0 0 MFlops 
+                              [120] ViscousTensorOp::residualNoExchange 0.02026  0.3% 63 0 0 MFlops 
+                                 [121] ViscousTensorOp::applyOpNoExchange 0.02005  0.2% 63 0 0 MFlops 
+                                    [123] ViscousTensorOp::computeOperatorNoBCs 0.01835  0.2% 63 0 0 MFlops 
+                                       [138] ViscousTensorOp::getflux 0.01292  0.2% 1512 0 0 MFlops 
+                                          [207] FORT_GETFACEGRADVTOP 0.00220  0.0% 13608 0 0 MFlops 
+                                          [220] ViscousTensorOp::getFluxFromDivAndGrad 0.00157  0.0% 1512 0 0 MFlops 
+                                             [238] FORT_ADDGRADTOFLUXVTOP 0.00102  0.0% 4536 0 0 MFlops 
+                                          [239] FORT_FACEDIVINCRVTOP 0.00098  0.0% 4536 0 0 MFlops 
+                                       [264] FORT_ADDDIVFLUXDIRVTOP 0.00051  0.0% 1512 0 0 MFlops 
+                                    [236] ViscousTensorOp::fillGradNoExchange 0.00123  0.0% 63 0 0 MFlops 
+                                       [245] LevelData::exchange (exchange + copier) 0.00062  0.0% 63 0 0 MFlops 
+                                          [246] LevelData::exchange (actual exchange) 0.00062  0.0% 63 0 0 MFlops 
+                                             [247] exchange 0.00062  0.0% 63 0 0 MFlops 
+                                                [248] local copying 0.00061  0.0% 63 0 0 MFlops 
+                                       [263] FORT_CELLGRADVTOP 0.00052  0.0% 4536 0 0 MFlops 
+                              [276] LevelData::exchange (exchange + copier) 0.00031  0.0% 63 0 0 MFlops 
+                                 [278] LevelData::exchange (actual exchange) 0.00030  0.0% 63 0 0 MFlops 
+                                    [281] exchange 0.00030  0.0% 63 0 0 MFlops 
+                                       [283] local copying 0.00030  0.0% 63 0 0 MFlops 
+                              [284] FORT_RESTRICTRESVTOP 0.00030  0.0% 504 0 0 MFlops 
+                              [303] LevelData<T>::define(dbl,comps,ghost,factory) 0.00012  0.0% 63 0 0 MFlops 
+                              [328] ~LayoutData 0.00003  0.0% 63 0 0 MFlops 
+                              [373] ~Copier 0.00000  0.0% 63 0 0 MFlops 
+                              [389] ~LevelData 0.00000  0.0% 63 0 0 MFlops 
+                              [393] ~BoxLayoutData 0.00000  0.0% 63 0 0 MFlops 
+                           [191] ViscousTensorOp::prolongIncrement 0.00366  0.0% 63 0 0 MFlops 
+                              [232] FORT_PROLONGVTOP 0.00133  0.0% 504 0 0 MFlops 
+                              [279] FORT_LINEAREXTRAPVTOP 0.00030  0.0% 3024 0 0 MFlops 
+                              [289] LevelData::exchange (exchange + copier) 0.00018  0.0% 63 0 0 MFlops 
+                                 [290] LevelData::exchange (actual exchange) 0.00018  0.0% 63 0 0 MFlops 
+                                    [291] exchange 0.00017  0.0% 63 0 0 MFlops 
+                                       [293] local copying 0.00017  0.0% 63 0 0 MFlops 
+                              [295] FORT_SLOPESVTOP 0.00016  0.0% 1512 0 0 MFlops 
+                        [24] ViscousTensorOp::relax 0.72805  9.0% 126 0 0 MFlops 
+                           [26] ViscousTensorOp::residual 0.69650  8.6% 1008 0 0 MFlops 
+                              [27] ViscousTensorOp::applyOp 0.68286  8.4% 1008 0 0 MFlops 
+                                 [28] ViscousTensorOp::computeOperatorNoBCs 0.57566  7.1% 1008 0 0 MFlops 
+                                    [30] ViscousTensorOp::getflux 0.50148  6.2% 24192 0 0 MFlops 
+                                       [56] FORT_GETFACEGRADVTOP 0.14690  1.8% 217728 0 0 MFlops 
+                                       [62] ViscousTensorOp::getFluxFromDivAndGrad 0.10383  1.3% 24192 0 0 MFlops 
+                                          [69] FORT_ADDGRADTOFLUXVTOP 0.07570  0.9% 72576 0 0 MFlops 
+                                       [75] FORT_FACEDIVINCRVTOP 0.05869  0.7% 72576 0 0 MFlops 
+                                    [79] FORT_ADDDIVFLUXDIRVTOP 0.04849  0.6% 24192 0 0 MFlops 
+                                 [66] ViscousTensorOp::fillGrad 0.08563  1.1% 1008 0 0 MFlops 
+                                    [77] FORT_CELLGRADVTOP 0.04980  0.6% 72576 0 0 MFlops 
+                                    [103] LevelData::exchange (exchange + copier) 0.02543  0.3% 1008 0 0 MFlops 
+                                       [104] LevelData::exchange (actual exchange) 0.02537  0.3% 1008 0 0 MFlops 
+                                          [106] exchange 0.02532  0.3% 1008 0 0 MFlops 
+                                             [108] local copying 0.02527  0.3% 1008 0 0 MFlops 
+                                       [360] LevelData::exchange (defining copier) 0.00000  0.0% 1 0 0 MFlops 
+                                          [362] Copier::define 0.00000  0.0% 1 0 0 MFlops 
+                                    [151] exchange 0.00883  0.1% 1008 0 0 MFlops 
+                                       [153] local copying 0.00878  0.1% 1008 0 0 MFlops 
+                           [126] FORT_GSRBSANELYVEC 0.01491  0.2% 8064 0 0 MFlops 
+                           [146] LevelData::exchange (exchange + copier) 0.00954  0.1% 1008 0 0 MFlops 
+                              [147] LevelData::exchange (actual exchange) 0.00946  0.1% 1008 0 0 MFlops 
+                                 [148] exchange 0.00942  0.1% 1008 0 0 MFlops 
+                                    [149] local copying 0.00937  0.1% 1008 0 0 MFlops 
+                              [348] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                 [351] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                           [273] LevelData<T>::define(dbl,comps,ghost,factory) 0.00036  0.0% 126 0 0 MFlops 
+                           [300] ~LayoutData 0.00013  0.0% 126 0 0 MFlops 
+                           [358] ~Copier 0.00000  0.0% 126 0 0 MFlops 
+                           [376] ~LevelData 0.00000  0.0% 126 0 0 MFlops 
+                           [381] ~BoxLayoutData 0.00000  0.0% 126 0 0 MFlops 
+                        [80] ViscousTensorOp::restrictResidual 0.04587  0.6% 63 0 0 MFlops 
+                           [82] ViscousTensorOp::residualNoExchange 0.04278  0.5% 63 0 0 MFlops 
+                              [83] ViscousTensorOp::applyOpNoExchange 0.04194  0.5% 63 0 0 MFlops 
+                                 [90] ViscousTensorOp::computeOperatorNoBCs 0.03589  0.4% 63 0 0 MFlops 
+                                    [96] ViscousTensorOp::getflux 0.03129  0.4% 1512 0 0 MFlops 
+                                       [150] FORT_GETFACEGRADVTOP 0.00915  0.1% 13608 0 0 MFlops 
+                                       [169] ViscousTensorOp::getFluxFromDivAndGrad 0.00644  0.1% 1512 0 0 MFlops 
+                                          [180] FORT_ADDGRADTOFLUXVTOP 0.00472  0.1% 4536 0 0 MFlops 
+                                       [190] FORT_FACEDIVINCRVTOP 0.00366  0.0% 4536 0 0 MFlops 
+                                    [195] FORT_ADDDIVFLUXDIRVTOP 0.00302  0.0% 1512 0 0 MFlops 
+                                 [181] ViscousTensorOp::fillGradNoExchange 0.00470  0.1% 63 0 0 MFlops 
+                                    [194] FORT_CELLGRADVTOP 0.00302  0.0% 4536 0 0 MFlops 
+                                    [218] LevelData::exchange (exchange + copier) 0.00158  0.0% 63 0 0 MFlops 
+                                       [219] LevelData::exchange (actual exchange) 0.00158  0.0% 63 0 0 MFlops 
+                                          [221] exchange 0.00157  0.0% 63 0 0 MFlops 
+                                             [222] local copying 0.00156  0.0% 63 0 0 MFlops 
+                           [216] FORT_RESTRICTRESVTOP 0.00169  0.0% 504 0 0 MFlops 
+                           [251] LevelData::exchange (exchange + copier) 0.00059  0.0% 63 0 0 MFlops 
+                              [252] LevelData::exchange (actual exchange) 0.00059  0.0% 63 0 0 MFlops 
+                                 [253] exchange 0.00058  0.0% 63 0 0 MFlops 
+                                    [256] local copying 0.00057  0.0% 63 0 0 MFlops 
+                           [302] LevelData<T>::define(dbl,comps,ghost,factory) 0.00012  0.0% 63 0 0 MFlops 
+                           [317] ~LayoutData 0.00006  0.0% 63 0 0 MFlops 
+                           [384] ~Copier 0.00000  0.0% 63 0 0 MFlops 
+                           [392] ~BoxLayoutData 0.00000  0.0% 63 0 0 MFlops 
+                           [395] ~LevelData 0.00000  0.0% 63 0 0 MFlops 
+                        [118] ViscousTensorOp::prolongIncrement 0.02164  0.3% 63 0 0 MFlops 
+                           [152] FORT_PROLONGVTOP 0.00881  0.1% 504 0 0 MFlops 
+                           [262] FORT_LINEAREXTRAPVTOP 0.00053  0.0% 3024 0 0 MFlops 
+                           [267] FORT_SLOPESVTOP 0.00044  0.0% 1512 0 0 MFlops 
+                           [275] LevelData::exchange (exchange + copier) 0.00031  0.0% 63 0 0 MFlops 
+                              [277] LevelData::exchange (actual exchange) 0.00031  0.0% 63 0 0 MFlops 
+                                 [280] exchange 0.00030  0.0% 63 0 0 MFlops 
+                                    [282] local copying 0.00030  0.0% 63 0 0 MFlops 
+                     [39] ViscousTensorOp::restrictResidual 0.30972  3.8% 63 0 0 MFlops 
+                        [40] ViscousTensorOp::residualNoExchange 0.29123  3.6% 63 0 0 MFlops 
+                           [41] ViscousTensorOp::applyOpNoExchange 0.28480  3.5% 63 0 0 MFlops 
+                              [49] ViscousTensorOp::computeOperatorNoBCs 0.24757  3.1% 63 0 0 MFlops 
+                                 [52] ViscousTensorOp::getflux 0.20058  2.5% 1512 0 0 MFlops 
+                                    [74] FORT_GETFACEGRADVTOP 0.05901  0.7% 13608 0 0 MFlops 
+                                    [76] ViscousTensorOp::getFluxFromDivAndGrad 0.05360  0.7% 1512 0 0 MFlops 
+                                       [105] FORT_ADDGRADTOFLUXVTOP 0.02533  0.3% 4536 0 0 MFlops 
+                                    [117] FORT_FACEDIVINCRVTOP 0.02249  0.3% 4536 0 0 MFlops 
+                                 [115] FORT_ADDDIVFLUXDIRVTOP 0.02352  0.3% 1512 0 0 MFlops 
+                              [94] ViscousTensorOp::fillGradNoExchange 0.03209  0.4% 63 0 0 MFlops 
+                                 [110] FORT_CELLGRADVTOP 0.02485  0.3% 4536 0 0 MFlops 
+                                 [162] LevelData::exchange (exchange + copier) 0.00708  0.1% 63 0 0 MFlops 
+                                    [163] LevelData::exchange (actual exchange) 0.00708  0.1% 63 0 0 MFlops 
+                                       [164] exchange 0.00706  0.1% 63 0 0 MFlops 
+                                          [165] local copying 0.00705  0.1% 63 0 0 MFlops 
+                        [141] FORT_RESTRICTRESVTOP 0.01207  0.1% 504 0 0 MFlops 
+                        [203] LevelData::exchange (exchange + copier) 0.00230  0.0% 63 0 0 MFlops 
+                           [204] LevelData::exchange (actual exchange) 0.00230  0.0% 63 0 0 MFlops 
+                              [205] exchange 0.00229  0.0% 63 0 0 MFlops 
+                                 [206] local copying 0.00228  0.0% 63 0 0 MFlops 
+                        [228] ~LayoutData 0.00147  0.0% 63 0 0 MFlops 
+                        [250] LevelData<T>::define(dbl,comps,ghost,factory) 0.00060  0.0% 63 0 0 MFlops 
+                        [335] ~Copier 0.00002  0.0% 63 0 0 MFlops 
+                        [385] ~LevelData 0.00000  0.0% 63 0 0 MFlops 
+                        [390] ~BoxLayoutData 0.00000  0.0% 63 0 0 MFlops 
+                     [55] ViscousTensorOp::prolongIncrement 0.16108  2.0% 63 0 0 MFlops 
+                        [71] FORT_PROLONGVTOP 0.06464  0.8% 504 0 0 MFlops 
+                        [210] FORT_SLOPESVTOP 0.00215  0.0% 1512 0 0 MFlops 
+                        [230] FORT_LINEAREXTRAPVTOP 0.00141  0.0% 3024 0 0 MFlops 
+                        [254] LevelData::exchange (exchange + copier) 0.00058  0.0% 63 0 0 MFlops 
+                           [255] LevelData::exchange (actual exchange) 0.00057  0.0% 63 0 0 MFlops 
+                              [258] exchange 0.00057  0.0% 63 0 0 MFlops 
+                                 [259] local copying 0.00056  0.0% 63 0 0 MFlops 
+            [42] AMRMultiGrid::computeAMRResidual 0.28277  3.5% 63 0 0 MFlops 
+               [43] AMRMultiGrid<T>::computeAMRResidualLevel 0.27866  3.4% 63 0 0 MFlops 
+                  [44] ViscousTensorOp::residual 0.27863  3.4% 63 0 0 MFlops 
+                     [45] ViscousTensorOp::applyOp 0.27154  3.4% 63 0 0 MFlops 
+                        [50] ViscousTensorOp::computeOperatorNoBCs 0.23105  2.9% 63 0 0 MFlops 
+                           [54] ViscousTensorOp::getflux 0.18867  2.3% 1512 0 0 MFlops 
+                              [73] FORT_GETFACEGRADVTOP 0.05921  0.7% 13608 0 0 MFlops 
+                              [81] ViscousTensorOp::getFluxFromDivAndGrad 0.04330  0.5% 1512 0 0 MFlops 
+                                 [109] FORT_ADDGRADTOFLUXVTOP 0.02505  0.3% 4536 0 0 MFlops 
+                              [116] FORT_FACEDIVINCRVTOP 0.02253  0.3% 4536 0 0 MFlops 
+                           [114] FORT_ADDDIVFLUXDIRVTOP 0.02353  0.3% 1512 0 0 MFlops 
+                        [91] ViscousTensorOp::fillGrad 0.03465  0.4% 63 0 0 MFlops 
+                           [111] FORT_CELLGRADVTOP 0.02480  0.3% 4536 0 0 MFlops 
+                           [158] LevelData::exchange (exchange + copier) 0.00746  0.1% 63 0 0 MFlops 
+                              [159] LevelData::exchange (actual exchange) 0.00745  0.1% 63 0 0 MFlops 
+                                 [160] exchange 0.00743  0.1% 63 0 0 MFlops 
+                                    [161] local copying 0.00741  0.1% 63 0 0 MFlops 
+                           [208] exchange 0.00219  0.0% 63 0 0 MFlops 
+                              [209] local copying 0.00219  0.0% 63 0 0 MFlops 
+            [182] Initial AMR Residual 0.00460  0.1% 1 0 0 MFlops 
+               [183] AMRMultiGrid::computeAMRResidual 0.00460  0.1% 1 0 0 MFlops 
+                  [184] AMRMultiGrid<T>::computeAMRResidualLevel 0.00454  0.1% 1 0 0 MFlops 
+                     [185] ViscousTensorOp::residual 0.00454  0.1% 1 0 0 MFlops 
+                        [186] ViscousTensorOp::applyOp 0.00442  0.1% 1 0 0 MFlops 
+                           [188] ViscousTensorOp::computeOperatorNoBCs 0.00372  0.0% 1 0 0 MFlops 
+                              [193] ViscousTensorOp::getflux 0.00312  0.0% 24 0 0 MFlops 
+                                 [237] FORT_GETFACEGRADVTOP 0.00104  0.0% 216 0 0 MFlops 
+                                 [241] ViscousTensorOp::getFluxFromDivAndGrad 0.00087  0.0% 24 0 0 MFlops 
+                                    [257] FORT_ADDGRADTOFLUXVTOP 0.00057  0.0% 72 0 0 MFlops 
+                                 [271] FORT_FACEDIVINCRVTOP 0.00038  0.0% 72 0 0 MFlops 
+                              [270] FORT_ADDDIVFLUXDIRVTOP 0.00039  0.0% 24 0 0 MFlops 
+                           [249] ViscousTensorOp::fillGrad 0.00060  0.0% 1 0 0 MFlops 
+                              [269] FORT_CELLGRADVTOP 0.00042  0.0% 72 0 0 MFlops 
+                              [296] LevelData::exchange (exchange + copier) 0.00014  0.0% 1 0 0 MFlops 
+                                 [297] LevelData::exchange (actual exchange) 0.00014  0.0% 1 0 0 MFlops 
+                                    [298] exchange 0.00014  0.0% 1 0 0 MFlops 
+                                       [299] local copying 0.00014  0.0% 1 0 0 MFlops 
+                                 [350] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                    [353] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                              [325] exchange 0.00003  0.0% 1 0 0 MFlops 
+                                 [326] local copying 0.00003  0.0% 1 0 0 MFlops 
+            [242] uberCorrection 0.00072  0.0% 1 0 0 MFlops 
+               [334] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 2 0 0 MFlops 
+            [301] ~LayoutData 0.00012  0.0% 1 0 0 MFlops 
+            [379] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+            [409] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+            [413] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+         [339] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 1 0 0 MFlops 
+         [369] ~LayoutData 0.00000  0.0% 1 0 0 MFlops 
+         [408] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+         [410] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+         [414] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+      [308] AMRMultiGrid::init 0.00010  0.0% 1 0 0 MFlops 
+         [315] MutliGrid::init 0.00006  0.0% 1 0 0 MFlops 
+            [316] LevelData<T>::define(dbl,comps,ghost,factory) 0.00006  0.0% 6 0 0 MFlops 
+         [324] LevelData<T>::define(dbl,comps,ghost,factory) 0.00004  0.0% 2 0 0 MFlops 
+      [411] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+   [171] AMRMultiGrid::define 0.00544  0.1% 1 0 0 MFlops 
+      [213] MultiGrid::define 0.00188  0.0% 1 0 0 MFlops 
+         [243] FORT_AVERAGEFACEHARMONIC 0.00069  0.0% 144 0 0 MFlops 
+         [304] CFIVS::define(slow) 0.00011  0.0% 288 0 0 MFlops 
+         [305] FORT_DECRINVRELCOEFVTOP 0.00011  0.0% 72 0 0 MFlops 
+         [306] LevelData<T>::define(dbl,comps,ghost,factory) 0.00011  0.0% 9 0 0 MFlops 
+         [309] CoarseAverage::computeAverages 0.00009  0.0% 3 0 0 MFlops 
+            [311] FORT_AVERAGE 0.00009  0.0% 24 0 0 MFlops 
+         [332] FORT_INVERTLAMBDAVTOP 0.00002  0.0% 24 0 0 MFlops 
+         [333] CoarseAverage::define1 0.00002  0.0% 3 0 0 MFlops 
+            [337] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 3 0 0 MFlops 
+         [340] Copier::define 0.00001  0.0% 3 0 0 MFlops 
+         [354] ~LayoutData 0.00001  0.0% 6 0 0 MFlops 
+         [400] ~Copier 0.00000  0.0% 9 0 0 MFlops 
+         [404] ~BoxLayoutData 0.00000  0.0% 6 0 0 MFlops 
+         [405] ~LevelData 0.00000  0.0% 6 0 0 MFlops 
+      [240] FORT_DECRINVRELCOEFVTOP 0.00088  0.0% 24 0 0 MFlops 
+      [272] CFIVS::define(slow) 0.00036  0.0% 96 0 0 MFlops 
+      [285] FORT_INVERTLAMBDAVTOP 0.00024  0.0% 8 0 0 MFlops 
+      [307] LevelData<T>::define(dbl,comps,ghost,factory) 0.00010  0.0% 2 0 0 MFlops 
+      [319] Copier::define 0.00005  0.0% 1 0 0 MFlops 
+      [403] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+   [187] WriteAMRHierarchyHDF5 0.00396  0.0% 2 0 0 MFlops 
+      [202] WriteFile 0.00243  0.0% 2 0 0 MFlops 
+         [212] Write Level 0.00196  0.0% 2 0 0 MFlops 
+            [214] write_Level 0.00185  0.0% 2 0 0 MFlops 
+               [224] linearize_H5Dwrite 0.00152  0.0% 2 0 0 MFlops 
+                  [233] H5Dwrite 0.00132  0.0% 16 0 0 MFlops 
+                  [292] linearize 0.00017  0.0% 16 0 0 MFlops 
+               [294] WriteAttributes 0.00017  0.0% 2 0 0 MFlops 
+               [320] H5S_H5D_offsets_create 0.00005  0.0% 2 0 0 MFlops 
+               [323] H5Dcreate 0.00004  0.0% 2 0 0 MFlops 
+               [341] WriteOffsets 0.00001  0.0% 2 0 0 MFlops 
+               [342] H5S_H5D_offsets_close 0.00001  0.0% 2 0 0 MFlops 
+               [352] getOffsets 0.00001  0.0% 2 0 0 MFlops 
+                  [372] offsets.resize 0.00000  0.0% 2 0 0 MFlops 
+                  [401] dataSize 0.00000  0.0% 16 0 0 MFlops 
+                  [402] offsets calc 0.00000  0.0% 16 0 0 MFlops 
+               [355] mallocMT_buffers 0.00001  0.0% 2 0 0 MFlops 
+               [359] H5Dclose 0.00000  0.0% 2 0 0 MFlops 
+               [367] freeMT 0.00000  0.0% 2 0 0 MFlops 
+               [375] H5Screate 0.00000  0.0% 2 0 0 MFlops 
+               [386] H5Sclose 0.00000  0.0% 2 0 0 MFlops 
+               [399] ComputeBufferCapacity 0.00000  0.0% 2 0 0 MFlops 
+            [322] writeToFile 0.00004  0.0% 2 0 0 MFlops 
+            [344] setGroup 0.00001  0.0% 2 0 0 MFlops 
+            [412] calc minimum in outputGhost 0.00000  0.0% 2 0 0 MFlops 
+      [234] CreateFile 0.00132  0.0% 2 0 0 MFlops 
+      [288] CloseFile 0.00019  0.0% 2 0 0 MFlops 
+   [260] ~AMRMultiGrid 0.00056  0.0% 1 0 0 MFlops 
+      [268] ~LayoutData 0.00043  0.0% 128 0 0 MFlops 
+      [346] ~Copier 0.00001  0.0% 36 0 0 MFlops 
+      [397] ~LevelData 0.00000  0.0% 32 0 0 MFlops 
+      [398] ~BoxLayoutData 0.00000  0.0% 32 0 0 MFlops 
+   [286] PrChUtilities::setupLLCornerGrids 0.00024  0.0% 1 0 0 MFlops 
+      [313] setupGrids: BaseGridCreation 0.00008  0.0% 1 0 0 MFlops 
+         [336] LoadBalance:VectorBoxEntry 0.00002  0.0% 1 0 0 MFlops 
+            [387] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+         [338] DisjointBoxLayout::computeNeighbors 0.00002  0.0% 1 0 0 MFlops 
+         [345] BRMeshRefine::domainSplit 0.00001  0.0% 1 0 0 MFlops 
+   [310] ~LayoutData 0.00009  0.0% 6 0 0 MFlops 
+   [394] ~Copier 0.00000  0.0% 8 0 0 MFlops 
+   [396] PrChUtilities::getRawVectorCh 0.00000  0.0% 4 0 0 MFlops 
+   [406] ~BoxLayoutData 0.00000  0.0% 6 0 0 MFlops 
+   [407] ~LevelData 0.00000  0.0% 6 0 0 MFlops 
+stack top 0x547450, stack bottom 0x546b09, stack size =    0.002 MB 
+[411] AMRMultiGrid::revert

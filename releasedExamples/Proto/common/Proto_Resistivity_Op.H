@@ -199,6 +199,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     homogeneousCFInterp(pr_cell_data_three & a_phi)
     {
+      CH_TIME("Proto_Resistivity::homogeneousCFInterp");
       Proto_Transition::DataUtilities<3>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
     }
     shared_ptr<pr_xfac_data_scalar>  m_eta_x;
@@ -248,6 +249,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
                                          const pr_lbd &  a_data_coar)
     {
+      CH_TIME("Proto_Resistivity::fillGhostDataOverCoarseFineInterface");
       int   reflect_sign_lo[DIM];
       int   reflect_sign_hi[DIM];  
       for(int idir = 0; idir < DIM; idir++)
@@ -293,6 +295,7 @@ namespace PrCh_AMR_Elliptic
          double    a_aco,
          double    a_bco) 
     {
+      CH_TIME("Proto_Resistivity::axby");
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook
@@ -360,6 +363,7 @@ namespace PrCh_AMR_Elliptic
              const pr_box_data_three   &  a_phi,
              pr_box                       a_valid)
     {
+      CH_TIME("Proto_Resistivity::cellGrad");
       
       //always.
       bool initToZero = true; double applyScale = 1.;
@@ -399,6 +403,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     fillGrad(const pr_cell_data_three   & a_phi)
     {
+      CH_TIME("Proto_Resistivity::fillGrad");
       auto dit   = a_phi.begin();
       auto dbl   = a_phi.layout();
       int ibreak = 4586; //gdb hook
@@ -583,6 +588,7 @@ namespace PrCh_AMR_Elliptic
                       const pr_box                & a_valid,
                       const int                   & a_face_dir)
     {
+      CH_TIME("Proto_Resistivity::getFaceDivAndGrad");
 
       pr_dom domain = m_grids.domain();
       ///first divergence 
@@ -687,6 +693,7 @@ namespace PrCh_AMR_Elliptic
             const pr_box                & a_valid,
             const int                   & a_face_dir)
     {
+      CH_TIME("Proto_Resistivity::getFlux");
 
       //get face centered velocity divergence
       pr_box flux_box = a_valid;
@@ -895,6 +902,7 @@ namespace PrCh_AMR_Elliptic
                          const pr_box            & a_face_box,
                          int a_face_dir,  int a_ibox)
     {
+      CH_TIME("Pr_Resistivity::getFlux_thr");
       auto dit   = m_eta_x->begin();
       pr_box                 valid =   m_grids[dit[a_ibox]];
       pr_box_data_thrdim &   grad =  (*m_grad)[dit[a_ibox]];

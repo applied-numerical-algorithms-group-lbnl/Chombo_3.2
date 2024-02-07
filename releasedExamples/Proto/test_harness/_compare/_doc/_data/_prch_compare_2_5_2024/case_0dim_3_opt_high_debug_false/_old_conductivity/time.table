@@ -1,0 +1,1287 @@
+-----------
+Timer report 0 (287 timers)
+--------------
+---------------------------------------------------------
+[0]main 0.07810 1 f=485888 MFlop/s=6
+    89.9%    0.07020        1 AMRMultiGrid::solve [1] f=485888
+     4.0%    0.00314        2 WriteAMRHierarchyHDF5 [26] f=0
+     1.5%    0.00115        1 AMRMultiGrid::define [46] f=0
+     0.3%    0.00023        1 PrChUtilities::setupLLCornerGrids [79] f=0
+     0.2%    0.00012        1 VCAMRPoissonOp2Factory::define [95] f=0
+     0.1%    0.00010        1 ~AMRMultiGrid [101] f=0
+     0.0%    0.00001       10 ~LayoutData [184] f=0
+     0.0%    0.00000        7 ~Copier [232] f=0
+     0.0%    0.00000        4 PrChUtilities::getRawVectorCh [247] f=0
+     0.0%    0.00000        4 ~LevelData [276] f=0
+     0.0%    0.00000        4 ~BoxLayoutData [280] f=0
+    96.0%                  Total 
+---------------------------------------------------------
+[1]AMRMultiGrid::solve 0.07020 1 f=485888 MFlop/s=7
+    99.9%    0.07011        1 AMRMultiGrid::solveNoInit [2] f=485888
+     0.1%    0.00009        1 AMRMultiGrid::init [104] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [283] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]AMRMultiGrid::solveNoInit 0.07011 1 f=485888 MFlop/s=7
+    100.0%    0.07009        1 AMRMultiGrid::solveNo-InitResid [3] f=485888
+     0.0%    0.00002        1 AMRPoissonOp::create [157] f=0
+     0.0%    0.00000        1 ~LayoutData [246] f=0
+     0.0%    0.00000        1 ~Copier [282] f=0
+     0.0%    0.00000        1 ~LevelData [285] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [286] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solveNo-InitResid 0.07009 1 f=485888 MFlop/s=7
+    94.4%    0.06617       13 AMRMultiGrid::AMRVcycle [4] f=485888
+     3.9%    0.00276       13 AMRMultiGrid::computeAMRResidual [29] f=0
+     0.4%    0.00027       13 AMRPoissonOp::incr [72] f=0
+     0.4%    0.00025        1 uberCorrection [76] f=0
+     0.3%    0.00022       14 AMRPoissonOp::setToZero [81] f=0
+     0.3%    0.00021        1 Initial AMR Residual [82] f=0
+     0.0%    0.00000        1 ~LayoutData [224] f=0
+     0.0%    0.00000        1 ~Copier [279] f=0
+     0.0%    0.00000        1 ~LevelData [281] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [284] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::AMRVcycle 0.06617 13 f=485888 MFlop/s=7
+    99.2%    0.06562       13 Multigrid::oneCycle [5] f=485888
+     0.5%    0.00030       13 AMRPoissonOp::assignLocal [68] f=0
+     0.4%    0.00025       13 AMRPoissonOp::setToZero [78] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[5]Multigrid::oneCycle 0.06562 13 f=485888 MFlop/s=7
+    100.0%    0.06562       13 Multigrid::cycle [6] f=485888
+    100.0%                  Total 
+---------------------------------------------------------
+[6]Multigrid::cycle 0.06562 13 f=485888 MFlop/s=7
+    67.8%    0.04447       26 AMRPoissonOp::levelGSRB [7] f=0
+    24.8%    0.01627       13 Multigrid::cycle [11] f=59904
+     4.0%    0.00261       13 VCAMRPoissonOp2::restrictResidual [30] f=0
+     3.4%    0.00221       13 AMRPoissonOp::prolongIncrement [36] f=425984
+     0.1%    0.00005       13 AMRPoissonOp::setToZero [124] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[7]AMRPoissonOp::levelGSRB 0.04447 26
+    86.5%    0.03849      208 AMRPoissonOp::residual [8] f=0
+    12.9%    0.00576     1664 FORT_GSRBSANELY [17] f=0
+     0.1%    0.00006       26 AMRPoissonOp::create [114] f=0
+     0.1%    0.00003       26 ~LayoutData [144] f=0
+     0.0%    0.00000       26 ~Copier [225] f=0
+     0.0%    0.00000       26 ~BoxLayoutData [240] f=0
+     0.0%    0.00000       26 ~LevelData [243] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[8]AMRPoissonOp::residual 0.03849 208
+    100.0%    0.03848      208 VCAMRPoissonOp2::residualI [9] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[9]VCAMRPoissonOp2::residualI 0.03848 208
+    68.3%    0.02628     1664 FORT_VCCOMPUTERES3D [10] f=0
+    31.1%    0.01195      208 VCAMRPoissonOp2::residualIBC [12] f=0
+     0.0%    0.00001      208 exchange [183] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[10]FORT_VCCOMPUTERES3D 0.02628 1664
+---------------------------------------------------------
+[11]Multigrid::cycle 0.01627 13 f=59904 MFlop/s=4
+    51.5%    0.00838       26 AMRPoissonOp::levelGSRB [13] f=0
+    43.2%    0.00702       13 Multigrid::cycle [16] f=6656
+     3.4%    0.00055       13 VCAMRPoissonOp2::restrictResidual [59] f=0
+     1.9%    0.00030       13 AMRPoissonOp::prolongIncrement [67] f=53248
+     0.1%    0.00001       13 AMRPoissonOp::setToZero [187] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[12]VCAMRPoissonOp2::residualIBC 0.01195 208
+---------------------------------------------------------
+[13]AMRPoissonOp::levelGSRB 0.00838 26
+    86.6%    0.00726      208 AMRPoissonOp::residual [14] f=0
+    10.9%    0.00091     1664 FORT_GSRBSANELY [51] f=0
+     1.3%    0.00011       26 AMRPoissonOp::create [99] f=0
+     0.1%    0.00001       26 ~LayoutData [172] f=0
+     0.0%    0.00000       26 ~Copier [237] f=0
+     0.0%    0.00000       26 ~LevelData [242] f=0
+     0.0%    0.00000       26 ~BoxLayoutData [245] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[14]AMRPoissonOp::residual 0.00726 208
+    99.9%    0.00725      208 VCAMRPoissonOp2::residualI [15] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[15]VCAMRPoissonOp2::residualI 0.00725 208
+    52.4%    0.00380     1664 FORT_VCCOMPUTERES3D [21] f=0
+    45.5%    0.00330      208 VCAMRPoissonOp2::residualIBC [25] f=0
+     0.1%    0.00001      208 exchange [192] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[16]Multigrid::cycle 0.00702 13 f=6656 MFlop/s=1
+    65.5%    0.00460       13 Multigrid::cycle [18] f=0
+    31.2%    0.00219       26 AMRPoissonOp::levelGSRB [38] f=0
+     2.4%    0.00017       13 VCAMRPoissonOp2::restrictResidual [90] f=0
+     0.8%    0.00005       13 AMRPoissonOp::prolongIncrement [119] f=6656
+     0.0%    0.00000       13 AMRPoissonOp::setToZero [210] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[17]FORT_GSRBSANELY 0.00576 1664
+---------------------------------------------------------
+[18]Multigrid::cycle 0.00460 13
+    100.0%    0.00460       13 Multigrid::cycle:bottom-solve [19] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[19]Multigrid::cycle:bottom-solve 0.00460 13
+    87.7%    0.00403       13 BiCGStabSolver::solve [20] f=0
+    12.2%    0.00056       13 AMRPoissonOp::levelGSRB [58] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[20]BiCGStabSolver::solve 0.00403 13
+    90.2%    0.00364       13 BiCGStabSolver::solve::MainLoop [22] f=0
+     7.9%    0.00032       13 BiCGStabSolver::solve::Initialize [66] f=0
+     0.7%    0.00003      104 ~LayoutData [142] f=0
+     0.1%    0.00001       13 BiCGStabSolver::solve::Cleanup [199] f=0
+     0.0%    0.00000      104 ~Copier [215] f=0
+     0.0%    0.00000      104 ~BoxLayoutData [218] f=0
+     0.0%    0.00000      104 ~LevelData [220] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[21]FORT_VCCOMPUTERES3D 0.00380 1664
+---------------------------------------------------------
+[22]BiCGStabSolver::solve::MainLoop 0.00364 13
+    96.9%    0.00352       13 VCAMRPoissonOp2::preCond [23] f=0
+     2.0%    0.00007       13 AMRPoissonOp::applyOp [108] f=0
+     0.3%    0.00001       26 AMRPoissonOp::dotProduct [177] f=0
+     0.3%    0.00001       26 AMRPoissonOp::incr [181] f=0
+     0.2%    0.00001       13 AMRPoissonOp::norm [193] f=0
+     0.1%    0.00000       13 AMRPoissonOp::assignLocal [202] f=0
+     0.0%    0.00000       13 AMRPoissonOp::setToZero [217] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[23]VCAMRPoissonOp2::preCond 0.00352 13
+    100.0%    0.00352       13 AMRPoissonOp::levelGSRB [24] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[24]AMRPoissonOp::levelGSRB 0.00352 13
+    88.1%    0.00310      702 AMRPoissonOp::residual [27] f=0
+     7.3%    0.00026     5616 FORT_GSRBSANELY [75] f=0
+     0.3%    0.00001       13 AMRPoissonOp::create [174] f=0
+     0.1%    0.00000       13 ~LayoutData [206] f=0
+     0.0%    0.00000       13 ~Copier [248] f=0
+     0.0%    0.00000       13 ~BoxLayoutData [262] f=0
+     0.0%    0.00000       13 ~LevelData [268] f=0
+    95.9%                  Total 
+---------------------------------------------------------
+[25]VCAMRPoissonOp2::residualIBC 0.00330 208
+---------------------------------------------------------
+[26]WriteAMRHierarchyHDF5 0.00314 2
+    50.3%    0.00158        2 WriteFile [44] f=0
+    43.1%    0.00135        2 CreateFile [45] f=0
+     5.9%    0.00018        2 CloseFile [89] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[27]AMRPoissonOp::residual 0.00310 702
+    99.4%    0.00309      702 VCAMRPoissonOp2::residualI [28] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[28]VCAMRPoissonOp2::residualI 0.00309 702
+    57.8%    0.00178      702 VCAMRPoissonOp2::residualIBC [41] f=0
+    29.9%    0.00092     5616 FORT_VCCOMPUTERES3D [50] f=0
+     1.1%    0.00003      702 exchange [137] f=0
+    88.7%                  Total 
+---------------------------------------------------------
+[29]AMRMultiGrid::computeAMRResidual 0.00276 13
+    89.5%    0.00247       13 AMRMultiGrid<T>::computeAMRResidualLevel [31] f=0
+    10.4%    0.00029       13 AMRPoissonOp::localMaxNorm [71] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[30]VCAMRPoissonOp2::restrictResidual 0.00261 13
+    92.0%    0.00240       13 AMRPoissonOp::residual [34] f=0
+     4.4%    0.00012      104 FORT_RESTRICTSANELY [98] f=0
+     0.8%    0.00002       13 AMRPoissonOp::CFInterp [149] f=0
+     0.8%    0.00002       13 AMRPoissonOp::create [151] f=0
+     0.7%    0.00002       13 ~LayoutData [159] f=0
+     0.0%    0.00000       13 ~Copier [254] f=0
+     0.0%    0.00000       13 ~LevelData [257] f=0
+     0.0%    0.00000       13 ~BoxLayoutData [259] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[31]AMRMultiGrid<T>::computeAMRResidualLevel 0.00247 13
+    100.0%    0.00247       13 AMRPoissonOp::residual [32] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[32]AMRPoissonOp::residual 0.00247 13
+    100.0%    0.00247       13 VCAMRPoissonOp2::residualI [33] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[33]VCAMRPoissonOp2::residualI 0.00247 13
+    69.0%    0.00171      104 FORT_VCCOMPUTERES3D [42] f=0
+    30.3%    0.00075       13 VCAMRPoissonOp2::residualIBC [54] f=0
+     0.0%    0.00000       13 exchange [223] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[34]AMRPoissonOp::residual 0.00240 13
+    100.0%    0.00240       13 VCAMRPoissonOp2::residualI [35] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[35]VCAMRPoissonOp2::residualI 0.00240 13
+    68.3%    0.00164      104 FORT_VCCOMPUTERES3D [43] f=0
+    31.1%    0.00074       13 VCAMRPoissonOp2::residualIBC [55] f=0
+     0.0%    0.00000       13 exchange [228] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[36]AMRPoissonOp::prolongIncrement 0.00221 13 f=425984 MFlop/s=192
+    99.6%    0.00220      104 FORT_PROLONG [37] f=425984
+    99.6%                  Total 
+---------------------------------------------------------
+[37]FORT_PROLONG 0.00220 104 f=425984 MFlop/s=193
+---------------------------------------------------------
+[38]AMRPoissonOp::levelGSRB 0.00219 26
+    86.1%    0.00189      208 AMRPoissonOp::residual [39] f=0
+     9.0%    0.00020     1664 FORT_GSRBSANELY [85] f=0
+     1.1%    0.00002       26 AMRPoissonOp::create [146] f=0
+     0.4%    0.00001       26 ~LayoutData [190] f=0
+     0.0%    0.00000       26 ~Copier [235] f=0
+     0.0%    0.00000       26 ~BoxLayoutData [239] f=0
+     0.0%    0.00000       26 ~LevelData [244] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[39]AMRPoissonOp::residual 0.00189 208
+    99.7%    0.00188      208 VCAMRPoissonOp2::residualI [40] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[40]VCAMRPoissonOp2::residualI 0.00188 208
+    56.2%    0.00106      208 VCAMRPoissonOp2::residualIBC [48] f=0
+    37.5%    0.00071     1664 FORT_VCCOMPUTERES3D [56] f=0
+     0.5%    0.00001      208 exchange [186] f=0
+    94.2%                  Total 
+---------------------------------------------------------
+[41]VCAMRPoissonOp2::residualIBC 0.00178 702
+---------------------------------------------------------
+[42]FORT_VCCOMPUTERES3D 0.00171 104
+---------------------------------------------------------
+[43]FORT_VCCOMPUTERES3D 0.00164 104
+---------------------------------------------------------
+[44]WriteFile 0.00158 2
+    72.4%    0.00114        2 Write Level [47] f=0
+    72.4%                  Total 
+---------------------------------------------------------
+[45]CreateFile 0.00135 2
+---------------------------------------------------------
+[46]AMRMultiGrid::define 0.00115 1
+    70.7%    0.00081        1 MultiGrid::define [52] f=0
+    28.1%    0.00032        1 VCAMRPoissonOp2Factory::AMRnewOp [65] f=0
+     0.0%    0.00000        2 ~Copier [277] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[47]Write Level 0.00114 2
+    90.3%    0.00103        2 write_Level [49] f=0
+     3.3%    0.00004        2 writeToFile [132] f=0
+     0.9%    0.00001        2 setGroup [180] f=0
+     0.0%    0.00000        2 calc minimum in outputGhost [278] f=0
+    94.4%                  Total 
+---------------------------------------------------------
+[48]VCAMRPoissonOp2::residualIBC 0.00106 208
+---------------------------------------------------------
+[49]write_Level 0.00103 2
+    62.1%    0.00064        2 linearize_H5Dwrite [57] f=0
+    16.4%    0.00017        2 WriteAttributes [91] f=0
+     7.1%    0.00007        2 H5Dclose [107] f=0
+     5.1%    0.00005        2 H5S_H5D_offsets_create [120] f=0
+     3.5%    0.00004        2 H5Dcreate [134] f=0
+     1.4%    0.00001        2 WriteOffsets [168] f=0
+     1.3%    0.00001        2 H5S_H5D_offsets_close [171] f=0
+     0.6%    0.00001        2 getOffsets [194] f=0
+     0.3%    0.00000        2 mallocMT_buffers [208] f=0
+     0.3%    0.00000        2 freeMT [209] f=0
+     0.1%    0.00000        2 H5Screate [216] f=0
+     0.1%    0.00000        2 H5Sclose [222] f=0
+     0.0%    0.00000        2 ComputeBufferCapacity [236] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[50]FORT_VCCOMPUTERES3D 0.00092 5616
+---------------------------------------------------------
+[51]FORT_GSRBSANELY 0.00091 1664
+---------------------------------------------------------
+[52]MultiGrid::define 0.00081 1
+    97.9%    0.00079        4 VCAMRPoissonOp2Factory::MGnewOp [53] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[53]VCAMRPoissonOp2Factory::MGnewOp 0.00079 4
+    37.0%    0.00029       72 FORT_AVERAGEFACE [70] f=0
+    18.1%    0.00014        9 LevelData<T>::define(dbl,comps,ghost,factory) [92] f=0
+     9.1%    0.00007        3 CoarseAverage::computeAverages [109] f=0
+     4.7%    0.00004        3 CoarseAverage::define2 [133] f=0
+     4.5%    0.00004        3 VCAMRPoissonOp2::computeLambda [135] f=0
+     3.3%    0.00003        3 AMRPoissonOp::define4 [141] f=0
+     1.8%    0.00001       24 ~LayoutData [169] f=0
+     0.1%    0.00000       12 ~Copier [233] f=0
+     0.0%    0.00000        6 ~LevelData [273] f=0
+     0.0%    0.00000        6 ~BoxLayoutData [274] f=0
+    78.4%                  Total 
+---------------------------------------------------------
+[54]VCAMRPoissonOp2::residualIBC 0.00075 13
+---------------------------------------------------------
+[55]VCAMRPoissonOp2::residualIBC 0.00074 13
+---------------------------------------------------------
+[56]FORT_VCCOMPUTERES3D 0.00071 1664
+---------------------------------------------------------
+[57]linearize_H5Dwrite 0.00064 2
+    84.8%    0.00054       16 H5Dwrite [60] f=0
+    10.9%    0.00007       16 linearize [111] f=0
+    95.7%                  Total 
+---------------------------------------------------------
+[58]AMRPoissonOp::levelGSRB 0.00056 13
+    83.3%    0.00047      104 AMRPoissonOp::residual [63] f=0
+     7.0%    0.00004      832 FORT_GSRBSANELY [129] f=0
+     2.7%    0.00002       13 AMRPoissonOp::create [165] f=0
+     0.7%    0.00000       13 ~LayoutData [205] f=0
+     0.0%    0.00000       13 ~Copier [251] f=0
+     0.0%    0.00000       13 ~LevelData [261] f=0
+     0.0%    0.00000       13 ~BoxLayoutData [266] f=0
+    93.7%                  Total 
+---------------------------------------------------------
+[59]VCAMRPoissonOp2::restrictResidual 0.00055 13
+    84.3%    0.00047       13 AMRPoissonOp::residual [61] f=0
+     3.7%    0.00002      104 FORT_RESTRICTSANELY [150] f=0
+     3.5%    0.00002       13 AMRPoissonOp::create [153] f=0
+     3.0%    0.00002       13 AMRPoissonOp::CFInterp [163] f=0
+     1.0%    0.00001       13 ~LayoutData [198] f=0
+     0.0%    0.00000       13 ~Copier [249] f=0
+     0.0%    0.00000       13 ~LevelData [260] f=0
+     0.0%    0.00000       13 ~BoxLayoutData [263] f=0
+    95.6%                  Total 
+---------------------------------------------------------
+[60]H5Dwrite 0.00054 16
+---------------------------------------------------------
+[61]AMRPoissonOp::residual 0.00047 13
+    99.9%    0.00047       13 VCAMRPoissonOp2::residualI [62] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[62]VCAMRPoissonOp2::residualI 0.00047 13
+    53.6%    0.00025      104 FORT_VCCOMPUTERES3D [77] f=0
+    44.2%    0.00021       13 VCAMRPoissonOp2::residualIBC [84] f=0
+     0.1%    0.00000       13 exchange [230] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[63]AMRPoissonOp::residual 0.00047 104
+    99.4%    0.00046      104 VCAMRPoissonOp2::residualI [64] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[64]VCAMRPoissonOp2::residualI 0.00046 104
+    57.7%    0.00027      104 VCAMRPoissonOp2::residualIBC [74] f=0
+    29.7%    0.00014      832 FORT_VCCOMPUTERES3D [93] f=0
+     1.0%    0.00000      104 exchange [204] f=0
+    88.4%                  Total 
+---------------------------------------------------------
+[65]VCAMRPoissonOp2Factory::AMRnewOp 0.00032 1
+    84.6%    0.00027        1 VCAMRPoissonOp2::computeLambda [73] f=0
+     4.7%    0.00002        1 AMRPoissonOp::define4 [166] f=0
+    89.3%                  Total 
+---------------------------------------------------------
+[66]BiCGStabSolver::solve::Initialize 0.00032 13
+    30.7%    0.00010      104 AMRPoissonOp::create [102] f=0
+    22.1%    0.00007       13 AMRPoissonOp::residual [110] f=0
+     3.2%    0.00001       13 AMRPoissonOp::norm [179] f=0
+     2.6%    0.00001       52 AMRPoissonOp::setToZero [191] f=0
+     1.8%    0.00001       13 AMRPoissonOp::assignLocal [197] f=0
+    60.5%                  Total 
+---------------------------------------------------------
+[67]AMRPoissonOp::prolongIncrement 0.00030 13 f=53248 MFlop/s=177
+    97.7%    0.00029      104 FORT_PROLONG [69] f=53248
+    97.7%                  Total 
+---------------------------------------------------------
+[68]AMRPoissonOp::assignLocal 0.00030 13
+---------------------------------------------------------
+[69]FORT_PROLONG 0.00029 104 f=53248 MFlop/s=181
+---------------------------------------------------------
+[70]FORT_AVERAGEFACE 0.00029 72
+---------------------------------------------------------
+[71]AMRPoissonOp::localMaxNorm 0.00029 13
+---------------------------------------------------------
+[72]AMRPoissonOp::incr 0.00027 13
+---------------------------------------------------------
+[73]VCAMRPoissonOp2::computeLambda 0.00027 1
+    31.0%    0.00008       24 FORT_SUMFACES [105] f=0
+     7.0%    0.00002        1 LevelData<T>::define(dbl,comps,ghost,factory) [155] f=0
+    38.0%                  Total 
+---------------------------------------------------------
+[74]VCAMRPoissonOp2::residualIBC 0.00027 104
+---------------------------------------------------------
+[75]FORT_GSRBSANELY 0.00026 5616
+---------------------------------------------------------
+[76]uberCorrection 0.00025 1
+    86.7%    0.00022        2 AMRPoissonOp::setToZero [80] f=0
+    12.7%    0.00003        2 AMRPoissonOp::create [138] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[77]FORT_VCCOMPUTERES3D 0.00025 104
+---------------------------------------------------------
+[78]AMRPoissonOp::setToZero 0.00025 13
+---------------------------------------------------------
+[79]PrChUtilities::setupLLCornerGrids 0.00023 1
+    34.6%    0.00008        1 setupGrids: BaseGridCreation [106] f=0
+    34.6%                  Total 
+---------------------------------------------------------
+[80]AMRPoissonOp::setToZero 0.00022 2
+---------------------------------------------------------
+[81]AMRPoissonOp::setToZero 0.00022 14
+---------------------------------------------------------
+[82]Initial AMR Residual 0.00021 1
+    100.0%    0.00021        1 AMRMultiGrid::computeAMRResidual [83] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[83]AMRMultiGrid::computeAMRResidual 0.00021 1
+    89.1%    0.00019        1 AMRMultiGrid<T>::computeAMRResidualLevel [86] f=0
+    10.6%    0.00002        1 AMRPoissonOp::localMaxNorm [147] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[84]VCAMRPoissonOp2::residualIBC 0.00021 13
+---------------------------------------------------------
+[85]FORT_GSRBSANELY 0.00020 1664
+---------------------------------------------------------
+[86]AMRMultiGrid<T>::computeAMRResidualLevel 0.00019 1
+    99.8%    0.00019        1 AMRPoissonOp::residual [87] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[87]AMRPoissonOp::residual 0.00019 1
+    99.8%    0.00019        1 VCAMRPoissonOp2::residualI [88] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[88]VCAMRPoissonOp2::residualI 0.00019 1
+    66.9%    0.00013        8 FORT_VCCOMPUTERES3D [94] f=0
+    31.1%    0.00006        1 VCAMRPoissonOp2::residualIBC [117] f=0
+     0.3%    0.00000        1 exchange [234] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[89]CloseFile 0.00018 2
+---------------------------------------------------------
+[90]VCAMRPoissonOp2::restrictResidual 0.00017 13
+    69.2%    0.00012       13 AMRPoissonOp::residual [96] f=0
+     8.0%    0.00001       13 AMRPoissonOp::CFInterp [170] f=0
+     6.0%    0.00001       13 AMRPoissonOp::create [182] f=0
+     3.4%    0.00001      104 FORT_RESTRICTSANELY [195] f=0
+     2.0%    0.00000       13 ~LayoutData [207] f=0
+     0.1%    0.00000       13 ~Copier [250] f=0
+     0.1%    0.00000       13 ~LevelData [264] f=0
+     0.1%    0.00000       13 ~BoxLayoutData [265] f=0
+    89.0%                  Total 
+---------------------------------------------------------
+[91]WriteAttributes 0.00017 2
+---------------------------------------------------------
+[92]LevelData<T>::define(dbl,comps,ghost,factory) 0.00014 9
+---------------------------------------------------------
+[93]FORT_VCCOMPUTERES3D 0.00014 832
+---------------------------------------------------------
+[94]FORT_VCCOMPUTERES3D 0.00013 8
+---------------------------------------------------------
+[95]VCAMRPoissonOp2Factory::define 0.00012 1
+    40.6%    0.00005       48 CFIVS::define(fast) [123] f=0
+    24.0%    0.00003        1 Copier::exchangeDefine [140] f=0
+     0.1%    0.00000        6 ~LayoutData [256] f=0
+     0.0%    0.00000        2 ~Copier [275] f=0
+    64.8%                  Total 
+---------------------------------------------------------
+[96]AMRPoissonOp::residual 0.00012 13
+    99.6%    0.00012       13 VCAMRPoissonOp2::residualI [97] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[97]VCAMRPoissonOp2::residualI 0.00012 13
+    56.0%    0.00007       13 VCAMRPoissonOp2::residualIBC [112] f=0
+    37.4%    0.00004      104 FORT_VCCOMPUTERES3D [127] f=0
+     0.5%    0.00000       13 exchange [229] f=0
+    93.9%                  Total 
+---------------------------------------------------------
+[98]FORT_RESTRICTSANELY 0.00012 104
+---------------------------------------------------------
+[99]AMRPoissonOp::create 0.00011 26
+    99.0%    0.00011       26 LevelData<T>::define(dbl,comps,ghost,factory) [100] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[100]LevelData<T>::define(dbl,comps,ghost,factory) 0.00011 26
+---------------------------------------------------------
+[101]~AMRMultiGrid 0.00010 1
+    42.4%    0.00004      129 ~LayoutData [128] f=0
+     0.7%    0.00000       41 ~Copier [227] f=0
+     0.4%    0.00000       33 ~BoxLayoutData [238] f=0
+     0.3%    0.00000       29 ~LevelData [241] f=0
+    43.9%                  Total 
+---------------------------------------------------------
+[102]AMRPoissonOp::create 0.00010 104
+    96.9%    0.00010      104 LevelData<T>::define(dbl,comps,ghost,factory) [103] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[103]LevelData<T>::define(dbl,comps,ghost,factory) 0.00010 104
+---------------------------------------------------------
+[104]AMRMultiGrid::init 0.00009 1
+    56.9%    0.00005        1 MutliGrid::init [121] f=0
+    42.2%    0.00004        2 AMRPoissonOp::create [130] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[105]FORT_SUMFACES 0.00008 24
+---------------------------------------------------------
+[106]setupGrids: BaseGridCreation 0.00008 1
+    20.8%    0.00002        1 LoadBalance:VectorBoxEntry [161] f=0
+    19.5%    0.00002        1 DisjointBoxLayout::computeNeighbors [164] f=0
+    13.5%    0.00001        1 BRMeshRefine::domainSplit [178] f=0
+    53.8%                  Total 
+---------------------------------------------------------
+[107]H5Dclose 0.00007 2
+---------------------------------------------------------
+[108]AMRPoissonOp::applyOp 0.00007 13
+    82.9%    0.00006       13 VCAMRPoissonOp2::applyOpI [116] f=0
+    15.4%    0.00001       13 AMRPoissonOp::CFInterp [176] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[109]CoarseAverage::computeAverages 0.00007 3
+    90.2%    0.00006       24 FORT_AVERAGE [113] f=0
+     7.1%    0.00001        3 LevelData::copyTo [200] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[110]AMRPoissonOp::residual 0.00007 13
+    81.0%    0.00006       13 VCAMRPoissonOp2::residualI [118] f=0
+    17.5%    0.00001       13 AMRPoissonOp::CFInterp [173] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[111]linearize 0.00007 16
+---------------------------------------------------------
+[112]VCAMRPoissonOp2::residualIBC 0.00007 13
+---------------------------------------------------------
+[113]FORT_AVERAGE 0.00006 24
+---------------------------------------------------------
+[114]AMRPoissonOp::create 0.00006 26
+    98.2%    0.00006       26 LevelData<T>::define(dbl,comps,ghost,factory) [115] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[115]LevelData<T>::define(dbl,comps,ghost,factory) 0.00006 26
+---------------------------------------------------------
+[116]VCAMRPoissonOp2::applyOpI 0.00006 13
+    43.6%    0.00003       13 VCAMRPoissonOp2::applyOpNoBoundary [143] f=0
+    43.6%                  Total 
+---------------------------------------------------------
+[117]VCAMRPoissonOp2::residualIBC 0.00006 1
+---------------------------------------------------------
+[118]VCAMRPoissonOp2::residualI 0.00006 13
+    57.9%    0.00003       13 VCAMRPoissonOp2::residualIBC [136] f=0
+    28.8%    0.00002      104 FORT_VCCOMPUTERES3D [162] f=0
+     1.0%    0.00000       13 exchange [231] f=0
+    87.7%                  Total 
+---------------------------------------------------------
+[119]AMRPoissonOp::prolongIncrement 0.00005 13 f=6656 MFlop/s=124
+    82.3%    0.00004      104 FORT_PROLONG [126] f=6656
+    82.3%                  Total 
+---------------------------------------------------------
+[120]H5S_H5D_offsets_create 0.00005 2
+---------------------------------------------------------
+[121]MutliGrid::init 0.00005 1
+    98.6%    0.00005        6 AMRPoissonOp::createCoarser [122] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[122]AMRPoissonOp::createCoarser 0.00005 6
+    94.8%    0.00005        6 LevelData<T>::define(dbl,comps,ghost,factory) [125] f=0
+    94.8%                  Total 
+---------------------------------------------------------
+[123]CFIVS::define(fast) 0.00005 48
+---------------------------------------------------------
+[124]AMRPoissonOp::setToZero 0.00005 13
+---------------------------------------------------------
+[125]LevelData<T>::define(dbl,comps,ghost,factory) 0.00005 6
+---------------------------------------------------------
+[126]FORT_PROLONG 0.00004 104 f=6656 MFlop/s=151
+---------------------------------------------------------
+[127]FORT_VCCOMPUTERES3D 0.00004 104
+---------------------------------------------------------
+[128]~LayoutData 0.00004 129
+---------------------------------------------------------
+[129]FORT_GSRBSANELY 0.00004 832
+---------------------------------------------------------
+[130]AMRPoissonOp::create 0.00004 2
+    99.3%    0.00004        2 LevelData<T>::define(dbl,comps,ghost,factory) [131] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[131]LevelData<T>::define(dbl,comps,ghost,factory) 0.00004 2
+---------------------------------------------------------
+[132]writeToFile 0.00004 2
+---------------------------------------------------------
+[133]CoarseAverage::define2 0.00004 3
+    64.5%    0.00002        3 LevelData<T>::define(dbl,comps,ghost,factory) [145] f=0
+    24.3%    0.00001        3 Copier::define [188] f=0
+    88.8%                  Total 
+---------------------------------------------------------
+[134]H5Dcreate 0.00004 2
+---------------------------------------------------------
+[135]VCAMRPoissonOp2::computeLambda 0.00004 3
+    46.3%    0.00002       72 FORT_SUMFACES [160] f=0
+    16.1%    0.00001        3 LevelData<T>::define(dbl,comps,ghost,factory) [196] f=0
+    62.4%                  Total 
+---------------------------------------------------------
+[136]VCAMRPoissonOp2::residualIBC 0.00003 13
+---------------------------------------------------------
+[137]exchange 0.00003 702
+    25.2%    0.00001      702 local copying [189] f=0
+    25.2%                  Total 
+---------------------------------------------------------
+[138]AMRPoissonOp::create 0.00003 2
+    99.6%    0.00003        2 LevelData<T>::define(dbl,comps,ghost,factory) [139] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[139]LevelData<T>::define(dbl,comps,ghost,factory) 0.00003 2
+---------------------------------------------------------
+[140]Copier::exchangeDefine 0.00003 1
+---------------------------------------------------------
+[141]AMRPoissonOp::define4 0.00003 3
+---------------------------------------------------------
+[142]~LayoutData 0.00003 104
+---------------------------------------------------------
+[143]VCAMRPoissonOp2::applyOpNoBoundary 0.00003 13
+    67.8%    0.00002      104 FORT_VCCOMPUTEOP3D [156] f=0
+     2.7%    0.00000       13 exchange [226] f=0
+    70.5%                  Total 
+---------------------------------------------------------
+[144]~LayoutData 0.00003 26
+---------------------------------------------------------
+[145]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 3
+---------------------------------------------------------
+[146]AMRPoissonOp::create 0.00002 26
+    96.3%    0.00002       26 LevelData<T>::define(dbl,comps,ghost,factory) [148] f=0
+    96.3%                  Total 
+---------------------------------------------------------
+[147]AMRPoissonOp::localMaxNorm 0.00002 1
+---------------------------------------------------------
+[148]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 26
+---------------------------------------------------------
+[149]AMRPoissonOp::CFInterp 0.00002 13
+---------------------------------------------------------
+[150]FORT_RESTRICTSANELY 0.00002 104
+---------------------------------------------------------
+[151]AMRPoissonOp::create 0.00002 13
+    96.5%    0.00002       13 LevelData<T>::define(dbl,comps,ghost,factory) [152] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[152]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 13
+---------------------------------------------------------
+[153]AMRPoissonOp::create 0.00002 13
+    97.3%    0.00002       13 LevelData<T>::define(dbl,comps,ghost,factory) [154] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[154]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 13
+---------------------------------------------------------
+[155]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 1
+---------------------------------------------------------
+[156]FORT_VCCOMPUTEOP3D 0.00002 104
+---------------------------------------------------------
+[157]AMRPoissonOp::create 0.00002 1
+    99.4%    0.00002        1 LevelData<T>::define(dbl,comps,ghost,factory) [158] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[158]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 1
+---------------------------------------------------------
+[159]~LayoutData 0.00002 13
+---------------------------------------------------------
+[160]FORT_SUMFACES 0.00002 72
+---------------------------------------------------------
+[161]LoadBalance:VectorBoxEntry 0.00002 1
+     5.9%    0.00000        1 LoadBalance:VectorBoxSimple [221] f=0
+     5.9%                  Total 
+---------------------------------------------------------
+[162]FORT_VCCOMPUTERES3D 0.00002 104
+---------------------------------------------------------
+[163]AMRPoissonOp::CFInterp 0.00002 13
+---------------------------------------------------------
+[164]DisjointBoxLayout::computeNeighbors 0.00002 1
+---------------------------------------------------------
+[165]AMRPoissonOp::create 0.00002 13
+    97.4%    0.00001       13 LevelData<T>::define(dbl,comps,ghost,factory) [167] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[166]AMRPoissonOp::define4 0.00002 1
+---------------------------------------------------------
+[167]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 13
+---------------------------------------------------------
+[168]WriteOffsets 0.00001 2
+---------------------------------------------------------
+[169]~LayoutData 0.00001 24
+---------------------------------------------------------
+[170]AMRPoissonOp::CFInterp 0.00001 13
+---------------------------------------------------------
+[171]H5S_H5D_offsets_close 0.00001 2
+---------------------------------------------------------
+[172]~LayoutData 0.00001 26
+---------------------------------------------------------
+[173]AMRPoissonOp::CFInterp 0.00001 13
+---------------------------------------------------------
+[174]AMRPoissonOp::create 0.00001 13
+    96.8%    0.00001       13 LevelData<T>::define(dbl,comps,ghost,factory) [175] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[175]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 13
+---------------------------------------------------------
+[176]AMRPoissonOp::CFInterp 0.00001 13
+---------------------------------------------------------
+[177]AMRPoissonOp::dotProduct 0.00001 26
+---------------------------------------------------------
+[178]BRMeshRefine::domainSplit 0.00001 1
+---------------------------------------------------------
+[179]AMRPoissonOp::norm 0.00001 13
+---------------------------------------------------------
+[180]setGroup 0.00001 2
+---------------------------------------------------------
+[181]AMRPoissonOp::incr 0.00001 26
+---------------------------------------------------------
+[182]AMRPoissonOp::create 0.00001 13
+    94.3%    0.00001       13 LevelData<T>::define(dbl,comps,ghost,factory) [185] f=0
+    94.3%                  Total 
+---------------------------------------------------------
+[183]exchange 0.00001 208
+    24.6%    0.00000      208 local copying [212] f=0
+    24.6%                  Total 
+---------------------------------------------------------
+[184]~LayoutData 0.00001 10
+---------------------------------------------------------
+[185]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 13
+---------------------------------------------------------
+[186]exchange 0.00001 208
+    26.9%    0.00000      208 local copying [211] f=0
+    26.9%                  Total 
+---------------------------------------------------------
+[187]AMRPoissonOp::setToZero 0.00001 13
+---------------------------------------------------------
+[188]Copier::define 0.00001 3
+---------------------------------------------------------
+[189]local copying 0.00001 702
+---------------------------------------------------------
+[190]~LayoutData 0.00001 26
+---------------------------------------------------------
+[191]AMRPoissonOp::setToZero 0.00001 52
+---------------------------------------------------------
+[192]exchange 0.00001 208
+    30.8%    0.00000      208 local copying [213] f=0
+    30.8%                  Total 
+---------------------------------------------------------
+[193]AMRPoissonOp::norm 0.00001 13
+---------------------------------------------------------
+[194]getOffsets 0.00001 2
+    41.9%    0.00000        2 offsets.resize [214] f=0
+     3.4%    0.00000       16 dataSize [253] f=0
+     3.1%    0.00000       16 offsets calc [255] f=0
+    48.5%                  Total 
+---------------------------------------------------------
+[195]FORT_RESTRICTSANELY 0.00001 104
+---------------------------------------------------------
+[196]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 3
+---------------------------------------------------------
+[197]AMRPoissonOp::assignLocal 0.00001 13
+---------------------------------------------------------
+[198]~LayoutData 0.00001 13
+---------------------------------------------------------
+[199]BiCGStabSolver::solve::Cleanup 0.00001 13
+    88.2%    0.00000       13 AMRPoissonOp::incr [203] f=0
+    88.2%                  Total 
+---------------------------------------------------------
+[200]LevelData::copyTo 0.00001 3
+    96.7%    0.00000        3 local copying [201] f=0
+    96.7%                  Total 
+---------------------------------------------------------
+[201]local copying 0.00000 3
+---------------------------------------------------------
+[202]AMRPoissonOp::assignLocal 0.00000 13
+---------------------------------------------------------
+[203]AMRPoissonOp::incr 0.00000 13
+---------------------------------------------------------
+[204]exchange 0.00000 104
+    26.5%    0.00000      104 local copying [219] f=0
+    26.5%                  Total 
+---------------------------------------------------------
+[205]~LayoutData 0.00000 13
+---------------------------------------------------------
+[206]~LayoutData 0.00000 13
+---------------------------------------------------------
+[207]~LayoutData 0.00000 13
+---------------------------------------------------------
+[208]mallocMT_buffers 0.00000 2
+---------------------------------------------------------
+[209]freeMT 0.00000 2
+---------------------------------------------------------
+[210]AMRPoissonOp::setToZero 0.00000 13
+---------------------------------------------------------
+[211]local copying 0.00000 208
+---------------------------------------------------------
+[212]local copying 0.00000 208
+---------------------------------------------------------
+[213]local copying 0.00000 208
+---------------------------------------------------------
+[214]offsets.resize 0.00000 2
+---------------------------------------------------------
+[215]~Copier 0.00000 104
+---------------------------------------------------------
+[216]H5Screate 0.00000 2
+---------------------------------------------------------
+[217]AMRPoissonOp::setToZero 0.00000 13
+---------------------------------------------------------
+[218]~BoxLayoutData 0.00000 104
+---------------------------------------------------------
+[219]local copying 0.00000 104
+---------------------------------------------------------
+[220]~LevelData 0.00000 104
+---------------------------------------------------------
+[221]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[222]H5Sclose 0.00000 2
+---------------------------------------------------------
+[223]exchange 0.00000 13
+    17.2%    0.00000       13 local copying [270] f=0
+    17.2%                  Total 
+---------------------------------------------------------
+[224]~LayoutData 0.00000 1
+---------------------------------------------------------
+[225]~Copier 0.00000 26
+---------------------------------------------------------
+[226]exchange 0.00000 13
+    21.1%    0.00000       13 local copying [269] f=0
+    21.1%                  Total 
+---------------------------------------------------------
+[227]~Copier 0.00000 41
+---------------------------------------------------------
+[228]exchange 0.00000 13
+    24.2%    0.00000       13 local copying [258] f=0
+    24.2%                  Total 
+---------------------------------------------------------
+[229]exchange 0.00000 13
+    21.9%    0.00000       13 local copying [272] f=0
+    21.9%                  Total 
+---------------------------------------------------------
+[230]exchange 0.00000 13
+    23.3%    0.00000       13 local copying [271] f=0
+    23.3%                  Total 
+---------------------------------------------------------
+[231]exchange 0.00000 13
+    25.9%    0.00000       13 local copying [267] f=0
+    25.9%                  Total 
+---------------------------------------------------------
+[232]~Copier 0.00000 7
+---------------------------------------------------------
+[233]~Copier 0.00000 12
+---------------------------------------------------------
+[234]exchange 0.00000 1
+    41.7%    0.00000        1 local copying [252] f=0
+    41.7%                  Total 
+---------------------------------------------------------
+[235]~Copier 0.00000 26
+---------------------------------------------------------
+[236]ComputeBufferCapacity 0.00000 2
+---------------------------------------------------------
+[237]~Copier 0.00000 26
+---------------------------------------------------------
+[238]~BoxLayoutData 0.00000 33
+---------------------------------------------------------
+[239]~BoxLayoutData 0.00000 26
+---------------------------------------------------------
+[240]~BoxLayoutData 0.00000 26
+---------------------------------------------------------
+[241]~LevelData 0.00000 29
+---------------------------------------------------------
+[242]~LevelData 0.00000 26
+---------------------------------------------------------
+[243]~LevelData 0.00000 26
+---------------------------------------------------------
+[244]~LevelData 0.00000 26
+---------------------------------------------------------
+[245]~BoxLayoutData 0.00000 26
+---------------------------------------------------------
+[246]~LayoutData 0.00000 1
+---------------------------------------------------------
+[247]PrChUtilities::getRawVectorCh 0.00000 4
+---------------------------------------------------------
+[248]~Copier 0.00000 13
+---------------------------------------------------------
+[249]~Copier 0.00000 13
+---------------------------------------------------------
+[250]~Copier 0.00000 13
+---------------------------------------------------------
+[251]~Copier 0.00000 13
+---------------------------------------------------------
+[252]local copying 0.00000 1
+---------------------------------------------------------
+[253]dataSize 0.00000 16
+---------------------------------------------------------
+[254]~Copier 0.00000 13
+---------------------------------------------------------
+[255]offsets calc 0.00000 16
+---------------------------------------------------------
+[256]~LayoutData 0.00000 6
+---------------------------------------------------------
+[257]~LevelData 0.00000 13
+---------------------------------------------------------
+[258]local copying 0.00000 13
+---------------------------------------------------------
+[259]~BoxLayoutData 0.00000 13
+---------------------------------------------------------
+[260]~LevelData 0.00000 13
+---------------------------------------------------------
+[261]~LevelData 0.00000 13
+---------------------------------------------------------
+[262]~BoxLayoutData 0.00000 13
+---------------------------------------------------------
+[263]~BoxLayoutData 0.00000 13
+---------------------------------------------------------
+[264]~LevelData 0.00000 13
+---------------------------------------------------------
+[265]~BoxLayoutData 0.00000 13
+---------------------------------------------------------
+[266]~BoxLayoutData 0.00000 13
+---------------------------------------------------------
+[267]local copying 0.00000 13
+---------------------------------------------------------
+[268]~LevelData 0.00000 13
+---------------------------------------------------------
+[269]local copying 0.00000 13
+---------------------------------------------------------
+[270]local copying 0.00000 13
+---------------------------------------------------------
+[271]local copying 0.00000 13
+---------------------------------------------------------
+[272]local copying 0.00000 13
+---------------------------------------------------------
+[273]~LevelData 0.00000 6
+---------------------------------------------------------
+[274]~BoxLayoutData 0.00000 6
+---------------------------------------------------------
+[275]~Copier 0.00000 2
+---------------------------------------------------------
+[276]~LevelData 0.00000 4
+---------------------------------------------------------
+[277]~Copier 0.00000 2
+---------------------------------------------------------
+[278]calc minimum in outputGhost 0.00000 2
+---------------------------------------------------------
+[279]~Copier 0.00000 1
+---------------------------------------------------------
+[280]~BoxLayoutData 0.00000 4
+---------------------------------------------------------
+[281]~LevelData 0.00000 1
+---------------------------------------------------------
+[282]~Copier 0.00000 1
+---------------------------------------------------------
+[283]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[284]~BoxLayoutData 0.00000 1
+---------------------------------------------------------
+[285]~LevelData 0.00000 1
+---------------------------------------------------------
+[286]~BoxLayoutData 0.00000 1
+=======================================================
+    0.03     1664  FORT_VCCOMPUTERES3D [10]
+    0.01     1664  FORT_GSRBSANELY [17]
+    0.00     1664  FORT_VCCOMPUTERES3D [21]
+    0.00      104  FORT_PROLONG [37] f=425984 MFlop/s=193
+    0.00      104  FORT_VCCOMPUTERES3D [42]
+    0.00      104  FORT_VCCOMPUTERES3D [43]
+    0.00     5616  FORT_VCCOMPUTERES3D [50]
+    0.00     1664  FORT_GSRBSANELY [51]
+    0.00     1664  FORT_VCCOMPUTERES3D [56]
+    0.00      104  FORT_PROLONG [69] f=53248 MFlop/s=181
+    0.00       72  FORT_AVERAGEFACE [70]
+    0.00     5616  FORT_GSRBSANELY [75]
+    0.00      104  FORT_VCCOMPUTERES3D [77]
+    0.00     1664  FORT_GSRBSANELY [85]
+    0.00      832  FORT_VCCOMPUTERES3D [93]
+    0.00        8  FORT_VCCOMPUTERES3D [94]
+    0.00      104  FORT_RESTRICTSANELY [98]
+    0.00       24  FORT_SUMFACES [105]
+    0.00       24  FORT_AVERAGE [113]
+    0.00      104  FORT_PROLONG [126] f=6656 MFlop/s=151
+    0.00      104  FORT_VCCOMPUTERES3D [127]
+    0.00      832  FORT_GSRBSANELY [129]
+    0.00      104  FORT_RESTRICTSANELY [150]
+    0.00      104  FORT_VCCOMPUTEOP3D [156]
+    0.00       72  FORT_SUMFACES [160]
+    0.00      104  FORT_VCCOMPUTERES3D [162]
+    0.00      104  FORT_RESTRICTSANELY [195]
+     0.04595   58.8%    Total
+=======================================================
+[0] main 0.07810 100.0% 1 485888 6 MFlops 
+   [1] AMRMultiGrid::solve 0.07020 89.9% 1 485888 7 MFlops 
+      [2] AMRMultiGrid::solveNoInit 0.07011 89.8% 1 485888 7 MFlops 
+         [3] AMRMultiGrid::solveNo-InitResid 0.07009 89.7% 1 485888 7 MFlops 
+            [4] AMRMultiGrid::AMRVcycle 0.06617 84.7% 13 485888 7 MFlops 
+               [5] Multigrid::oneCycle 0.06562 84.0% 13 485888 7 MFlops 
+                  [6] Multigrid::cycle 0.06562 84.0% 13 485888 7 MFlops 
+                     [7] AMRPoissonOp::levelGSRB 0.04447 56.9% 26 0 0 MFlops 
+                        [8] AMRPoissonOp::residual 0.03849 49.3% 208 0 0 MFlops 
+                           [9] VCAMRPoissonOp2::residualI 0.03848 49.3% 208 0 0 MFlops 
+                              [10] FORT_VCCOMPUTERES3D 0.02628 33.6% 1664 0 0 MFlops 
+                              [12] VCAMRPoissonOp2::residualIBC 0.01195 15.3% 208 0 0 MFlops 
+                              [183] exchange 0.00001  0.0% 208 0 0 MFlops 
+                                 [212] local copying 0.00000  0.0% 208 0 0 MFlops 
+                        [17] FORT_GSRBSANELY 0.00576  7.4% 1664 0 0 MFlops 
+                        [114] AMRPoissonOp::create 0.00006  0.1% 26 0 0 MFlops 
+                           [115] LevelData<T>::define(dbl,comps,ghost,factory) 0.00006  0.1% 26 0 0 MFlops 
+                        [144] ~LayoutData 0.00003  0.0% 26 0 0 MFlops 
+                        [225] ~Copier 0.00000  0.0% 26 0 0 MFlops 
+                        [240] ~BoxLayoutData 0.00000  0.0% 26 0 0 MFlops 
+                        [243] ~LevelData 0.00000  0.0% 26 0 0 MFlops 
+                     [11] Multigrid::cycle 0.01627 20.8% 13 59904 4 MFlops 
+                        [13] AMRPoissonOp::levelGSRB 0.00838 10.7% 26 0 0 MFlops 
+                           [14] AMRPoissonOp::residual 0.00726  9.3% 208 0 0 MFlops 
+                              [15] VCAMRPoissonOp2::residualI 0.00725  9.3% 208 0 0 MFlops 
+                                 [21] FORT_VCCOMPUTERES3D 0.00380  4.9% 1664 0 0 MFlops 
+                                 [25] VCAMRPoissonOp2::residualIBC 0.00330  4.2% 208 0 0 MFlops 
+                                 [192] exchange 0.00001  0.0% 208 0 0 MFlops 
+                                    [213] local copying 0.00000  0.0% 208 0 0 MFlops 
+                           [51] FORT_GSRBSANELY 0.00091  1.2% 1664 0 0 MFlops 
+                           [99] AMRPoissonOp::create 0.00011  0.1% 26 0 0 MFlops 
+                              [100] LevelData<T>::define(dbl,comps,ghost,factory) 0.00011  0.1% 26 0 0 MFlops 
+                           [172] ~LayoutData 0.00001  0.0% 26 0 0 MFlops 
+                           [237] ~Copier 0.00000  0.0% 26 0 0 MFlops 
+                           [242] ~LevelData 0.00000  0.0% 26 0 0 MFlops 
+                           [245] ~BoxLayoutData 0.00000  0.0% 26 0 0 MFlops 
+                        [16] Multigrid::cycle 0.00702  9.0% 13 6656 1 MFlops 
+                           [18] Multigrid::cycle 0.00460  5.9% 13 0 0 MFlops 
+                              [19] Multigrid::cycle:bottom-solve 0.00460  5.9% 13 0 0 MFlops 
+                                 [20] BiCGStabSolver::solve 0.00403  5.2% 13 0 0 MFlops 
+                                    [22] BiCGStabSolver::solve::MainLoop 0.00364  4.7% 13 0 0 MFlops 
+                                       [23] VCAMRPoissonOp2::preCond 0.00352  4.5% 13 0 0 MFlops 
+                                          [24] AMRPoissonOp::levelGSRB 0.00352  4.5% 13 0 0 MFlops 
+                                             [27] AMRPoissonOp::residual 0.00310  4.0% 702 0 0 MFlops 
+                                                [28] VCAMRPoissonOp2::residualI 0.00309  4.0% 702 0 0 MFlops 
+                                                   [41] VCAMRPoissonOp2::residualIBC 0.00178  2.3% 702 0 0 MFlops 
+                                                   [50] FORT_VCCOMPUTERES3D 0.00092  1.2% 5616 0 0 MFlops 
+                                                   [137] exchange 0.00003  0.0% 702 0 0 MFlops 
+                                                      [189] local copying 0.00001  0.0% 702 0 0 MFlops 
+                                             [75] FORT_GSRBSANELY 0.00026  0.3% 5616 0 0 MFlops 
+                                             [174] AMRPoissonOp::create 0.00001  0.0% 13 0 0 MFlops 
+                                                [175] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 13 0 0 MFlops 
+                                             [206] ~LayoutData 0.00000  0.0% 13 0 0 MFlops 
+                                             [248] ~Copier 0.00000  0.0% 13 0 0 MFlops 
+                                             [262] ~BoxLayoutData 0.00000  0.0% 13 0 0 MFlops 
+                                             [268] ~LevelData 0.00000  0.0% 13 0 0 MFlops 
+                                       [108] AMRPoissonOp::applyOp 0.00007  0.1% 13 0 0 MFlops 
+                                          [116] VCAMRPoissonOp2::applyOpI 0.00006  0.1% 13 0 0 MFlops 
+                                             [143] VCAMRPoissonOp2::applyOpNoBoundary 0.00003  0.0% 13 0 0 MFlops 
+                                                [156] FORT_VCCOMPUTEOP3D 0.00002  0.0% 104 0 0 MFlops 
+                                                [226] exchange 0.00000  0.0% 13 0 0 MFlops 
+                                                   [269] local copying 0.00000  0.0% 13 0 0 MFlops 
+                                          [176] AMRPoissonOp::CFInterp 0.00001  0.0% 13 0 0 MFlops 
+                                       [177] AMRPoissonOp::dotProduct 0.00001  0.0% 26 0 0 MFlops 
+                                       [181] AMRPoissonOp::incr 0.00001  0.0% 26 0 0 MFlops 
+                                       [193] AMRPoissonOp::norm 0.00001  0.0% 13 0 0 MFlops 
+                                       [202] AMRPoissonOp::assignLocal 0.00000  0.0% 13 0 0 MFlops 
+                                       [217] AMRPoissonOp::setToZero 0.00000  0.0% 13 0 0 MFlops 
+                                    [66] BiCGStabSolver::solve::Initialize 0.00032  0.4% 13 0 0 MFlops 
+                                       [102] AMRPoissonOp::create 0.00010  0.1% 104 0 0 MFlops 
+                                          [103] LevelData<T>::define(dbl,comps,ghost,factory) 0.00010  0.1% 104 0 0 MFlops 
+                                       [110] AMRPoissonOp::residual 0.00007  0.1% 13 0 0 MFlops 
+                                          [118] VCAMRPoissonOp2::residualI 0.00006  0.1% 13 0 0 MFlops 
+                                             [136] VCAMRPoissonOp2::residualIBC 0.00003  0.0% 13 0 0 MFlops 
+                                             [162] FORT_VCCOMPUTERES3D 0.00002  0.0% 104 0 0 MFlops 
+                                             [231] exchange 0.00000  0.0% 13 0 0 MFlops 
+                                                [267] local copying 0.00000  0.0% 13 0 0 MFlops 
+                                          [173] AMRPoissonOp::CFInterp 0.00001  0.0% 13 0 0 MFlops 
+                                       [179] AMRPoissonOp::norm 0.00001  0.0% 13 0 0 MFlops 
+                                       [191] AMRPoissonOp::setToZero 0.00001  0.0% 52 0 0 MFlops 
+                                       [197] AMRPoissonOp::assignLocal 0.00001  0.0% 13 0 0 MFlops 
+                                    [142] ~LayoutData 0.00003  0.0% 104 0 0 MFlops 
+                                    [199] BiCGStabSolver::solve::Cleanup 0.00001  0.0% 13 0 0 MFlops 
+                                       [203] AMRPoissonOp::incr 0.00000  0.0% 13 0 0 MFlops 
+                                    [215] ~Copier 0.00000  0.0% 104 0 0 MFlops 
+                                    [218] ~BoxLayoutData 0.00000  0.0% 104 0 0 MFlops 
+                                    [220] ~LevelData 0.00000  0.0% 104 0 0 MFlops 
+                                 [58] AMRPoissonOp::levelGSRB 0.00056  0.7% 13 0 0 MFlops 
+                                    [63] AMRPoissonOp::residual 0.00047  0.6% 104 0 0 MFlops 
+                                       [64] VCAMRPoissonOp2::residualI 0.00046  0.6% 104 0 0 MFlops 
+                                          [74] VCAMRPoissonOp2::residualIBC 0.00027  0.3% 104 0 0 MFlops 
+                                          [93] FORT_VCCOMPUTERES3D 0.00014  0.2% 832 0 0 MFlops 
+                                          [204] exchange 0.00000  0.0% 104 0 0 MFlops 
+                                             [219] local copying 0.00000  0.0% 104 0 0 MFlops 
+                                    [129] FORT_GSRBSANELY 0.00004  0.1% 832 0 0 MFlops 
+                                    [165] AMRPoissonOp::create 0.00002  0.0% 13 0 0 MFlops 
+                                       [167] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 13 0 0 MFlops 
+                                    [205] ~LayoutData 0.00000  0.0% 13 0 0 MFlops 
+                                    [251] ~Copier 0.00000  0.0% 13 0 0 MFlops 
+                                    [261] ~LevelData 0.00000  0.0% 13 0 0 MFlops 
+                                    [266] ~BoxLayoutData 0.00000  0.0% 13 0 0 MFlops 
+                           [38] AMRPoissonOp::levelGSRB 0.00219  2.8% 26 0 0 MFlops 
+                              [39] AMRPoissonOp::residual 0.00189  2.4% 208 0 0 MFlops 
+                                 [40] VCAMRPoissonOp2::residualI 0.00188  2.4% 208 0 0 MFlops 
+                                    [48] VCAMRPoissonOp2::residualIBC 0.00106  1.4% 208 0 0 MFlops 
+                                    [56] FORT_VCCOMPUTERES3D 0.00071  0.9% 1664 0 0 MFlops 
+                                    [186] exchange 0.00001  0.0% 208 0 0 MFlops 
+                                       [211] local copying 0.00000  0.0% 208 0 0 MFlops 
+                              [85] FORT_GSRBSANELY 0.00020  0.3% 1664 0 0 MFlops 
+                              [146] AMRPoissonOp::create 0.00002  0.0% 26 0 0 MFlops 
+                                 [148] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 26 0 0 MFlops 
+                              [190] ~LayoutData 0.00001  0.0% 26 0 0 MFlops 
+                              [235] ~Copier 0.00000  0.0% 26 0 0 MFlops 
+                              [239] ~BoxLayoutData 0.00000  0.0% 26 0 0 MFlops 
+                              [244] ~LevelData 0.00000  0.0% 26 0 0 MFlops 
+                           [90] VCAMRPoissonOp2::restrictResidual 0.00017  0.2% 13 0 0 MFlops 
+                              [96] AMRPoissonOp::residual 0.00012  0.2% 13 0 0 MFlops 
+                                 [97] VCAMRPoissonOp2::residualI 0.00012  0.2% 13 0 0 MFlops 
+                                    [112] VCAMRPoissonOp2::residualIBC 0.00007  0.1% 13 0 0 MFlops 
+                                    [127] FORT_VCCOMPUTERES3D 0.00004  0.1% 104 0 0 MFlops 
+                                    [229] exchange 0.00000  0.0% 13 0 0 MFlops 
+                                       [272] local copying 0.00000  0.0% 13 0 0 MFlops 
+                              [170] AMRPoissonOp::CFInterp 0.00001  0.0% 13 0 0 MFlops 
+                              [182] AMRPoissonOp::create 0.00001  0.0% 13 0 0 MFlops 
+                                 [185] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 13 0 0 MFlops 
+                              [195] FORT_RESTRICTSANELY 0.00001  0.0% 104 0 0 MFlops 
+                              [207] ~LayoutData 0.00000  0.0% 13 0 0 MFlops 
+                              [250] ~Copier 0.00000  0.0% 13 0 0 MFlops 
+                              [264] ~LevelData 0.00000  0.0% 13 0 0 MFlops 
+                              [265] ~BoxLayoutData 0.00000  0.0% 13 0 0 MFlops 
+                           [119] AMRPoissonOp::prolongIncrement 0.00005  0.1% 13 6656 124 MFlops 
+                              [126] FORT_PROLONG 0.00004  0.1% 104 6656 151 MFlops 
+                           [210] AMRPoissonOp::setToZero 0.00000  0.0% 13 0 0 MFlops 
+                        [59] VCAMRPoissonOp2::restrictResidual 0.00055  0.7% 13 0 0 MFlops 
+                           [61] AMRPoissonOp::residual 0.00047  0.6% 13 0 0 MFlops 
+                              [62] VCAMRPoissonOp2::residualI 0.00047  0.6% 13 0 0 MFlops 
+                                 [77] FORT_VCCOMPUTERES3D 0.00025  0.3% 104 0 0 MFlops 
+                                 [84] VCAMRPoissonOp2::residualIBC 0.00021  0.3% 13 0 0 MFlops 
+                                 [230] exchange 0.00000  0.0% 13 0 0 MFlops 
+                                    [271] local copying 0.00000  0.0% 13 0 0 MFlops 
+                           [150] FORT_RESTRICTSANELY 0.00002  0.0% 104 0 0 MFlops 
+                           [153] AMRPoissonOp::create 0.00002  0.0% 13 0 0 MFlops 
+                              [154] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 13 0 0 MFlops 
+                           [163] AMRPoissonOp::CFInterp 0.00002  0.0% 13 0 0 MFlops 
+                           [198] ~LayoutData 0.00001  0.0% 13 0 0 MFlops 
+                           [249] ~Copier 0.00000  0.0% 13 0 0 MFlops 
+                           [260] ~LevelData 0.00000  0.0% 13 0 0 MFlops 
+                           [263] ~BoxLayoutData 0.00000  0.0% 13 0 0 MFlops 
+                        [67] AMRPoissonOp::prolongIncrement 0.00030  0.4% 13 53248 177 MFlops 
+                           [69] FORT_PROLONG 0.00029  0.4% 104 53248 181 MFlops 
+                        [187] AMRPoissonOp::setToZero 0.00001  0.0% 13 0 0 MFlops 
+                     [30] VCAMRPoissonOp2::restrictResidual 0.00261  3.3% 13 0 0 MFlops 
+                        [34] AMRPoissonOp::residual 0.00240  3.1% 13 0 0 MFlops 
+                           [35] VCAMRPoissonOp2::residualI 0.00240  3.1% 13 0 0 MFlops 
+                              [43] FORT_VCCOMPUTERES3D 0.00164  2.1% 104 0 0 MFlops 
+                              [55] VCAMRPoissonOp2::residualIBC 0.00074  1.0% 13 0 0 MFlops 
+                              [228] exchange 0.00000  0.0% 13 0 0 MFlops 
+                                 [258] local copying 0.00000  0.0% 13 0 0 MFlops 
+                        [98] FORT_RESTRICTSANELY 0.00012  0.1% 104 0 0 MFlops 
+                        [149] AMRPoissonOp::CFInterp 0.00002  0.0% 13 0 0 MFlops 
+                        [151] AMRPoissonOp::create 0.00002  0.0% 13 0 0 MFlops 
+                           [152] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 13 0 0 MFlops 
+                        [159] ~LayoutData 0.00002  0.0% 13 0 0 MFlops 
+                        [254] ~Copier 0.00000  0.0% 13 0 0 MFlops 
+                        [257] ~LevelData 0.00000  0.0% 13 0 0 MFlops 
+                        [259] ~BoxLayoutData 0.00000  0.0% 13 0 0 MFlops 
+                     [36] AMRPoissonOp::prolongIncrement 0.00221  2.8% 13 425984 192 MFlops 
+                        [37] FORT_PROLONG 0.00220  2.8% 104 425984 193 MFlops 
+                     [124] AMRPoissonOp::setToZero 0.00005  0.1% 13 0 0 MFlops 
+               [68] AMRPoissonOp::assignLocal 0.00030  0.4% 13 0 0 MFlops 
+               [78] AMRPoissonOp::setToZero 0.00025  0.3% 13 0 0 MFlops 
+            [29] AMRMultiGrid::computeAMRResidual 0.00276  3.5% 13 0 0 MFlops 
+               [31] AMRMultiGrid<T>::computeAMRResidualLevel 0.00247  3.2% 13 0 0 MFlops 
+                  [32] AMRPoissonOp::residual 0.00247  3.2% 13 0 0 MFlops 
+                     [33] VCAMRPoissonOp2::residualI 0.00247  3.2% 13 0 0 MFlops 
+                        [42] FORT_VCCOMPUTERES3D 0.00171  2.2% 104 0 0 MFlops 
+                        [54] VCAMRPoissonOp2::residualIBC 0.00075  1.0% 13 0 0 MFlops 
+                        [223] exchange 0.00000  0.0% 13 0 0 MFlops 
+                           [270] local copying 0.00000  0.0% 13 0 0 MFlops 
+               [71] AMRPoissonOp::localMaxNorm 0.00029  0.4% 13 0 0 MFlops 
+            [72] AMRPoissonOp::incr 0.00027  0.4% 13 0 0 MFlops 
+            [76] uberCorrection 0.00025  0.3% 1 0 0 MFlops 
+               [80] AMRPoissonOp::setToZero 0.00022  0.3% 2 0 0 MFlops 
+               [138] AMRPoissonOp::create 0.00003  0.0% 2 0 0 MFlops 
+                  [139] LevelData<T>::define(dbl,comps,ghost,factory) 0.00003  0.0% 2 0 0 MFlops 
+            [81] AMRPoissonOp::setToZero 0.00022  0.3% 14 0 0 MFlops 
+            [82] Initial AMR Residual 0.00021  0.3% 1 0 0 MFlops 
+               [83] AMRMultiGrid::computeAMRResidual 0.00021  0.3% 1 0 0 MFlops 
+                  [86] AMRMultiGrid<T>::computeAMRResidualLevel 0.00019  0.2% 1 0 0 MFlops 
+                     [87] AMRPoissonOp::residual 0.00019  0.2% 1 0 0 MFlops 
+                        [88] VCAMRPoissonOp2::residualI 0.00019  0.2% 1 0 0 MFlops 
+                           [94] FORT_VCCOMPUTERES3D 0.00013  0.2% 8 0 0 MFlops 
+                           [117] VCAMRPoissonOp2::residualIBC 0.00006  0.1% 1 0 0 MFlops 
+                           [234] exchange 0.00000  0.0% 1 0 0 MFlops 
+                              [252] local copying 0.00000  0.0% 1 0 0 MFlops 
+                  [147] AMRPoissonOp::localMaxNorm 0.00002  0.0% 1 0 0 MFlops 
+            [224] ~LayoutData 0.00000  0.0% 1 0 0 MFlops 
+            [279] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+            [281] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+            [284] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+         [157] AMRPoissonOp::create 0.00002  0.0% 1 0 0 MFlops 
+            [158] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 1 0 0 MFlops 
+         [246] ~LayoutData 0.00000  0.0% 1 0 0 MFlops 
+         [282] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+         [285] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+         [286] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+      [104] AMRMultiGrid::init 0.00009  0.1% 1 0 0 MFlops 
+         [121] MutliGrid::init 0.00005  0.1% 1 0 0 MFlops 
+            [122] AMRPoissonOp::createCoarser 0.00005  0.1% 6 0 0 MFlops 
+               [125] LevelData<T>::define(dbl,comps,ghost,factory) 0.00005  0.1% 6 0 0 MFlops 
+         [130] AMRPoissonOp::create 0.00004  0.0% 2 0 0 MFlops 
+            [131] LevelData<T>::define(dbl,comps,ghost,factory) 0.00004  0.0% 2 0 0 MFlops 
+      [283] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+   [26] WriteAMRHierarchyHDF5 0.00314  4.0% 2 0 0 MFlops 
+      [44] WriteFile 0.00158  2.0% 2 0 0 MFlops 
+         [47] Write Level 0.00114  1.5% 2 0 0 MFlops 
+            [49] write_Level 0.00103  1.3% 2 0 0 MFlops 
+               [57] linearize_H5Dwrite 0.00064  0.8% 2 0 0 MFlops 
+                  [60] H5Dwrite 0.00054  0.7% 16 0 0 MFlops 
+                  [111] linearize 0.00007  0.1% 16 0 0 MFlops 
+               [91] WriteAttributes 0.00017  0.2% 2 0 0 MFlops 
+               [107] H5Dclose 0.00007  0.1% 2 0 0 MFlops 
+               [120] H5S_H5D_offsets_create 0.00005  0.1% 2 0 0 MFlops 
+               [134] H5Dcreate 0.00004  0.0% 2 0 0 MFlops 
+               [168] WriteOffsets 0.00001  0.0% 2 0 0 MFlops 
+               [171] H5S_H5D_offsets_close 0.00001  0.0% 2 0 0 MFlops 
+               [194] getOffsets 0.00001  0.0% 2 0 0 MFlops 
+                  [214] offsets.resize 0.00000  0.0% 2 0 0 MFlops 
+                  [253] dataSize 0.00000  0.0% 16 0 0 MFlops 
+                  [255] offsets calc 0.00000  0.0% 16 0 0 MFlops 
+               [208] mallocMT_buffers 0.00000  0.0% 2 0 0 MFlops 
+               [209] freeMT 0.00000  0.0% 2 0 0 MFlops 
+               [216] H5Screate 0.00000  0.0% 2 0 0 MFlops 
+               [222] H5Sclose 0.00000  0.0% 2 0 0 MFlops 
+               [236] ComputeBufferCapacity 0.00000  0.0% 2 0 0 MFlops 
+            [132] writeToFile 0.00004  0.0% 2 0 0 MFlops 
+            [180] setGroup 0.00001  0.0% 2 0 0 MFlops 
+            [278] calc minimum in outputGhost 0.00000  0.0% 2 0 0 MFlops 
+      [45] CreateFile 0.00135  1.7% 2 0 0 MFlops 
+      [89] CloseFile 0.00018  0.2% 2 0 0 MFlops 
+   [46] AMRMultiGrid::define 0.00115  1.5% 1 0 0 MFlops 
+      [52] MultiGrid::define 0.00081  1.0% 1 0 0 MFlops 
+         [53] VCAMRPoissonOp2Factory::MGnewOp 0.00079  1.0% 4 0 0 MFlops 
+            [70] FORT_AVERAGEFACE 0.00029  0.4% 72 0 0 MFlops 
+            [92] LevelData<T>::define(dbl,comps,ghost,factory) 0.00014  0.2% 9 0 0 MFlops 
+            [109] CoarseAverage::computeAverages 0.00007  0.1% 3 0 0 MFlops 
+               [113] FORT_AVERAGE 0.00006  0.1% 24 0 0 MFlops 
+               [200] LevelData::copyTo 0.00001  0.0% 3 0 0 MFlops 
+                  [201] local copying 0.00000  0.0% 3 0 0 MFlops 
+            [133] CoarseAverage::define2 0.00004  0.0% 3 0 0 MFlops 
+               [145] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 3 0 0 MFlops 
+               [188] Copier::define 0.00001  0.0% 3 0 0 MFlops 
+            [135] VCAMRPoissonOp2::computeLambda 0.00004  0.0% 3 0 0 MFlops 
+               [160] FORT_SUMFACES 0.00002  0.0% 72 0 0 MFlops 
+               [196] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 3 0 0 MFlops 
+            [141] AMRPoissonOp::define4 0.00003  0.0% 3 0 0 MFlops 
+            [169] ~LayoutData 0.00001  0.0% 24 0 0 MFlops 
+            [233] ~Copier 0.00000  0.0% 12 0 0 MFlops 
+            [273] ~LevelData 0.00000  0.0% 6 0 0 MFlops 
+            [274] ~BoxLayoutData 0.00000  0.0% 6 0 0 MFlops 
+      [65] VCAMRPoissonOp2Factory::AMRnewOp 0.00032  0.4% 1 0 0 MFlops 
+         [73] VCAMRPoissonOp2::computeLambda 0.00027  0.3% 1 0 0 MFlops 
+            [105] FORT_SUMFACES 0.00008  0.1% 24 0 0 MFlops 
+            [155] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 1 0 0 MFlops 
+         [166] AMRPoissonOp::define4 0.00002  0.0% 1 0 0 MFlops 
+      [277] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+   [79] PrChUtilities::setupLLCornerGrids 0.00023  0.3% 1 0 0 MFlops 
+      [106] setupGrids: BaseGridCreation 0.00008  0.1% 1 0 0 MFlops 
+         [161] LoadBalance:VectorBoxEntry 0.00002  0.0% 1 0 0 MFlops 
+            [221] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+         [164] DisjointBoxLayout::computeNeighbors 0.00002  0.0% 1 0 0 MFlops 
+         [178] BRMeshRefine::domainSplit 0.00001  0.0% 1 0 0 MFlops 
+   [95] VCAMRPoissonOp2Factory::define 0.00012  0.2% 1 0 0 MFlops 
+      [123] CFIVS::define(fast) 0.00005  0.1% 48 0 0 MFlops 
+      [140] Copier::exchangeDefine 0.00003  0.0% 1 0 0 MFlops 
+      [256] ~LayoutData 0.00000  0.0% 6 0 0 MFlops 
+      [275] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+   [101] ~AMRMultiGrid 0.00010  0.1% 1 0 0 MFlops 
+      [128] ~LayoutData 0.00004  0.1% 129 0 0 MFlops 
+      [227] ~Copier 0.00000  0.0% 41 0 0 MFlops 
+      [238] ~BoxLayoutData 0.00000  0.0% 33 0 0 MFlops 
+      [241] ~LevelData 0.00000  0.0% 29 0 0 MFlops 
+   [184] ~LayoutData 0.00001  0.0% 10 0 0 MFlops 
+   [232] ~Copier 0.00000  0.0% 7 0 0 MFlops 
+   [247] PrChUtilities::getRawVectorCh 0.00000  0.0% 4 0 0 MFlops 
+   [276] ~LevelData 0.00000  0.0% 4 0 0 MFlops 
+   [280] ~BoxLayoutData 0.00000  0.0% 4 0 0 MFlops 
+stack top 0x546c58, stack bottom 0x5462b5, stack size =    0.002 MB 
+[283] AMRMultiGrid::revert
