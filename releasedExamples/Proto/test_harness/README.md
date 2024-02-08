@@ -9,5 +9,5 @@
 # Directories
 * _input_templates holds templated versions of the input files for the Proto/Chombo examples.
 * _batch_templates are batch scripts to run on the platforms I use.
-* _compare runs the comparable examples and puts the results in manageable places.
+* _compare runs the comparable examples and puts the results in manageable places.   It includes a document.
 

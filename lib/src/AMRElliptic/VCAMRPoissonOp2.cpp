@@ -33,7 +33,7 @@ relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
       int                         a_iterations)
 {
-  CH_TIME("AMRPoissonOp::levelGSRB");
+  CH_TIME("VCAMRPoissonOp2::relax (slow gsrb)");
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());

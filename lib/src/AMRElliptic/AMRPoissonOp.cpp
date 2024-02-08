@@ -1367,7 +1367,7 @@ AMRPoissonOp::
 slowGSRB(  LevelData<FArrayBox>      &  a_phi,
            const LevelData<FArrayBox>&  a_rhs )
 {
-  CH_TIME("AMRPoissonOp::levelGSRB");
+  CH_TIME("AMRPoissonOp::slowGSRB");
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());

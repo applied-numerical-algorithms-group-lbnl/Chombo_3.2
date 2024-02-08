@@ -166,6 +166,8 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   a_amrSolver->define(a_amrDomains[0], castFact,
                       &a_bottomSolver, numLevels);
 
+  ///so it is doing the same relaxation as the proto version
+  AMRPoissonOp::s_relaxMode = 4586;
   // multigrid solver parameters
   int numSmooth, numMG, maxIter;
   Real eps, hang;

@@ -1299,6 +1299,7 @@ slowGSRB(LevelData<FArrayBox>&       a_phi,
          const LevelData<FArrayBox>& a_rhs,
          int a_iterations)
 {
+  CH_TIME("ViscousTensorOp::slowGSRB");
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
   CH_assert(a_phi.ghostVect() >= IntVect::Unit);

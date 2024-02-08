@@ -1,0 +1,1791 @@
+-----------
+Timer report 0 (401 timers)
+--------------
+---------------------------------------------------------
+[0]main 22.93598 1
+    100.0%   22.93565        1 runSolver [1] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[1]runSolver 22.93565 1
+    100.0%   22.92848        1 solveForPhi [2] f=0
+     0.0%    0.00424        1 WriteAMRHierarchyHDF5 [220] f=0
+     0.0%    0.00200        1 setRHS [244] f=0
+     0.0%    0.00035        4 ~LayoutData [298] f=0
+     0.0%    0.00033        1 PrChUtilities::setupLLCornerGrids [302] f=0
+     0.0%    0.00000        4 ~Copier [385] f=0
+     0.0%    0.00000        4 ~LevelData [396] f=0
+     0.0%    0.00000        4 ~BoxLayoutData [397] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]solveForPhi 22.92848 1
+    100.0%   22.92124        1 AMRMultiGrid::solve [3] f=0
+     0.0%    0.00278        1 PrChUtilities::setupSolver [228] f=0
+     0.0%    0.00122        2 PrChUtilities::copyToDevice-Cell [263] f=0
+     0.0%    0.00078        2 PrChUtilities::copyToHost [283] f=0
+     0.0%    0.00067        2 defineAndSetCoefficients [286] f=0
+     0.0%    0.00063        1 PrChUtilities::getProtoViscousTensorOpFactory [288] f=0
+     0.0%    0.00061        1 ~AMRMultiGrid [290] f=0
+     0.0%    0.00002        2 ~LayoutData [349] f=0
+     0.0%    0.00001        2 PrChUtilities::getProtoLayout [359] f=0
+     0.0%    0.00000        6 ~Copier [384] f=0
+     0.0%    0.00000        2 ~LevelData [394] f=0
+     0.0%    0.00000        2 ~BoxLayoutData [395] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solve 22.92124 1
+    100.0%   22.92073        1 AMRMultiGrid::solveNoInit [4] f=0
+     0.0%    0.00052        1 AMRMultiGrid::init [292] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [399] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::solveNoInit 22.92073 1
+    100.0%   22.92045        1 AMRMultiGrid::solveNo-InitResid [5] f=0
+     0.0%    0.00007        2 Base_Proto_AMRLevelOp::create [335] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[5]AMRMultiGrid::solveNo-InitResid 22.92045 1
+    94.9%   21.76064       27 AMRMultiGrid::AMRVcycle [6] f=0
+     4.8%    1.09435       27 AMRMultiGrid::computeAMRResidual [42] f=0
+     0.2%    0.04708        1 Initial AMR Residual [142] f=0
+     0.0%    0.00639       54 Base_Simplified_AMRLevelOp::incr [212] f=0
+     0.0%    0.00242        2 uberCorrection [233] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[6]AMRMultiGrid::AMRVcycle 21.76064 27
+    92.7%   20.18171       27 Multigrid::oneCycle [7] f=0
+     4.6%    1.01021       27 AMRMultiGrid<T>::computeAMRResidualLevel [47] f=0
+     1.6%    0.35666       54 AMRMultiGrid::relax [69] f=0
+     0.3%    0.05895       27 Base_Simplified_AMRLevelOp::AMRRestrict [129] f=0
+     0.3%    0.05750       27 Base_Simplified_AMRLevelOp::AMRUpdateResidual [130] f=0
+     0.2%    0.04094      108 Base_Proto_AMRLevelOp::assign [153] f=0
+     0.2%    0.03570       27 Base_Simplified_AMRLevelOp::AMRProlong [156] f=0
+     0.0%    0.00606       81 Base_Simplified_AMRLevelOp::incr [216] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[7]Multigrid::oneCycle 20.18171 27
+    100.0%   20.18170       27 Multigrid::cycle [8] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[8]Multigrid::cycle 20.18170 27
+    50.1%   10.11297       27 Multigrid::cycle [9] f=0
+    45.6%    9.20484       54 Pr_Resistivity::relax [10] f=0
+     2.9%    0.59501       27 Base_Simplified_AMRLevelOp::restrictResidual [59] f=0
+     0.0%    0.00113       27 Base_Proto_AMRLevelOp::createCoarser [267] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[9]Multigrid::cycle 10.11297 27
+    66.9%    6.76363       27 Multigrid::cycle [14] f=0
+    30.0%    3.02941       54 Pr_Resistivity::relax [26] f=0
+     2.0%    0.19909       27 Base_Simplified_AMRLevelOp::restrictResidual [93] f=0
+     0.0%    0.00111       27 Base_Proto_AMRLevelOp::createCoarser [270] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[10]Pr_Resistivity::relax 9.20484 54
+    99.0%    9.10926      432 Base_Simplified_AMRLevelOp::residual [11] f=0
+     0.0%    0.00233       54 Base_Proto_AMRLevelOp::create [235] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[11]Base_Simplified_AMRLevelOp::residual 9.10926 432
+    97.2%    8.85077      432 Base_Simplified_AMRLevelOp::applyOp [12] f=0
+     1.6%    0.14629      432 Proto_Resistivity::axby [101] f=0
+     0.2%    0.02061      432 Base_Proto_AMRLevelOp::create [167] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[12]Base_Simplified_AMRLevelOp::applyOp 8.85077 432
+    78.7%    6.96559      432 Proto_Resistivity_Op::applyOperator [13] f=0
+    19.4%    1.71590      432 Pr_Resistivity::fillGhostdataOutsideDomain [35] f=0
+     1.9%    0.16858      432 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [99] f=0
+     0.0%    0.00026      432 Base_Proto_AMRLevelOp::getDomainFromData [308] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[13]Proto_Resistivity_Op::applyOperator 6.96559 432
+    82.2%    5.72465    10368 Pr_Resistivity::getDivergenceIcrement [15] f=0
+    14.9%    1.03531      432 Proto_Resistivity::fillGrad [45] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[14]Multigrid::cycle 6.76363 27
+    72.8%    4.92233       27 Multigrid::cycle [16] f=0
+    24.5%    1.65630       54 Pr_Resistivity::relax [36] f=0
+     1.6%    0.10869       27 Base_Simplified_AMRLevelOp::restrictResidual [107] f=0
+     0.0%    0.00112       27 Base_Proto_AMRLevelOp::createCoarser [269] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[15]Pr_Resistivity::getDivergenceIcrement 5.72465 10368
+    85.8%    4.91334    10368 Proto_Resistivity::getFlux [18] f=0
+    85.8%                  Total 
+---------------------------------------------------------
+[16]Multigrid::cycle 4.92233 27
+    100.0%    4.92233       27 Multigrid::cycle:bottom-solve [17] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[17]Multigrid::cycle:bottom-solve 4.92233 27
+    87.5%    4.30827       27 BiCGStabSolver::solve [19] f=0
+    12.5%    0.61404       27 Pr_Resistivity::relax [56] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[18]Proto_Resistivity::getFlux 4.91334 10368
+    85.0%    4.17466    10368 Proto_Resistivity::getFaceDivAndGrad [21] f=0
+    85.0%                  Total 
+---------------------------------------------------------
+[19]BiCGStabSolver::solve 4.30827 27
+    97.9%    4.21709       27 BiCGStabSolver::solve::MainLoop [20] f=0
+     2.1%    0.09054       27 BiCGStabSolver::solve::Initialize [117] f=0
+     0.0%    0.00014       27 BiCGStabSolver::solve::Cleanup [322] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[20]BiCGStabSolver::solve::MainLoop 4.21709 27
+    98.1%    4.13661       27 Base_Simplified_AMRLevelOp::preCond [22] f=0
+     1.8%    0.07489       27 Base_Simplified_AMRLevelOp::applyOp [121] f=0
+     0.1%    0.00229       54 Base_Proto_AMRLevelOp::createCoarser [238] f=0
+     0.0%    0.00206       27 Base_Proto_AMRLevelOp::assign [243] f=0
+     0.0%    0.00028       54 Base_Simplified_AMRLevelOp::incr [304] f=0
+     0.0%    0.00024       27 Base_Proto_AMRLevelOp::norm [313] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[21]Proto_Resistivity::getFaceDivAndGrad 4.17466 10368
+---------------------------------------------------------
+[22]Base_Simplified_AMRLevelOp::preCond 4.13661 27
+    100.0%    4.13661       27 Pr_Resistivity::relax [23] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[23]Pr_Resistivity::relax 4.13661 27
+    99.8%    4.12925     1458 Base_Simplified_AMRLevelOp::residual [24] f=0
+     0.0%    0.00110       27 Base_Proto_AMRLevelOp::create [275] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[24]Base_Simplified_AMRLevelOp::residual 4.12925 1458
+    97.5%    4.02432     1458 Base_Simplified_AMRLevelOp::applyOp [25] f=0
+     1.4%    0.05947     1458 Base_Proto_AMRLevelOp::create [128] f=0
+     0.2%    0.00735     1458 Proto_Resistivity::axby [203] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[25]Base_Simplified_AMRLevelOp::applyOp 4.02432 1458
+    64.7%    2.60450     1458 Proto_Resistivity_Op::applyOperator [29] f=0
+    32.8%    1.32178     1458 Pr_Resistivity::fillGhostdataOutsideDomain [41] f=0
+     2.4%    0.09750     1458 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [115] f=0
+     0.0%    0.00016     1458 Base_Proto_AMRLevelOp::getDomainFromData [318] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[26]Pr_Resistivity::relax 3.02941 54
+    99.5%    3.01530      432 Base_Simplified_AMRLevelOp::residual [27] f=0
+     0.1%    0.00237       54 Base_Proto_AMRLevelOp::create [234] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[27]Base_Simplified_AMRLevelOp::residual 3.01530 432
+    97.8%    2.94910      432 Base_Simplified_AMRLevelOp::applyOp [28] f=0
+     0.6%    0.01815      432 Base_Proto_AMRLevelOp::create [173] f=0
+     0.4%    0.01349      432 Proto_Resistivity::axby [183] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[28]Base_Simplified_AMRLevelOp::applyOp 2.94910 432
+    70.0%    2.06295      432 Proto_Resistivity_Op::applyOperator [32] f=0
+    27.4%    0.80794      432 Pr_Resistivity::fillGhostdataOutsideDomain [52] f=0
+     2.6%    0.07797      432 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [119] f=0
+     0.0%    0.00008      432 Base_Proto_AMRLevelOp::getDomainFromData [334] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[29]Proto_Resistivity_Op::applyOperator 2.60450 1458
+    85.4%    2.22355    34992 Pr_Resistivity::getDivergenceIcrement [30] f=0
+    13.4%    0.34898     1458 Proto_Resistivity::fillGrad [73] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[30]Pr_Resistivity::getDivergenceIcrement 2.22355 34992
+    92.8%    2.06422    34992 Proto_Resistivity::getFlux [31] f=0
+    92.8%                  Total 
+---------------------------------------------------------
+[31]Proto_Resistivity::getFlux 2.06422 34992
+    90.4%    1.86616    34992 Proto_Resistivity::getFaceDivAndGrad [33] f=0
+    90.4%                  Total 
+---------------------------------------------------------
+[32]Proto_Resistivity_Op::applyOperator 2.06295 432
+    83.2%    1.71624    10368 Pr_Resistivity::getDivergenceIcrement [34] f=0
+    14.8%    0.30592      432 Proto_Resistivity::fillGrad [82] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[33]Proto_Resistivity::getFaceDivAndGrad 1.86616 34992
+---------------------------------------------------------
+[34]Pr_Resistivity::getDivergenceIcrement 1.71624 10368
+    88.3%    1.51535    10368 Proto_Resistivity::getFlux [39] f=0
+    88.3%                  Total 
+---------------------------------------------------------
+[35]Pr_Resistivity::fillGhostdataOutsideDomain 1.71590 432
+---------------------------------------------------------
+[36]Pr_Resistivity::relax 1.65630 54
+    99.6%    1.65038      432 Base_Simplified_AMRLevelOp::residual [37] f=0
+     0.1%    0.00224       54 Base_Proto_AMRLevelOp::create [241] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[37]Base_Simplified_AMRLevelOp::residual 1.65038 432
+    97.7%    1.61318      432 Base_Simplified_AMRLevelOp::applyOp [38] f=0
+     1.1%    0.01786      432 Base_Proto_AMRLevelOp::create [174] f=0
+     0.2%    0.00410      432 Proto_Resistivity::axby [223] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[38]Base_Simplified_AMRLevelOp::applyOp 1.61318 432
+    65.1%    1.04993      432 Proto_Resistivity_Op::applyOperator [44] f=0
+    31.8%    0.51364      432 Pr_Resistivity::fillGhostdataOutsideDomain [62] f=0
+     3.1%    0.04941      432 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [139] f=0
+     0.0%    0.00005      432 Base_Proto_AMRLevelOp::getDomainFromData [339] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[39]Proto_Resistivity::getFlux 1.51535 10368
+    87.8%    1.33064    10368 Proto_Resistivity::getFaceDivAndGrad [40] f=0
+    87.8%                  Total 
+---------------------------------------------------------
+[40]Proto_Resistivity::getFaceDivAndGrad 1.33064 10368
+---------------------------------------------------------
+[41]Pr_Resistivity::fillGhostdataOutsideDomain 1.32178 1458
+---------------------------------------------------------
+[42]AMRMultiGrid::computeAMRResidual 1.09435 27
+    97.6%    1.06782       54 AMRMultiGrid<T>::computeAMRResidualLevel [43] f=0
+     1.8%    0.02023       27 Base_Proto_AMRLevelOp::assign [169] f=0
+     0.6%    0.00609       54 Base_Proto_AMRLevelOp::norm [215] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[43]AMRMultiGrid<T>::computeAMRResidualLevel 1.06782 54
+    94.6%    1.01037       27 Base_Simplified_AMRLevelOp::AMRResidualNC [46] f=0
+     5.4%    0.05742       27 Base_Simplified_AMRLevelOp::AMRResidualNF [131] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[44]Proto_Resistivity_Op::applyOperator 1.04993 432
+    84.5%    0.88759    10368 Pr_Resistivity::getDivergenceIcrement [51] f=0
+    13.8%    0.14541      432 Proto_Resistivity::fillGrad [102] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[45]Proto_Resistivity::fillGrad 1.03531 432
+    70.6%    0.73119     3456 Proto_Resistivity::cellGrad [54] f=0
+    70.6%                  Total 
+---------------------------------------------------------
+[46]Base_Simplified_AMRLevelOp::AMRResidualNC 1.01037 27
+    99.4%    1.00383       27 Base_Simplified_AMRLevelOp::AMROperatorNC [49] f=0
+     0.6%    0.00652       27 Proto_Resistivity::axby [206] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[47]AMRMultiGrid<T>::computeAMRResidualLevel 1.01021 27
+    100.0%    1.01019       27 Base_Simplified_AMRLevelOp::AMRResidualNC [48] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[48]Base_Simplified_AMRLevelOp::AMRResidualNC 1.01019 27
+    99.4%    1.00379       27 Base_Simplified_AMRLevelOp::AMROperatorNC [50] f=0
+     0.6%    0.00639       27 Proto_Resistivity::axby [213] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[49]Base_Simplified_AMRLevelOp::AMROperatorNC 1.00383 27
+    43.3%    0.43444       27 Proto_Resistivity_Op::applyOperator [65] f=0
+    31.9%    0.32036      729 Pr_Resistivity::getFlux_thr [76] f=0
+    12.0%    0.12026       27 PrChFluxRegister::reflux [105] f=0
+    10.7%    0.10720       27 Pr_Resistivity::fillGhostdataOutsideDomain [111] f=0
+     1.0%    0.01050       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [197] f=0
+     0.7%    0.00724       27 PrChFluxRegister::setCoarFlux [204] f=0
+     0.1%    0.00125       27 PrChFluxRegister::setFineFlux [261] f=0
+     0.1%    0.00106       27 PrChFluxRegister constructor [277] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [373] f=0
+     0.0%    0.00000       27 PrChFluxRegister destructor [390] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[50]Base_Simplified_AMRLevelOp::AMROperatorNC 1.00379 27
+    43.3%    0.43492       27 Proto_Resistivity_Op::applyOperator [64] f=0
+    31.8%    0.31954      729 Pr_Resistivity::getFlux_thr [78] f=0
+    12.0%    0.12014       27 PrChFluxRegister::reflux [106] f=0
+    10.7%    0.10760       27 Pr_Resistivity::fillGhostdataOutsideDomain [109] f=0
+     1.1%    0.01062       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [193] f=0
+     0.7%    0.00723       27 PrChFluxRegister::setCoarFlux [205] f=0
+     0.1%    0.00124       27 PrChFluxRegister::setFineFlux [262] f=0
+     0.1%    0.00105       27 PrChFluxRegister constructor [278] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [366] f=0
+     0.0%    0.00000       27 PrChFluxRegister destructor [389] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[51]Pr_Resistivity::getDivergenceIcrement 0.88759 10368
+    91.0%    0.80741    10368 Proto_Resistivity::getFlux [53] f=0
+    91.0%                  Total 
+---------------------------------------------------------
+[52]Pr_Resistivity::fillGhostdataOutsideDomain 0.80794 432
+---------------------------------------------------------
+[53]Proto_Resistivity::getFlux 0.80741 10368
+    89.5%    0.72235    10368 Proto_Resistivity::getFaceDivAndGrad [55] f=0
+    89.5%                  Total 
+---------------------------------------------------------
+[54]Proto_Resistivity::cellGrad 0.73119 3456
+---------------------------------------------------------
+[55]Proto_Resistivity::getFaceDivAndGrad 0.72235 10368
+---------------------------------------------------------
+[56]Pr_Resistivity::relax 0.61404 27
+    99.7%    0.61194      216 Base_Simplified_AMRLevelOp::residual [57] f=0
+     0.2%    0.00111       27 Base_Proto_AMRLevelOp::create [271] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[57]Base_Simplified_AMRLevelOp::residual 0.61194 216
+    97.5%    0.59638      216 Base_Simplified_AMRLevelOp::applyOp [58] f=0
+     1.4%    0.00881      216 Base_Proto_AMRLevelOp::create [202] f=0
+     0.2%    0.00110      216 Proto_Resistivity::axby [273] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[58]Base_Simplified_AMRLevelOp::applyOp 0.59638 216
+    64.7%    0.38606      216 Proto_Resistivity_Op::applyOperator [66] f=0
+    32.8%    0.19579      216 Pr_Resistivity::fillGhostdataOutsideDomain [94] f=0
+     2.4%    0.01444      216 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [179] f=0
+     0.0%    0.00003      216 Base_Proto_AMRLevelOp::getDomainFromData [345] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[59]Base_Simplified_AMRLevelOp::restrictResidual 0.59501 27
+    96.0%    0.57094       27 Base_Simplified_AMRLevelOp::residual [60] f=0
+     0.2%    0.00125       27 Base_Proto_AMRLevelOp::create [260] f=0
+    96.2%                  Total 
+---------------------------------------------------------
+[60]Base_Simplified_AMRLevelOp::residual 0.57094 27
+    97.1%    0.55431       27 Base_Simplified_AMRLevelOp::applyOp [61] f=0
+     1.7%    0.00973       27 Proto_Resistivity::axby [199] f=0
+     0.2%    0.00113       27 Base_Proto_AMRLevelOp::create [266] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[61]Base_Simplified_AMRLevelOp::applyOp 0.55431 27
+    78.7%    0.43623       27 Proto_Resistivity_Op::applyOperator [63] f=0
+    19.4%    0.10749       27 Pr_Resistivity::fillGhostdataOutsideDomain [110] f=0
+     1.9%    0.01053       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [195] f=0
+     0.0%    0.00002       27 Base_Proto_AMRLevelOp::getDomainFromData [347] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[62]Pr_Resistivity::fillGhostdataOutsideDomain 0.51364 432
+---------------------------------------------------------
+[63]Proto_Resistivity_Op::applyOperator 0.43623 27
+    82.2%    0.35866      648 Pr_Resistivity::getDivergenceIcrement [67] f=0
+    14.8%    0.06454       27 Proto_Resistivity::fillGrad [127] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[64]Proto_Resistivity_Op::applyOperator 0.43492 27
+    82.0%    0.35682      648 Pr_Resistivity::getDivergenceIcrement [68] f=0
+    14.9%    0.06481       27 Proto_Resistivity::fillGrad [125] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[65]Proto_Resistivity_Op::applyOperator 0.43444 27
+    82.0%    0.35623      648 Pr_Resistivity::getDivergenceIcrement [71] f=0
+    14.9%    0.06457       27 Proto_Resistivity::fillGrad [126] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[66]Proto_Resistivity_Op::applyOperator 0.38606 216
+    85.3%    0.32947     5184 Pr_Resistivity::getDivergenceIcrement [75] f=0
+    13.4%    0.05181      216 Proto_Resistivity::fillGrad [136] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[67]Pr_Resistivity::getDivergenceIcrement 0.35866 648
+    85.9%    0.30807      648 Proto_Resistivity::getFlux [80] f=0
+    85.9%                  Total 
+---------------------------------------------------------
+[68]Pr_Resistivity::getDivergenceIcrement 0.35682 648
+    85.8%    0.30609      648 Proto_Resistivity::getFlux [81] f=0
+    85.8%                  Total 
+---------------------------------------------------------
+[69]AMRMultiGrid::relax 0.35666 54
+    100.0%    0.35665       54 Pr_Resistivity::relax [70] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[70]Pr_Resistivity::relax 0.35665 54
+    99.5%    0.35471      432 Base_Simplified_AMRLevelOp::residual [72] f=0
+     0.1%    0.00041       54 Base_Proto_AMRLevelOp::create [296] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[71]Pr_Resistivity::getDivergenceIcrement 0.35623 648
+    85.8%    0.30562      648 Proto_Resistivity::getFlux [84] f=0
+    85.8%                  Total 
+---------------------------------------------------------
+[72]Base_Simplified_AMRLevelOp::residual 0.35471 432
+    97.5%    0.34595      432 Base_Simplified_AMRLevelOp::applyOp [74] f=0
+     0.7%    0.00232      432 Base_Proto_AMRLevelOp::create [236] f=0
+     0.5%    0.00169      432 Proto_Resistivity::axby [250] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[73]Proto_Resistivity::fillGrad 0.34898 1458
+    39.0%    0.13601    11664 Proto_Resistivity::cellGrad [103] f=0
+    39.0%                  Total 
+---------------------------------------------------------
+[74]Base_Simplified_AMRLevelOp::applyOp 0.34595 432
+    70.5%    0.24397      432 Proto_Resistivity_Op::applyOperator [91] f=0
+    29.4%    0.10176      432 Pr_Resistivity::fillGhostdataOutsideDomain [113] f=0
+     0.0%    0.00009      432 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [332] f=0
+     0.0%    0.00004      432 Base_Proto_AMRLevelOp::getDomainFromData [342] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[75]Pr_Resistivity::getDivergenceIcrement 0.32947 5184
+    92.8%    0.30579     5184 Proto_Resistivity::getFlux [83] f=0
+    92.8%                  Total 
+---------------------------------------------------------
+[76]Pr_Resistivity::getFlux_thr 0.32036 729
+    99.9%    0.32002      729 Proto_Resistivity::getFlux [77] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[77]Proto_Resistivity::getFlux 0.32002 729
+    84.8%    0.27125      729 Proto_Resistivity::getFaceDivAndGrad [86] f=0
+    84.8%                  Total 
+---------------------------------------------------------
+[78]Pr_Resistivity::getFlux_thr 0.31954 729
+    99.9%    0.31918      729 Proto_Resistivity::getFlux [79] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[79]Proto_Resistivity::getFlux 0.31918 729
+    84.8%    0.27082      729 Proto_Resistivity::getFaceDivAndGrad [87] f=0
+    84.8%                  Total 
+---------------------------------------------------------
+[80]Proto_Resistivity::getFlux 0.30807 648
+    85.0%    0.26198      648 Proto_Resistivity::getFaceDivAndGrad [88] f=0
+    85.0%                  Total 
+---------------------------------------------------------
+[81]Proto_Resistivity::getFlux 0.30609 648
+    84.9%    0.25999      648 Proto_Resistivity::getFaceDivAndGrad [89] f=0
+    84.9%                  Total 
+---------------------------------------------------------
+[82]Proto_Resistivity::fillGrad 0.30592 432
+    59.1%    0.18065     3456 Proto_Resistivity::cellGrad [98] f=0
+    59.1%                  Total 
+---------------------------------------------------------
+[83]Proto_Resistivity::getFlux 0.30579 5184
+    90.4%    0.27640     5184 Proto_Resistivity::getFaceDivAndGrad [85] f=0
+    90.4%                  Total 
+---------------------------------------------------------
+[84]Proto_Resistivity::getFlux 0.30562 648
+    85.0%    0.25967      648 Proto_Resistivity::getFaceDivAndGrad [90] f=0
+    85.0%                  Total 
+---------------------------------------------------------
+[85]Proto_Resistivity::getFaceDivAndGrad 0.27640 5184
+---------------------------------------------------------
+[86]Proto_Resistivity::getFaceDivAndGrad 0.27125 729
+---------------------------------------------------------
+[87]Proto_Resistivity::getFaceDivAndGrad 0.27082 729
+---------------------------------------------------------
+[88]Proto_Resistivity::getFaceDivAndGrad 0.26198 648
+---------------------------------------------------------
+[89]Proto_Resistivity::getFaceDivAndGrad 0.25999 648
+---------------------------------------------------------
+[90]Proto_Resistivity::getFaceDivAndGrad 0.25967 648
+---------------------------------------------------------
+[91]Proto_Resistivity_Op::applyOperator 0.24397 432
+    88.5%    0.21591     1296 Pr_Resistivity::getDivergenceIcrement [92] f=0
+     9.3%    0.02273      432 Proto_Resistivity::fillGrad [165] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[92]Pr_Resistivity::getDivergenceIcrement 0.21591 1296
+    88.2%    0.19047     1296 Proto_Resistivity::getFlux [95] f=0
+    88.2%                  Total 
+---------------------------------------------------------
+[93]Base_Simplified_AMRLevelOp::restrictResidual 0.19909 27
+    94.9%    0.18895       27 Base_Simplified_AMRLevelOp::residual [96] f=0
+     0.6%    0.00112       27 Base_Proto_AMRLevelOp::create [268] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[94]Pr_Resistivity::fillGhostdataOutsideDomain 0.19579 216
+---------------------------------------------------------
+[95]Proto_Resistivity::getFlux 0.19047 1296
+    87.9%    0.16746     1296 Proto_Resistivity::getFaceDivAndGrad [100] f=0
+    87.9%                  Total 
+---------------------------------------------------------
+[96]Base_Simplified_AMRLevelOp::residual 0.18895 27
+    97.8%    0.18487       27 Base_Simplified_AMRLevelOp::applyOp [97] f=0
+     0.6%    0.00111       27 Base_Proto_AMRLevelOp::create [272] f=0
+     0.4%    0.00081       27 Proto_Resistivity::axby [280] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[97]Base_Simplified_AMRLevelOp::applyOp 0.18487 27
+    70.1%    0.12959       27 Proto_Resistivity_Op::applyOperator [104] f=0
+    27.3%    0.05045       27 Pr_Resistivity::fillGhostdataOutsideDomain [137] f=0
+     2.6%    0.00482       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [219] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [367] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[98]Proto_Resistivity::cellGrad 0.18065 3456
+---------------------------------------------------------
+[99]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.16858 432
+---------------------------------------------------------
+[100]Proto_Resistivity::getFaceDivAndGrad 0.16746 1296
+---------------------------------------------------------
+[101]Proto_Resistivity::axby 0.14629 432
+---------------------------------------------------------
+[102]Proto_Resistivity::fillGrad 0.14541 432
+    46.4%    0.06753     3456 Proto_Resistivity::cellGrad [123] f=0
+    46.4%                  Total 
+---------------------------------------------------------
+[103]Proto_Resistivity::cellGrad 0.13601 11664
+---------------------------------------------------------
+[104]Proto_Resistivity_Op::applyOperator 0.12959 27
+    83.4%    0.10806      648 Pr_Resistivity::getDivergenceIcrement [108] f=0
+    14.7%    0.01903       27 Proto_Resistivity::fillGrad [172] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[105]PrChFluxRegister::reflux 0.12026 27
+---------------------------------------------------------
+[106]PrChFluxRegister::reflux 0.12014 27
+---------------------------------------------------------
+[107]Base_Simplified_AMRLevelOp::restrictResidual 0.10869 27
+    94.3%    0.10249       27 Base_Simplified_AMRLevelOp::residual [112] f=0
+     1.0%    0.00110       27 Base_Proto_AMRLevelOp::create [274] f=0
+    95.3%                  Total 
+---------------------------------------------------------
+[108]Pr_Resistivity::getDivergenceIcrement 0.10806 648
+    88.3%    0.09542      648 Proto_Resistivity::getFlux [116] f=0
+    88.3%                  Total 
+---------------------------------------------------------
+[109]Pr_Resistivity::fillGhostdataOutsideDomain 0.10760 27
+---------------------------------------------------------
+[110]Pr_Resistivity::fillGhostdataOutsideDomain 0.10749 27
+---------------------------------------------------------
+[111]Pr_Resistivity::fillGhostdataOutsideDomain 0.10720 27
+---------------------------------------------------------
+[112]Base_Simplified_AMRLevelOp::residual 0.10249 27
+    97.8%    0.10020       27 Base_Simplified_AMRLevelOp::applyOp [114] f=0
+     1.1%    0.00109       27 Base_Proto_AMRLevelOp::create [276] f=0
+     0.2%    0.00025       27 Proto_Resistivity::axby [310] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[113]Pr_Resistivity::fillGhostdataOutsideDomain 0.10176 432
+---------------------------------------------------------
+[114]Base_Simplified_AMRLevelOp::applyOp 0.10020 27
+    65.1%    0.06522       27 Proto_Resistivity_Op::applyOperator [124] f=0
+    31.8%    0.03191       27 Pr_Resistivity::fillGhostdataOutsideDomain [162] f=0
+     3.1%    0.00306       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [225] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [369] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[115]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.09750 1458
+---------------------------------------------------------
+[116]Proto_Resistivity::getFlux 0.09542 648
+    88.0%    0.08397      648 Proto_Resistivity::getFaceDivAndGrad [118] f=0
+    88.0%                  Total 
+---------------------------------------------------------
+[117]BiCGStabSolver::solve::Initialize 0.09054 27
+    84.7%    0.07671       27 Base_Simplified_AMRLevelOp::residual [120] f=0
+     9.8%    0.00886      216 Base_Proto_AMRLevelOp::create [201] f=0
+     2.3%    0.00206       27 Base_Proto_AMRLevelOp::assign [242] f=0
+     0.3%    0.00026       27 Base_Proto_AMRLevelOp::norm [309] f=0
+    97.1%                  Total 
+---------------------------------------------------------
+[118]Proto_Resistivity::getFaceDivAndGrad 0.08397 648
+---------------------------------------------------------
+[119]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.07797 432
+---------------------------------------------------------
+[120]Base_Simplified_AMRLevelOp::residual 0.07671 27
+    97.4%    0.07471       27 Base_Simplified_AMRLevelOp::applyOp [122] f=0
+     1.5%    0.00116       27 Base_Proto_AMRLevelOp::create [265] f=0
+     0.2%    0.00014       27 Proto_Resistivity::axby [325] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[121]Base_Simplified_AMRLevelOp::applyOp 0.07489 27
+    64.9%    0.04857       27 Proto_Resistivity_Op::applyOperator [140] f=0
+    32.7%    0.02450       27 Pr_Resistivity::fillGhostdataOutsideDomain [163] f=0
+     2.4%    0.00180       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [248] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [372] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[122]Base_Simplified_AMRLevelOp::applyOp 0.07471 27
+    64.9%    0.04849       27 Proto_Resistivity_Op::applyOperator [141] f=0
+    32.7%    0.02440       27 Pr_Resistivity::fillGhostdataOutsideDomain [164] f=0
+     2.4%    0.00180       27 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [249] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [371] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[123]Proto_Resistivity::cellGrad 0.06753 3456
+---------------------------------------------------------
+[124]Proto_Resistivity_Op::applyOperator 0.06522 27
+    84.6%    0.05520      648 Pr_Resistivity::getDivergenceIcrement [135] f=0
+    13.8%    0.00898       27 Proto_Resistivity::fillGrad [200] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[125]Proto_Resistivity::fillGrad 0.06481 27
+    70.6%    0.04576      216 Proto_Resistivity::cellGrad [145] f=0
+    70.6%                  Total 
+---------------------------------------------------------
+[126]Proto_Resistivity::fillGrad 0.06457 27
+    70.6%    0.04560      216 Proto_Resistivity::cellGrad [147] f=0
+    70.6%                  Total 
+---------------------------------------------------------
+[127]Proto_Resistivity::fillGrad 0.06454 27
+    70.7%    0.04561      216 Proto_Resistivity::cellGrad [146] f=0
+    70.7%                  Total 
+---------------------------------------------------------
+[128]Base_Proto_AMRLevelOp::create 0.05947 1458
+---------------------------------------------------------
+[129]Base_Simplified_AMRLevelOp::AMRRestrict 0.05895 27
+    97.3%    0.05739       27 Base_Simplified_AMRLevelOp::AMROperatorNF [132] f=0
+     0.4%    0.00024       27 Base_Proto_AMRLevelOp::create [311] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[130]Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.05750 27
+    99.4%    0.05717       27 Base_Simplified_AMRLevelOp::AMROperatorNF [134] f=0
+     0.3%    0.00017       27 Proto_Resistivity::axby [316] f=0
+     0.3%    0.00015       27 Base_Proto_AMRLevelOp::create [320] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[131]Base_Simplified_AMRLevelOp::AMRResidualNF 0.05742 27
+    99.7%    0.05722       27 Base_Simplified_AMRLevelOp::AMROperatorNF [133] f=0
+     0.3%    0.00018       27 Proto_Resistivity::axby [314] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[132]Base_Simplified_AMRLevelOp::AMROperatorNF 0.05739 27
+    61.6%    0.03532       27 Proto_Resistivity::fillGhostDataOverCoarseFineInterface [157] f=0
+    27.1%    0.01553       27 Proto_Resistivity_Op::applyOperator [176] f=0
+    11.3%    0.00649       27 Pr_Resistivity::fillGhostdataOutsideDomain [209] f=0
+     0.0%    0.00002       27 Base_Proto_AMRLevelOp::getDomainFromData [350] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[133]Base_Simplified_AMRLevelOp::AMROperatorNF 0.05722 27
+    61.5%    0.03520       27 Proto_Resistivity::fillGhostDataOverCoarseFineInterface [158] f=0
+    27.1%    0.01548       27 Proto_Resistivity_Op::applyOperator [177] f=0
+    11.3%    0.00649       27 Pr_Resistivity::fillGhostdataOutsideDomain [208] f=0
+     0.0%    0.00002       27 Base_Proto_AMRLevelOp::getDomainFromData [346] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[134]Base_Simplified_AMRLevelOp::AMROperatorNF 0.05717 27
+    61.4%    0.03512       27 Proto_Resistivity::fillGhostDataOverCoarseFineInterface [159] f=0
+    27.2%    0.01553       27 Proto_Resistivity_Op::applyOperator [175] f=0
+    11.3%    0.00647       27 Pr_Resistivity::fillGhostdataOutsideDomain [211] f=0
+     0.0%    0.00002       27 Base_Proto_AMRLevelOp::getDomainFromData [351] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[135]Pr_Resistivity::getDivergenceIcrement 0.05520 648
+    91.0%    0.05022      648 Proto_Resistivity::getFlux [138] f=0
+    91.0%                  Total 
+---------------------------------------------------------
+[136]Proto_Resistivity::fillGrad 0.05181 216
+    39.2%    0.02028     1728 Proto_Resistivity::cellGrad [168] f=0
+    39.2%                  Total 
+---------------------------------------------------------
+[137]Pr_Resistivity::fillGhostdataOutsideDomain 0.05045 27
+---------------------------------------------------------
+[138]Proto_Resistivity::getFlux 0.05022 648
+    89.5%    0.04493      648 Proto_Resistivity::getFaceDivAndGrad [148] f=0
+    89.5%                  Total 
+---------------------------------------------------------
+[139]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.04941 432
+---------------------------------------------------------
+[140]Proto_Resistivity_Op::applyOperator 0.04857 27
+    85.4%    0.04150      648 Pr_Resistivity::getDivergenceIcrement [151] f=0
+    13.3%    0.00648       27 Proto_Resistivity::fillGrad [210] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[141]Proto_Resistivity_Op::applyOperator 0.04849 27
+    85.1%    0.04128      648 Pr_Resistivity::getDivergenceIcrement [152] f=0
+    13.4%    0.00650       27 Proto_Resistivity::fillGrad [207] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[142]Initial AMR Residual 0.04708 1
+    100.0%    0.04708        1 AMRMultiGrid::computeAMRResidual [143] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[143]AMRMultiGrid::computeAMRResidual 0.04708 1
+    98.1%    0.04620        2 AMRMultiGrid<T>::computeAMRResidualLevel [144] f=0
+     1.6%    0.00075        1 Base_Proto_AMRLevelOp::assign [284] f=0
+     0.2%    0.00011        2 Base_Proto_AMRLevelOp::norm [328] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[144]AMRMultiGrid<T>::computeAMRResidualLevel 0.04620 2
+    95.1%    0.04393        1 Base_Simplified_AMRLevelOp::AMRResidualNC [149] f=0
+     4.9%    0.00227        1 Base_Simplified_AMRLevelOp::AMRResidualNF [239] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[145]Proto_Resistivity::cellGrad 0.04576 216
+---------------------------------------------------------
+[146]Proto_Resistivity::cellGrad 0.04561 216
+---------------------------------------------------------
+[147]Proto_Resistivity::cellGrad 0.04560 216
+---------------------------------------------------------
+[148]Proto_Resistivity::getFaceDivAndGrad 0.04493 648
+---------------------------------------------------------
+[149]Base_Simplified_AMRLevelOp::AMRResidualNC 0.04393 1
+    99.4%    0.04365        1 Base_Simplified_AMRLevelOp::AMROperatorNC [150] f=0
+     0.6%    0.00028        1 Proto_Resistivity::axby [306] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[150]Base_Simplified_AMRLevelOp::AMROperatorNC 0.04365 1
+    44.2%    0.01928        1 Proto_Resistivity_Op::applyOperator [171] f=0
+    30.5%    0.01333       27 Pr_Resistivity::getFlux_thr [184] f=0
+    12.5%    0.00544        1 PrChFluxRegister::reflux [218] f=0
+     9.4%    0.00410        1 Pr_Resistivity::fillGhostdataOutsideDomain [222] f=0
+     2.0%    0.00086        1 PrChFluxRegister::setCoarFlux [279] f=0
+     0.9%    0.00039        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [297] f=0
+     0.2%    0.00009        1 PrChFluxRegister constructor [331] f=0
+     0.1%    0.00006        1 PrChFluxRegister::setFineFlux [337] f=0
+     0.0%    0.00000        1 Base_Proto_AMRLevelOp::getDomainFromData [382] f=0
+     0.0%    0.00000        1 PrChFluxRegister destructor [400] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[151]Pr_Resistivity::getDivergenceIcrement 0.04150 648
+    92.9%    0.03854      648 Proto_Resistivity::getFlux [154] f=0
+    92.9%                  Total 
+---------------------------------------------------------
+[152]Pr_Resistivity::getDivergenceIcrement 0.04128 648
+    92.9%    0.03833      648 Proto_Resistivity::getFlux [155] f=0
+    92.9%                  Total 
+---------------------------------------------------------
+[153]Base_Proto_AMRLevelOp::assign 0.04094 108
+---------------------------------------------------------
+[154]Proto_Resistivity::getFlux 0.03854 648
+    90.4%    0.03484      648 Proto_Resistivity::getFaceDivAndGrad [160] f=0
+    90.4%                  Total 
+---------------------------------------------------------
+[155]Proto_Resistivity::getFlux 0.03833 648
+    90.3%    0.03462      648 Proto_Resistivity::getFaceDivAndGrad [161] f=0
+    90.3%                  Total 
+---------------------------------------------------------
+[156]Base_Simplified_AMRLevelOp::AMRProlong 0.03570 27
+    56.6%    0.02021       27 Base_Proto_AMRLevelOp::copyTo [170] f=0
+     0.8%    0.00027       27 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [307] f=0
+     0.4%    0.00014       27 Base_Proto_AMRLevelOp::createCoarser [321] f=0
+    57.8%                  Total 
+---------------------------------------------------------
+[157]Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03532 27
+---------------------------------------------------------
+[158]Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03520 27
+---------------------------------------------------------
+[159]Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03512 27
+---------------------------------------------------------
+[160]Proto_Resistivity::getFaceDivAndGrad 0.03484 648
+---------------------------------------------------------
+[161]Proto_Resistivity::getFaceDivAndGrad 0.03462 648
+---------------------------------------------------------
+[162]Pr_Resistivity::fillGhostdataOutsideDomain 0.03191 27
+---------------------------------------------------------
+[163]Pr_Resistivity::fillGhostdataOutsideDomain 0.02450 27
+---------------------------------------------------------
+[164]Pr_Resistivity::fillGhostdataOutsideDomain 0.02440 27
+---------------------------------------------------------
+[165]Proto_Resistivity::fillGrad 0.02273 432
+    98.8%    0.02244      432 Proto_Resistivity::cellGrad [166] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[166]Proto_Resistivity::cellGrad 0.02244 432
+---------------------------------------------------------
+[167]Base_Proto_AMRLevelOp::create 0.02061 432
+---------------------------------------------------------
+[168]Proto_Resistivity::cellGrad 0.02028 1728
+---------------------------------------------------------
+[169]Base_Proto_AMRLevelOp::assign 0.02023 27
+---------------------------------------------------------
+[170]Base_Proto_AMRLevelOp::copyTo 0.02021 27
+---------------------------------------------------------
+[171]Proto_Resistivity_Op::applyOperator 0.01928 1
+    76.8%    0.01481       24 Pr_Resistivity::getDivergenceIcrement [178] f=0
+    19.2%    0.00370        1 Proto_Resistivity::fillGrad [224] f=0
+    96.0%                  Total 
+---------------------------------------------------------
+[172]Proto_Resistivity::fillGrad 0.01903 27
+    58.9%    0.01121      216 Proto_Resistivity::cellGrad [190] f=0
+    58.9%                  Total 
+---------------------------------------------------------
+[173]Base_Proto_AMRLevelOp::create 0.01815 432
+---------------------------------------------------------
+[174]Base_Proto_AMRLevelOp::create 0.01786 432
+---------------------------------------------------------
+[175]Proto_Resistivity_Op::applyOperator 0.01553 27
+    87.7%    0.01363       81 Pr_Resistivity::getDivergenceIcrement [180] f=0
+     9.7%    0.00151       27 Proto_Resistivity::fillGrad [253] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[176]Proto_Resistivity_Op::applyOperator 0.01553 27
+    87.6%    0.01361       81 Pr_Resistivity::getDivergenceIcrement [181] f=0
+     9.7%    0.00150       27 Proto_Resistivity::fillGrad [254] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[177]Proto_Resistivity_Op::applyOperator 0.01548 27
+    87.6%    0.01356       81 Pr_Resistivity::getDivergenceIcrement [182] f=0
+     9.6%    0.00149       27 Proto_Resistivity::fillGrad [255] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[178]Pr_Resistivity::getDivergenceIcrement 0.01481 24
+    86.6%    0.01282       24 Proto_Resistivity::getFlux [186] f=0
+    86.6%                  Total 
+---------------------------------------------------------
+[179]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01444 216
+---------------------------------------------------------
+[180]Pr_Resistivity::getDivergenceIcrement 0.01363 81
+    88.3%    0.01203       81 Proto_Resistivity::getFlux [187] f=0
+    88.3%                  Total 
+---------------------------------------------------------
+[181]Pr_Resistivity::getDivergenceIcrement 0.01361 81
+    88.0%    0.01198       81 Proto_Resistivity::getFlux [188] f=0
+    88.0%                  Total 
+---------------------------------------------------------
+[182]Pr_Resistivity::getDivergenceIcrement 0.01356 81
+    88.1%    0.01195       81 Proto_Resistivity::getFlux [189] f=0
+    88.1%                  Total 
+---------------------------------------------------------
+[183]Proto_Resistivity::axby 0.01349 432
+---------------------------------------------------------
+[184]Pr_Resistivity::getFlux_thr 0.01333 27
+    99.9%    0.01332       27 Proto_Resistivity::getFlux [185] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[185]Proto_Resistivity::getFlux 0.01332 27
+    80.1%    0.01066       27 Proto_Resistivity::getFaceDivAndGrad [192] f=0
+    80.1%                  Total 
+---------------------------------------------------------
+[186]Proto_Resistivity::getFlux 0.01282 24
+    84.5%    0.01083       24 Proto_Resistivity::getFaceDivAndGrad [191] f=0
+    84.5%                  Total 
+---------------------------------------------------------
+[187]Proto_Resistivity::getFlux 0.01203 81
+    87.6%    0.01053       81 Proto_Resistivity::getFaceDivAndGrad [194] f=0
+    87.6%                  Total 
+---------------------------------------------------------
+[188]Proto_Resistivity::getFlux 0.01198 81
+    87.7%    0.01051       81 Proto_Resistivity::getFaceDivAndGrad [196] f=0
+    87.7%                  Total 
+---------------------------------------------------------
+[189]Proto_Resistivity::getFlux 0.01195 81
+    87.6%    0.01046       81 Proto_Resistivity::getFaceDivAndGrad [198] f=0
+    87.6%                  Total 
+---------------------------------------------------------
+[190]Proto_Resistivity::cellGrad 0.01121 216
+---------------------------------------------------------
+[191]Proto_Resistivity::getFaceDivAndGrad 0.01083 24
+---------------------------------------------------------
+[192]Proto_Resistivity::getFaceDivAndGrad 0.01066 27
+---------------------------------------------------------
+[193]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01062 27
+---------------------------------------------------------
+[194]Proto_Resistivity::getFaceDivAndGrad 0.01053 81
+---------------------------------------------------------
+[195]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01053 27
+---------------------------------------------------------
+[196]Proto_Resistivity::getFaceDivAndGrad 0.01051 81
+---------------------------------------------------------
+[197]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01050 27
+---------------------------------------------------------
+[198]Proto_Resistivity::getFaceDivAndGrad 0.01046 81
+---------------------------------------------------------
+[199]Proto_Resistivity::axby 0.00973 27
+---------------------------------------------------------
+[200]Proto_Resistivity::fillGrad 0.00898 27
+    46.3%    0.00416      216 Proto_Resistivity::cellGrad [221] f=0
+    46.3%                  Total 
+---------------------------------------------------------
+[201]Base_Proto_AMRLevelOp::create 0.00886 216
+---------------------------------------------------------
+[202]Base_Proto_AMRLevelOp::create 0.00881 216
+---------------------------------------------------------
+[203]Proto_Resistivity::axby 0.00735 1458
+---------------------------------------------------------
+[204]PrChFluxRegister::setCoarFlux 0.00724 27
+---------------------------------------------------------
+[205]PrChFluxRegister::setCoarFlux 0.00723 27
+---------------------------------------------------------
+[206]Proto_Resistivity::axby 0.00652 27
+---------------------------------------------------------
+[207]Proto_Resistivity::fillGrad 0.00650 27
+    39.0%    0.00254      216 Proto_Resistivity::cellGrad [230] f=0
+    39.0%                  Total 
+---------------------------------------------------------
+[208]Pr_Resistivity::fillGhostdataOutsideDomain 0.00649 27
+---------------------------------------------------------
+[209]Pr_Resistivity::fillGhostdataOutsideDomain 0.00649 27
+---------------------------------------------------------
+[210]Proto_Resistivity::fillGrad 0.00648 27
+    39.0%    0.00253      216 Proto_Resistivity::cellGrad [231] f=0
+    39.0%                  Total 
+---------------------------------------------------------
+[211]Pr_Resistivity::fillGhostdataOutsideDomain 0.00647 27
+---------------------------------------------------------
+[212]Base_Simplified_AMRLevelOp::incr 0.00639 54
+    99.9%    0.00639       54 Proto_Resistivity::axby [214] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[213]Proto_Resistivity::axby 0.00639 27
+---------------------------------------------------------
+[214]Proto_Resistivity::axby 0.00639 54
+---------------------------------------------------------
+[215]Base_Proto_AMRLevelOp::norm 0.00609 54
+---------------------------------------------------------
+[216]Base_Simplified_AMRLevelOp::incr 0.00606 81
+    99.8%    0.00604       81 Proto_Resistivity::axby [217] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[217]Proto_Resistivity::axby 0.00604 81
+---------------------------------------------------------
+[218]PrChFluxRegister::reflux 0.00544 1
+---------------------------------------------------------
+[219]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00482 27
+---------------------------------------------------------
+[220]WriteAMRHierarchyHDF5 0.00424 1
+    67.5%    0.00287        1 WriteFile [227] f=0
+    28.3%    0.00120        1 CreateFile [264] f=0
+     3.5%    0.00015        1 CloseFile [319] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[221]Proto_Resistivity::cellGrad 0.00416 216
+---------------------------------------------------------
+[222]Pr_Resistivity::fillGhostdataOutsideDomain 0.00410 1
+---------------------------------------------------------
+[223]Proto_Resistivity::axby 0.00410 432
+---------------------------------------------------------
+[224]Proto_Resistivity::fillGrad 0.00370 1
+    78.4%    0.00290        8 Proto_Resistivity::cellGrad [226] f=0
+    78.4%                  Total 
+---------------------------------------------------------
+[225]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00306 27
+---------------------------------------------------------
+[226]Proto_Resistivity::cellGrad 0.00290 8
+---------------------------------------------------------
+[227]WriteFile 0.00287 1
+    84.6%    0.00242        2 Write Level [232] f=0
+    84.6%                  Total 
+---------------------------------------------------------
+[228]PrChUtilities::setupSolver 0.00278 1
+    99.4%    0.00276        1 AMRMultiGrid::define [229] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[229]AMRMultiGrid::define 0.00276 1
+    70.3%    0.00194        2 MultiGrid::define [246] f=0
+    28.5%    0.00079        2 Pr_Resistivity_Factory_AMRnewOp [281] f=0
+     0.0%    0.00000        4 ~Copier [393] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[230]Proto_Resistivity::cellGrad 0.00254 216
+---------------------------------------------------------
+[231]Proto_Resistivity::cellGrad 0.00253 216
+---------------------------------------------------------
+[232]Write Level 0.00242 2
+    95.3%    0.00231        2 write_Level [237] f=0
+     1.6%    0.00004        2 writeToFile [343] f=0
+     0.4%    0.00001        2 setGroup [356] f=0
+     0.0%    0.00000        2 calc minimum in outputGhost [398] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[233]uberCorrection 0.00242 2
+     5.8%    0.00014        4 Base_Proto_AMRLevelOp::create [323] f=0
+     5.8%                  Total 
+---------------------------------------------------------
+[234]Base_Proto_AMRLevelOp::create 0.00237 54
+---------------------------------------------------------
+[235]Base_Proto_AMRLevelOp::create 0.00233 54
+---------------------------------------------------------
+[236]Base_Proto_AMRLevelOp::create 0.00232 432
+---------------------------------------------------------
+[237]write_Level 0.00231 2
+    85.9%    0.00198        2 linearize_H5Dwrite [245] f=0
+     7.3%    0.00017        2 WriteAttributes [315] f=0
+     2.2%    0.00005        2 H5S_H5D_offsets_create [340] f=0
+     1.6%    0.00004        2 H5Dcreate [344] f=0
+     0.7%    0.00002        2 WriteOffsets [352] f=0
+     0.5%    0.00001        2 H5S_H5D_offsets_close [353] f=0
+     0.2%    0.00001        2 freeMT [361] f=0
+     0.2%    0.00001        2 H5Dclose [362] f=0
+     0.2%    0.00001        2 getOffsets [364] f=0
+     0.2%    0.00000        2 mallocMT_buffers [368] f=0
+     0.1%    0.00000        2 H5Screate [377] f=0
+     0.1%    0.00000        2 H5Sclose [380] f=0
+     0.0%    0.00000        2 ComputeBufferCapacity [387] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[238]Base_Proto_AMRLevelOp::createCoarser 0.00229 54
+     0.0%    0.00000       54 Base_Proto_AMRLevelOp::createCoarser [386] f=0
+     0.0%                  Total 
+---------------------------------------------------------
+[239]Base_Simplified_AMRLevelOp::AMRResidualNF 0.00227 1
+    99.6%    0.00226        1 Base_Simplified_AMRLevelOp::AMROperatorNF [240] f=0
+     0.4%    0.00001        1 Proto_Resistivity::axby [358] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[240]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00226 1
+    59.1%    0.00134        1 Proto_Resistivity::fillGhostDataOverCoarseFineInterface [259] f=0
+    30.2%    0.00068        1 Proto_Resistivity_Op::applyOperator [285] f=0
+    10.6%    0.00024        1 Pr_Resistivity::fillGhostdataOutsideDomain [312] f=0
+     0.0%    0.00000        1 Base_Proto_AMRLevelOp::getDomainFromData [381] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[241]Base_Proto_AMRLevelOp::create 0.00224 54
+---------------------------------------------------------
+[242]Base_Proto_AMRLevelOp::assign 0.00206 27
+---------------------------------------------------------
+[243]Base_Proto_AMRLevelOp::assign 0.00206 27
+---------------------------------------------------------
+[244]setRHS 0.00200 1
+---------------------------------------------------------
+[245]linearize_H5Dwrite 0.00198 2
+    84.2%    0.00167        9 H5Dwrite [251] f=0
+    14.6%    0.00029        9 linearize [303] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[246]MultiGrid::define 0.00194 2
+    99.7%    0.00193        7 Pr_Resistivity_Factory_MGnewOp [247] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[247]Pr_Resistivity_Factory_MGnewOp 0.00193 7
+    82.2%    0.00159        5 Pr_Resistivity_Factory_getCoefficients [252] f=0
+    17.6%    0.00034        5 Proto_Resistivity_Op::Proto_Resistivity_Op [301] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[248]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00180 27
+---------------------------------------------------------
+[249]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00180 27
+---------------------------------------------------------
+[250]Proto_Resistivity::axby 0.00169 432
+---------------------------------------------------------
+[251]H5Dwrite 0.00167 9
+---------------------------------------------------------
+[252]Pr_Resistivity_Factory_getCoefficients 0.00159 5
+---------------------------------------------------------
+[253]Proto_Resistivity::fillGrad 0.00151 27
+    98.2%    0.00148       27 Proto_Resistivity::cellGrad [256] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[254]Proto_Resistivity::fillGrad 0.00150 27
+    98.1%    0.00147       27 Proto_Resistivity::cellGrad [257] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[255]Proto_Resistivity::fillGrad 0.00149 27
+    97.9%    0.00146       27 Proto_Resistivity::cellGrad [258] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[256]Proto_Resistivity::cellGrad 0.00148 27
+---------------------------------------------------------
+[257]Proto_Resistivity::cellGrad 0.00147 27
+---------------------------------------------------------
+[258]Proto_Resistivity::cellGrad 0.00146 27
+---------------------------------------------------------
+[259]Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.00134 1
+---------------------------------------------------------
+[260]Base_Proto_AMRLevelOp::create 0.00125 27
+---------------------------------------------------------
+[261]PrChFluxRegister::setFineFlux 0.00125 27
+---------------------------------------------------------
+[262]PrChFluxRegister::setFineFlux 0.00124 27
+---------------------------------------------------------
+[263]PrChUtilities::copyToDevice-Cell 0.00122 2
+     0.1%    0.00000        2 PrChUtilities::getRaHostData [379] f=0
+     0.1%                  Total 
+---------------------------------------------------------
+[264]CreateFile 0.00120 1
+---------------------------------------------------------
+[265]Base_Proto_AMRLevelOp::create 0.00116 27
+---------------------------------------------------------
+[266]Base_Proto_AMRLevelOp::create 0.00113 27
+---------------------------------------------------------
+[267]Base_Proto_AMRLevelOp::createCoarser 0.00113 27
+---------------------------------------------------------
+[268]Base_Proto_AMRLevelOp::create 0.00112 27
+---------------------------------------------------------
+[269]Base_Proto_AMRLevelOp::createCoarser 0.00112 27
+---------------------------------------------------------
+[270]Base_Proto_AMRLevelOp::createCoarser 0.00111 27
+---------------------------------------------------------
+[271]Base_Proto_AMRLevelOp::create 0.00111 27
+---------------------------------------------------------
+[272]Base_Proto_AMRLevelOp::create 0.00111 27
+---------------------------------------------------------
+[273]Proto_Resistivity::axby 0.00110 216
+---------------------------------------------------------
+[274]Base_Proto_AMRLevelOp::create 0.00110 27
+---------------------------------------------------------
+[275]Base_Proto_AMRLevelOp::create 0.00110 27
+---------------------------------------------------------
+[276]Base_Proto_AMRLevelOp::create 0.00109 27
+---------------------------------------------------------
+[277]PrChFluxRegister constructor 0.00106 27
+---------------------------------------------------------
+[278]PrChFluxRegister constructor 0.00105 27
+---------------------------------------------------------
+[279]PrChFluxRegister::setCoarFlux 0.00086 1
+---------------------------------------------------------
+[280]Proto_Resistivity::axby 0.00081 27
+---------------------------------------------------------
+[281]Pr_Resistivity_Factory_AMRnewOp 0.00079 2
+    99.9%    0.00079        2 Proto_Resistivity_Op::Proto_Resistivity_Op [282] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[282]Proto_Resistivity_Op::Proto_Resistivity_Op 0.00079 2
+    82.1%    0.00065        2 Pr_Resistivity::defineAndSetRelaxationCoefficient [287] f=0
+    82.1%                  Total 
+---------------------------------------------------------
+[283]PrChUtilities::copyToHost 0.00078 2
+     0.7%    0.00001        2 PrChUtilities::getRaHostData [363] f=0
+     0.7%                  Total 
+---------------------------------------------------------
+[284]Base_Proto_AMRLevelOp::assign 0.00075 1
+---------------------------------------------------------
+[285]Proto_Resistivity_Op::applyOperator 0.00068 1
+    81.8%    0.00056        3 Pr_Resistivity::getDivergenceIcrement [291] f=0
+    15.4%    0.00011        1 Proto_Resistivity::fillGrad [329] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[286]defineAndSetCoefficients 0.00067 2
+---------------------------------------------------------
+[287]Pr_Resistivity::defineAndSetRelaxationCoefficient 0.00065 2
+---------------------------------------------------------
+[288]PrChUtilities::getProtoViscousTensorOpFactory 0.00063 1
+    99.0%    0.00063        1 PrChUtilities::protoizeCoefficients [289] f=0
+     0.8%    0.00000        1 Pr_Resistivity_Factory_Constructor [365] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[289]PrChUtilities::protoizeCoefficients 0.00063 1
+    75.1%    0.00047        2 PrChUtilities::copyToDevice-Flux [294] f=0
+     8.0%    0.00005        2 PrChUtilities::getProtoLayout [341] f=0
+    83.2%                  Total 
+---------------------------------------------------------
+[290]~AMRMultiGrid 0.00061 1
+---------------------------------------------------------
+[291]Pr_Resistivity::getDivergenceIcrement 0.00056 3
+    88.3%    0.00049        3 Proto_Resistivity::getFlux [293] f=0
+    88.3%                  Total 
+---------------------------------------------------------
+[292]AMRMultiGrid::init 0.00052 1
+    67.7%    0.00035        2 MutliGrid::init [299] f=0
+    30.6%    0.00016        4 Base_Proto_AMRLevelOp::create [317] f=0
+     1.3%    0.00001        1 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [360] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[293]Proto_Resistivity::getFlux 0.00049 3
+    87.3%    0.00043        3 Proto_Resistivity::getFaceDivAndGrad [295] f=0
+    87.3%                  Total 
+---------------------------------------------------------
+[294]PrChUtilities::copyToDevice-Flux 0.00047 2
+---------------------------------------------------------
+[295]Proto_Resistivity::getFaceDivAndGrad 0.00043 3
+---------------------------------------------------------
+[296]Base_Proto_AMRLevelOp::create 0.00041 54
+---------------------------------------------------------
+[297]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00039 1
+---------------------------------------------------------
+[298]~LayoutData 0.00035 4
+---------------------------------------------------------
+[299]MutliGrid::init 0.00035 2
+    99.8%    0.00035        6 Base_Proto_AMRLevelOp::createCoarser [300] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[300]Base_Proto_AMRLevelOp::createCoarser 0.00035 6
+---------------------------------------------------------
+[301]Proto_Resistivity_Op::Proto_Resistivity_Op 0.00034 5
+    22.9%    0.00008        5 Pr_Resistivity::defineAndSetRelaxationCoefficient [333] f=0
+    22.9%                  Total 
+---------------------------------------------------------
+[302]PrChUtilities::setupLLCornerGrids 0.00033 1
+    33.4%    0.00011        1 setupGrids: meshRefine and all that [327] f=0
+    19.3%    0.00006        1 setupGrids: BaseGridCreation [336] f=0
+    52.7%                  Total 
+---------------------------------------------------------
+[303]linearize 0.00029 9
+---------------------------------------------------------
+[304]Base_Simplified_AMRLevelOp::incr 0.00028 54
+    98.5%    0.00028       54 Proto_Resistivity::axby [305] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[305]Proto_Resistivity::axby 0.00028 54
+---------------------------------------------------------
+[306]Proto_Resistivity::axby 0.00028 1
+---------------------------------------------------------
+[307]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00027 27
+---------------------------------------------------------
+[308]Base_Proto_AMRLevelOp::getDomainFromData 0.00026 432
+---------------------------------------------------------
+[309]Base_Proto_AMRLevelOp::norm 0.00026 27
+---------------------------------------------------------
+[310]Proto_Resistivity::axby 0.00025 27
+---------------------------------------------------------
+[311]Base_Proto_AMRLevelOp::create 0.00024 27
+---------------------------------------------------------
+[312]Pr_Resistivity::fillGhostdataOutsideDomain 0.00024 1
+---------------------------------------------------------
+[313]Base_Proto_AMRLevelOp::norm 0.00024 27
+---------------------------------------------------------
+[314]Proto_Resistivity::axby 0.00018 27
+---------------------------------------------------------
+[315]WriteAttributes 0.00017 2
+---------------------------------------------------------
+[316]Proto_Resistivity::axby 0.00017 27
+---------------------------------------------------------
+[317]Base_Proto_AMRLevelOp::create 0.00016 4
+---------------------------------------------------------
+[318]Base_Proto_AMRLevelOp::getDomainFromData 0.00016 1458
+---------------------------------------------------------
+[319]CloseFile 0.00015 1
+---------------------------------------------------------
+[320]Base_Proto_AMRLevelOp::create 0.00015 27
+---------------------------------------------------------
+[321]Base_Proto_AMRLevelOp::createCoarser 0.00014 27
+---------------------------------------------------------
+[322]BiCGStabSolver::solve::Cleanup 0.00014 27
+    97.3%    0.00014       27 Base_Simplified_AMRLevelOp::incr [324] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[323]Base_Proto_AMRLevelOp::create 0.00014 4
+---------------------------------------------------------
+[324]Base_Simplified_AMRLevelOp::incr 0.00014 27
+    99.0%    0.00014       27 Proto_Resistivity::axby [326] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[325]Proto_Resistivity::axby 0.00014 27
+---------------------------------------------------------
+[326]Proto_Resistivity::axby 0.00014 27
+---------------------------------------------------------
+[327]setupGrids: meshRefine and all that 0.00011 1
+    53.3%    0.00006        1 MeshRefine::regrid [338] f=0
+    10.0%    0.00001        2 DisjointBoxLayout::computeNeighbors [355] f=0
+     1.5%    0.00000        2 LoadBalance:VectorBoxEntry [378] f=0
+    64.8%                  Total 
+---------------------------------------------------------
+[328]Base_Proto_AMRLevelOp::norm 0.00011 2
+---------------------------------------------------------
+[329]Proto_Resistivity::fillGrad 0.00011 1
+    98.3%    0.00010        1 Proto_Resistivity::cellGrad [330] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[330]Proto_Resistivity::cellGrad 0.00010 1
+---------------------------------------------------------
+[331]PrChFluxRegister constructor 0.00009 1
+---------------------------------------------------------
+[332]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00009 432
+---------------------------------------------------------
+[333]Pr_Resistivity::defineAndSetRelaxationCoefficient 0.00008 5
+---------------------------------------------------------
+[334]Base_Proto_AMRLevelOp::getDomainFromData 0.00008 432
+---------------------------------------------------------
+[335]Base_Proto_AMRLevelOp::create 0.00007 2
+---------------------------------------------------------
+[336]setupGrids: BaseGridCreation 0.00006 1
+    29.2%    0.00002        1 DisjointBoxLayout::computeNeighbors [348] f=0
+    14.5%    0.00001        1 LoadBalance:VectorBoxEntry [357] f=0
+     5.6%    0.00000        1 BRMeshRefine::domainSplit [370] f=0
+    49.3%                  Total 
+---------------------------------------------------------
+[337]PrChFluxRegister::setFineFlux 0.00006 1
+---------------------------------------------------------
+[338]MeshRefine::regrid 0.00006 1
+    19.7%    0.00001        2 BRMeshRefine::makeBoxes [354] f=0
+    19.7%                  Total 
+---------------------------------------------------------
+[339]Base_Proto_AMRLevelOp::getDomainFromData 0.00005 432
+---------------------------------------------------------
+[340]H5S_H5D_offsets_create 0.00005 2
+---------------------------------------------------------
+[341]PrChUtilities::getProtoLayout 0.00005 2
+     5.7%    0.00000        2 PrChUtilities::getRawLayout [374] f=0
+     5.7%                  Total 
+---------------------------------------------------------
+[342]Base_Proto_AMRLevelOp::getDomainFromData 0.00004 432
+---------------------------------------------------------
+[343]writeToFile 0.00004 2
+---------------------------------------------------------
+[344]H5Dcreate 0.00004 2
+---------------------------------------------------------
+[345]Base_Proto_AMRLevelOp::getDomainFromData 0.00003 216
+---------------------------------------------------------
+[346]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 27
+---------------------------------------------------------
+[347]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 27
+---------------------------------------------------------
+[348]DisjointBoxLayout::computeNeighbors 0.00002 1
+---------------------------------------------------------
+[349]~LayoutData 0.00002 2
+---------------------------------------------------------
+[350]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 27
+---------------------------------------------------------
+[351]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 27
+---------------------------------------------------------
+[352]WriteOffsets 0.00002 2
+---------------------------------------------------------
+[353]H5S_H5D_offsets_close 0.00001 2
+---------------------------------------------------------
+[354]BRMeshRefine::makeBoxes 0.00001 2
+---------------------------------------------------------
+[355]DisjointBoxLayout::computeNeighbors 0.00001 2
+---------------------------------------------------------
+[356]setGroup 0.00001 2
+---------------------------------------------------------
+[357]LoadBalance:VectorBoxEntry 0.00001 1
+     9.4%    0.00000        1 LoadBalance:VectorBoxSimple [383] f=0
+     9.4%                  Total 
+---------------------------------------------------------
+[358]Proto_Resistivity::axby 0.00001 1
+---------------------------------------------------------
+[359]PrChUtilities::getProtoLayout 0.00001 2
+    24.1%    0.00000        2 PrChUtilities::getRawLayout [376] f=0
+    24.1%                  Total 
+---------------------------------------------------------
+[360]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00001 1
+---------------------------------------------------------
+[361]freeMT 0.00001 2
+---------------------------------------------------------
+[362]H5Dclose 0.00001 2
+---------------------------------------------------------
+[363]PrChUtilities::getRaHostData 0.00001 2
+---------------------------------------------------------
+[364]getOffsets 0.00001 2
+    45.0%    0.00000        2 offsets.resize [375] f=0
+     2.5%    0.00000        9 dataSize [391] f=0
+     1.9%    0.00000        9 offsets calc [392] f=0
+    49.3%                  Total 
+---------------------------------------------------------
+[365]Pr_Resistivity_Factory_Constructor 0.00000 1
+---------------------------------------------------------
+[366]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[367]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[368]mallocMT_buffers 0.00000 2
+---------------------------------------------------------
+[369]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[370]BRMeshRefine::domainSplit 0.00000 1
+---------------------------------------------------------
+[371]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[372]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[373]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[374]PrChUtilities::getRawLayout 0.00000 2
+---------------------------------------------------------
+[375]offsets.resize 0.00000 2
+---------------------------------------------------------
+[376]PrChUtilities::getRawLayout 0.00000 2
+---------------------------------------------------------
+[377]H5Screate 0.00000 2
+---------------------------------------------------------
+[378]LoadBalance:VectorBoxEntry 0.00000 2
+    32.7%    0.00000        2 LoadBalance:VectorBoxSimple [388] f=0
+    32.7%                  Total 
+---------------------------------------------------------
+[379]PrChUtilities::getRaHostData 0.00000 2
+---------------------------------------------------------
+[380]H5Sclose 0.00000 2
+---------------------------------------------------------
+[381]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 1
+---------------------------------------------------------
+[382]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 1
+---------------------------------------------------------
+[383]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[384]~Copier 0.00000 6
+---------------------------------------------------------
+[385]~Copier 0.00000 4
+---------------------------------------------------------
+[386]Base_Proto_AMRLevelOp::createCoarser 0.00000 54
+---------------------------------------------------------
+[387]ComputeBufferCapacity 0.00000 2
+---------------------------------------------------------
+[388]LoadBalance:VectorBoxSimple 0.00000 2
+---------------------------------------------------------
+[389]PrChFluxRegister destructor 0.00000 27
+---------------------------------------------------------
+[390]PrChFluxRegister destructor 0.00000 27
+---------------------------------------------------------
+[391]dataSize 0.00000 9
+---------------------------------------------------------
+[392]offsets calc 0.00000 9
+---------------------------------------------------------
+[393]~Copier 0.00000 4
+---------------------------------------------------------
+[394]~LevelData 0.00000 2
+---------------------------------------------------------
+[395]~BoxLayoutData 0.00000 2
+---------------------------------------------------------
+[396]~LevelData 0.00000 4
+---------------------------------------------------------
+[397]~BoxLayoutData 0.00000 4
+---------------------------------------------------------
+[398]calc minimum in outputGhost 0.00000 2
+---------------------------------------------------------
+[399]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[400]PrChFluxRegister destructor 0.00000 1
+=======================================================
+=======================================================
+[0] main 22.93598 100.0% 1 0 0 MFlops 
+   [1] runSolver 22.93565 100.0% 1 0 0 MFlops 
+      [2] solveForPhi 22.92848 100.0% 1 0 0 MFlops 
+         [3] AMRMultiGrid::solve 22.92124 99.9% 1 0 0 MFlops 
+            [4] AMRMultiGrid::solveNoInit 22.92073 99.9% 1 0 0 MFlops 
+               [5] AMRMultiGrid::solveNo-InitResid 22.92045 99.9% 1 0 0 MFlops 
+                  [6] AMRMultiGrid::AMRVcycle 21.76064 94.9% 27 0 0 MFlops 
+                     [7] Multigrid::oneCycle 20.18171 88.0% 27 0 0 MFlops 
+                        [8] Multigrid::cycle 20.18170 88.0% 27 0 0 MFlops 
+                           [9] Multigrid::cycle 10.11297 44.1% 27 0 0 MFlops 
+                              [14] Multigrid::cycle 6.76363 29.5% 27 0 0 MFlops 
+                                 [16] Multigrid::cycle 4.92233 21.5% 27 0 0 MFlops 
+                                    [17] Multigrid::cycle:bottom-solve 4.92233 21.5% 27 0 0 MFlops 
+                                       [19] BiCGStabSolver::solve 4.30827 18.8% 27 0 0 MFlops 
+                                          [20] BiCGStabSolver::solve::MainLoop 4.21709 18.4% 27 0 0 MFlops 
+                                             [22] Base_Simplified_AMRLevelOp::preCond 4.13661 18.0% 27 0 0 MFlops 
+                                                [23] Pr_Resistivity::relax 4.13661 18.0% 27 0 0 MFlops 
+                                                   [24] Base_Simplified_AMRLevelOp::residual 4.12925 18.0% 1458 0 0 MFlops 
+                                                      [25] Base_Simplified_AMRLevelOp::applyOp 4.02432 17.5% 1458 0 0 MFlops 
+                                                         [29] Proto_Resistivity_Op::applyOperator 2.60450 11.4% 1458 0 0 MFlops 
+                                                            [30] Pr_Resistivity::getDivergenceIcrement 2.22355  9.7% 34992 0 0 MFlops 
+                                                               [31] Proto_Resistivity::getFlux 2.06422  9.0% 34992 0 0 MFlops 
+                                                                  [33] Proto_Resistivity::getFaceDivAndGrad 1.86616  8.1% 34992 0 0 MFlops 
+                                                            [73] Proto_Resistivity::fillGrad 0.34898  1.5% 1458 0 0 MFlops 
+                                                               [103] Proto_Resistivity::cellGrad 0.13601  0.6% 11664 0 0 MFlops 
+                                                         [41] Pr_Resistivity::fillGhostdataOutsideDomain 1.32178  5.8% 1458 0 0 MFlops 
+                                                         [115] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.09750  0.4% 1458 0 0 MFlops 
+                                                         [318] Base_Proto_AMRLevelOp::getDomainFromData 0.00016  0.0% 1458 0 0 MFlops 
+                                                      [128] Base_Proto_AMRLevelOp::create 0.05947  0.3% 1458 0 0 MFlops 
+                                                      [203] Proto_Resistivity::axby 0.00735  0.0% 1458 0 0 MFlops 
+                                                   [275] Base_Proto_AMRLevelOp::create 0.00110  0.0% 27 0 0 MFlops 
+                                             [121] Base_Simplified_AMRLevelOp::applyOp 0.07489  0.3% 27 0 0 MFlops 
+                                                [140] Proto_Resistivity_Op::applyOperator 0.04857  0.2% 27 0 0 MFlops 
+                                                   [151] Pr_Resistivity::getDivergenceIcrement 0.04150  0.2% 648 0 0 MFlops 
+                                                      [154] Proto_Resistivity::getFlux 0.03854  0.2% 648 0 0 MFlops 
+                                                         [160] Proto_Resistivity::getFaceDivAndGrad 0.03484  0.2% 648 0 0 MFlops 
+                                                   [210] Proto_Resistivity::fillGrad 0.00648  0.0% 27 0 0 MFlops 
+                                                      [231] Proto_Resistivity::cellGrad 0.00253  0.0% 216 0 0 MFlops 
+                                                [163] Pr_Resistivity::fillGhostdataOutsideDomain 0.02450  0.1% 27 0 0 MFlops 
+                                                [248] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00180  0.0% 27 0 0 MFlops 
+                                                [372] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                                             [238] Base_Proto_AMRLevelOp::createCoarser 0.00229  0.0% 54 0 0 MFlops 
+                                                [386] Base_Proto_AMRLevelOp::createCoarser 0.00000  0.0% 54 0 0 MFlops 
+                                             [243] Base_Proto_AMRLevelOp::assign 0.00206  0.0% 27 0 0 MFlops 
+                                             [304] Base_Simplified_AMRLevelOp::incr 0.00028  0.0% 54 0 0 MFlops 
+                                                [305] Proto_Resistivity::axby 0.00028  0.0% 54 0 0 MFlops 
+                                             [313] Base_Proto_AMRLevelOp::norm 0.00024  0.0% 27 0 0 MFlops 
+                                          [117] BiCGStabSolver::solve::Initialize 0.09054  0.4% 27 0 0 MFlops 
+                                             [120] Base_Simplified_AMRLevelOp::residual 0.07671  0.3% 27 0 0 MFlops 
+                                                [122] Base_Simplified_AMRLevelOp::applyOp 0.07471  0.3% 27 0 0 MFlops 
+                                                   [141] Proto_Resistivity_Op::applyOperator 0.04849  0.2% 27 0 0 MFlops 
+                                                      [152] Pr_Resistivity::getDivergenceIcrement 0.04128  0.2% 648 0 0 MFlops 
+                                                         [155] Proto_Resistivity::getFlux 0.03833  0.2% 648 0 0 MFlops 
+                                                            [161] Proto_Resistivity::getFaceDivAndGrad 0.03462  0.2% 648 0 0 MFlops 
+                                                      [207] Proto_Resistivity::fillGrad 0.00650  0.0% 27 0 0 MFlops 
+                                                         [230] Proto_Resistivity::cellGrad 0.00254  0.0% 216 0 0 MFlops 
+                                                   [164] Pr_Resistivity::fillGhostdataOutsideDomain 0.02440  0.1% 27 0 0 MFlops 
+                                                   [249] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00180  0.0% 27 0 0 MFlops 
+                                                   [371] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                                                [265] Base_Proto_AMRLevelOp::create 0.00116  0.0% 27 0 0 MFlops 
+                                                [325] Proto_Resistivity::axby 0.00014  0.0% 27 0 0 MFlops 
+                                             [201] Base_Proto_AMRLevelOp::create 0.00886  0.0% 216 0 0 MFlops 
+                                             [242] Base_Proto_AMRLevelOp::assign 0.00206  0.0% 27 0 0 MFlops 
+                                             [309] Base_Proto_AMRLevelOp::norm 0.00026  0.0% 27 0 0 MFlops 
+                                          [322] BiCGStabSolver::solve::Cleanup 0.00014  0.0% 27 0 0 MFlops 
+                                             [324] Base_Simplified_AMRLevelOp::incr 0.00014  0.0% 27 0 0 MFlops 
+                                                [326] Proto_Resistivity::axby 0.00014  0.0% 27 0 0 MFlops 
+                                       [56] Pr_Resistivity::relax 0.61404  2.7% 27 0 0 MFlops 
+                                          [57] Base_Simplified_AMRLevelOp::residual 0.61194  2.7% 216 0 0 MFlops 
+                                             [58] Base_Simplified_AMRLevelOp::applyOp 0.59638  2.6% 216 0 0 MFlops 
+                                                [66] Proto_Resistivity_Op::applyOperator 0.38606  1.7% 216 0 0 MFlops 
+                                                   [75] Pr_Resistivity::getDivergenceIcrement 0.32947  1.4% 5184 0 0 MFlops 
+                                                      [83] Proto_Resistivity::getFlux 0.30579  1.3% 5184 0 0 MFlops 
+                                                         [85] Proto_Resistivity::getFaceDivAndGrad 0.27640  1.2% 5184 0 0 MFlops 
+                                                   [136] Proto_Resistivity::fillGrad 0.05181  0.2% 216 0 0 MFlops 
+                                                      [168] Proto_Resistivity::cellGrad 0.02028  0.1% 1728 0 0 MFlops 
+                                                [94] Pr_Resistivity::fillGhostdataOutsideDomain 0.19579  0.9% 216 0 0 MFlops 
+                                                [179] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01444  0.1% 216 0 0 MFlops 
+                                                [345] Base_Proto_AMRLevelOp::getDomainFromData 0.00003  0.0% 216 0 0 MFlops 
+                                             [202] Base_Proto_AMRLevelOp::create 0.00881  0.0% 216 0 0 MFlops 
+                                             [273] Proto_Resistivity::axby 0.00110  0.0% 216 0 0 MFlops 
+                                          [271] Base_Proto_AMRLevelOp::create 0.00111  0.0% 27 0 0 MFlops 
+                                 [36] Pr_Resistivity::relax 1.65630  7.2% 54 0 0 MFlops 
+                                    [37] Base_Simplified_AMRLevelOp::residual 1.65038  7.2% 432 0 0 MFlops 
+                                       [38] Base_Simplified_AMRLevelOp::applyOp 1.61318  7.0% 432 0 0 MFlops 
+                                          [44] Proto_Resistivity_Op::applyOperator 1.04993  4.6% 432 0 0 MFlops 
+                                             [51] Pr_Resistivity::getDivergenceIcrement 0.88759  3.9% 10368 0 0 MFlops 
+                                                [53] Proto_Resistivity::getFlux 0.80741  3.5% 10368 0 0 MFlops 
+                                                   [55] Proto_Resistivity::getFaceDivAndGrad 0.72235  3.1% 10368 0 0 MFlops 
+                                             [102] Proto_Resistivity::fillGrad 0.14541  0.6% 432 0 0 MFlops 
+                                                [123] Proto_Resistivity::cellGrad 0.06753  0.3% 3456 0 0 MFlops 
+                                          [62] Pr_Resistivity::fillGhostdataOutsideDomain 0.51364  2.2% 432 0 0 MFlops 
+                                          [139] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.04941  0.2% 432 0 0 MFlops 
+                                          [339] Base_Proto_AMRLevelOp::getDomainFromData 0.00005  0.0% 432 0 0 MFlops 
+                                       [174] Base_Proto_AMRLevelOp::create 0.01786  0.1% 432 0 0 MFlops 
+                                       [223] Proto_Resistivity::axby 0.00410  0.0% 432 0 0 MFlops 
+                                    [241] Base_Proto_AMRLevelOp::create 0.00224  0.0% 54 0 0 MFlops 
+                                 [107] Base_Simplified_AMRLevelOp::restrictResidual 0.10869  0.5% 27 0 0 MFlops 
+                                    [112] Base_Simplified_AMRLevelOp::residual 0.10249  0.4% 27 0 0 MFlops 
+                                       [114] Base_Simplified_AMRLevelOp::applyOp 0.10020  0.4% 27 0 0 MFlops 
+                                          [124] Proto_Resistivity_Op::applyOperator 0.06522  0.3% 27 0 0 MFlops 
+                                             [135] Pr_Resistivity::getDivergenceIcrement 0.05520  0.2% 648 0 0 MFlops 
+                                                [138] Proto_Resistivity::getFlux 0.05022  0.2% 648 0 0 MFlops 
+                                                   [148] Proto_Resistivity::getFaceDivAndGrad 0.04493  0.2% 648 0 0 MFlops 
+                                             [200] Proto_Resistivity::fillGrad 0.00898  0.0% 27 0 0 MFlops 
+                                                [221] Proto_Resistivity::cellGrad 0.00416  0.0% 216 0 0 MFlops 
+                                          [162] Pr_Resistivity::fillGhostdataOutsideDomain 0.03191  0.1% 27 0 0 MFlops 
+                                          [225] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00306  0.0% 27 0 0 MFlops 
+                                          [369] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                                       [276] Base_Proto_AMRLevelOp::create 0.00109  0.0% 27 0 0 MFlops 
+                                       [310] Proto_Resistivity::axby 0.00025  0.0% 27 0 0 MFlops 
+                                    [274] Base_Proto_AMRLevelOp::create 0.00110  0.0% 27 0 0 MFlops 
+                                 [269] Base_Proto_AMRLevelOp::createCoarser 0.00112  0.0% 27 0 0 MFlops 
+                              [26] Pr_Resistivity::relax 3.02941 13.2% 54 0 0 MFlops 
+                                 [27] Base_Simplified_AMRLevelOp::residual 3.01530 13.1% 432 0 0 MFlops 
+                                    [28] Base_Simplified_AMRLevelOp::applyOp 2.94910 12.9% 432 0 0 MFlops 
+                                       [32] Proto_Resistivity_Op::applyOperator 2.06295  9.0% 432 0 0 MFlops 
+                                          [34] Pr_Resistivity::getDivergenceIcrement 1.71624  7.5% 10368 0 0 MFlops 
+                                             [39] Proto_Resistivity::getFlux 1.51535  6.6% 10368 0 0 MFlops 
+                                                [40] Proto_Resistivity::getFaceDivAndGrad 1.33064  5.8% 10368 0 0 MFlops 
+                                          [82] Proto_Resistivity::fillGrad 0.30592  1.3% 432 0 0 MFlops 
+                                             [98] Proto_Resistivity::cellGrad 0.18065  0.8% 3456 0 0 MFlops 
+                                       [52] Pr_Resistivity::fillGhostdataOutsideDomain 0.80794  3.5% 432 0 0 MFlops 
+                                       [119] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.07797  0.3% 432 0 0 MFlops 
+                                       [334] Base_Proto_AMRLevelOp::getDomainFromData 0.00008  0.0% 432 0 0 MFlops 
+                                    [173] Base_Proto_AMRLevelOp::create 0.01815  0.1% 432 0 0 MFlops 
+                                    [183] Proto_Resistivity::axby 0.01349  0.1% 432 0 0 MFlops 
+                                 [234] Base_Proto_AMRLevelOp::create 0.00237  0.0% 54 0 0 MFlops 
+                              [93] Base_Simplified_AMRLevelOp::restrictResidual 0.19909  0.9% 27 0 0 MFlops 
+                                 [96] Base_Simplified_AMRLevelOp::residual 0.18895  0.8% 27 0 0 MFlops 
+                                    [97] Base_Simplified_AMRLevelOp::applyOp 0.18487  0.8% 27 0 0 MFlops 
+                                       [104] Proto_Resistivity_Op::applyOperator 0.12959  0.6% 27 0 0 MFlops 
+                                          [108] Pr_Resistivity::getDivergenceIcrement 0.10806  0.5% 648 0 0 MFlops 
+                                             [116] Proto_Resistivity::getFlux 0.09542  0.4% 648 0 0 MFlops 
+                                                [118] Proto_Resistivity::getFaceDivAndGrad 0.08397  0.4% 648 0 0 MFlops 
+                                          [172] Proto_Resistivity::fillGrad 0.01903  0.1% 27 0 0 MFlops 
+                                             [190] Proto_Resistivity::cellGrad 0.01121  0.0% 216 0 0 MFlops 
+                                       [137] Pr_Resistivity::fillGhostdataOutsideDomain 0.05045  0.2% 27 0 0 MFlops 
+                                       [219] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00482  0.0% 27 0 0 MFlops 
+                                       [367] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                                    [272] Base_Proto_AMRLevelOp::create 0.00111  0.0% 27 0 0 MFlops 
+                                    [280] Proto_Resistivity::axby 0.00081  0.0% 27 0 0 MFlops 
+                                 [268] Base_Proto_AMRLevelOp::create 0.00112  0.0% 27 0 0 MFlops 
+                              [270] Base_Proto_AMRLevelOp::createCoarser 0.00111  0.0% 27 0 0 MFlops 
+                           [10] Pr_Resistivity::relax 9.20484 40.1% 54 0 0 MFlops 
+                              [11] Base_Simplified_AMRLevelOp::residual 9.10926 39.7% 432 0 0 MFlops 
+                                 [12] Base_Simplified_AMRLevelOp::applyOp 8.85077 38.6% 432 0 0 MFlops 
+                                    [13] Proto_Resistivity_Op::applyOperator 6.96559 30.4% 432 0 0 MFlops 
+                                       [15] Pr_Resistivity::getDivergenceIcrement 5.72465 25.0% 10368 0 0 MFlops 
+                                          [18] Proto_Resistivity::getFlux 4.91334 21.4% 10368 0 0 MFlops 
+                                             [21] Proto_Resistivity::getFaceDivAndGrad 4.17466 18.2% 10368 0 0 MFlops 
+                                       [45] Proto_Resistivity::fillGrad 1.03531  4.5% 432 0 0 MFlops 
+                                          [54] Proto_Resistivity::cellGrad 0.73119  3.2% 3456 0 0 MFlops 
+                                    [35] Pr_Resistivity::fillGhostdataOutsideDomain 1.71590  7.5% 432 0 0 MFlops 
+                                    [99] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.16858  0.7% 432 0 0 MFlops 
+                                    [308] Base_Proto_AMRLevelOp::getDomainFromData 0.00026  0.0% 432 0 0 MFlops 
+                                 [101] Proto_Resistivity::axby 0.14629  0.6% 432 0 0 MFlops 
+                                 [167] Base_Proto_AMRLevelOp::create 0.02061  0.1% 432 0 0 MFlops 
+                              [235] Base_Proto_AMRLevelOp::create 0.00233  0.0% 54 0 0 MFlops 
+                           [59] Base_Simplified_AMRLevelOp::restrictResidual 0.59501  2.6% 27 0 0 MFlops 
+                              [60] Base_Simplified_AMRLevelOp::residual 0.57094  2.5% 27 0 0 MFlops 
+                                 [61] Base_Simplified_AMRLevelOp::applyOp 0.55431  2.4% 27 0 0 MFlops 
+                                    [63] Proto_Resistivity_Op::applyOperator 0.43623  1.9% 27 0 0 MFlops 
+                                       [67] Pr_Resistivity::getDivergenceIcrement 0.35866  1.6% 648 0 0 MFlops 
+                                          [80] Proto_Resistivity::getFlux 0.30807  1.3% 648 0 0 MFlops 
+                                             [88] Proto_Resistivity::getFaceDivAndGrad 0.26198  1.1% 648 0 0 MFlops 
+                                       [127] Proto_Resistivity::fillGrad 0.06454  0.3% 27 0 0 MFlops 
+                                          [146] Proto_Resistivity::cellGrad 0.04561  0.2% 216 0 0 MFlops 
+                                    [110] Pr_Resistivity::fillGhostdataOutsideDomain 0.10749  0.5% 27 0 0 MFlops 
+                                    [195] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01053  0.0% 27 0 0 MFlops 
+                                    [347] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 27 0 0 MFlops 
+                                 [199] Proto_Resistivity::axby 0.00973  0.0% 27 0 0 MFlops 
+                                 [266] Base_Proto_AMRLevelOp::create 0.00113  0.0% 27 0 0 MFlops 
+                              [260] Base_Proto_AMRLevelOp::create 0.00125  0.0% 27 0 0 MFlops 
+                           [267] Base_Proto_AMRLevelOp::createCoarser 0.00113  0.0% 27 0 0 MFlops 
+                     [47] AMRMultiGrid<T>::computeAMRResidualLevel 1.01021  4.4% 27 0 0 MFlops 
+                        [48] Base_Simplified_AMRLevelOp::AMRResidualNC 1.01019  4.4% 27 0 0 MFlops 
+                           [50] Base_Simplified_AMRLevelOp::AMROperatorNC 1.00379  4.4% 27 0 0 MFlops 
+                              [64] Proto_Resistivity_Op::applyOperator 0.43492  1.9% 27 0 0 MFlops 
+                                 [68] Pr_Resistivity::getDivergenceIcrement 0.35682  1.6% 648 0 0 MFlops 
+                                    [81] Proto_Resistivity::getFlux 0.30609  1.3% 648 0 0 MFlops 
+                                       [89] Proto_Resistivity::getFaceDivAndGrad 0.25999  1.1% 648 0 0 MFlops 
+                                 [125] Proto_Resistivity::fillGrad 0.06481  0.3% 27 0 0 MFlops 
+                                    [145] Proto_Resistivity::cellGrad 0.04576  0.2% 216 0 0 MFlops 
+                              [78] Pr_Resistivity::getFlux_thr 0.31954  1.4% 729 0 0 MFlops 
+                                 [79] Proto_Resistivity::getFlux 0.31918  1.4% 729 0 0 MFlops 
+                                    [87] Proto_Resistivity::getFaceDivAndGrad 0.27082  1.2% 729 0 0 MFlops 
+                              [106] PrChFluxRegister::reflux 0.12014  0.5% 27 0 0 MFlops 
+                              [109] Pr_Resistivity::fillGhostdataOutsideDomain 0.10760  0.5% 27 0 0 MFlops 
+                              [193] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01062  0.0% 27 0 0 MFlops 
+                              [205] PrChFluxRegister::setCoarFlux 0.00723  0.0% 27 0 0 MFlops 
+                              [262] PrChFluxRegister::setFineFlux 0.00124  0.0% 27 0 0 MFlops 
+                              [278] PrChFluxRegister constructor 0.00105  0.0% 27 0 0 MFlops 
+                              [366] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                              [389] PrChFluxRegister destructor 0.00000  0.0% 27 0 0 MFlops 
+                           [213] Proto_Resistivity::axby 0.00639  0.0% 27 0 0 MFlops 
+                     [69] AMRMultiGrid::relax 0.35666  1.6% 54 0 0 MFlops 
+                        [70] Pr_Resistivity::relax 0.35665  1.6% 54 0 0 MFlops 
+                           [72] Base_Simplified_AMRLevelOp::residual 0.35471  1.5% 432 0 0 MFlops 
+                              [74] Base_Simplified_AMRLevelOp::applyOp 0.34595  1.5% 432 0 0 MFlops 
+                                 [91] Proto_Resistivity_Op::applyOperator 0.24397  1.1% 432 0 0 MFlops 
+                                    [92] Pr_Resistivity::getDivergenceIcrement 0.21591  0.9% 1296 0 0 MFlops 
+                                       [95] Proto_Resistivity::getFlux 0.19047  0.8% 1296 0 0 MFlops 
+                                          [100] Proto_Resistivity::getFaceDivAndGrad 0.16746  0.7% 1296 0 0 MFlops 
+                                    [165] Proto_Resistivity::fillGrad 0.02273  0.1% 432 0 0 MFlops 
+                                       [166] Proto_Resistivity::cellGrad 0.02244  0.1% 432 0 0 MFlops 
+                                 [113] Pr_Resistivity::fillGhostdataOutsideDomain 0.10176  0.4% 432 0 0 MFlops 
+                                 [332] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00009  0.0% 432 0 0 MFlops 
+                                 [342] Base_Proto_AMRLevelOp::getDomainFromData 0.00004  0.0% 432 0 0 MFlops 
+                              [236] Base_Proto_AMRLevelOp::create 0.00232  0.0% 432 0 0 MFlops 
+                              [250] Proto_Resistivity::axby 0.00169  0.0% 432 0 0 MFlops 
+                           [296] Base_Proto_AMRLevelOp::create 0.00041  0.0% 54 0 0 MFlops 
+                     [129] Base_Simplified_AMRLevelOp::AMRRestrict 0.05895  0.3% 27 0 0 MFlops 
+                        [132] Base_Simplified_AMRLevelOp::AMROperatorNF 0.05739  0.3% 27 0 0 MFlops 
+                           [157] Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03532  0.2% 27 0 0 MFlops 
+                           [176] Proto_Resistivity_Op::applyOperator 0.01553  0.1% 27 0 0 MFlops 
+                              [181] Pr_Resistivity::getDivergenceIcrement 0.01361  0.1% 81 0 0 MFlops 
+                                 [188] Proto_Resistivity::getFlux 0.01198  0.1% 81 0 0 MFlops 
+                                    [196] Proto_Resistivity::getFaceDivAndGrad 0.01051  0.0% 81 0 0 MFlops 
+                              [254] Proto_Resistivity::fillGrad 0.00150  0.0% 27 0 0 MFlops 
+                                 [257] Proto_Resistivity::cellGrad 0.00147  0.0% 27 0 0 MFlops 
+                           [209] Pr_Resistivity::fillGhostdataOutsideDomain 0.00649  0.0% 27 0 0 MFlops 
+                           [350] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 27 0 0 MFlops 
+                        [311] Base_Proto_AMRLevelOp::create 0.00024  0.0% 27 0 0 MFlops 
+                     [130] Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.05750  0.3% 27 0 0 MFlops 
+                        [134] Base_Simplified_AMRLevelOp::AMROperatorNF 0.05717  0.2% 27 0 0 MFlops 
+                           [159] Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03512  0.2% 27 0 0 MFlops 
+                           [175] Proto_Resistivity_Op::applyOperator 0.01553  0.1% 27 0 0 MFlops 
+                              [180] Pr_Resistivity::getDivergenceIcrement 0.01363  0.1% 81 0 0 MFlops 
+                                 [187] Proto_Resistivity::getFlux 0.01203  0.1% 81 0 0 MFlops 
+                                    [194] Proto_Resistivity::getFaceDivAndGrad 0.01053  0.0% 81 0 0 MFlops 
+                              [253] Proto_Resistivity::fillGrad 0.00151  0.0% 27 0 0 MFlops 
+                                 [256] Proto_Resistivity::cellGrad 0.00148  0.0% 27 0 0 MFlops 
+                           [211] Pr_Resistivity::fillGhostdataOutsideDomain 0.00647  0.0% 27 0 0 MFlops 
+                           [351] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 27 0 0 MFlops 
+                        [316] Proto_Resistivity::axby 0.00017  0.0% 27 0 0 MFlops 
+                        [320] Base_Proto_AMRLevelOp::create 0.00015  0.0% 27 0 0 MFlops 
+                     [153] Base_Proto_AMRLevelOp::assign 0.04094  0.2% 108 0 0 MFlops 
+                     [156] Base_Simplified_AMRLevelOp::AMRProlong 0.03570  0.2% 27 0 0 MFlops 
+                        [170] Base_Proto_AMRLevelOp::copyTo 0.02021  0.1% 27 0 0 MFlops 
+                        [307] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00027  0.0% 27 0 0 MFlops 
+                        [321] Base_Proto_AMRLevelOp::createCoarser 0.00014  0.0% 27 0 0 MFlops 
+                     [216] Base_Simplified_AMRLevelOp::incr 0.00606  0.0% 81 0 0 MFlops 
+                        [217] Proto_Resistivity::axby 0.00604  0.0% 81 0 0 MFlops 
+                  [42] AMRMultiGrid::computeAMRResidual 1.09435  4.8% 27 0 0 MFlops 
+                     [43] AMRMultiGrid<T>::computeAMRResidualLevel 1.06782  4.7% 54 0 0 MFlops 
+                        [46] Base_Simplified_AMRLevelOp::AMRResidualNC 1.01037  4.4% 27 0 0 MFlops 
+                           [49] Base_Simplified_AMRLevelOp::AMROperatorNC 1.00383  4.4% 27 0 0 MFlops 
+                              [65] Proto_Resistivity_Op::applyOperator 0.43444  1.9% 27 0 0 MFlops 
+                                 [71] Pr_Resistivity::getDivergenceIcrement 0.35623  1.6% 648 0 0 MFlops 
+                                    [84] Proto_Resistivity::getFlux 0.30562  1.3% 648 0 0 MFlops 
+                                       [90] Proto_Resistivity::getFaceDivAndGrad 0.25967  1.1% 648 0 0 MFlops 
+                                 [126] Proto_Resistivity::fillGrad 0.06457  0.3% 27 0 0 MFlops 
+                                    [147] Proto_Resistivity::cellGrad 0.04560  0.2% 216 0 0 MFlops 
+                              [76] Pr_Resistivity::getFlux_thr 0.32036  1.4% 729 0 0 MFlops 
+                                 [77] Proto_Resistivity::getFlux 0.32002  1.4% 729 0 0 MFlops 
+                                    [86] Proto_Resistivity::getFaceDivAndGrad 0.27125  1.2% 729 0 0 MFlops 
+                              [105] PrChFluxRegister::reflux 0.12026  0.5% 27 0 0 MFlops 
+                              [111] Pr_Resistivity::fillGhostdataOutsideDomain 0.10720  0.5% 27 0 0 MFlops 
+                              [197] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01050  0.0% 27 0 0 MFlops 
+                              [204] PrChFluxRegister::setCoarFlux 0.00724  0.0% 27 0 0 MFlops 
+                              [261] PrChFluxRegister::setFineFlux 0.00125  0.0% 27 0 0 MFlops 
+                              [277] PrChFluxRegister constructor 0.00106  0.0% 27 0 0 MFlops 
+                              [373] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                              [390] PrChFluxRegister destructor 0.00000  0.0% 27 0 0 MFlops 
+                           [206] Proto_Resistivity::axby 0.00652  0.0% 27 0 0 MFlops 
+                        [131] Base_Simplified_AMRLevelOp::AMRResidualNF 0.05742  0.3% 27 0 0 MFlops 
+                           [133] Base_Simplified_AMRLevelOp::AMROperatorNF 0.05722  0.2% 27 0 0 MFlops 
+                              [158] Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.03520  0.2% 27 0 0 MFlops 
+                              [177] Proto_Resistivity_Op::applyOperator 0.01548  0.1% 27 0 0 MFlops 
+                                 [182] Pr_Resistivity::getDivergenceIcrement 0.01356  0.1% 81 0 0 MFlops 
+                                    [189] Proto_Resistivity::getFlux 0.01195  0.1% 81 0 0 MFlops 
+                                       [198] Proto_Resistivity::getFaceDivAndGrad 0.01046  0.0% 81 0 0 MFlops 
+                                 [255] Proto_Resistivity::fillGrad 0.00149  0.0% 27 0 0 MFlops 
+                                    [258] Proto_Resistivity::cellGrad 0.00146  0.0% 27 0 0 MFlops 
+                              [208] Pr_Resistivity::fillGhostdataOutsideDomain 0.00649  0.0% 27 0 0 MFlops 
+                              [346] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 27 0 0 MFlops 
+                           [314] Proto_Resistivity::axby 0.00018  0.0% 27 0 0 MFlops 
+                     [169] Base_Proto_AMRLevelOp::assign 0.02023  0.1% 27 0 0 MFlops 
+                     [215] Base_Proto_AMRLevelOp::norm 0.00609  0.0% 54 0 0 MFlops 
+                  [142] Initial AMR Residual 0.04708  0.2% 1 0 0 MFlops 
+                     [143] AMRMultiGrid::computeAMRResidual 0.04708  0.2% 1 0 0 MFlops 
+                        [144] AMRMultiGrid<T>::computeAMRResidualLevel 0.04620  0.2% 2 0 0 MFlops 
+                           [149] Base_Simplified_AMRLevelOp::AMRResidualNC 0.04393  0.2% 1 0 0 MFlops 
+                              [150] Base_Simplified_AMRLevelOp::AMROperatorNC 0.04365  0.2% 1 0 0 MFlops 
+                                 [171] Proto_Resistivity_Op::applyOperator 0.01928  0.1% 1 0 0 MFlops 
+                                    [178] Pr_Resistivity::getDivergenceIcrement 0.01481  0.1% 24 0 0 MFlops 
+                                       [186] Proto_Resistivity::getFlux 0.01282  0.1% 24 0 0 MFlops 
+                                          [191] Proto_Resistivity::getFaceDivAndGrad 0.01083  0.0% 24 0 0 MFlops 
+                                    [224] Proto_Resistivity::fillGrad 0.00370  0.0% 1 0 0 MFlops 
+                                       [226] Proto_Resistivity::cellGrad 0.00290  0.0% 8 0 0 MFlops 
+                                 [184] Pr_Resistivity::getFlux_thr 0.01333  0.1% 27 0 0 MFlops 
+                                    [185] Proto_Resistivity::getFlux 0.01332  0.1% 27 0 0 MFlops 
+                                       [192] Proto_Resistivity::getFaceDivAndGrad 0.01066  0.0% 27 0 0 MFlops 
+                                 [218] PrChFluxRegister::reflux 0.00544  0.0% 1 0 0 MFlops 
+                                 [222] Pr_Resistivity::fillGhostdataOutsideDomain 0.00410  0.0% 1 0 0 MFlops 
+                                 [279] PrChFluxRegister::setCoarFlux 0.00086  0.0% 1 0 0 MFlops 
+                                 [297] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00039  0.0% 1 0 0 MFlops 
+                                 [331] PrChFluxRegister constructor 0.00009  0.0% 1 0 0 MFlops 
+                                 [337] PrChFluxRegister::setFineFlux 0.00006  0.0% 1 0 0 MFlops 
+                                 [382] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 1 0 0 MFlops 
+                                 [400] PrChFluxRegister destructor 0.00000  0.0% 1 0 0 MFlops 
+                              [306] Proto_Resistivity::axby 0.00028  0.0% 1 0 0 MFlops 
+                           [239] Base_Simplified_AMRLevelOp::AMRResidualNF 0.00227  0.0% 1 0 0 MFlops 
+                              [240] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00226  0.0% 1 0 0 MFlops 
+                                 [259] Proto_Resistivity::fillGhostDataOverCoarseFineInterface 0.00134  0.0% 1 0 0 MFlops 
+                                 [285] Proto_Resistivity_Op::applyOperator 0.00068  0.0% 1 0 0 MFlops 
+                                    [291] Pr_Resistivity::getDivergenceIcrement 0.00056  0.0% 3 0 0 MFlops 
+                                       [293] Proto_Resistivity::getFlux 0.00049  0.0% 3 0 0 MFlops 
+                                          [295] Proto_Resistivity::getFaceDivAndGrad 0.00043  0.0% 3 0 0 MFlops 
+                                    [329] Proto_Resistivity::fillGrad 0.00011  0.0% 1 0 0 MFlops 
+                                       [330] Proto_Resistivity::cellGrad 0.00010  0.0% 1 0 0 MFlops 
+                                 [312] Pr_Resistivity::fillGhostdataOutsideDomain 0.00024  0.0% 1 0 0 MFlops 
+                                 [381] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 1 0 0 MFlops 
+                              [358] Proto_Resistivity::axby 0.00001  0.0% 1 0 0 MFlops 
+                        [284] Base_Proto_AMRLevelOp::assign 0.00075  0.0% 1 0 0 MFlops 
+                        [328] Base_Proto_AMRLevelOp::norm 0.00011  0.0% 2 0 0 MFlops 
+                  [212] Base_Simplified_AMRLevelOp::incr 0.00639  0.0% 54 0 0 MFlops 
+                     [214] Proto_Resistivity::axby 0.00639  0.0% 54 0 0 MFlops 
+                  [233] uberCorrection 0.00242  0.0% 2 0 0 MFlops 
+                     [323] Base_Proto_AMRLevelOp::create 0.00014  0.0% 4 0 0 MFlops 
+               [335] Base_Proto_AMRLevelOp::create 0.00007  0.0% 2 0 0 MFlops 
+            [292] AMRMultiGrid::init 0.00052  0.0% 1 0 0 MFlops 
+               [299] MutliGrid::init 0.00035  0.0% 2 0 0 MFlops 
+                  [300] Base_Proto_AMRLevelOp::createCoarser 0.00035  0.0% 6 0 0 MFlops 
+               [317] Base_Proto_AMRLevelOp::create 0.00016  0.0% 4 0 0 MFlops 
+               [360] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00001  0.0% 1 0 0 MFlops 
+            [399] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+         [228] PrChUtilities::setupSolver 0.00278  0.0% 1 0 0 MFlops 
+            [229] AMRMultiGrid::define 0.00276  0.0% 1 0 0 MFlops 
+               [246] MultiGrid::define 0.00194  0.0% 2 0 0 MFlops 
+                  [247] Pr_Resistivity_Factory_MGnewOp 0.00193  0.0% 7 0 0 MFlops 
+                     [252] Pr_Resistivity_Factory_getCoefficients 0.00159  0.0% 5 0 0 MFlops 
+                     [301] Proto_Resistivity_Op::Proto_Resistivity_Op 0.00034  0.0% 5 0 0 MFlops 
+                        [333] Pr_Resistivity::defineAndSetRelaxationCoefficient 0.00008  0.0% 5 0 0 MFlops 
+               [281] Pr_Resistivity_Factory_AMRnewOp 0.00079  0.0% 2 0 0 MFlops 
+                  [282] Proto_Resistivity_Op::Proto_Resistivity_Op 0.00079  0.0% 2 0 0 MFlops 
+                     [287] Pr_Resistivity::defineAndSetRelaxationCoefficient 0.00065  0.0% 2 0 0 MFlops 
+               [393] ~Copier 0.00000  0.0% 4 0 0 MFlops 
+         [263] PrChUtilities::copyToDevice-Cell 0.00122  0.0% 2 0 0 MFlops 
+            [379] PrChUtilities::getRaHostData 0.00000  0.0% 2 0 0 MFlops 
+         [283] PrChUtilities::copyToHost 0.00078  0.0% 2 0 0 MFlops 
+            [363] PrChUtilities::getRaHostData 0.00001  0.0% 2 0 0 MFlops 
+         [286] defineAndSetCoefficients 0.00067  0.0% 2 0 0 MFlops 
+         [288] PrChUtilities::getProtoViscousTensorOpFactory 0.00063  0.0% 1 0 0 MFlops 
+            [289] PrChUtilities::protoizeCoefficients 0.00063  0.0% 1 0 0 MFlops 
+               [294] PrChUtilities::copyToDevice-Flux 0.00047  0.0% 2 0 0 MFlops 
+               [341] PrChUtilities::getProtoLayout 0.00005  0.0% 2 0 0 MFlops 
+                  [374] PrChUtilities::getRawLayout 0.00000  0.0% 2 0 0 MFlops 
+            [365] Pr_Resistivity_Factory_Constructor 0.00000  0.0% 1 0 0 MFlops 
+         [290] ~AMRMultiGrid 0.00061  0.0% 1 0 0 MFlops 
+         [349] ~LayoutData 0.00002  0.0% 2 0 0 MFlops 
+         [359] PrChUtilities::getProtoLayout 0.00001  0.0% 2 0 0 MFlops 
+            [376] PrChUtilities::getRawLayout 0.00000  0.0% 2 0 0 MFlops 
+         [384] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+         [394] ~LevelData 0.00000  0.0% 2 0 0 MFlops 
+         [395] ~BoxLayoutData 0.00000  0.0% 2 0 0 MFlops 
+      [220] WriteAMRHierarchyHDF5 0.00424  0.0% 1 0 0 MFlops 
+         [227] WriteFile 0.00287  0.0% 1 0 0 MFlops 
+            [232] Write Level 0.00242  0.0% 2 0 0 MFlops 
+               [237] write_Level 0.00231  0.0% 2 0 0 MFlops 
+                  [245] linearize_H5Dwrite 0.00198  0.0% 2 0 0 MFlops 
+                     [251] H5Dwrite 0.00167  0.0% 9 0 0 MFlops 
+                     [303] linearize 0.00029  0.0% 9 0 0 MFlops 
+                  [315] WriteAttributes 0.00017  0.0% 2 0 0 MFlops 
+                  [340] H5S_H5D_offsets_create 0.00005  0.0% 2 0 0 MFlops 
+                  [344] H5Dcreate 0.00004  0.0% 2 0 0 MFlops 
+                  [352] WriteOffsets 0.00002  0.0% 2 0 0 MFlops 
+                  [353] H5S_H5D_offsets_close 0.00001  0.0% 2 0 0 MFlops 
+                  [361] freeMT 0.00001  0.0% 2 0 0 MFlops 
+                  [362] H5Dclose 0.00001  0.0% 2 0 0 MFlops 
+                  [364] getOffsets 0.00001  0.0% 2 0 0 MFlops 
+                     [375] offsets.resize 0.00000  0.0% 2 0 0 MFlops 
+                     [391] dataSize 0.00000  0.0% 9 0 0 MFlops 
+                     [392] offsets calc 0.00000  0.0% 9 0 0 MFlops 
+                  [368] mallocMT_buffers 0.00000  0.0% 2 0 0 MFlops 
+                  [377] H5Screate 0.00000  0.0% 2 0 0 MFlops 
+                  [380] H5Sclose 0.00000  0.0% 2 0 0 MFlops 
+                  [387] ComputeBufferCapacity 0.00000  0.0% 2 0 0 MFlops 
+               [343] writeToFile 0.00004  0.0% 2 0 0 MFlops 
+               [356] setGroup 0.00001  0.0% 2 0 0 MFlops 
+               [398] calc minimum in outputGhost 0.00000  0.0% 2 0 0 MFlops 
+         [264] CreateFile 0.00120  0.0% 1 0 0 MFlops 
+         [319] CloseFile 0.00015  0.0% 1 0 0 MFlops 
+      [244] setRHS 0.00200  0.0% 1 0 0 MFlops 
+      [298] ~LayoutData 0.00035  0.0% 4 0 0 MFlops 
+      [302] PrChUtilities::setupLLCornerGrids 0.00033  0.0% 1 0 0 MFlops 
+         [327] setupGrids: meshRefine and all that 0.00011  0.0% 1 0 0 MFlops 
+            [338] MeshRefine::regrid 0.00006  0.0% 1 0 0 MFlops 
+               [354] BRMeshRefine::makeBoxes 0.00001  0.0% 2 0 0 MFlops 
+            [355] DisjointBoxLayout::computeNeighbors 0.00001  0.0% 2 0 0 MFlops 
+            [378] LoadBalance:VectorBoxEntry 0.00000  0.0% 2 0 0 MFlops 
+               [388] LoadBalance:VectorBoxSimple 0.00000  0.0% 2 0 0 MFlops 
+         [336] setupGrids: BaseGridCreation 0.00006  0.0% 1 0 0 MFlops 
+            [348] DisjointBoxLayout::computeNeighbors 0.00002  0.0% 1 0 0 MFlops 
+            [357] LoadBalance:VectorBoxEntry 0.00001  0.0% 1 0 0 MFlops 
+               [383] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+            [370] BRMeshRefine::domainSplit 0.00000  0.0% 1 0 0 MFlops 
+      [385] ~Copier 0.00000  0.0% 4 0 0 MFlops 
+      [396] ~LevelData 0.00000  0.0% 4 0 0 MFlops 
+      [397] ~BoxLayoutData 0.00000  0.0% 4 0 0 MFlops 
+stack top 0x5194cc, stack bottom 0x518ee9, stack size =    0.001 MB 
+[399] AMRMultiGrid::revert
