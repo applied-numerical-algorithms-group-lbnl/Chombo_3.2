@@ -216,9 +216,10 @@ public:
   {
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNF");
     ch_dom domain = this->getDomainFromData(a_phiMedi);
-    level_data_type& castphi = (level_data_type&)(a_phiMedi);
-    fillGhostDataOutsideDomain(castphi, domain);
-    fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
+    level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
+    level_data_type& castphi_coar = (level_data_type&)(a_phiMedi);
+    fillGhostDataOutsideDomain(castphi_medi, domain);
+    fillGhostDataOverCoarseFineInterface(castphi_medi, castphi_coar);
     applyOperator(a_lphMedi, a_phiMedi);
       
   }
@@ -233,13 +234,13 @@ public:
   {
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNC");
     ch_dom domain = getDomainFromData(a_phiMedi);
-    level_data_type& castphi = (level_data_type&)(a_phiMedi);
-    fillGhostDataOutsideDomain(          castphi, domain);
-    fillGhostDataOverCoarseFineInterface(castphi, a_phiMedi);
-    fillGhostDataOverFineFineInterface(castphi);
+    level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
+    level_data_type& castphi_fine = (level_data_type&)(a_phiFine);
+    fillGhostDataOutsideDomain(        castphi_medi, domain);
+    fillGhostDataOverFineFineInterface(castphi_medi);
     applyOperator(a_lphMedi, a_phiMedi);
     //finer level should always be defined if you got here.
-    this->refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
+    this->refluxFineCorrection(a_lphMedi, castphi_fine, castphi_medi, a_finerOp);
   }
 
  

@@ -162,12 +162,11 @@ namespace Chombo
       
       Vector<ch_ldf* > phi_ch(numLevels, NULL);
       Vector<ch_ldf* > rhs_ch(numLevels, NULL);
-      IntVect ivghost = 4*IntVect::Unit; 
       for (int lev=0; lev< numLevels; lev++)
       {
         const ch_dbl& levelGrids = amrGrids[lev];
-        phi_ch[lev] = new ch_ldf(levelGrids, 1, ivghost);
-        rhs_ch[lev] = new ch_ldf(levelGrids, 1, ivghost);
+        phi_ch[lev] = new ch_ldf(levelGrids, 1, 2*IntVect::Unit);
+        rhs_ch[lev] = new ch_ldf(levelGrids, 1,   IntVect::Zero);
       }
 
       setRHS(rhs_ch, amrDomains, refRatios, amrDx, finestLevel );
