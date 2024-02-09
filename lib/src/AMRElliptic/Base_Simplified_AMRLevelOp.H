@@ -234,7 +234,8 @@ public:
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNC");
     ch_dom domain = getDomainFromData(a_phiMedi);
     level_data_type& castphi = (level_data_type&)(a_phiMedi);
-    fillGhostDataOutsideDomain(        castphi, domain);
+    fillGhostDataOutsideDomain(          castphi, domain);
+    fillGhostDataOverCoarseFineInterface(castphi, a_phiMedi);
     fillGhostDataOverFineFineInterface(castphi);
     applyOperator(a_lphMedi, a_phiMedi);
     //finer level should always be defined if you got here.
