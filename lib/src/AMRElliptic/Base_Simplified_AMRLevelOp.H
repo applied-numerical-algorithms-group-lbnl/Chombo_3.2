@@ -217,7 +217,7 @@ public:
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperatorNF");
     ch_dom domain = this->getDomainFromData(a_phiMedi);
     level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
-    level_data_type& castphi_coar = (level_data_type&)(a_phiMedi);
+    level_data_type& castphi_coar = (level_data_type&)(a_phiCoar);
     fillGhostDataOutsideDomain(castphi_medi, domain);
     fillGhostDataOverCoarseFineInterface(castphi_medi, castphi_coar);
     applyOperator(a_lphMedi, a_phiMedi);
