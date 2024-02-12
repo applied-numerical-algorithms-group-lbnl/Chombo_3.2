@@ -594,8 +594,9 @@ Real AMRPoissonOp::norm(const LevelData<FArrayBox>& a_x,
                         int                         a_ord)
 {
   CH_TIME("AMRPoissonOp::norm");
-
-  return CH_XD::norm(a_x, a_x.interval(), a_ord);
+//  little wobbly. (just kidding--the proto one uses max --dtg)
+//  return CH_XD::norm(a_x, a_x.interval(), a_ord);
+  return CH_XD::norm(a_x, a_x.interval(), 0);
 }
 
 // ---------------------------------------------------------
