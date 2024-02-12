@@ -2,8 +2,8 @@
 #define ____Debugging_Tools____
 ///set this stuff so you can customize your area
 //box bounds of area
-#define DBG_LOX 0
-#define DBG_HIX 8
+#define DBG_LOX 6
+#define DBG_HIX 12
 #define DBG_LOY 0
 #define DBG_HIY 7
 #define DBG_LOZ 0
