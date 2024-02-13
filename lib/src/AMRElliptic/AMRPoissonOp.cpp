@@ -346,6 +346,8 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
   // (alpha - 6 * beta/h/h) in 3D,
   // so inverse of this is our initial multiplier
 
+#if 0
+  //strangely effective old code
   CH_assert(a_phi.nComp() == a_rhs.nComp());
 
   Real mult = 1.0 / (m_alpha - 2.0*SpaceDim * m_beta / (m_dx*m_dx));
@@ -362,6 +364,10 @@ void AMRPoissonOp::preCond(LevelData<FArrayBox>&       a_phi,
       }
  //end pragma
   relax(a_phi, a_rhs, 2);
+#else
+  //what proto is doing.
+  relax(a_phi, a_rhs, 27);
+#endif  
 }
 
 // ---------------------------------------------------------

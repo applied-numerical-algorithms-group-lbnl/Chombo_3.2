@@ -1,13 +1,12 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-///set this stuff so you can customize your area
-//box bounds of area
 #define DBG_LOX 0
-#define DBG_HIX 7
+#define DBG_HIX 3
 #define DBG_LOY 0
-#define DBG_HIY 7
+#define DBG_HIY 3
 #define DBG_LOZ 0
 #define DBG_HIZ 0
+#define VALID_ONLY TRUE
 
 #include "Proto.H"
 #include "FArrayBox.H"
@@ -18,8 +17,29 @@
 
 /// Old school Debugging utilities 
 /**
-  If you want to print areas of data to screen during a debug session,
-  this is the way you do it.  All of these functions can be called from gdb.
+  // f you want to print areas of data to screen during a debug session,
+  // his is the way you do it.  All of these functions can be called from gdb.
+  // LDR:
+  // This is a set  of crude but effective tools to  print out stuff from gdb.   
+  // Send pointers to the data to these functions and the data gets printed out neatly.    
+  // The user is meant to hack the the bounds according to her needs.   
+  // The macros above are the primary buttons to modify.    
+  // 
+  // Set the bounds (DBG_LOX and so on) to customize which area gets printed.
+  // Set VALID_ONLY to TRUE if you only want valid data printed when a 
+  //     level gets printed out (sometimes it is help ful to see ghost data, other times not so much).
+  // 
+  // This command:
+  // (gdb) p PrChDebug::dumpLDAreaPr(&a_cor)  
+  // yeilds:
+  // ibox = 0:
+  // data_box = [(-2,-2),( 3, 3)], area_box = [( 0, 0),( 3, 3)]
+  // data for variable 0:
+  // ( 0, 3): 4.86993301e-05  ( 1, 3): 3.13317884e-04  ( 2, 3): 1.72362925e-04  ( 3, 3): 6.44824962e-05  
+  // ( 0, 2): 3.13287135e-04  ( 1, 2): 5.52541534e-04  ( 2, 2): 8.82170603e-04  ( 3, 2): 1.72362925e-04  
+  // ( 0, 1): 1.72411307e-04  ( 1, 1): 8.82090868e-04  ( 2, 1): 5.52541534e-04  ( 3, 1): 3.13317884e-04  
+  // ( 0, 0): 6.46298245e-05  ( 1, 0): 1.72411307e-04  ( 2, 0): 3.13287135e-04  ( 3, 0): 4.86993301e-05  
+  // and so on.
 **/
 namespace PrChDebug
 {
@@ -53,39 +73,35 @@ namespace PrChDebug
       a_sten_ptr->print();
     }
   }
-  ///
-  void 
-  dumpAreaCh(ch_fab* dataPtr)
-  {
-    static const ch_iv       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
-    static const ch_iv       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
-    static const ch_box     s_areaBox(s_areaLo, s_areaHi);
 
-    if(dataPtr != NULL)
+  void 
+  dumpCh(ch_fab* a_dataPtr, ch_box a_areaBox)
+  {
+
+    if(a_dataPtr != NULL)
     {
       using std::cout;
       using std::end;
-
       cout    << setprecision(8)
               << setiosflags(ios::showpoint)
               << setiosflags(ios::scientific);
 
-      ch_box area = s_areaBox;
+      ch_box area = a_areaBox;
 
-      ch_fab & data   = *dataPtr;
-      ch_box databox  = dataPtr->box();
-      ch_iv  hidata    = databox.bigEnd();
-      ch_iv  lodata    = databox.smallEnd();
+      ch_fab & data    =*a_dataPtr;
+      ch_box databox   = a_dataPtr->box();
+      ch_iv  hidata    =   databox.bigEnd();
+      ch_iv  lodata    =   databox.smallEnd();
 
       ///to get around weird box types
       ch_box printBox(lodata, hidata);
-      printBox &= s_areaBox;
+      printBox &= a_areaBox;
       ch_iv lodeb = printBox.smallEnd();
       ch_iv hideb = printBox.bigEnd();
       
       for(int ivar = 0; ivar < data.nComp(); ivar++)
       {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
+        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  endl;
         cout << "data for variable "<< ivar << ":" << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
@@ -117,12 +133,18 @@ namespace PrChDebug
 
   ///
   void 
-  dumpAreaPr(pr_fab_1* dataPtr)
+  dumpAreaCh(ch_fab* dataPtr)
   {
-    static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
-    static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
-    static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-
+    static const ch_iv       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+    static const ch_iv       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+    static const ch_box     s_areaBox(s_areaLo, s_areaHi);
+    dumpCh(dataPtr, s_areaBox);
+  }
+  
+  ///
+  void 
+  dumpPr(pr_fab_1* dataPtr, pr_box a_areaBox)
+  {
     if(dataPtr != NULL)
     {
       using std::cout;
@@ -132,17 +154,17 @@ namespace PrChDebug
               << setiosflags(ios::showpoint)
               << setiosflags(ios::scientific);
 
-      pr_box area = s_areaBox;
+      pr_box area = a_areaBox;
 
       auto & data   = *dataPtr;
       pr_box databox  = dataPtr->box();
-      pr_box printBox = databox & s_areaBox;
+      pr_box printBox = databox & a_areaBox;
       pr_pt  hideb    = printBox.high();
       pr_pt  lodeb    = printBox.low();
       
       int ivar = 0;
       {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
+        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  endl;
         cout << "data for variable "<< ivar << ":" << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
@@ -170,8 +192,16 @@ namespace PrChDebug
 #endif
       }// end loop over components
     } //end if not null
-  } //end function dumpAreaPr
+  } //end function dumpPr
 
+  void 
+  dumpAreaPr(pr_fab_1* dataPtr)
+  {
+    static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+    static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+    static const pr_box     s_areaBox(s_areaLo, s_areaHi);
+    dumpPr(dataPtr, s_areaBox);
+  }
 
   void 
   dumpAreaVecPr(pr_fab_vec* dataPtr)
@@ -407,12 +437,24 @@ namespace PrChDebug
   {
     if(dataPtr != NULL)
     {
+      static const ch_iv       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+      static const ch_iv       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+      static const ch_box     s_areaBox(s_areaLo, s_areaHi);
+
       ch_ldf & data = *dataPtr;
+      ch_dbl   grid = data.disjointBoxLayout();
       ch_dit  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.size(); ibox++)
       {
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaCh(&data[dit[ibox]]);
+        ch_box valid = grid[dit[ibox]];
+#if VALID_ONLY==TRUE
+        ch_box valid_area = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = :" << valid_area << endl;
+        dumpCh(&data[dit[ibox]], valid_area);
+#else
+        cout << "ibox = " << ibox << ", valid = " << valid << ":"<< endl;
+        dumpCh(&data[dit[ibox]], s_areaBox);
+#endif        
       }
     }
   }
@@ -427,8 +469,18 @@ namespace PrChDebug
       auto  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
+        static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+        static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+        static const pr_box     s_areaBox(s_areaLo, s_areaHi);
+#if VALID_ONLY==TRUE
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        dumpPr(&data[dit[ibox]], valid_area);
+#else        
         cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaPr(&data[dit[ibox]]);
+        dumpPr(&data[dit[ibox]], s_areaBox);
+#endif        
       }
     }
   }
