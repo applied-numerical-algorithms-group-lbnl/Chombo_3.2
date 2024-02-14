@@ -5,6 +5,44 @@
 namespace PrChTools
 {
   ///
+  class InterpolationUtilities
+  {
+  public:
+    typedef  Proto::ProblemDomain                  pr_dom;
+    typedef  Proto::Point                          pr_pt;
+    typedef  Proto::Shift                          pr_shift;
+    typedef  Proto::Box                            pr_box;
+    typedef  Proto::BoxData<double, 1    >         pr_box_data;
+    typedef  Proto::Stencil<double>                pr_sten;
+    
+    ///zeroth order interpolation
+    static vector<pr_sten>
+    getZerothInterpStencils(int    a_ref_rat)
+    {
+      pr_box ref_box(pr_pt::Zeros(), pr_pt::Ones(a_ref_rat -1));
+      int numPts = ref_box.size();
+      vector<pr_sten> retval(numPts);
+
+      pr_pt dst_ref_ratio = pr_pt::Ones(a_ref_rat);
+      pr_pt src_ref_ratio = pr_pt::Ones(1);
+      pr_shift   home_shift(pr_pt::Zeros());
+      pr_sten    home_sten(home_shift, 1.);
+      int ipt = 0;
+      for(auto boxit = ref_box.begin(); boxit != ref_box.end(); ++boxit)
+      {
+        pr_pt box_loc = *boxit;
+        pr_sten pt_sten  =  home_sten;
+
+        pt_sten.srcRatio()  = src_ref_ratio;
+        pt_sten.destRatio() = dst_ref_ratio;
+        pt_sten.destShift() = box_loc;
+        retval[ipt]= pt_sten;
+        ipt++;
+      }
+    
+      return retval;
+    }
+  };
   class AveragingUtilities
   {
   public:

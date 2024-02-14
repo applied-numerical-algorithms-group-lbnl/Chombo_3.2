@@ -1,6 +1,7 @@
 #include "Base_Simplified_AMRLevelOp.H"
 #include "ProtoInterface.H"
 #include "PrChFluxRegister.H"
+#include "PrChAveraging.H"
 #include "Proto.H"
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
@@ -36,41 +37,43 @@
      
    In the end, all operators have to implement 5 functions.
 **/
-  ///
-  /**
-     Base_Proto_AMRLevelOp
-     All the proto-dependent default implementations go here.
-     The distinction is probably academic but it does make for  smaller classes.
+///
+/**
+   Base_Proto_AMRLevelOp
+   All the proto-dependent default implementations go here.
+   The distinction is probably academic but it does make for  smaller classes.
 
-     This layer deals with proto<---->chombo conversions and will deal
-     only with the purely virtual functions of
-     Base_Simplified_AMRLevelOp.  This layer leans heavily upon the
-     proto interface.  Only operator-dependent stuff is left out.
+   This layer deals with proto<---->chombo conversions and will deal
+   only with the purely virtual functions of
+   Base_Simplified_AMRLevelOp.  This layer leans heavily upon the
+   proto interface.  Only operator-dependent stuff is left out.
 
-     The operator class has to implement the following:
-     (1) applyOperator
-     (2) relax 
-     (3) fillGhostCellsOutsideDomain
-     (4) getFlux
-     (5) refToCoarser.
+   The operator class has to implement the following:
+   (1) applyOperator
+   (2) relax 
+   (3) fillGhostCellsOutsideDomain
+   (4) getFlux
+   (5) refToCoarser.
 
-     Some of these could be reasonably hardwired (force gsrb, first
-     order prolongation, etc.), If this gets reused enough, we can
-     do that. But for now, five shall be the number (and 5 << 83).  
+   Some of these could be reasonably hardwired (force gsrb, first
+   order prolongation, etc.), If this gets reused enough, we can
+   do that. But for now, five shall be the number (and 5 << 83).  
+   There are many default function
+   implementations here.  All will have timers.  If, for a
+   particular operator, one of these functions become odious, that
+   operator can supercede it (all these functions are virtual).
 
-     An important design point here is that both base classes have no
-     data.  I prefer base classes to just be base classes with all
-     data living in the derived class.  There are many default function
-     implementations here.  All will have timers.  If, for a
-     particular operator, one of these functions become odious, that
-     operator can supercede it (all these functions are virtual),
-  **/
+   An important design point here is that both base classes have no
+   data.  I prefer base classes to just be base classes with all
+   data living in the derived class.  
+**/
 namespace PrCh_AMR_Elliptic
 {
   template<int ncomp>
   class Base_Proto_AMRLevelOp: public Chombo::Base_Simplified_AMRLevelOp<Proto::LevelBoxData<double, ncomp> >
   {
   public:
+    
     typedef Chombo::Base_Simplified_AMRLevelOp< Proto::LevelBoxData<double, ncomp> >    ch_simple_op;
     typedef Chombo::AMRLevelOp<                 Proto::LevelBoxData<double, ncomp> >    ch_amrlevelop;
     typedef                                     Proto::LevelBoxData<double, ncomp  >    pr_lbd;
@@ -79,16 +82,21 @@ namespace PrCh_AMR_Elliptic
     typedef                                    Chombo::ProblemDomain                    ch_dom;
     typedef                                     Proto::ProblemDomain                    pr_dom;
     typedef                                     Proto::Point                            pr_pt;
+    typedef                                     Proto::Shift                            pr_shift;
+    typedef                                     Proto::Stencil<double >                 pr_sten;
     typedef                                     Proto::BoxData<double, ncomp>           pr_box_data;
+    typedef                                     Proto::BoxData<double, 1    >           pr_box_data_sca;
     typedef                                     Proto::Box                              pr_box;
     typedef                                     Proto::DisjointBoxLayout                pr_dbl;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_CELL   >     pr_cell_data;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >     pr_xfac_data;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >     pr_yfac_data;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >     pr_zfac_data;
-    
-    ///This class has no data.  
-    Base_Proto_AMRLevelOp():ch_simple_op() {}
+
+    ///
+    Base_Proto_AMRLevelOp():ch_simple_op()
+    {
+    }
 
     ///This class has no data
     virtual ~Base_Proto_AMRLevelOp(){}
@@ -175,7 +183,7 @@ namespace PrCh_AMR_Elliptic
     /**
        Standard function that I use for all arithmetic.  Because this is not fortran,
        it does not matter if any of the arguments point to overlapping things.
-     **/
+    **/
     virtual void 
     axby(pr_lbd         & a_lphi,
          const pr_lbd   & a_xval,
@@ -232,45 +240,110 @@ namespace PrCh_AMR_Elliptic
       a_phiCoar.define(gridsCoar, ghostFine);
     }
     
-    ///a_phiThisLevel += I[2h->h](a_correctCoarse).  factor of 2.  indifferent to layout.
+    ///a_phiThisLevel += I[2h->h](a_correctCoarse).  factor of 2.  On proc.
     virtual void
-    prolongIncrement(pr_lbd              & a_phiMedi,
-                     const pr_lbd        & a_corCoar)
+    prolongIncrement(pr_lbd              & a_phi_fine,
+                     const pr_lbd        & a_cor_coar)
     {
-      //borrowed from Phil's levelmultigrid example in proto/example
-      pr_lbd localCor;
-      this->createCoarser(   localCor, a_phiMedi, true);
-      a_corCoar.copyTo(localCor);
-      typedef Proto::InterpStencil<double> pr_interp_sten;
-      pr_interp_sten interp_stencil = pr_interp_sten::Constant(pr_pt::Ones(2));
-      auto grids =  a_phiMedi.layout();
-      auto dit   =  a_phiMedi.begin();
+      int ref_rat = 2;
+      vector<pr_sten> zeroth_interp =
+        PrChTools::InterpolationUtilities::getZerothInterpStencils(ref_rat);
+      auto grids =  a_phi_fine.layout();
+      auto dit   =  a_phi_fine.begin();
+      pr_lbd & cor_coar_cast = (pr_lbd &) a_cor_coar;
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        pr_box_data & corfab =   localCor[dit[ibox]];
-        pr_box_data & phifab =  a_phiMedi[dit[ibox]];
-        pr_box_data fineCorr = interp_stencil(corfab);
-        phifab += fineCorr;
-      }
+        pr_box_data & cor_coar_fab =  cor_coar_cast[dit[ibox]];
+        pr_box_data & phi_fine_fab =     a_phi_fine[dit[ibox]];
+        pr_box          valid_box  =          grids[dit[ibox]];
+        for(int isten  = 0; isten < zeroth_interp.size(); isten++)
+        {
+          pr_sten color_sten = zeroth_interp[isten];
+          /**
+           // Doing this as an incr was too much trouble.   
+           // Might have to change the sign of applyScale
+           **/
+          bool initToZeroFalse = false;  double applyScalePos = 1.;  
+          color_sten.apply(cor_coar_fab   , phi_fine_fab, ///this arg list is src, dst  so phi_fine_fab is the output
+                           valid_box, initToZeroFalse, applyScalePos);
+        }// end loop over colors
+      }//   end loop over boxes
+    } //    end function prolongIncrement
+
+
+    ///  a_resCoar = I[h-2h]( a_rhsFine - L(phiFine, phiCoar)  )
+    virtual void
+    AMRRestrict(pr_lbd      & a_res_coar,
+                const pr_lbd& a_rhs_fine,
+                const pr_lbd& a_phi_fine,
+                const pr_lbd& a_phi_coar,
+                bool a_skip_res)
+    {
+      CH_TIME("Base_Simplified_AMRLevelOp::AMRRestrict");
+      int ref_rat = this->refToCoarser();
+      pr_lbd res_fine, res_cofi;
+      this->create(         res_fine, a_rhs_fine);
+      //makes resfine = rhs-lphi
+      this->AMRResidualNF(res_fine, a_phi_fine, a_phi_coar, a_rhs_fine, false);
+     
+      this->createCoarsened(res_cofi, res_fine, ref_rat);
+      this->restriction(    res_cofi, res_fine, ref_rat);
+      copyTo(a_res_coar, res_cofi);
     }
 
+    ///a_phiFine += I[2h->h](a_phiCoar) 
+    virtual void
+    AMRProlong(pr_lbd      & a_phi_fine,
+               const pr_lbd& a_cor_coar)
+    {
+      CH_TIME("Base_Simplified_AMRLevelOp::AMRProlong");
+      pr_lbd cor_cofi;
+      int ref_rat = this->refToCoarser();
+      this->createCoarsened(cor_cofi, a_phi_fine, ref_rat);
+      copyTo(cor_cofi, a_cor_coar);
+    
+      vector<pr_sten> zeroth_interp =
+        PrChTools::InterpolationUtilities::getZerothInterpStencils(ref_rat);
+      auto grids =  a_phi_fine.layout();
+      auto dit   =  a_phi_fine.begin();
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        pr_box_data & cor_cofi_fab =    cor_cofi[dit[ibox]];
+        pr_box_data & phi_fine_fab =  a_phi_fine[dit[ibox]];
+        pr_box           valid_box =       grids[dit[ibox]];
+        for(int isten  = 0; isten < zeroth_interp.size(); isten++)
+        {
+          pr_sten color_sten = zeroth_interp[isten];
+          /**
+           // Doing this as an incr was too much trouble.   
+           // Might have to change the sign of applyScale
+           **/
+          bool initToZeroFalse = false;  double applyScalePos = 1.;  
+          color_sten.apply(cor_cofi_fab   , phi_fine_fab, ///this arg list is src, dst  so phi_fine_fab is the output
+                           valid_box, initToZeroFalse, applyScalePos);
+        } //end loop over colors
+      }   //end loop over boxes
+    } //end function AMRProlong
     
     ///a_resCoarse = average(a_resfine) on processor. 
     virtual void
     restriction(pr_lbd & a_resCoar,
-                pr_lbd & a_resFine)
+                pr_lbd & a_resFine,
+                int a_ref_rat)
     {
-      ///taken from Phil's levelmultigrid example
-      typedef Proto::Stencil<double> pr_sten;
-      auto A = pr_sten::AvgDown(2);
       auto grids =  a_resCoar.layout();
       auto dit   =  a_resCoar.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        auto & finefab =   a_resFine[dit[ibox]];
-        auto & coarfab =   a_resCoar[dit[ibox]];
-        coarfab.setVal(0.);
-        coarfab |= A(finefab);
+        pr_box coar_valid =       grids[dit[ibox]];
+        auto & finefab    =   a_resFine[dit[ibox]];
+        auto & coarfab    =   a_resCoar[dit[ibox]];
+        for(int icomp = 0;icomp <  ncomp; icomp++)
+        {
+          pr_box_data_sca fine_sca = Proto::slice(finefab, icomp);
+          pr_box_data_sca coar_sca = Proto::slice(coarfab, icomp);
+          PrChTools::AveragingUtilities::averageDownCell(coar_sca, fine_sca, coar_valid, a_ref_rat);
+        }
       }
     }
 
@@ -356,7 +429,7 @@ namespace PrCh_AMR_Elliptic
        Fill in the values over a_face_box (memory is already allocated).
        ibox is in relation to the operator's grids
        (so you can find your variable coefficients if you have them).
-     **/
+    **/
     virtual void getFlux(pr_box_data       & a_flux,
                          const pr_box_data & a_phi,
                          const pr_box      & a_face_box,
@@ -366,5 +439,7 @@ namespace PrCh_AMR_Elliptic
     virtual double getDx() const = 0;
   };
 } //end namespace PrCh_AMR_Elliptic
+
+#undef MG_NUM_COLORS
 
 #endif

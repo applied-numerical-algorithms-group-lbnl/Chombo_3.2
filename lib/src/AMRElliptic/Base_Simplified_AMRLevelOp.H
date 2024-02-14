@@ -59,7 +59,7 @@ public:
     level_data_type resMedi;
     this->create(resMedi, a_rhsMedi);
     residual(resMedi, a_phiMedi, a_rhsMedi);
-    restriction(a_resCoar, resMedi);
+    restriction(a_resCoar, resMedi, 2);
   }
 
   
@@ -244,32 +244,6 @@ public:
   }
 
  
-  ///  a_resCoar = I[h-2h]( a_rhsMedi - L(phiMedi, phiCoar)  )
-  virtual void
-  AMRRestrict(level_data_type      & a_resCoar,
-              const level_data_type& a_rhsMedi,
-              const level_data_type& a_phiMedi,
-              const level_data_type& a_phiCoar,
-              bool a_skip_res)
-  {
-    CH_TIME("Base_Simplified_AMRLevelOp::AMRRestrict");
-    level_data_type resMedi;
-    this->create(resMedi, a_rhsMedi);
-    this->AMROperatorNF(resMedi, a_phiMedi, a_phiCoar, false);
-    this->restriction(a_resCoar, resMedi);
-  }
-
-  ///a_phiFine += I[2h->h](a_phiCoar) 
-  virtual void
-  AMRProlong(level_data_type      & a_phiFine,
-             const level_data_type& a_phiCoar)
-  {
-    CH_TIME("Base_Simplified_AMRLevelOp::AMRProlong");
-    level_data_type phiCoFi;
-    this->createCoarsened(phiCoFi, a_phiFine, 2);
-    copyTo(phiCoFi, a_phiCoar);
-    prolongIncrement(a_phiFine, phiCoFi);
-  }
 
   ///a_resMedi = a_resMedi - L(a_phiMedi, a_phiCoar)
   virtual void
@@ -316,7 +290,8 @@ public:
   **/
   virtual void
   restriction(level_data_type & a_resCoar,
-              level_data_type & a_resFine) = 0;
+              level_data_type & a_resFine,
+              int ref_rat) = 0;
 
   /// amr thing
   virtual void
