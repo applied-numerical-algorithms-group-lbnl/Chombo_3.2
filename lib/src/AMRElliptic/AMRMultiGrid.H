@@ -883,11 +883,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
-  int verbsave = m_verbosity;
-  if(a_print)
-  {
-    m_verbosity = 4586;
-  }
+
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -903,7 +899,8 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 
 
   for (int ilev = lowlim; ilev <= l_max; ilev++)
-  { CH_TIME("uberCorrection");
+  {
+    CH_TIME("uberCorrection creation");
     uberCorrection[ilev] = new T();
     m_op[ilev]->create(*uberCorrection[ilev], *a_phi[ilev]);
     if (ilev >= l_base)
@@ -913,7 +910,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     }
     m_op[ilev]->setToZero(*(uberCorrection[ilev]));
   }
-  //  m_op[0]->dumpStuff(uberResidual, string("initialRes.hdf5"));
+
   if (a_zeroPhi)
   {
     for (int ilev = l_base; ilev <=l_max; ++ilev)
@@ -922,13 +919,11 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     }
   }
   //compute initial residual and initialize internal residual to it
-
   m_initial_rnorm = 0;
   {
     CH_TIME("Initial AMR Residual");
     m_initial_rnorm=computeAMRResidual(uberResidual, a_phi, a_rhs, l_max, l_base, a_forceHomogeneous, true);
   }
-
   if (m_convergenceMetric != 0.)
   {
     m_initial_rnorm = m_convergenceMetric;
@@ -1008,38 +1003,29 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//keep iterating if we didn't hang
     goMin = iter < m_iterMin ; // keep iterating if iter < min
   }
-  // if ((rnorm > 10.*m_initial_rnorm) && (rnorm > 10.*m_eps))
-  //   {
-  //     pout() << "solver seems to have blown up" << endl;
-  //     MayDay::Error("kaboom");
-  //   }
+
   m_exitStatus = int(!goRedu) + int(!goIter)*2 + int(!goHang)*4 + int(!goNorm)*8;
-  if (m_verbosity >= 2)
-  {
-    pout() << "    AMRMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm << std::endl;
+
+  pout() << " RMultiGrid::solveNoInitResid: "    <<   std::endl;
+  pout() << "  Final residual norm  = " << rnorm <<   std::endl;
+  pout() << "  Multigrid iterations = " << iter  <<   std::endl;
+  if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T
+  { // m_exitStatus == 0 + 2 + 0|4 + 0 = 2|6
+    pout() << "    AMRMultiGrid:: WARNING: Exit because max iteration count exceeded" << std::endl;
   }
-  pout() << "    AMRMultiGrid::solveNoInitResid: final residual norm = " << rnorm << " after "<< iter << " iterations."<< std::endl;
-                                                                                                                          if (m_verbosity > 1)
-                                                                                                                          {
-                                                                                                                            if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T
-                                                                                                                            { // m_exitStatus == 0 + 2 + 0|4 + 0 = 2|6
-                                                                                                                              pout() << "    AMRMultiGrid:: WARNING: Exit because max iteration count exceeded" << std::endl;
-                                                                                                                            }
-                                                                                                                            if (!goHang && goRedu && goNorm) // goRedu=T, goIter=?, goHang=F, goNorm=T
-                                                                                                                            { // m_exitStatus == 0 + 0|2 + 4 + 0 = 4|6
-                                                                                                                              pout() << "    AMRMultiGrid:: WARNING: Exit because of solver hang" << std::endl;
-                                                                                                                            }
-                                                                                                                            if (m_verbosity > 4)
-                                                                                                                            {
-                                                                                                                              pout() << "    AMRMultiGrid:: exitStatus = " << m_exitStatus << std::endl;
-                                                                                                                            }
-                                                                                                                          }
-                                                                                                                                                                              for (int i = lowlim; i <= l_max; i++)
-                                                                                                                                                                              {
-                                                                                                                                                                                m_op[i]->clear(*uberCorrection[i]);
-                                                                                                                                                                                delete uberCorrection[i];
-                                                                                                                                                                              }
-                                                                                                                                                                              m_verbosity = verbsave;
+  if (!goHang && goRedu && goNorm) // goRedu=T, goIter=?, goHang=F, goNorm=T
+  { // m_exitStatus == 0 + 0|2 + 4 + 0 = 4|6
+    pout() << "    AMRMultiGrid:: WARNING: Exit because of solver hang" << std::endl;
+  }
+  if (m_verbosity > 4)
+  {
+    pout() << "    AMRMultiGrid:: exitStatus = " << m_exitStatus << std::endl;
+  }
+  for (int i = lowlim; i <= l_max; i++)
+  {
+    m_op[i]->clear(*uberCorrection[i]);
+    delete uberCorrection[i];
+  }
 }
 
   template<class T>
