@@ -237,6 +237,7 @@ namespace PrCh_AMR_Elliptic
           int a_iterations)
     {
       CH_TIME("Proto_Helmholtz::relax");
+      int iprint = 0; // debugging hook.
       pr_lbd resid;
       create(resid, a_rhs);
       auto grids =  a_rhs.layout();
@@ -253,7 +254,6 @@ namespace PrCh_AMR_Elliptic
             const auto & resfab =  resid[dit[ibox]];
             const auto & phifab =  a_phi[dit[ibox]];
             auto valid          =  grids[dit[ibox]];
-            int iprint = 0; // I left in a debugging hook.
             Proto::forallInPlace_i(gsrbResid, valid, phifab, resfab,
                                    m_alpha, m_beta, m_dx, iredblack, iprint);
           }

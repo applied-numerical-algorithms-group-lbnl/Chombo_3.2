@@ -255,7 +255,8 @@ namespace PrCh_AMR_Elliptic
       {
         pr_box_data & cor_coar_fab =  cor_coar_cast[dit[ibox]];
         pr_box_data & phi_fine_fab =     a_phi_fine[dit[ibox]];
-        pr_box          valid_box  =          grids[dit[ibox]];
+        pr_box          valid_fine =          grids[dit[ibox]];
+        pr_box valid_coar = valid_fine.coarsen(2);
         for(int isten  = 0; isten < zeroth_interp.size(); isten++)
         {
           pr_sten color_sten = zeroth_interp[isten];
@@ -265,7 +266,7 @@ namespace PrCh_AMR_Elliptic
            **/
           bool initToZeroFalse = false;  double applyScalePos = 1.;  
           color_sten.apply(cor_coar_fab   , phi_fine_fab, ///this arg list is src, dst  so phi_fine_fab is the output
-                           valid_box, initToZeroFalse, applyScalePos);
+                           valid_coar, initToZeroFalse, applyScalePos);
         }// end loop over colors
       }//   end loop over boxes
     } //    end function prolongIncrement
@@ -310,7 +311,8 @@ namespace PrCh_AMR_Elliptic
       {
         pr_box_data & cor_cofi_fab =    cor_cofi[dit[ibox]];
         pr_box_data & phi_fine_fab =  a_phi_fine[dit[ibox]];
-        pr_box           valid_box =       grids[dit[ibox]];
+        pr_box        valid_fine =       grids[dit[ibox]];
+        pr_box valid_coar = valid_fine.coarsen(ref_rat);
         for(int isten  = 0; isten < zeroth_interp.size(); isten++)
         {
           pr_sten color_sten = zeroth_interp[isten];
@@ -320,7 +322,7 @@ namespace PrCh_AMR_Elliptic
            **/
           bool initToZeroFalse = false;  double applyScalePos = 1.;  
           color_sten.apply(cor_cofi_fab   , phi_fine_fab, ///this arg list is src, dst  so phi_fine_fab is the output
-                           valid_box, initToZeroFalse, applyScalePos);
+                           valid_coar, initToZeroFalse, applyScalePos);
         } //end loop over colors
       }   //end loop over boxes
     } //end function AMRProlong
