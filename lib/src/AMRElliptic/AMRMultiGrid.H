@@ -72,15 +72,6 @@ public:
     return this->norm(a_coarResid, 0);
   }
 
-  //debugging hook
-  virtual void outputLevel(T& a_rhs, string& a_name)
-  {
-  }
-
-  //debugging hook
-  virtual void outputAMR(Vector<T*>& a_rhs, string& a_name)
-  {
-  }
   ///
   /**
      return the refinement ratio to next coarser level.
@@ -252,53 +243,6 @@ public:
 
 };
 
-//! \class AMRMultiGridInspector
-//! This base class allows one to construct methods for inspecting the
-//! multigrid algorithm at each of its steps.
-template <class T>
-class AMRMultiGridInspector
-{
-public:
-
-  //! Base class constructor. This must be called by all subclasses.
-  AMRMultiGridInspector()
-  {
-  }
-
-  //! Destructor.
-  virtual ~AMRMultiGridInspector()
-  {
-  }
-
-  //! Override this method to keep track of a multigrid residual computed
-  //! during a multigrid iteration at the given levels.
-  //! \param a_residuals An array containing the residuals computed by the multigrid
-  //!                    algorithm at each level in the range [a_minLevel, a_maxLevel].
-  //! \param a_minLevel The lowest AMR level at which residuals were computed.
-  //! \param a_maxLevel The highest AMR level at which residuals were computed.
-  //! \param a_iter The multigrid iteration number.
-  virtual void recordResiduals(const Vector<T*>& a_residuals,
-                               int a_minLevel,
-                               int a_maxLevel,
-                               int a_iter) = 0;
-
-  //! Override this method to keep track of a multigrid correction computed
-  //! during a V cycle at the given level.
-  //! \param a_corrections An array containing the corrections computed during a V cycle
-  //!                      at each level in the range [a_minLevel, a_maxLevel].
-  //! \param a_minLevel The lowest AMR level at which corrections were computed.
-  //! \param a_maxLevel The highest AMR level at which corrections were computed.
-  //! \param a_iter The multigrid iteration number.
-  virtual void recordCorrections(const Vector<T*>& a_corrections,
-                                 int a_minLevel,
-                                 int a_maxLevel,
-                                 int a_iter) = 0;
-
-private:
-
-  AMRMultiGridInspector(const AMRMultiGridInspector&);
-  AMRMultiGridInspector& operator=(const AMRMultiGridInspector&);
-};
 
 ///
 /**
@@ -312,8 +256,6 @@ public:
   AMRMultiGrid();
 
   virtual ~AMRMultiGrid();
-
-  void outputAMR(Vector<T*>& a_data, string& a_name, int a_lmax, int a_lbase);
 
   ///
   /**
@@ -329,13 +271,6 @@ public:
                       LinearSolver<T>* a_bottomSolver,
                       int a_numLevels);
 
-  //! Add an inspector to the list of inspectors maintained by this AMRMultiGrid
-  //! instance. It will be given the opportunity to record intermediate data.
-  void addInspector(RefCountedPtr<AMRMultiGridInspector<T> >& a_inspector)
-  {
-    CH_assert(!a_inspector.isNull());
-    m_inspectors.push_back(a_inspector);
-  }
 
   ///
   /**
@@ -504,8 +439,6 @@ protected:
 
 private:
 
-  // A list of inspectors maintained by this instance.
-  Vector<RefCountedPtr<AMRMultiGridInspector<T> > > m_inspectors;
 
   // Forbidden copiers.
   AMRMultiGrid(const AMRMultiGrid<T>&);
@@ -518,17 +451,6 @@ private:
 
 //===================================================================
 
-template <class T>
-void
-AMRMultiGrid<T>::outputAMR(Vector<T*>& a_data, string& a_name, int a_lmax, int a_lbase)
-{
-  Vector<T*> outputData;
-  for (int ilev = a_lbase; ilev <= a_lmax; ilev++)
-  {
-    outputData.push_back(a_data[ilev]);
-  }
-  m_op[a_lbase]->outputAMR(outputData, a_name);
-}
 
 template <class T>
 void
@@ -619,8 +541,7 @@ AMRMultiGrid<T>::AMRMultiGrid()
    m_maxDepth(-1),
    m_convergenceMetric(0.),
    m_bottomSolverEpsCushion(1.0),
-   m_bottomSolver(NULL),
-   m_inspectors()
+   m_bottomSolver(NULL)
 {
   m_solverParamsSet = false;
 
@@ -979,8 +900,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   int lowlim = l_base;
   if (l_base > 0)  // we need an ubercorrection one level lower than l_base
     lowlim--;
-  // for (int ilev = l_base; ilev <= l_max; ilev++)
-  bool outputIntermediates = false;
+
 
   for (int ilev = lowlim; ilev <= l_max; ilev++)
   { CH_TIME("uberCorrection");
@@ -1039,18 +959,6 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   while (goMin || (goIter && goRedu && goHang && goNorm))
   {
 
-    // Report the residuals to the inspectors.
-    for (int i = 0; i < m_inspectors.size(); ++i)
-      m_inspectors[i]->recordResiduals(uberResidual, l_base, l_max, iter);
-
-    if (outputIntermediates)
-    {
-      char strresname[100];
-      sprintf(strresname, "amrmg.res.iter.%03d", iter);
-      string nameres(strresname);
-      outputAMR(uberResidual, nameres, l_max, l_base);
-    }
-
     norm_last = rnorm;
 
     //this generates a correction from the current residual
@@ -1058,34 +966,12 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     AMRVCycle(uberCorrection, uberResidual, l_max, l_max, l_base);
     CH_STOP(vtimer);
 
-    char charname[100];
-    sprintf(charname, "resid_iter%03d.%dd.hdf5", iter, SpaceDim);
-    string sname(charname);
-    //      m_op[0]->dumpAMR(uberResidual, sname);
-    // Report the corrections to the inspectors.
-    for (int i = 0; i < m_inspectors.size(); ++i)
-      m_inspectors[i]->recordCorrections(uberCorrection, l_base, l_max, iter);
 
     //increment phi by correction and reset correction to zero
     for (int ilev = l_base; ilev <= l_max; ilev++)
     {
-      if (outputIntermediates)
-      {
-        char strcorname[100];
-        sprintf(strcorname, "amrmg.phi.iter.%03d", iter);
-        string namecor(strcorname);
-        outputAMR(a_phi, namecor, l_max, l_base);
-      }
 
       m_op[ilev]->incr(*(a_phi[ilev]), *(uberCorrection[ilev]), 1.0);
-
-      if (outputIntermediates)
-      {
-        char strcorname[100];
-        sprintf(strcorname, "amrmg.cor.iter.%03d", iter);
-        string namecor(strcorname);
-        outputAMR(uberCorrection, namecor, l_max, l_base);
-      }
 
       m_op[ilev]->setToZero(*(uberCorrection[ilev]));
       // clean const out
