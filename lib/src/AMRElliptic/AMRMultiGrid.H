@@ -205,15 +205,7 @@ public:
     AMRRestrict(a_resCoarse, a_residual, a_correction, a_coarseCorrection, a_skip_res);
   }
 
-  virtual unsigned int orderOfAccuracy(void) const
-  {
-    return 2;
-  }
 
-  /// This routine is for operators with orderOfAccuracy()>2.
-  virtual void enforceCFConsistency(T& a_coarseCorrection, const T& a_correction)
-  {
-  }
 };
 
 ///
@@ -319,7 +311,7 @@ public:
 
   Real m_eps, m_hang, m_normThresh;
   bool   m_solverParamsSet;
-  int m_imin, m_iterMax, m_iterMin, m_verbosity, m_exitStatus;
+  int m_imin, m_iterMax, m_iterMin, m_verbosity;
   int m_pre, m_post, m_bottom, m_numMG;
   /// max no. of coarsenings -- -1 (default) means coarsen as far as possible
   /** If using a value besides the default, need to set it _before_
@@ -972,19 +964,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       // clean const out
     }
 
-    // For solvers with accuracy higher than 2nd order
-    //  consistency between levels has to be explicitly enforced.
-    // Qinghai Zhang
-    if (m_op[0]->orderOfAccuracy()>2)
-    {
-      for (int ilev=l_max; ilev>l_base; ilev--)
-      {
-        m_op[ilev]->enforceCFConsistency(*a_phi[ilev-1], *a_phi[ilev]);
-      }
-    }
-    //------end enforcing consistency.
 
-    //recompute residual
     rnorm = computeAMRResidual(uberResidual, a_phi, a_rhs, l_max, l_base, a_forceHomogeneous, true);
     iter++;
     if (m_verbosity >= 3) ////
@@ -1004,22 +984,16 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     goMin = iter < m_iterMin ; // keep iterating if iter < min
   }
 
-  m_exitStatus = int(!goRedu) + int(!goIter)*2 + int(!goHang)*4 + int(!goNorm)*8;
-
   pout() << " RMultiGrid::solveNoInitResid: "    <<   std::endl;
   pout() << "  Final residual norm  = " << rnorm <<   std::endl;
   pout() << "  Multigrid iterations = " << iter  <<   std::endl;
   if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T
-  { // m_exitStatus == 0 + 2 + 0|4 + 0 = 2|6
+  { 
     pout() << "    AMRMultiGrid:: WARNING: Exit because max iteration count exceeded" << std::endl;
   }
   if (!goHang && goRedu && goNorm) // goRedu=T, goIter=?, goHang=F, goNorm=T
-  { // m_exitStatus == 0 + 0|2 + 4 + 0 = 4|6
+  { 
     pout() << "    AMRMultiGrid:: WARNING: Exit because of solver hang" << std::endl;
-  }
-  if (m_verbosity > 4)
-  {
-    pout() << "    AMRMultiGrid:: exitStatus = " << m_exitStatus << std::endl;
   }
   for (int i = lowlim; i <= l_max; i++)
   {
@@ -1081,7 +1055,6 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       goIter = iter < m_iterMax;                            //keep iterating if iter < max iteration count
       goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//keep iterating if we didn't hang
     }
-    m_exitStatus = 0;
     for (int i = 0; i < m_op.size(); i++)
     {
       m_op[i]->clear(*uberResidual[i]);
