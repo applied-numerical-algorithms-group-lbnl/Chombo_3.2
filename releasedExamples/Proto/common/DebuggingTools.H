@@ -1,12 +1,41 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX 0
+#define DBG_LOX -1
 #define DBG_HIX 3
-#define DBG_LOY 0
+#define DBG_LOY -1
 #define DBG_HIY 3
 #define DBG_LOZ 0
 #define DBG_HIZ 0
-#define VALID_ONLY TRUE
+#define VALID_ONLY false
+
+/**
+//   for dumpFracPr and dumpFracCh
+//   Makes box = defined fraction of the domain.
+// set the numerators and denominators of fraction you want displayed
+// This:
+//#define DBG_NUMER_LO 1
+//#define DBG_DENOM_LO 8
+//#define DBG_NUMER_HI 1
+//#define DBG_DENOM_HI 4
+//  Will display the fraction of the domain that is between 1/8 and 1/4 of
+//   of the domain area.  (so near the lower left corner)
+//  This may go down in history as the worst API ever but it is helpful when you
+//  need to keep an eye on a particular region of the domain when AMR is involved.
+ **/
+#define DBG_NUMER_LO_X 1
+#define DBG_DENOM_LO_X 8
+#define DBG_NUMER_HI_X 1
+#define DBG_DENOM_HI_X 4
+
+#define DBG_NUMER_LO_Y 0
+#define DBG_DENOM_LO_Y 1
+#define DBG_NUMER_HI_Y 1
+#define DBG_DENOM_HI_Y 8
+
+#define DBG_NUMER_LO_Z 0 0
+#define DBG_DENOM_LO_Z 01
+#define DBG_NUMER_HI_Z 01
+#define DBG_DENOM_HI_Z 08
 
 #include "Proto.H"
 #include "FArrayBox.H"
@@ -17,9 +46,9 @@
 
 /// Old school Debugging utilities 
 /**
-  // f you want to print areas of data to screen during a debug session,
+  // If you want to print areas of data to screen during a debug session,
   // his is the way you do it.  All of these functions can be called from gdb.
-  // LDR:
+  // TLDR:
   // This is a set  of crude but effective tools to  print out stuff from gdb.   
   // Send pointers to the data to these functions and the data gets printed out neatly.    
   // The user is meant to hack the the bounds according to her needs.   
@@ -447,18 +476,116 @@ namespace PrChDebug
       for(int ibox = 0; ibox < dit.size(); ibox++)
       {
         ch_box valid = grid[dit[ibox]];
-#if VALID_ONLY==TRUE
         ch_box valid_area = valid & s_areaBox;
         cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = :" << valid_area << endl;
-        dumpCh(&data[dit[ibox]], valid_area);
-#else
-        cout << "ibox = " << ibox << ", valid = " << valid << ":"<< endl;
-        dumpCh(&data[dit[ibox]], s_areaBox);
-#endif        
+        bool valid_only = VALID_ONLY;
+
+        if(valid_only)
+        {
+          dumpCh(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.isEmpty())
+        {
+          dumpCh(&data[dit[ibox]], s_areaBox);
+        }
       }
     }
   }
 
+  void 
+  dumpFracCh(ch_ldf* dataPtr)
+  {
+    if(dataPtr != NULL)
+    {
+
+      ch_ldf & data = *dataPtr;
+      ch_dbl   grid = data.disjointBoxLayout();
+      ch_box dom_box = grid.physDomain().domainBox();
+      ch_iv areaLo, areaHi;
+      ch_iv size_iv = dom_box.bigEnd() + ch_iv::Unit;
+
+      int lo_dir_x = (DBG_NUMER_LO_X*size_iv[0])/(DBG_DENOM_LO_X);
+      int hi_dir_x = (DBG_NUMER_HI_X*size_iv[0])/(DBG_DENOM_HI_X);
+      areaLo[0] = lo_dir_x;
+      areaHi[0] = hi_dir_x;
+      
+      int lo_dir_y = (DBG_NUMER_LO_Y*size_iv[1])/(DBG_DENOM_LO_Y);
+      int hi_dir_y = (DBG_NUMER_HI_Y*size_iv[1])/(DBG_DENOM_HI_Y);
+      areaLo[1] = lo_dir_y;
+      areaHi[1] = hi_dir_y;
+#if DIM==3
+      int lo_dir_z = (DBG_NUMER_LO_Z*size_iv[2])/(DBG_DENOM_LO_Z);
+      int hi_dir_z = (DBG_NUMER_HI_Z*size_iv[2])/(DBG_DENOM_HI_Z);
+      areaLo[2] = lo_dir_z;
+      areaHi[2] = hi_dir_z;
+#endif      
+      ch_box     areaBox(areaLo, areaHi);
+      ch_dit  dit = data.dataIterator();
+      for(int ibox = 0; ibox < dit.size(); ibox++)
+      {
+        ch_box valid = grid[dit[ibox]];
+        ch_box valid_area = valid & areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = :" << valid_area << endl;
+        bool valid_only = VALID_ONLY;
+
+        if(valid_only)
+        {
+          dumpCh(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.isEmpty())
+        {
+          dumpCh(&data[dit[ibox]], areaBox);
+        }
+      }
+    }
+  }
+  
+  /// print to screen (very neatly) data from the area whereever it is found in proto data
+  void 
+  dumpFracPr(pr_lbd_sca* dataPtr)
+  {
+    if(dataPtr != NULL)
+    {
+      pr_lbd_sca & data = *dataPtr;
+      auto  dit = data.dataIterator();
+      pr_pt      areaLo, areaHi;
+      pr_pt dom_hi = data.layout().domain().box().high();
+      pr_pt size_pt = dom_hi + pr_pt::Ones(1);
+      
+      int lo_dir_x = (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X);
+      int hi_dir_x = (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
+      areaLo[0] = lo_dir_x;
+      areaHi[0] = hi_dir_x;
+      
+      int lo_dir_y = (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y);
+      int hi_dir_y = (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
+      areaLo[1] = lo_dir_y;
+      areaHi[1] = hi_dir_y;
+#if DIM==3
+      int lo_dir_z = (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z);
+      int hi_dir_z = (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
+      areaLo[2] = lo_dir_z;
+      areaHi[2] = hi_dir_z;
+#endif      
+      pr_box     areaBox(areaLo, areaHi);
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpPr(&data[dit[ibox]], areaBox);
+        }
+
+      }
+    }
+  }
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
   dumpLDAreaPr(pr_lbd_sca* dataPtr)
@@ -472,15 +599,19 @@ namespace PrChDebug
         static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
         static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
         static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-#if VALID_ONLY==TRUE
         pr_box valid = data.layout()[dit[ibox]];
         pr_box valid_area  = valid & s_areaBox;
         cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
-        dumpPr(&data[dit[ibox]], valid_area);
-#else        
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpPr(&data[dit[ibox]], s_areaBox);
-#endif        
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpPr(&data[dit[ibox]], s_areaBox);
+        }
+
       }
     }
   }
@@ -607,6 +738,8 @@ inline void dummy_function_to_get_functions_into_symbol_table()
   PrChDebug::dumpLDAreaThreeDimPr(NULL);
   PrChDebug::dumpLDAreaTenPr(NULL);
   PrChDebug::dumpSten(NULL);
+  PrChDebug::dumpFracCh(NULL);
+  PrChDebug::dumpFracPr(NULL);
 }
 
 #undef DBG_LOX 
@@ -615,6 +748,11 @@ inline void dummy_function_to_get_functions_into_symbol_table()
 #undef DBG_HIX 
 #undef DBG_HIY 
 #undef DBG_HIZ 
+#undef VALID_ONLY
+#undef DBG_NUMER_LO 
+#undef DBG_DENOM_LO 
+#undef DBG_NUMER_HI 
+#undef DBG_DENOM_HI 
 
 
 #endif

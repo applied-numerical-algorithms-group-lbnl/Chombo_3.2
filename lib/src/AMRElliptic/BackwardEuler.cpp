@@ -247,10 +247,6 @@ solveHelm(Vector<LevelData<FArrayBox>*>&       a_ans,
 
   m_solver->solve(a_ans, a_rhs, a_lmax, a_lbase, a_zeroPhi);
 
-  if (m_solver->m_exitStatus==1 && m_verbosity>3)
-    {
-      pout() << "BackwardEuler:: WARNING: solver exitStatus == 1" << std::endl;
-    }
 }
 
 #include "NamespaceFooter.H"

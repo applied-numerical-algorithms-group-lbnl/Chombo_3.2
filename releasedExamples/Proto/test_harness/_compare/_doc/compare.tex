@@ -454,7 +454,8 @@ Here are my next steps.
     }
 \end{table}
 \end{small}
-\end{document}
+
+\section{Log of early performance debugging}
 These runs flushed out a bug in in {\tt
   Base\_Simplified\_AMRLevelOp} but preliminary runs do not show much
 difference multigrid performance.  The AMR case also have grids that
@@ -463,3 +464,10 @@ of the domain (instead of a single point).   There was not enough
 difference to document.  The current culprit seems to be being called
 by BiCGStab.   The norms were different but fixing them did not do it.
 The preconditioner was way off but fixing this did not help either.
+As of 2-14-2024, AMR examples are still showing far worse multigrid convergence
+for the new operators than the old.   I just archived that data.
+2-15-2024: for case 2 Helmholtz, old and new agree pretty well coming
+out of the bottom solver but way off once back at amr levels.
+3pm update: the solution looks fine heading into second amr vcycle.   It
+is amr residual that is broken.   This means looking at fluxes and so on.
+\end{document}

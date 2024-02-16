@@ -553,10 +553,6 @@ solveHelm(Vector<T*>&       a_ans,
                         a_lmax,
                         a_lbase,
                         false);//zeroPhi
-  if (m_solver->m_exitStatus==1 && m_verbosity>3)
-    {
-      pout() << "AMRTGA:: WARNING: solver exitStatus == 1" << std::endl;
-    }
 }
 
 #include "NamespaceFooter.H"

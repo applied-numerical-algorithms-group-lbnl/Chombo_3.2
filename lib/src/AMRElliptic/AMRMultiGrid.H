@@ -964,18 +964,15 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       // clean const out
     }
 
-
+    ///recompute uberResidual after Martin-Cartwright V-Cycle.
     rnorm = computeAMRResidual(uberResidual, a_phi, a_rhs, l_max, l_base, a_forceHomogeneous, true);
     iter++;
-    if (m_verbosity >= 3) ////
+    pout() << "    AMRMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
+    if (rnorm > 0.0)
     {
-      pout() << "    AMRMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
-      if (rnorm > 0.0)
-      {
-        pout() << ", rate = " << norm_last/rnorm;
-      }
-      pout() << std::endl;
+      pout() << ", rate = " << norm_last/rnorm;
     }
+    pout() << std::endl;
 
     goNorm = rnorm > m_normThresh;                        //keep iterating if norm is not small enough
     goRedu = rnorm > m_eps*m_initial_rnorm;                 //keep iterating if initial norm is not reduced enough
@@ -1042,7 +1039,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
       m_op[0]->relax(*a_phi[0], *a_rhs[0], 1);
 
       iter++;
-      //recompute residual
+      //Recompute residual after relax iteration
       m_op[0]->residual(*uberResidual[0], *a_phi[0], *a_rhs[0], true);
       rnorm = m_op[0]->norm(*uberResidual[0], 2);
       if (m_verbosity >= 4)
@@ -1281,7 +1278,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
     //m_op[ilev]->AMRProlong(*(m_correction[ilev]), *(m_correction[ilev-1]));
     m_op[ilev]->AMRProlongS(*(m_correction[ilev]), *(m_correction[ilev-1]),
                             *m_resC[ilev], m_reverseCopier[ilev]);
-    //recompute residual
+    ///
     m_op[ilev]->AMRUpdateResidual(*(m_residual[ilev]), *(m_correction[ilev]), *(m_correction[ilev-1]));
 
     //compute correction to the correction

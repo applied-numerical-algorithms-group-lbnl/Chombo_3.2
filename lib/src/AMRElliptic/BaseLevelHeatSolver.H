@@ -405,16 +405,6 @@ class BaseLevelHeatSolver
     resetSolverAlphaAndBeta(1.0, factor);
 
     m_solver->solve(phi, rhs, a_level, a_level, a_zeroPhi);
-    int solverExitStatus = m_solver->m_exitStatus;
-    if (solverExitStatus==2 || solverExitStatus==4 || solverExitStatus==6)
-      {
-        // These status codes correspond to the cases in which
-        // norm is neither small enough nor reduced enough.
-        // Either we've reached the maximum number of iterations,
-        // or we've hung.
-        pout() << "BaseLevelTGA:: WARNING: solver exitStatus == "
-               << solverExitStatus << std::endl;
-      }
   }
 
   //! Sets the alpha and beta parameters in each Helmholtz operator to the
