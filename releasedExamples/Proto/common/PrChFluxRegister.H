@@ -72,6 +72,7 @@ namespace PrCh_Tools
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_0 >     pr_xfac_data;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_1 >     pr_yfac_data;
     typedef Proto::LevelBoxData<double,  ncomp, Proto::MEMTYPE_DEFAULT,  Proto::PR_FACE_2 >     pr_zfac_data;
+    typedef Proto::LevelIterator                                                                pr_level_it;
     //meta data
     pr_dbl m_grids_coar;
     pr_dbl m_grids_cofi;
@@ -86,10 +87,41 @@ namespace PrCh_Tools
     shared_ptr<pr_zfac_data> m_zflux_cofi;
 
     ///scratch space on coarse layout
-    shared_ptr<pr_xfac_data> m_xbuff_coar;
-    shared_ptr<pr_yfac_data> m_ybuff_coar;
-    shared_ptr<pr_zfac_data> m_zbuff_coar;
+    shared_ptr<pr_xfac_data>   m_xbuff_coar;
+    shared_ptr<pr_yfac_data>   m_ybuff_coar;
+    shared_ptr<pr_zfac_data>   m_zbuff_coar;
+    vector< vector<pr_box > >  m_boxes_CFI[2*DIM];
 
+    /// this is way more complicated with periodic
+    void setCoarseLocations()
+    {
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        vector< vector<pr_box> > & lo_cfi = m_boxes_CFI[idir];
+        vector< vector<pr_box> > & hi_cfi = m_boxes_CFI[idir+ DIM];
+        auto dit_coar   =  a_xflux_coar->begin();
+        lo_cfi.resize(dit.localSize());
+        hi_cfi.resize(dit.localSize());
+        for(int ibox = 0; ibox < dit.localSize(); ibox++)
+        {
+          pr_box grid_coar = m_grids_coar[dit[ibox]];
+          for(auto level_it = m_grids_cofi.begin(); level_it != m_grids_cofi.end(); ++level_it)
+          {
+            pr_box grid_cofi = m_grids_cofi[level_it];
+            pr_box lo_box = grid_cofi;  lo_box.m_high[idir] = lo_box.m_low [idir]; lo_box.recomputeSize();
+            pr_box hi_box = grid_cofi;  hi_box.m_low [idir] = hi_box.m_high[idir]; hi_box.recomputeSize();
+            pr_box buff_box_lo = lo_box.shift(pr_pt::Basis(idir, -1));
+            pr_box buff_box_hi = hi_box.shift(pr_pt::Basis(idir,  1));
+            if(grid_coar.contains(buff_box_lo))
+            {
+              lo_cfi[ibox].push_back(lo_box);
+            }
+            if(grid_coar.contains(buff_box_hi))
+            {
+              hi_cfi[ibox].push_back(hi_box);
+            }
+        }
+    }
     
     /// 
     ~FluxRegister()
@@ -118,7 +150,7 @@ namespace PrCh_Tools
       m_zbuff_coar = shared_ptr<pr_zfac_data>(new pr_zfac_data(m_grids_coar, pr_pt::Zeros()));
       m_zflux_cofi = shared_ptr<pr_zfac_data>(new pr_zfac_data(m_grids_cofi, pr_pt::Zeros()));
 #endif      
-
+      setCoarseLocations();
     }
 
 
@@ -214,36 +246,19 @@ namespace PrCh_Tools
     {
       CH_TIME("PrChFluxRegister::reflux");
       
-      //always.
-      bool initToZero = true; double applyScale = 1.;
-      
-      pr_sten div_stencils[DIM];
-      for(int deriv_dir = 0;  deriv_dir < DIM; deriv_dir++)
-      {        
-        double weight = 1.0/(a_dx);
-        pr_pt righ_point = (+1)*pr_pt::Basis(deriv_dir);
-        pr_pt home_point =      pr_pt::Zeros();
-        pr_shift righ(righ_point);
-        pr_shift home(home_point);
-        pr_sten  home_sten(home, weight);
-        pr_sten  righ_sten(righ, weight);
-        pr_sten  iph_minu_imh = (righ_sten - home_sten);
-        div_stencils[deriv_dir] = iph_minu_imh;
-        if(a_verbose)
-        {
-          Chombo::pout() << "reflux: div_stencils[" << deriv_dir << "] = " << endl;
-          div_stencils[deriv_dir].print();
-        }
-      }
       /**
-         // Stage 1: 
-         //  Set buff = flux_coar.   
+       // Stage 1: 
+       //  Set buffers = averaged fine flux (where it exists) and zero elsewhere.
+       //  This makes all the data live on the coarse layout
       **/
-      m_xflux_coar->copyTo(*m_xbuff_coar);
-      m_yflux_coar->copyTo(*m_ybuff_coar);
-#if DIM==3                          
-      m_zflux_coar->copyTo(*m_zbuff_coar);
-#endif      
+      m_xbuff_coar->setVal(0.);
+      m_ybuff_coar->setVal(0.);
+      m_xflux_cofi->copyTo(*m_xbuff_coar);
+      m_yflux_cofi->copyTo(*m_ybuff_coar);
+#if DIM==3
+      m_zbuff_coar.setVal(0.);
+      m_zflux_cofi->copyTo(*m_zbuff_coar);
+#endif
       if(a_verbose)
       {
         double max_x = m_xbuff_coar->max(); double min_x = m_xbuff_coar->min();
@@ -251,7 +266,7 @@ namespace PrCh_Tools
 #if DIM==3                                                                  
         double max_z = m_zbuff_coar->max(); double min_z = m_zbuff_coar->min();
 #endif
-        Chombo::pout() << "reflux: After stage 1 (coarse flux only): " << endl;
+        Chombo::pout() << "reflux: After stage 1 (coarsend fine flux only): " << endl;
         Chombo::pout() <<  " max_x = " << max_x << ", min_x = " << min_x << endl;
         Chombo::pout() <<  " max_y = " << max_y << ", min_y = " << min_y << endl;
 #if DIM==3                                                               
@@ -260,17 +275,8 @@ namespace PrCh_Tools
       }
       /**
          //  Stage 2:
-         //  Copy over from the flux_cofi
-         //  so now buff = f_composite(flux_coar, flux_cofi)
-         //    f_composite_i = flux_cofi_i  if i is covered by finer grid
-         //                    flux_coar_i  otherwise
-         //  These are the only all-to-all copies.  
+         //  Loop through coarse/fine boxes and update solution 
       **/
-      m_xflux_cofi->copyTo(*m_xbuff_coar);
-      m_yflux_cofi->copyTo(*m_ybuff_coar);
-#if DIM==3                          
-      m_zflux_cofi->copyTo(*m_zbuff_coar);
-#endif      
       if(a_verbose)
       {
         Chombo::pout() << "reflux: After stage 2 (composite coar/cofi): " << endl;
@@ -287,6 +293,15 @@ namespace PrCh_Tools
 #endif
       }
 
+      for(int idir = 0; idir < DIM; idir++)
+      {
+        vector<pr_box>& lo =
+      auto dit   =  a_soln_coar.begin();
+      ch_dit DataIterator = m_grids
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        
+      }
       /** Stage 3:
        //  Refluxing dance.   Should be able to do all this within the dataiterator loop
        //  to avoid yet more temporary data.
@@ -301,9 +316,6 @@ namespace PrCh_Tools
         Chombo::pout() << "reflux stage 3: reflux divergence and increment: " << endl;
       }
       int ibox_print = 0; ///only print tons of stuff on box this one box
-      auto dit   =  a_soln_coar.begin();
-      for(int ibox = 0; ibox < dit.localSize(); ibox++)
-      {
         ///whether to print stuff for this particular box
         bool verb_box = a_verbose && (ibox == ibox_print);
         

@@ -119,33 +119,7 @@ LevelFluxRegister::define(const DisjointBoxLayout& a_dbl,
   m_scaleFineFluxes = a_scaleFineFluxes;
   DisjointBoxLayout coarsenedFine;
   coarsen(coarsenedFine, a_dbl, m_nRefine);
-  m_noRealCoarseFineInterface = false;
-#if 0
-  // This doesn't work for multi-block calculations, which are
-  // not properly nested. -JNJ
 
-  //begin temporary optimization.  bvs
-  int numPts=0;
-  for (LayoutIterator lit = a_dblCoarse.layoutIterator(); lit.ok(); ++lit)
-    {
-      numPts += a_dblCoarse[lit].numPts();
-    }
-  for (LayoutIterator lit = coarsenedFine.layoutIterator(); lit.ok(); ++lit)
-    {
-      numPts -= coarsenedFine[lit].numPts();
-    }
-
-   if (numPts == 0)
-     {
-       m_coarFlux.clear();
-       m_noRealCoarseFineInterface = true;
-       // OK, fine region completely covers coarse region.  no registers.
-       return;
-     }
-
-#endif
-
-  //end temporary optimization.   bvs
   m_coarFlux.define( a_dblCoarse, a_nComp);
   m_isDefined |= FluxRegCoarseDefined;
   m_domain = a_dProblem;
@@ -499,17 +473,6 @@ LevelFluxRegister::incrementFine(const FArrayBox& a_fineFlux,
       fineBox = adjCellHi(clipBox,a_dir,1);
       fineBox &= fineFlux.box();
     }
-#if 0
-  for (BoxIterator b(fineBox); b.ok(); ++b)
-     {
-       int s = a_srcInterval.begin();
-       int d = a_dstInterval.begin();
-       for (;s<=a_srcInterval.end(); ++s, ++d)
-         {
-           cFine(coarsen(b(), m_nRefine), d) += scale*fineFlux(b(), s);
-         }
-     }
-#else
    // shifting to ensure fineBox is in the positive quadrant, so IntVect coarening
    // is just integer division.
 
@@ -581,7 +544,6 @@ LevelFluxRegister::incrementFine(const FArrayBox& a_fineFlux,
 
     }
 
-#endif
   fineFlux.shiftHalf(a_dir, - sign(a_sd));
 }
 

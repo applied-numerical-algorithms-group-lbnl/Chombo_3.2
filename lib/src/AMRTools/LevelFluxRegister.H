@@ -307,7 +307,6 @@ protected:
 
   Copier m_reverseCopier;
 
-  bool m_noRealCoarseFineInterface;
 private:
 
   ///there is no operator= for this class
