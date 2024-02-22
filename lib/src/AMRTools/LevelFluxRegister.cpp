@@ -28,46 +28,46 @@ void
 LevelFluxRegister::poutCoarseRegisters() const
 {
   for (DataIterator dit = m_coarFlux.dataIterator(); dit.ok(); ++dit)
+  {
+    pout() << "dumping coarse registers where non-zero" << endl;
+    const FArrayBox& fab = m_coarFlux[dit()];
+    const Box&       box = fab.box();
+    for (BoxIterator bit(box); bit.ok(); ++bit)
     {
-      pout() << "dumping coarse registers where non-zero" << endl;
-      const FArrayBox& fab = m_coarFlux[dit()];
-      const Box&       box = fab.box();
-      for (BoxIterator bit(box); bit.ok(); ++bit)
+      if (Abs(fab(bit(), 0)) > 0.0)
+      {
+        pout() << bit()  << "  ";
+        for (int ivar = 0; ivar < fab.nComp(); ivar++)
         {
-          if (Abs(fab(bit(), 0)) > 0.0)
-            {
-              pout() << bit()  << "  ";
-              for (int ivar = 0; ivar < fab.nComp(); ivar++)
-                {
-                  pout() << fab(bit(), ivar) << "  ";
-                }
-              pout() << endl;
-            }
+          pout() << fab(bit(), ivar) << "  ";
         }
+        pout() << endl;
+      }
     }
+  }
 }
 
 void
 LevelFluxRegister::poutFineRegisters() const
 {
   for (DataIterator dit = m_fineFlux.dataIterator(); dit.ok(); ++dit)
+  {
+    pout() << "dumping fine registers where non-zero" << endl;
+    const FArrayBox& fab = m_fineFlux[dit()];
+    const Box&       box = fab.box();
+    for (BoxIterator bit(box); bit.ok(); ++bit)
     {
-      pout() << "dumping fine registers where non-zero" << endl;
-      const FArrayBox& fab = m_fineFlux[dit()];
-      const Box&       box = fab.box();
-      for (BoxIterator bit(box); bit.ok(); ++bit)
+      if (Abs(fab(bit(), 0)) > 0.0)
+      {
+        pout() << bit()  << "  ";
+        for (int ivar = 0; ivar < fab.nComp(); ivar++)
         {
-          if (Abs(fab(bit(), 0)) > 0.0)
-            {
-              pout() << bit()  << "  ";
-              for (int ivar = 0; ivar < fab.nComp(); ivar++)
-                {
-                  pout() << fab(bit(), ivar) << "  ";
-                }
-              pout() << endl;
-            }
+          pout() << fab(bit(), ivar) << "  ";
         }
+        pout() << endl;
+      }
     }
+  }
 }
 LevelFluxRegister::LevelFluxRegister(const DisjointBoxLayout& a_dblFine,
                                      const DisjointBoxLayout& a_dblCoar,
@@ -112,9 +112,9 @@ LevelFluxRegister::define(const DisjointBoxLayout& a_dbl,
   m_unrefinedDirection = a_unrefinedDirection;
   m_nRefine = a_nRefine*IntVect::Unit;
   if ((m_unrefinedDirection >= 0) && (m_unrefinedDirection < SpaceDim))
-    {
-      m_nRefine[m_unrefinedDirection] =1;
-    }
+  {
+    m_nRefine[m_unrefinedDirection] =1;
+  }
 
   m_scaleFineFluxes = a_scaleFineFluxes;
   DisjointBoxLayout coarsenedFine;
@@ -133,105 +133,105 @@ LevelFluxRegister::define(const DisjointBoxLayout& a_dbl,
                               coarsenedDomain, IntVect::Unit);
 
   for (int i=0; i<CH_SPACEDIM; i++)
-    {
-      m_coarseLocations[i].define(a_dblCoarse);
-      m_coarseLocations[i+CH_SPACEDIM].define(a_dblCoarse);
-    }
+  {
+    m_coarseLocations[i].define(a_dblCoarse);
+    m_coarseLocations[i+CH_SPACEDIM].define(a_dblCoarse);
+  }
 
 
   DataIterator dC   = a_dblCoarse.dataIterator();
   LayoutIterator dF = coarsenedFine.layoutIterator();
 
   for (dC.begin(); dC.ok(); ++dC)
+  {
+    const Box& cBox = a_dblCoarse.get(dC);
+
+    for (dF.begin(); dF.ok(); ++dF)
     {
-      const Box& cBox = a_dblCoarse.get(dC);
+      const Box& fBox  = coarsenedFine.get(dF);
 
-      for (dF.begin(); dF.ok(); ++dF)
+      if (fBox.bigEnd(0)+1 < cBox.smallEnd(0))
+      {
+        //can skip this box since they cannot intersect, due to sorting
+      }
+      else if (fBox.smallEnd(0)-1 > cBox.bigEnd(0))
+      {
+        //skip to end, since all the rest of boxes will not intersect either
+        dF.end();
+      }
+      else
+      {
+
+        for (int i=0; i<CH_SPACEDIM; i++)
         {
-          const Box& fBox  = coarsenedFine.get(dF);
+          Vector<Box>& lo = m_coarseLocations[i][dC];
+          Vector<Box>& hi = m_coarseLocations[i+CH_SPACEDIM][dC];
 
-          if (fBox.bigEnd(0)+1 < cBox.smallEnd(0))
-            {
-              //can skip this box since they cannot intersect, due to sorting
-            }
-          else if (fBox.smallEnd(0)-1 > cBox.bigEnd(0))
-            {
-              //skip to end, since all the rest of boxes will not intersect either
-              dF.end();
-            }
-          else
-            {
-
-              for (int i=0; i<CH_SPACEDIM; i++)
-                {
-                  Vector<Box>& lo = m_coarseLocations[i][dC];
-                  Vector<Box>& hi = m_coarseLocations[i+CH_SPACEDIM][dC];
-
-                  Box loBox = adjCellLo(fBox, i, 1);
-                  Box hiBox = adjCellHi(fBox, i, 1);
-                  if (cBox.intersectsNotEmpty(loBox)) lo.push_back(loBox & cBox);
-                  if (cBox.intersectsNotEmpty(hiBox)) hi.push_back(hiBox & cBox);
-                }
-            }
+          Box loBox = adjCellLo(fBox, i, 1);
+          Box hiBox = adjCellHi(fBox, i, 1);
+          if (cBox.intersectsNotEmpty(loBox)) lo.push_back(loBox & cBox);
+          if (cBox.intersectsNotEmpty(hiBox)) hi.push_back(hiBox & cBox);
         }
+      }
     }
+  }
 
   Box domainBox = coarsenedDomain.domainBox();
 
   if (a_dProblem.isPeriodic())
+  {
+    Vector<Box> periodicBoxes[2*CH_SPACEDIM];
+    for (dF.begin(); dF.ok(); ++dF)
     {
-      Vector<Box> periodicBoxes[2*CH_SPACEDIM];
-      for (dF.begin(); dF.ok(); ++dF)
-        {
-          const Box& fBox  = coarsenedFine.get(dF);
-          for (int i=0; i<CH_SPACEDIM; i++)
-            {
-              if (a_dProblem.isPeriodic(i))
-                {
-                  if (fBox.smallEnd(i) == domainBox.smallEnd(i))
-                    periodicBoxes[i].push_back(adjCellLo(fBox, i, 1));
-                  if (fBox.bigEnd(i) == domainBox.bigEnd(i))
-                    periodicBoxes[i+CH_SPACEDIM].push_back(adjCellHi(fBox, i, 1));
-                }
-            }
-        }
+      const Box& fBox  = coarsenedFine.get(dF);
       for (int i=0; i<CH_SPACEDIM; i++)
+      {
+        if (a_dProblem.isPeriodic(i))
+        {
+          if (fBox.smallEnd(i) == domainBox.smallEnd(i))
+            periodicBoxes[i].push_back(adjCellLo(fBox, i, 1));
+          if (fBox.bigEnd(i) == domainBox.bigEnd(i))
+            periodicBoxes[i+CH_SPACEDIM].push_back(adjCellHi(fBox, i, 1));
+        }
+      }
+    }
+    for (int i=0; i<CH_SPACEDIM; i++)
+    {
+      Vector<Box>& loV = periodicBoxes[i];
+      Vector<Box>& hiV = periodicBoxes[i+CH_SPACEDIM];
+      int size = domainBox.size(i);
+      for (int j=0; j<loV.size(); j++) loV[j].shift(i, size);
+      for (int j=0; j<hiV.size(); j++) hiV[j].shift(i, -size);
+    }
+    for (dC.begin(); dC.ok(); ++dC)
+    {
+      const Box& cBox = a_dblCoarse.get(dC);
+      for (int i=0; i<CH_SPACEDIM; i++)
+        if (a_dProblem.isPeriodic(i))
         {
           Vector<Box>& loV = periodicBoxes[i];
           Vector<Box>& hiV = periodicBoxes[i+CH_SPACEDIM];
-          int size = domainBox.size(i);
-          for (int j=0; j<loV.size(); j++) loV[j].shift(i, size);
-          for (int j=0; j<hiV.size(); j++) hiV[j].shift(i, -size);
-        }
-      for (dC.begin(); dC.ok(); ++dC)
-        {
-          const Box& cBox = a_dblCoarse.get(dC);
-          for (int i=0; i<CH_SPACEDIM; i++)
-            if (a_dProblem.isPeriodic(i))
-              {
-                Vector<Box>& loV = periodicBoxes[i];
-                Vector<Box>& hiV = periodicBoxes[i+CH_SPACEDIM];
 
-                if (cBox.smallEnd(i) == domainBox.smallEnd(i) )
-                  {
-                    Vector<Box>& hi = m_coarseLocations[i+CH_SPACEDIM][dC];
-                    for (int j=0; j<hiV.size(); j++)
-                      {
-                        if (cBox.intersectsNotEmpty(hiV[j])) hi.push_back(cBox & hiV[j]);
-                      }
-                  }
-                if (cBox.bigEnd(i) == domainBox.bigEnd(i) )
-                  {
-                    Vector<Box>& lo = m_coarseLocations[i][dC];
-                    for (int j=0; j<loV.size(); j++)
-                      {
-                        if (cBox.intersectsNotEmpty(loV[j])) lo.push_back(cBox & loV[j]);
-                      }
-                  }
+          if (cBox.smallEnd(i) == domainBox.smallEnd(i) )
+          {
+            Vector<Box>& hi = m_coarseLocations[i+CH_SPACEDIM][dC];
+            for (int j=0; j<hiV.size(); j++)
+            {
+              if (cBox.intersectsNotEmpty(hiV[j])) hi.push_back(cBox & hiV[j]);
+            }
+          }
+          if (cBox.bigEnd(i) == domainBox.bigEnd(i) )
+          {
+            Vector<Box>& lo = m_coarseLocations[i][dC];
+            for (int j=0; j<loV.size(); j++)
+            {
+              if (cBox.intersectsNotEmpty(loV[j])) lo.push_back(cBox & loV[j]);
+            }
+          }
 
-              }
         }
     }
+  }
 
 }
 
@@ -276,7 +276,7 @@ LevelFluxRegister::define(const DisjointBoxLayout& a_dbl,
 }
 
 LevelFluxRegister::LevelFluxRegister()
-:
+  :
   m_isDefined(FluxRegUndefined),
   m_scaleFineFluxes(true)
 {
@@ -312,19 +312,19 @@ LevelFluxRegister::setToZero()
 {
   CH_TIME("LevelFluxRegister::setToZero");
   if (m_isDefined & FluxRegCoarseDefined)
+  {
+    for (DataIterator d = m_coarFlux.dataIterator(); d.ok(); ++d)
     {
-      for (DataIterator d = m_coarFlux.dataIterator(); d.ok(); ++d)
-        {
-          m_coarFlux[d].setVal(0.0);
-        }
+      m_coarFlux[d].setVal(0.0);
     }
+  }
   if (m_isDefined & FluxRegFineDefined)
+  {
+    for (DataIterator d = m_fineFlux.dataIterator(); d.ok(); ++d)
     {
-      for (DataIterator d = m_fineFlux.dataIterator(); d.ok(); ++d)
-        {
-          m_fineFlux[d].setVal(0.0);
-        }
+      m_fineFlux[d].setVal(0.0);
     }
+  }
 }
 
 void
@@ -357,7 +357,7 @@ LevelFluxRegister::incrementCoarse(const FArrayBox& a_coarseFlux,
   CH_TIME("LevelFluxRegister::incrementCoarse");
 
   const Vector<Box>& intersect =
-     m_coarseLocations[a_dir+a_sd*CH_SPACEDIM][a_coarseDataIndex];
+    m_coarseLocations[a_dir+a_sd*CH_SPACEDIM][a_coarseDataIndex];
 
   FArrayBox& coarse = m_coarFlux[a_coarseDataIndex];
 
@@ -371,38 +371,38 @@ LevelFluxRegister::incrementCoarse(const FArrayBox& a_coarseFlux,
   int size = a_srcInterval.size();
 
   for (int b=0; b<intersect.size(); ++b)
+  {
+    const Box& box = intersect[b];
+    Vector<Real> regbefore(coarse.nComp());
+    Vector<Real> regafter(coarse.nComp());
+    if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
     {
-      const Box& box = intersect[b];
-      Vector<Real> regbefore(coarse.nComp());
-      Vector<Real> regafter(coarse.nComp());
-      if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
-        {
-          for (int ivar = 0; ivar < coarse.nComp(); ivar++)
-            {
-              regbefore[ivar] = coarse(ivdebnoeb, ivar);
-            }
-        }
-
-      coarse.plus(coarseFlux, box, box, scale, s, d, size);
-
-      if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
-        {
-          for (int ivar = 0; ivar < coarse.nComp(); ivar++)
-            {
-              regafter[ivar] = coarse(ivdebnoeb, ivar);
-            }
-
-          pout() << "levelfluxreg::incrementCoar: scale = " << scale << ", ";
-          for (int ivar = 0; ivar < coarse.nComp(); ivar++)
-            {
-              pout() << " input flux = " << coarseFlux(ivdebnoeb, ivar) << ", ";
-              pout() << " reg before = " <<             regbefore[ivar] << ", ";
-              pout() << " reg after  = " <<                regafter[ivar] << ", ";
-            }
-          pout() << endl;
-
-        }
+      for (int ivar = 0; ivar < coarse.nComp(); ivar++)
+      {
+        regbefore[ivar] = coarse(ivdebnoeb, ivar);
+      }
     }
+
+    coarse.plus(coarseFlux, box, box, scale, s, d, size);
+
+    if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
+    {
+      for (int ivar = 0; ivar < coarse.nComp(); ivar++)
+      {
+        regafter[ivar] = coarse(ivdebnoeb, ivar);
+      }
+
+      pout() << "levelfluxreg::incrementCoar: scale = " << scale << ", ";
+      for (int ivar = 0; ivar < coarse.nComp(); ivar++)
+      {
+        pout() << " input flux = " << coarseFlux(ivdebnoeb, ivar) << ", ";
+        pout() << " reg before = " <<             regbefore[ivar] << ", ";
+        pout() << " reg after  = " <<                regafter[ivar] << ", ";
+      }
+      pout() << endl;
+
+    }
+  }
 
   coarseFlux.shiftHalf(a_dir, - sign(a_sd));
 }
@@ -446,12 +446,12 @@ LevelFluxRegister::incrementFine(const FArrayBox& a_fineFlux,
   if (m_scaleFineFluxes)
   {
     for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      if (idir != a_dir)
       {
-        if (idir != a_dir)
-          {
-            denom *= m_nRefine[idir];
-          }
+        denom *= m_nRefine[idir];
       }
+    }
   }
 
   Real scale = sign(a_sd)*a_scale/denom;
@@ -464,85 +464,85 @@ LevelFluxRegister::incrementFine(const FArrayBox& a_fineFlux,
   clipBox.refine(m_nRefine);
   Box fineBox;
   if (a_sd == Side::Lo)
-    {
-      fineBox = adjCellLo(clipBox, a_dir, 1);
-      fineBox &= fineFlux.box();
-    }
+  {
+    fineBox = adjCellLo(clipBox, a_dir, 1);
+    fineBox &= fineFlux.box();
+  }
   else
-    {
-      fineBox = adjCellHi(clipBox,a_dir,1);
-      fineBox &= fineFlux.box();
-    }
-   // shifting to ensure fineBox is in the positive quadrant, so IntVect coarening
-   // is just integer division.
+  {
+    fineBox = adjCellHi(clipBox,a_dir,1);
+    fineBox &= fineFlux.box();
+  }
+  // shifting to ensure fineBox is in the positive quadrant, so IntVect coarening
+  // is just integer division.
 
   const Box& box = coarsen(fineBox, m_nRefine);
   Vector<Real> regbefore(cFine.nComp());
   Vector<Real>  regafter(cFine.nComp());
   if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
+  {
+    for (int ivar = 0; ivar < cFine.nComp(); ivar++)
     {
-      for (int ivar = 0; ivar < cFine.nComp(); ivar++)
-        {
-          regbefore[ivar] = cFine(ivdebnoeb, ivar);
-        }
+      regbefore[ivar] = cFine(ivdebnoeb, ivar);
     }
+  }
 
 
-   const IntVect& iv=fineBox.smallEnd();
-   IntVect civ = coarsen(iv, m_nRefine);
-   int srcComp = a_srcInterval.begin();
-   int destComp = a_dstInterval.begin();
-   int ncomp = a_srcInterval.size();
-   FORT_INCREMENTFINE(CHF_CONST_FRA_SHIFT(fineFlux, iv),
-                      CHF_FRA_SHIFT(cFine, civ),
-                      CHF_BOX_SHIFT(fineBox, iv),
-                      CHF_CONST_INTVECT(m_nRefine),
-                      CHF_CONST_REAL(scale),
-                      CHF_CONST_INT(srcComp),
-                      CHF_CONST_INT(destComp),
-                      CHF_CONST_INT(ncomp));
+  const IntVect& iv=fineBox.smallEnd();
+  IntVect civ = coarsen(iv, m_nRefine);
+  int srcComp = a_srcInterval.begin();
+  int destComp = a_dstInterval.begin();
+  int ncomp = a_srcInterval.size();
+  FORT_INCREMENTFINE(CHF_CONST_FRA_SHIFT(fineFlux, iv),
+                     CHF_FRA_SHIFT(cFine, civ),
+                     CHF_BOX_SHIFT(fineBox, iv),
+                     CHF_CONST_INTVECT(m_nRefine),
+                     CHF_CONST_REAL(scale),
+                     CHF_CONST_INT(srcComp),
+                     CHF_CONST_INT(destComp),
+                     CHF_CONST_INT(ncomp));
 
 
   if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
+  {
+    for (int ivar = 0; ivar < cFine.nComp(); ivar++)
     {
-      for (int ivar = 0; ivar < cFine.nComp(); ivar++)
-        {
-          regafter[ivar] = cFine(ivdebnoeb, ivar);
-        }
+      regafter[ivar] = cFine(ivdebnoeb, ivar);
     }
+  }
 
   if (s_verbose && (a_dir == debugdir) && box.contains(ivdebnoeb))
+  {
+
+    pout() << "levelfluxreg::incrementFine: scale = " << scale << endl;
+    Box refbox(ivdebnoeb, ivdebnoeb);
+    refbox.refine(m_nRefine);
+    refbox &= fineBox;
+    if (!refbox.isEmpty())
     {
-
-      pout() << "levelfluxreg::incrementFine: scale = " << scale << endl;
-      Box refbox(ivdebnoeb, ivdebnoeb);
-      refbox.refine(m_nRefine);
-      refbox &= fineBox;
-      if (!refbox.isEmpty())
+      pout() << "fine fluxes = " << endl;
+      for (BoxIterator  bit(refbox); bit.ok(); ++bit)
+      {
+        for (int ivar = 0; ivar < cFine.nComp(); ivar++)
         {
-          pout() << "fine fluxes = " << endl;
-          for (BoxIterator  bit(refbox); bit.ok(); ++bit)
-            {
-              for (int ivar = 0; ivar < cFine.nComp(); ivar++)
-                {
-                  pout() << "iv = " << bit() << "(";
-                  for (int ivar = 0; ivar < cFine.nComp(); ivar++)
-                    {
-                      pout() << fineFlux(bit(), ivar);
-                    }
-                  pout() << ")" << endl;
-                }
-            }
+          pout() << "iv = " << bit() << "(";
+          for (int ivar = 0; ivar < cFine.nComp(); ivar++)
+          {
+            pout() << fineFlux(bit(), ivar);
+          }
+          pout() << ")" << endl;
         }
-
-      for (int ivar = 0; ivar < cFine.nComp(); ivar++)
-        {
-          pout() << " reg before = " <<               regbefore[ivar] << ", ";
-          pout() << " reg after  = " <<                regafter[ivar] << ", ";
-        }
-      pout() << endl;
-
+      }
     }
+
+    for (int ivar = 0; ivar < cFine.nComp(); ivar++)
+    {
+      pout() << " reg before = " <<               regbefore[ivar] << ", ";
+      pout() << " reg after  = " <<                regafter[ivar] << ", ";
+    }
+    pout() << endl;
+
+  }
 
   fineFlux.shiftHalf(a_dir, - sign(a_sd));
 }
@@ -583,7 +583,7 @@ public:
         argR+=*buffer * scale;
         buffer++;
       } EndFor
-    }
+          }
     else
     {
       ForAllXBNNnoindx(Real, arg, R, comps.begin(), comps.size())
@@ -591,7 +591,7 @@ public:
         argR+=*buffer;
         buffer++;
       } EndFor
-    }
+          }
   }
 
   void op(FArrayBox& dest,
@@ -609,22 +609,20 @@ public:
 };
 
 void LevelFluxRegister::reflux(
-                               LevelData<FArrayBox>& a_uCoarse,
-                               const Interval&       a_coarse_interval,
-                               const Interval&       a_flux_interval,
-                               Real                  a_scale )
+  LevelData<FArrayBox>& a_uCoarse,
+  const Interval&       a_coarse_interval,
+  const Interval&       a_flux_interval,
+  Real                  a_scale )
 {
   CH_assert(isDefined() );
-  if (m_noRealCoarseFineInterface)
-    return;
   CH_TIME("LevelFluxRegister::reflux");
   for (DataIterator dit(a_uCoarse.dataIterator()); dit.ok(); ++dit)
-    {
-      FArrayBox& u = a_uCoarse[dit];
-      FArrayBox& coarse = m_coarFlux[dit];
-      u.plus(coarse, -a_scale, a_flux_interval.begin(),
-             a_coarse_interval.begin(), a_coarse_interval.size() );
-    }
+  {
+    FArrayBox& u = a_uCoarse[dit];
+    FArrayBox& coarse = m_coarFlux[dit];
+    u.plus(coarse, -a_scale, a_flux_interval.begin(),
+           a_coarse_interval.begin(), a_coarse_interval.size() );
+  }
   AddOp op;
   op.scale = -a_scale;
   m_fineFlux.copyTo(a_flux_interval, a_uCoarse, a_coarse_interval, m_reverseCopier, op);
@@ -632,36 +630,36 @@ void LevelFluxRegister::reflux(
 }
 
 void LevelFluxRegister::reflux(
-                               LevelData<FArrayBox>& a_uCoarse,
-                               Real                  a_scale,
-                               const Interval&       a_coarse_interval,
-                               const Interval&       a_flux_interval,
-                               const LevelData<FArrayBox>& a_beta
-                               )
+  LevelData<FArrayBox>& a_uCoarse,
+  Real                  a_scale,
+  const Interval&       a_coarse_interval,
+  const Interval&       a_flux_interval,
+  const LevelData<FArrayBox>& a_beta
+  )
 {
   CH_assert(isAllDefined() );
   CH_TIME("LevelFluxRegister::reflux");
   CH_assert(a_beta.nComp() ==1);
   LevelData<FArrayBox> increment(a_uCoarse.disjointBoxLayout(), a_uCoarse.nComp(), a_uCoarse.ghostVect());
   for (DataIterator dit(a_uCoarse.dataIterator()); dit.ok(); ++dit)
-    {
-      increment[dit()].setVal(0.0);
-    }
+  {
+    increment[dit()].setVal(0.0);
+  }
 
   reflux(increment, a_coarse_interval, a_flux_interval, a_scale );
   for (DataIterator dit(a_uCoarse.dataIterator()); dit.ok(); ++dit)
+  {
+    for (int icomp = 0; icomp < increment.nComp(); icomp++)
     {
-      for (int icomp = 0; icomp < increment.nComp(); icomp++)
-        {
-          int srccomp = 0;
-          int dstcomp = icomp;
-          int ncomp = 1;
-          increment[dit()].mult(a_beta[dit()], srccomp, dstcomp, ncomp);
-        }
       int srccomp = 0;
-      int dstcomp = 0;
-      int ncomp = a_uCoarse.nComp();
-      a_uCoarse[dit()].plus(increment[dit()], srccomp, dstcomp, ncomp);
+      int dstcomp = icomp;
+      int ncomp = 1;
+      increment[dit()].mult(a_beta[dit()], srccomp, dstcomp, ncomp);
     }
+    int srccomp = 0;
+    int dstcomp = 0;
+    int ncomp = a_uCoarse.nComp();
+    a_uCoarse[dit()].plus(increment[dit()], srccomp, dstcomp, ncomp);
+  }
 }
 #include "NamespaceFooter.H"
