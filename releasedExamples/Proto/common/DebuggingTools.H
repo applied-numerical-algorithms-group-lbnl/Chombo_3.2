@@ -24,8 +24,8 @@
  **/
 #define DBG_NUMER_LO_X 1
 #define DBG_DENOM_LO_X 8
-#define DBG_NUMER_HI_X 1
-#define DBG_DENOM_HI_X 4
+#define DBG_NUMER_HI_X 3
+#define DBG_DENOM_HI_X 8
 
 #define DBG_NUMER_LO_Y 0
 #define DBG_DENOM_LO_Y 1
@@ -34,8 +34,8 @@
 
 #define DBG_NUMER_LO_Z 0 0
 #define DBG_DENOM_LO_Z 01
-#define DBG_NUMER_HI_Z 01
-#define DBG_DENOM_HI_Z 08
+#define DBG_NUMER_HI_Z 00
+#define DBG_DENOM_HI_Z 0 1
 
 #include "Proto.H"
 #include "FArrayBox.H"

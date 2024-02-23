@@ -187,10 +187,10 @@ namespace PrCh_Tools
       } // end verbosity check
     }   // end function setCoarFlux
     
-        /// sets internal cofi buffers = average of fine fluxes
-        /***
-            cofi_flux = sum(fine_fluxes)/nfine_per_coar
-        **/
+    /// sets internal cofi buffers = average of fine fluxes
+    /***
+         cofi_flux = sum(fine_fluxes)/nfine_per_coar
+    **/
     void setFineFlux(shared_ptr<pr_xfac_data> a_xflux_fine,
                      shared_ptr<pr_yfac_data> a_yflux_fine,
                      shared_ptr<pr_zfac_data> a_zflux_fine,
@@ -267,106 +267,115 @@ namespace PrCh_Tools
 #if DIM==3                                                                                                         
       t_zflux_cofi->copyTo(*m_zflux_fine);
 #endif
+      if(a_verbose)
+      {
+        Chombo::pout() << " Laving setFineFlux: " << endl;
+        Chombo::pout() << " m_xflux_fine->max() = " << m_xflux_fine->max() << " m_xflux_fine->min() = " << m_xflux_fine->min()  << endl;
+        Chombo::pout() << " m_yflux_fine->max() = " << m_yflux_fine->max() << " m_yflux_fine->min() = " << m_yflux_fine->min()  << endl;
+#if DIM==3                                                                                                         
+        Chombo::pout() << " m_zflux_fine->max() = " << m_zflux_fine->max() << " m_zflux_fine->min() = " << m_zflux_fine->min()  << endl;
+#endif
+      } // end verbosity check
     }     // end function setFineFlux
 
-      ///
-      /**
-       **/
-      pr_box_data_ncomp* getFluxPtrFine(int a_idir, int a_ibox)
+    ///
+    /**
+     **/
+    pr_box_data_ncomp* getFluxPtrFine(int a_idir, int a_ibox)
+    {
+      pr_box_data_ncomp* retval = NULL;
+      auto dit = m_xflux_fine->begin();
+      if(a_idir == 0)
       {
-        pr_box_data_ncomp* retval = NULL;
-        auto dit = m_xflux_fine->begin();
-        if(a_idir == 0)
-        {
-          retval = &((*m_xflux_fine)[dit[a_ibox]]);
-        }
-        else if(a_idir == 1)
-        {
-          retval = &((*m_yflux_fine)[dit[a_ibox]]);
-        }
+        retval = &((*m_xflux_fine)[dit[a_ibox]]);
+      }
+      else if(a_idir == 1)
+      {
+        retval = &((*m_yflux_fine)[dit[a_ibox]]);
+      }
 #if DIM==3       
-        else if(a_idir == 2)
-        {
-          retval = &((*m_zflux_fine)[dit[a_ibox]]);
-        }
+      else if(a_idir == 2)
+      {
+        retval = &((*m_zflux_fine)[dit[a_ibox]]);
+      }
 #endif
           
-        return retval;
-      }
-      ///
-      /**
-       **/
-      pr_box_data_ncomp* getFluxPtrCoar(int a_idir, int a_ibox)
+      return retval;
+    }
+    ///
+    /**
+     **/
+    pr_box_data_ncomp* getFluxPtrCoar(int a_idir, int a_ibox)
+    {
+      pr_box_data_ncomp* retval = NULL;
+      auto dit = m_xflux_coar->begin();
+      if(a_idir == 0)
       {
-        pr_box_data_ncomp* retval = NULL;
-        auto dit = m_xflux_coar->begin();
-        if(a_idir == 0)
-        {
-          retval = &((*m_xflux_coar)[dit[a_ibox]]);
-        }
-        else if(a_idir == 1)
-        {
-          retval = &((*m_yflux_coar)[dit[a_ibox]]);
-        }
+        retval = &((*m_xflux_coar)[dit[a_ibox]]);
+      }
+      else if(a_idir == 1)
+      {
+        retval = &((*m_yflux_coar)[dit[a_ibox]]);
+      }
 #if DIM==3       
-        else if(a_idir == 2)
-        {
-          retval = &((*m_zflux_coar)[dit[a_ibox]]);
-        }
-#endif        
-        return retval;
-      }
-      ///
-      /**
-         All fluxes input on coarse resolution and coarse layout
-         Side refers to which side of the coarse cell it is on.
-      **/
-      void refluxSide(pr_box_data_ncomp            & a_solu_coar,
-                      const pr_box_data_ncomp      & a_flux_fine,
-                      const pr_box_data_ncomp      & a_flux_coar,
-                      const double                 & a_dx,
-                      const vector<pr_box>         & a_cfi_boxes,
-                      int a_idir,  ch_side::LoHiSide    a_coarCellSide)
+      else if(a_idir == 2)
       {
-        /**
-         // Stencils weights for fine and cofi will have opposite signs.
-         // The shifts  will be the same for both.
-         **/
-        double wgt_fine = 4586,wgt_coar = 4586;
-        pr_shift shift_val;
-        if(a_coarCellSide == ch_side::Lo)
-        {
-          wgt_fine = -1/a_dx;
-          wgt_coar =  1/a_dx;
-          shift_val = pr_shift(pr_pt::Zeros());
-        }
-        else
-        {
-          wgt_fine =  1/a_dx;
-          wgt_coar = -1/a_dx;
-          shift_val = pr_shift(pr_pt::Basis(a_idir, 1));
-        }
-        pr_sten sten_fine(shift_val, wgt_fine);
-        pr_sten sten_coar(shift_val, wgt_coar);
-        for(int icomp = 0; icomp < ncomp; icomp++)
-        {
-          pr_box_data_sca solu_coar = Proto::slice(a_solu_coar, icomp);
-          pr_box_data_sca flux_coar = Proto::slice(a_flux_coar, icomp);
-          pr_box_data_sca flux_fine = Proto::slice(a_flux_fine, icomp);
+        retval = &((*m_zflux_coar)[dit[a_ibox]]);
+      }
+#endif        
+      return retval;
+    }
+    ///
+    /**
+       All fluxes input on coarse resolution and coarse layout
+       Side refers to which side of the coarse cell it is on.
+    **/
+    void refluxSide(pr_box_data_ncomp            & a_solu_coar,
+                    const pr_box_data_ncomp      & a_flux_fine,
+                    const pr_box_data_ncomp      & a_flux_coar,
+                    const double                 & a_dx,
+                    const vector<pr_box>         & a_cfi_boxes,
+                    int a_idir,  ch_side::LoHiSide    a_coarCellSide)
+    {
+      /**
+       // Stencils weights for fine and cofi will have opposite signs.
+       // The shifts  will be the same for both.
+       **/
+      double wgt_fine = 4586,wgt_coar = 4586;
+      pr_shift shift_val;
+      if(a_coarCellSide == ch_side::Lo)
+      {
+        wgt_fine = -1/a_dx;
+        wgt_coar =  1/a_dx;
+        shift_val = pr_shift(pr_pt::Zeros());
+      }
+      else
+      {
+        wgt_fine =  1/a_dx;
+        wgt_coar = -1/a_dx;
+        shift_val = pr_shift(pr_pt::Basis(a_idir, 1));
+      }
+      pr_sten sten_fine(shift_val, wgt_fine);
+      pr_sten sten_coar(shift_val, wgt_coar);
+      for(int icomp = 0; icomp < ncomp; icomp++)
+      {
+        pr_box_data_sca solu_coar = Proto::slice(a_solu_coar, icomp);
+        pr_box_data_sca flux_coar = Proto::slice(a_flux_coar, icomp);
+        pr_box_data_sca flux_fine = Proto::slice(a_flux_fine, icomp);
 
-          ///these are all done incrementally
-          bool initToZero = false;   double applyScale = 1.;
-          for(int ibox = 0; ibox < a_cfi_boxes.size(); ibox++)
-          {
-            ///this arg list is src, dst  so solu_coar is the output
-            sten_fine.apply(flux_fine, solu_coar, a_cfi_boxes[ibox], 
-                            initToZero, applyScale);
-            sten_coar.apply(flux_coar, solu_coar, a_cfi_boxes[ibox], 
-                            initToZero, applyScale);
-          } //end loop over cfi boxes for this coarse grid
-        }   //end loop over components
-        return;
-      }    //end function refluxSide
+        ///these are all done incrementally
+        bool initToZero = false;   double applyScale = 1.;
+        for(int ibox = 0; ibox < a_cfi_boxes.size(); ibox++)
+        {
+          ///this arg list is src, dst  so solu_coar is the output
+          sten_fine.apply(flux_fine, solu_coar, a_cfi_boxes[ibox], 
+                          initToZero, applyScale);
+          sten_coar.apply(flux_coar, solu_coar, a_cfi_boxes[ibox], 
+                          initToZero, applyScale);
+        } //end loop over cfi boxes for this coarse grid
+      }   //end loop over components
+      return;
+    }    //end function refluxSide
     /// 
     /**
      // U += Div(Ave(F_fine) - Fcoar)
@@ -376,6 +385,11 @@ namespace PrCh_Tools
     {
       CH_TIME("PrChFluxRegister::reflux");
       
+      if(a_verbose)
+      {
+        Chombo::pout() << " entering reflux: " << endl;
+        Chombo::pout() << " a_solut_coar.max() = " << a_solut_coar.max() << " a_solut_coar.min() = " << a_solut_coar.min()  << endl;
+      } // end verbosity check
       /**
        // Stage 1: 
        //  Set buffers = averaged fine flux (where it exists) and zero elsewhere.
@@ -408,8 +422,14 @@ namespace PrCh_Tools
           } //end high side (of the fine grid) reflux 
         }   //end loop over coarse local boxes
       }     //end loop over face directions
+
+      if(a_verbose)
+      {
+        Chombo::pout() << " leaving reflux: " << endl;
+        Chombo::pout() << " a_solut_coar.max() = " << a_solut_coar.max() << " a_solut_coar.min() = " << a_solut_coar.min()  << endl;
+      } // end verbosity check
       return;
-    }//end function reflux
-  }; //end class FluxRegister
-} //end namespace PrChTools
+    } //end function reflux
+  };  //end class FluxRegister
+}     //end namespace PrChTools
 #endif

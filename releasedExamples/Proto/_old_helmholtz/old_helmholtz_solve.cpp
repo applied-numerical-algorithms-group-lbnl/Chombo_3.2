@@ -192,6 +192,67 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   ppSolver.get("relax_mode", relaxMode);
   AMRPoissonOp::s_relaxMode =  relaxMode;
 }
+void
+makeSmoothAndInteresting(Vector<LevelData<FArrayBox>* >  &  a_phi,
+                         Vector<DisjointBoxLayout>       &  a_amrGrids,
+                         Vector<ProblemDomain>           &  a_amrDomains,
+                         Vector<int>                     &  a_refRatios,
+                         Vector<Real>                    &  a_amrDx)
+{
+  double twopi   = 8.*atan(1.);
+  Chombo::pout() << "makeSmoothAndInteresting: " << endl;
+  for(int ilev = 0; ilev <  a_phi.size(); ilev++)
+  {
+    LevelData<FArrayBox>& phi_level = *a_phi[ilev];
+    Real dx = a_amrDx[ilev];
+    DataIterator dit = phi_level.dataIterator();
+    for(int ibox = 0; ibox < dit.size(); ibox++)
+    {
+      FArrayBox& phi_fab = phi_level[dit[ibox]];
+      for(BoxIterator bit(phi_fab.box()); bit.ok(); ++bit)
+      {
+        IntVect iv = bit();
+        double phi_val = 1;
+        for(int idir = 0; idir < DIM; idir++)
+        {
+          double x_val    = dx*(double(iv[idir]) + 0.5);
+          double sine_val = sin(twopi*x_val);
+          phi_val *= sine_val;
+        }
+        phi_fab(iv, 0) =  phi_val;
+      } //end loop over cells in box
+    }   //end loop over boxes
+    double norm = CH_XD::norm(phi_level, phi_level.interval(), 0);
+    Chombo::pout() << "ilev : " << ilev << "phi_level.maxNorm = " << norm << endl;
+  }     //end loop over levels
+}       //end function makeSmoothAndInteresting
+void
+testAMROperator(Vector<      LevelData<FArrayBox>* >          & a_rhs,
+                Vector<      LevelData<FArrayBox>* >          & a_phi, 
+                AMRMultiGrid<LevelData<FArrayBox>  >          * a_amr_solver_ptr)
+{
+  Chombo::pout() << " going into testAMROperator: " << endl;
+  for(int ilev = 0; ilev < a_phi.size(); ilev++)
+  {
+    auto& phi_level = *a_phi[ilev];
+    double norm = CH_XD::norm(phi_level, phi_level.interval(), 0);
+    Chombo::pout() << " ilev:           " << ilev  << endl;
+    Chombo::pout() << " phi_level.norm(0) = " << norm << endl;
+  }//end loop over levels
+
+  
+  int l_max  = a_rhs.size() - 1;
+  int l_base = 0;
+  a_amr_solver_ptr->computeAMROperator(a_rhs, a_phi, l_max, l_base, false);
+
+  for(int ilev = 0; ilev < a_phi.size(); ilev++)
+  {
+    auto& rhs_level = *a_rhs[ilev];
+    double norm = CH_XD::norm(rhs_level, rhs_level.interval(), 0);
+    Chombo::pout() << " ilev:" << ilev  << endl;
+    Chombo::pout() << " rhs_level.norm(0) = " << norm << endl;
+  }//end loop over levels
+}
 
 int runSolver()
 {
@@ -233,7 +294,10 @@ int runSolver()
     phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
-
+ //because it is convenient, put in an operator test to compare with ye olde chombo
+  makeSmoothAndInteresting(phi, amrGrids, amrDomains, refRatios, amrDx);
+  testAMROperator(rhs, phi, amrSolver);
+    
   setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
   amrSolver->solve(phi, rhs, finestLevel, 0, true); //bool zeroInitialGuess = true;
 
