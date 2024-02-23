@@ -101,8 +101,8 @@ namespace Chombo
           Proto::forallInPlace_i(setToSineXSineYSineZ, phi_fab.box(), phi_fab, dx);
         } //end loop over boxes
 
-        Chombo::pout() << " ilev:           " << ilev  << endl;
-        Chombo::pout() << " phi_level.max = " << phi_level.max() << " phi_level.min() = " << phi_level.min()  << endl;
+        Chombo::pout() << " ilev:           " << ilev; 
+        Chombo::pout() << ", phi_level.max = " << phi_level.max() << " phi_level.min() = " << phi_level.min()  << endl;
       }//end loop over levels
     }//  end function makeSmoothAndInteresting
     static void
@@ -114,8 +114,8 @@ namespace Chombo
       for(int ilev = 0; ilev < a_phi_pr.size(); ilev++)
       {
         auto& phi_level = *a_phi_pr[ilev];
-        Chombo::pout() << " ilev:           " << ilev  << endl;
-        Chombo::pout() << " phi_level.max = " << phi_level.max() << " phi_level.min() = " << phi_level.min()  << endl;
+        Chombo::pout() << " ilev = " << ilev;
+        Chombo::pout() << ", phi_level.max = " << phi_level.max() << ", phi_level.min() = " << phi_level.min()  << endl;
       }//end loop over levels
 
       int l_max  = a_rhs_pr.size() - 1;

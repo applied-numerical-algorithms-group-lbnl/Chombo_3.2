@@ -24,8 +24,8 @@
  **/
 #define DBG_NUMER_LO_X 1
 #define DBG_DENOM_LO_X 8
-#define DBG_NUMER_HI_X 3
-#define DBG_DENOM_HI_X 8
+#define DBG_NUMER_HI_X 1
+#define DBG_DENOM_HI_X 4
 
 #define DBG_NUMER_LO_Y 0
 #define DBG_DENOM_LO_Y 1
@@ -504,18 +504,18 @@ namespace PrChDebug
       ch_iv areaLo, areaHi;
       ch_iv size_iv = dom_box.bigEnd() + ch_iv::Unit;
 
-      int lo_dir_x = (DBG_NUMER_LO_X*size_iv[0])/(DBG_DENOM_LO_X);
-      int hi_dir_x = (DBG_NUMER_HI_X*size_iv[0])/(DBG_DENOM_HI_X);
+      int lo_dir_x =     (DBG_NUMER_LO_X*size_iv[0])/(DBG_DENOM_LO_X) - 1;
+      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_iv[0])/(DBG_DENOM_HI_X);
       areaLo[0] = lo_dir_x;
       areaHi[0] = hi_dir_x;
       
-      int lo_dir_y = (DBG_NUMER_LO_Y*size_iv[1])/(DBG_DENOM_LO_Y);
-      int hi_dir_y = (DBG_NUMER_HI_Y*size_iv[1])/(DBG_DENOM_HI_Y);
+      int lo_dir_y =     (DBG_NUMER_LO_Y*size_iv[1])/(DBG_DENOM_LO_Y) - 1;
+      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_iv[1])/(DBG_DENOM_HI_Y);
       areaLo[1] = lo_dir_y;
       areaHi[1] = hi_dir_y;
 #if DIM==3
-      int lo_dir_z = (DBG_NUMER_LO_Z*size_iv[2])/(DBG_DENOM_LO_Z);
-      int hi_dir_z = (DBG_NUMER_HI_Z*size_iv[2])/(DBG_DENOM_HI_Z);
+      int lo_dir_z =     (DBG_NUMER_LO_Z*size_iv[2])/(DBG_DENOM_LO_Z) - 1;
+      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_iv[2])/(DBG_DENOM_HI_Z);
       areaLo[2] = lo_dir_z;
       areaHi[2] = hi_dir_z;
 #endif      
@@ -552,18 +552,18 @@ namespace PrChDebug
       pr_pt dom_hi = data.layout().domain().box().high();
       pr_pt size_pt = dom_hi + pr_pt::Ones(1);
       
-      int lo_dir_x = (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X);
-      int hi_dir_x = (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
+      int lo_dir_x =     (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X) - 1;
+      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
       areaLo[0] = lo_dir_x;
       areaHi[0] = hi_dir_x;
       
-      int lo_dir_y = (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y);
-      int hi_dir_y = (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
+      int lo_dir_y =     (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y) - 1;
+      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
       areaLo[1] = lo_dir_y;
       areaHi[1] = hi_dir_y;
 #if DIM==3
-      int lo_dir_z = (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z);
-      int hi_dir_z = (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
+      int lo_dir_z =     (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z) - 1;
+      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
       areaLo[2] = lo_dir_z;
       areaHi[2] = hi_dir_z;
 #endif      

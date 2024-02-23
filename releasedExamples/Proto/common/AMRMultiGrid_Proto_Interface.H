@@ -381,6 +381,24 @@ namespace PrCh_AMR_Elliptic
 #else
       shared_ptr<pr_zfac_data> zflux_coar, zflux_fine;
 #endif
+      /**
+         // Because fillFluxes does not do anything about ghost cells,
+         //  The finer solution its ghost cells over the C/F interface to be correct.
+         //  Both resolutions need to be exchanged.
+         // AMRPoissonOp.cpp contains the following cryptic comment which applies here:
+         // const cast:  OK because we're changing ghost cells only
+         // Translation.  We going to a bunch of evil casting of const objects but
+         // you should trust us since we are just changing ghost cells.   
+      **/
+      pr_lbd& phi_fine_cast = (pr_lbd &) a_phiFine;
+      pr_lbd& phi_coar_cast = (pr_lbd &) a_phiCoar;
+      ch_dom domain_fine = this->getDomainFromData(phi_fine_cast);
+      ch_dom domain_coar = this->getDomainFromData(phi_coar_cast);
+      cast_finer_op->fillGhostDataOutsideDomain(phi_fine_cast, domain_fine);
+      this->fillGhostDataOutsideDomain(         phi_coar_cast, domain_coar);
+      cast_finer_op->fillGhostDataOverCoarseFineInterface(phi_fine_cast, phi_coar_cast);
+      phi_fine_cast.exchange();
+      phi_coar_cast.exchange();
       
       this->fillFluxes(         xflux_coar, yflux_coar, zflux_coar, a_phiCoar);
       cast_finer_op->fillFluxes(xflux_fine, yflux_fine, zflux_fine, a_phiFine);
