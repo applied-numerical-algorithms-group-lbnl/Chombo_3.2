@@ -894,6 +894,7 @@ void AMRPoissonOp::AMROperator(LevelData<FArrayBox>&              a_LofPhi,
     CH_assert(a_finerOp != NULL);
     reflux(a_phiFine, a_phi, a_LofPhi, a_finerOp);
   }
+  return;
 }
 
 // ---------------------------------------------------------
@@ -1200,36 +1201,36 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
                           LevelData<FArrayBox>&              a_residual,
                           AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
 {
-  CH_TIMERS("AMRPoissonOp::reflux");
-  CH_TIMER("AMRPoissonOp::reflux::incrementCoarse", t2);
-  CH_TIMER("AMRPoissonOp::reflux::incrementFine", t3);
+  CH_TIME("AMRPoissonOp::reflux");
 
   m_levfluxreg.setToZero();
   Interval interv(0,a_phi.nComp()-1);
 
-  CH_START(t2);
-
+  auto grids = a_phi.disjointBoxLayout();
   DataIterator dit = a_phi.dataIterator();
   for (dit.reset(); dit.ok(); ++dit)
+  {
+    const FArrayBox& coarfab = a_phi[dit];
+    
+    Box valid = grids[dit];
+    if (m_levfluxreg.hasCF(dit()))
     {
-      const FArrayBox& coarfab = a_phi[dit];
+      //pout() << " AMRPoissonOp::reflux: " << coarfab.box() << endl;
+      for (int idir = 0; idir < SpaceDim; idir++)
+      {
+        Box edgeBox = surroundingNodes(valid, idir);
+        FArrayBox coarflux(edgeBox, 1);
+        int iref = 1; 
+        getFlux(coarflux, coarfab, edgeBox, idir, iref);
 
-      if (m_levfluxreg.hasCF(dit()))
-        {
-          //pout() << " AMRPoissonOp::reflux: " << coarfab.box() << endl;
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              FArrayBox coarflux;
-              getFlux(coarflux, coarfab, idir);
-
-              Real scale = 1.0;
-              m_levfluxreg.incrementCoarse(coarflux, scale, dit(),
-                                           interv, interv, idir);
-            }
-        }
+        Real scale = 1.0;
+        m_levfluxreg.incrementCoarse(coarflux, scale, dit(),
+                                     interv, interv, idir);
+      }
     }
+    return;
+  }
 
-  CH_STOP(t2);
 
   // const cast:  OK because we're changing ghost cells only
   LevelData<FArrayBox>& phiFineRef = ( LevelData<FArrayBox>&)a_phiFine;
@@ -1244,39 +1245,35 @@ void AMRPoissonOp::reflux(const LevelData<FArrayBox>&        a_phiFine,
   IntVect phiGhost = phiFineRef.ghostVect();
   int ncomps = a_phiFine.nComp();
 
-  CH_START(t3);
 
   DataIterator ditf = a_phiFine.dataIterator();
   const  DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   for (ditf.reset(); ditf.ok(); ++ditf)
+  {
+    const FArrayBox& phifFab = a_phiFine[ditf];
+    const Box& valid = dblFine[ditf];
+
+    for (int idir = 0; idir < SpaceDim; idir++)
     {
-      const FArrayBox& phifFab = a_phiFine[ditf];
-      const Box& gridbox = dblFine[ditf];
-
-      for (int idir = 0; idir < SpaceDim; idir++)
+      //int normalGhost = phiGhost[idir];
+      SideIterator sit;
+      for (sit.begin(); sit.ok(); sit.next())
+      {
+        if (m_levfluxreg.hasCF(ditf(), sit()))
         {
-          //int normalGhost = phiGhost[idir];
-          SideIterator sit;
-          for (sit.begin(); sit.ok(); sit.next())
-            {
-              if (m_levfluxreg.hasCF(ditf(), sit()))
-                {
-                  Side::LoHiSide hiorlo = sit();
-                  Box fluxBox = bdryBox(gridbox,idir,hiorlo,1);
+          Side::LoHiSide hiorlo = sit();
+          Box fluxBox = surroundingNodes(valid, idir);
 
-                  FArrayBox fineflux(fluxBox,ncomps);
-                  getFlux(fineflux, phifFab, fluxBox, idir, m_refToFiner);
+          FArrayBox fineflux(fluxBox,ncomps);
+          getFlux(fineflux, phifFab, fluxBox, idir, m_refToFiner);
 
-                  Real scale = 1.0;
-                  m_levfluxreg.incrementFine(fineflux, scale, ditf(),
-                                             interv, interv, idir, hiorlo);
-                }
-            }
+          Real scale = 1.0;
+          m_levfluxreg.incrementFine(fineflux, scale, ditf(),
+                                     interv, interv, idir, hiorlo);
         }
+      }
     }
-
-  CH_STOP(t3);
-
+  }
   Real scale = 1.0/m_dx;
   m_levfluxreg.reflux(a_residual, scale);
 }

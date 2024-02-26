@@ -394,9 +394,12 @@ namespace PrCh_AMR_Elliptic
       pr_lbd& phi_coar_cast = (pr_lbd &) a_phiCoar;
       ch_dom domain_fine = this->getDomainFromData(phi_fine_cast);
       ch_dom domain_coar = this->getDomainFromData(phi_coar_cast);
-      cast_finer_op->fillGhostDataOutsideDomain(phi_fine_cast, domain_fine);
       this->fillGhostDataOutsideDomain(         phi_coar_cast, domain_coar);
+#if 1
+      //fine boundary conditions are not done here in AMRPoissonOp.
+      cast_finer_op->fillGhostDataOutsideDomain(phi_fine_cast, domain_fine);
       cast_finer_op->fillGhostDataOverCoarseFineInterface(phi_fine_cast, phi_coar_cast);
+#endif      
       phi_fine_cast.exchange();
       phi_coar_cast.exchange();
       

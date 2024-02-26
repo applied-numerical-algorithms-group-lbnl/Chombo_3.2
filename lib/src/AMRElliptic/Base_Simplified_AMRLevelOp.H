@@ -241,6 +241,7 @@ public:
     applyOperator(a_lphMedi, a_phiMedi);
     //finer level should always be defined if you got here.
     this->refluxFineCorrection(a_lphMedi, castphi_fine, castphi_medi, a_finerOp);
+    return;
   }
 
  

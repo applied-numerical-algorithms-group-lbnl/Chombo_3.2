@@ -291,7 +291,7 @@ int runSolver()
   for (int lev=0; lev<=finestLevel; lev++)
   {
     const DisjointBoxLayout& levelGrids = amrGrids[lev];
-    phi[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Unit);
+    phi[lev] = new LevelData<FArrayBox>(levelGrids, 1,2*IntVect::Unit);
     rhs[lev] = new LevelData<FArrayBox>(levelGrids, 1, IntVect::Zero);
   }
  //because it is convenient, put in an operator test to compare with ye olde chombo
