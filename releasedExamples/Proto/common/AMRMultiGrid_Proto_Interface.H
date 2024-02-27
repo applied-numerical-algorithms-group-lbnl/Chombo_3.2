@@ -3,6 +3,7 @@
 #include "PrChFluxRegister.H"
 #include "PrChAveraging.H"
 #include "Proto.H"
+#include "SPMD.H"
 #ifndef ___AMRMultiGrid_Proto_Interface___
 #define ___AMRMultiGrid_Proto_Interface___
 
@@ -169,11 +170,11 @@ namespace PrCh_AMR_Elliptic
       Real sum = a_value;
 #ifdef CH_MPI
       Real sendBuf = a_value;
-      int result = MPI_Allreduce(&sendBuf, &sum, 1, MPI_CH_REAL,MPI_SUM, Chombo_MPI::comm);
+      int result = MPI_Allreduce(&sendBuf, &sum, 1, MPI_CH_REAL,MPI_SUM, MPI_COMM_WORLD);
 
       if (result != MPI_SUCCESS)
       {
-        MayDay::Error("Base_Proto_AMRLevelOp::parallelSum communication error");
+        Chombo::MayDay::Error("Base_Proto_AMRLevelOp::parallelSum communication error");
       }
 #endif
       return sum;

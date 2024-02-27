@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
   int status = Chombo::local_test_harness::runSolver();
   
 #ifdef CH_MPI
-  dumpmemoryatexit();
+  Chombo::dumpmemoryatexit();
   CH_TIMER_REPORT();
   MPI_Finalize();
 #endif

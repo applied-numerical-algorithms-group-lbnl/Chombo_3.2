@@ -333,7 +333,7 @@ int main(int argc, char* argv[])
   //end scoping trick
   
 #ifdef CH_MPI
-  dumpmemoryatexit();
+  Chombo::dumpmemoryatexit();
   CH_TIMER_REPORT();
   MPI_Finalize();
 #endif
