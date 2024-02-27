@@ -150,8 +150,8 @@ public:
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperator");
     ch_dom domain = getDomainFromData(a_phiMedi);
     level_data_type& castphi = (level_data_type&)(a_phiMedi);
-    this->fillGhostDataOutsideDomain(castphi, domain);
     this->fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
+    this->fillGhostDataOutsideDomain(castphi, domain);
     this->fillGhostDataOverFineFineInterface(castphi);
     applyOperator(a_lphMedi, a_phiMedi);
     this->refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
@@ -218,8 +218,8 @@ public:
     ch_dom domain = this->getDomainFromData(a_phiMedi);
     level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
     level_data_type& castphi_coar = (level_data_type&)(a_phiCoar);
-    fillGhostDataOutsideDomain(castphi_medi, domain);
     fillGhostDataOverCoarseFineInterface(castphi_medi, castphi_coar);
+    fillGhostDataOutsideDomain(castphi_medi, domain);
     applyOperator(a_lphMedi, a_phiMedi);
       
   }
