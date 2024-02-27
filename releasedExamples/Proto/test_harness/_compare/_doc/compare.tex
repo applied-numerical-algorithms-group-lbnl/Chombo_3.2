@@ -13,7 +13,7 @@
 
 \title{Serial comparison of Proto-based an fortran-based elliptic operators}
 \author{D. T. Graves   }
-\date{February 2, 2024 ce.}
+\date{February 2, 2024 c.e.}
 
 \maketitle
 
@@ -153,7 +153,7 @@ converged. All of these runs had debug false and optimation high.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::helmholtz}
+\label{tab::helmholtz1}
 \caption
     {
       Final residual and number of iterations in solution of the  constant
@@ -190,7 +190,7 @@ converged. All of these runs had debug false and optimation high.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::conductivity}
+\label{tab::conductivity1}
 \caption
     {
       Final residual and number of iterations in solution of the variable
@@ -227,7 +227,7 @@ converged. All of these runs had debug false and optimation high.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::viscous}
+\label{tab::viscous1}
 \caption
     {
       Final residual and number of iterations in solution of the
@@ -265,7 +265,7 @@ converged. All of these runs had debug false and optimation high.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::resist}
+\label{tab::resist1}
 \caption
     {
       Final residual and number of iterations in solution of the
@@ -333,7 +333,7 @@ Here are my next steps.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::helmholtz}
+\label{tab::helmholtz2}
 \caption
     {
       Final residual and number of iterations in solution of the  constant
@@ -370,7 +370,7 @@ Here are my next steps.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::conductivity}
+\label{tab::conductivity2}
 \caption
     {
       Final residual and number of iterations in solution of the variable
@@ -407,7 +407,7 @@ Here are my next steps.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::viscous}
+\label{tab::viscous2}
 \caption
     {
       Final residual and number of iterations in solution of the
@@ -445,7 +445,7 @@ Here are my next steps.
 \hline
 \end{tabular}
 \end{center}
-\label{tab::resist}
+\label{tab::resist2}
 \caption
     {
       Final residual and number of iterations in solution of the
@@ -456,7 +456,7 @@ Here are my next steps.
 \end{small}
 
 \section{Log of early performance debugging}
-These runs flushed out a bug in in {\tt
+The  runs above flushed out a bug in in {\tt
   Base\_Simplified\_AMRLevelOp} but preliminary runs do not show much
 difference multigrid performance.  The AMR case also have grids that
 are way too small.    The next data set, I tagged the lower left eighth
@@ -464,10 +464,173 @@ of the domain (instead of a single point).   There was not enough
 difference to document.  The current culprit seems to be being called
 by BiCGStab.   The norms were different but fixing them did not do it.
 The preconditioner was way off but fixing this did not help either.
-As of 2-14-2024, AMR examples are still showing far worse multigrid convergence
-for the new operators than the old.   I just archived that data.
-2-15-2024: for case 2 Helmholtz, old and new agree pretty well coming
+\begin{itemize}
+ \item 2-14-2024:  AMR examples are still showing far worse multigrid convergence
+   for the new operators than the old.   I just archived that data.
+\item: 2-15-2024: for case 2 Helmholtz, old and new agree pretty well coming
 out of the bottom solver but way off once back at amr levels.
 3pm update: the solution looks fine heading into second amr vcycle.   It
 is amr residual that is broken.   This means looking at fluxes and so on.
+\item 2-27/2024: Found the problem.   Setting ghost outside the domain
+has to happen after setting the coarse/fine ghost (side effects).    I
+am perversely glad that this turned out as tricky as it was.   Right
+now, both Helmholtz operators get the same multigrid convergence so I
+will run the set again.  Remember that the grids here are a bit chubbier.
+
+\section{Dataset labelled 2-27-2024}
+My early impression of this data is that I may be oversmoothing the
+Proto operators.    Multigrid convergence looks better but times look
+slower.    It also looks as if old and new are solving to different tolerances.
+The old resistivity operator does not converge with AMR.
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c||c|} \hline
+ Operator                   & $D$ & Case & Final Residual &
+ Num. Iteration & Time to solution\\
+\hline
+ {\tt Proto\_Helmholtz\_Op}       & 2   & 0    & 7.815970e-14   & 7    & 0.04691   \\
+ {\tt Proto\_Helmholtz\_Op}       & 2   & 1    & 9.476864e-13   & 7    & 0.05558   \\
+ {\tt Proto\_Helmholtz\_Op}       & 2   & 2    & 1.705303e-13   & 8    & 0.07391   \\
+ {\tt Proto\_Helmholtz\_Op}       & 2   & 3    & 3.126388e-13   & 8    & 0.09054   \\
+ {\tt Proto\_Helmholtz\_Op}       & 3   & 0    & 3.375078e-13   & 8    & 0.35757   \\
+ {\tt Proto\_Helmholtz\_Op}       & 3   & 1    & 1.563194e-13   & 9    & 0.54453   \\
+ {\tt Proto\_Helmholtz\_Op}       & 3   & 2    & 2.273737e-13   & 9    & 0.55963   \\
+ {\tt Proto\_Helmholtz\_Op}       & 3   & 3    & 5.115908e-13   & 9    & 1.62688   \\
+ \hline                                                        
+ {\tt AMRPoissonOp}               & 2   & 0    & 6.672440e-14   &  7    &  0.01191  \\
+ {\tt AMRPoissonOp}               & 2   & 1    & 3.724798e-13   &  12   &  0.01787  \\
+ {\tt AMRPoissonOp}               & 2   & 2    & 9.429124e-13   &  12   &  0.01825  \\
+ {\tt AMRPoissonOp}               & 2   & 3    & 3.135270e-13   &  13   &  0.02464  \\
+ {\tt AMRPoissonOp}               & 3   & 0    & 3.489431e-13   &  8    &  0.06093  \\
+ {\tt AMRPoissonOp}               & 3   & 1    & 5.592193e-13   &  13   &  0.12106  \\
+ {\tt AMRPoissonOp}               & 3   & 2    & 2.939871e-13   &  14   &  0.12952  \\
+ {\tt AMRPoissonOp}               & 3   & 3    & 5.895284e-13   &  14   &  0.83605  \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab::helmholtz3}
+\caption
+    {
+      Final residual and number of iterations in solution of the  constant
+      coefficient Helmholtz equation.
+      The data set is dated February 27, 2024.
+    }
+\end{table}
+\end{small}
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c||c|} \hline
+ Operator                   & $D$ & Case & Final Residual &
+ Num. Iteration & Solution Time\\
+\hline
+ {\tt Proto\_Conductivity\_Op}    & 2   & 0    & 2.081668e-09   &  6     & 0.09480   \\
+ {\tt Proto\_Conductivity\_Op}    & 2   & 1    & 9.007191e-09   &  6     & 0.10860   \\
+ {\tt Proto\_Conductivity\_Op}    & 2   & 2    & 3.270379e-08   &  6     & 0.11943   \\
+ {\tt Proto\_Conductivity\_Op}    & 2   & 3    & 1.399536e-07   &  6     & 0.14835   \\
+ {\tt Proto\_Conductivity\_Op}    & 3   & 0    & 4.222235e-09   &  7     & 1.02356   \\
+ {\tt Proto\_Conductivity\_Op}    & 3   & 1    & 2.413319e-08   &  7     & 1.18508   \\
+ {\tt Proto\_Conductivity\_Op}    & 3   & 2    & 1.152679e-07   &  7     & 1.28507   \\
+ {\tt Proto\_Conductivity\_Op}    & 3   & 3    & 4.670957e-07   &  7     & 3.55426   \\
+\hline                                                           
+ {\tt VCAMRPoissonOp2}            & 2   & 0    & 3.941292e-11   &  13    & 0.00989   \\
+ {\tt VCAMRPoissonOp2}            & 2   & 1    & 9.582835e-11   &  13    & 0.01444   \\
+ {\tt VCAMRPoissonOp2}            & 2   & 2    & 1.578537e-11   &  14    & 0.02121   \\
+ {\tt VCAMRPoissonOp2}            & 2   & 3    & 6.872614e-11   &  18    & 0.03027   \\
+ {\tt VCAMRPoissonOp2}            & 3   & 0    & 6.221268e-11   &  13    & 0.08053   \\
+ {\tt VCAMRPoissonOp2}            & 3   & 1    & 1.838352e-11   &  14    & 0.14128   \\
+ {\tt VCAMRPoissonOp2}            & 3   & 2    & 1.841904e-11   &  14    & 0.17096   \\
+ {\tt VCAMRPoissonOp2}            & 3   & 3    & 4.454703e-11   &  20    & 1.38377   \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab::conductivity3}
+\caption
+    {
+      Final residual and number of iterations in solution of the variable
+      coefficient Helmholtz equation.
+      The data set is dated February 27, 2024.
+    }
+\end{table}
+\end{small}
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c||c|} \hline
+ Operator                   & $D$ & Case & Final Residual &
+ Num. Iteration & Solution Time\\
+\hline
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 0    & 1.039169e-13   &  12    & 0.61551     \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 1    & 1.348921e-13   &  12    & 0.67349     \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 2    & 6.046275e-13   &  12    & 0.71314     \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 3    & 4.942713e-13   &  13    & 0.96939     \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 0    & 3.987921e-13   &  13    & 10.24858    \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 1    & 5.000445e-13   &  13    & 11.52722    \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 2    & 9.388046e-13   &  13    & 12.38466    \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 3    & 4.052314e-13   &  14    & 38.32874    \\
+\hline                                                          
+ {\tt ViscousTensorOp}            & 2   & 0    & 1.759459e-11   &  11    & 0.10782     \\
+ {\tt ViscousTensorOp}            & 2   & 1    & 9.670575e-11   &  22    & 0.12033     \\
+ {\tt ViscousTensorOp}            & 2   & 2    & 9.472689e-11   &  20    & 0.12633     \\
+ {\tt ViscousTensorOp}            & 2   & 3    & 4.363443e-11   &  21    & 0.22487     \\
+ {\tt ViscousTensorOp}            & 3   & 0    & 6.480527e-11   &  63    & 8.04359     \\
+ {\tt ViscousTensorOp}            & 3   & 1    & 9.083534e-11   &  69    & 9.32905     \\
+ {\tt ViscousTensorOp}            & 3   & 2    & 8.982792e-11   &  62    & 9.27616     \\
+ {\tt ViscousTensorOp}            & 3   & 3    & 9.661805e-11   &  68    & 66.7762     \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab::viscous3}
+\caption
+    {
+      Final residual and number of iterations in solution of the
+      viscous tensor equation.
+      The data set is dated February 27, 2024.
+    }
+\end{table}
+\end{small}
+
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c||c|} \hline
+ Operator                   & $D$ & Case & Final Residual &
+ Num. Iteration & Solution Time\\
+\hline
+ \hline
+ {\tt Proto\_Resistivity\_Op}     & 2   & 0    & 1.514344e-13   & 7    &  0.45422    \\
+ {\tt Proto\_Resistivity\_Op}     & 2   & 1    & 7.747136e-13   & 9    &  0.63848    \\
+ {\tt Proto\_Resistivity\_Op}     & 2   & 2    & 1.486589e-13   & 10   &  0.75847    \\
+ {\tt Proto\_Resistivity\_Op}     & 2   & 3    & 2.629008e-13   & 10   &  0.96361    \\
+ {\tt Proto\_Resistivity\_Op}     & 3   & 0    & 3.852474e-14   & 9    &  6.96852    \\
+ {\tt Proto\_Resistivity\_Op}     & 3   & 1    & 5.141443e-13   & 10   &  8.81750    \\
+ {\tt Proto\_Resistivity\_Op}     & 3   & 2    & 1.372236e-13   & 11   &  10.4100    \\
+ {\tt Proto\_Resistivity\_Op}     & 3   & 3    & 1.747491e-13   & 11   &  31.0512    \\
+ \hline                                                       
+ {\tt ResistivityOp}              & 2   & 0    & 1.075184e-11   & 12    &  0.07743    \\
+ {\tt ResistivityOp}              & 2   & 1    & 5.579218e-01   & 100   &  0.90034    \\
+ {\tt ResistivityOp}              & 2   & 2    & 1.072290e+00   & 100   &  0.89708    \\
+ {\tt ResistivityOp}              & 2   & 3    & 1.634815e+00   & 100   &  1.34867    \\
+ {\tt ResistivityOp}              & 3   & 0    & 7.031487e-12   & 10   &  1.09571    \\
+ {\tt ResistivityOp}              & 3   & 1    & 6.849711e-01   & 84   &  11.2639    \\
+ {\tt ResistivityOp}              & 3   & 2    & 1.060858e+00   & 88   &  12.8748    \\
+ {\tt ResistivityOp}              & 3   & 3    & 1.285510e+00   & 89   &  81.6278    \\
+\hline
+\end{tabular}
+\end{center}
+\label{tab::resist3}
+\caption
+    {
+      Final residual and number of iterations in solution of the
+      magnetic resistivity equation.
+      The data set is dated February 27, 2024.
+    }
+\end{table}
+\end{small}
+
 \end{document}

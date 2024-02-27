@@ -261,7 +261,7 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   bool init = true;
   int restarts = 0;
 
-//  if (m_verbosity >= 5)
+  if (m_verbosity >= 5)
     {
       pout() << "      BiCGStab:: initial Residual norm = "
              << initial_norm << "\n";
@@ -496,7 +496,7 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
 
   CH_START(timeCleanup);
 
-//  if (m_verbosity >= 4)
+  if (m_verbosity >= 4)
     {
       pout() << "      BiCGStab:: " << m_iter << " iterations, final Residual norm = "
              << norm[0] << "\n";
