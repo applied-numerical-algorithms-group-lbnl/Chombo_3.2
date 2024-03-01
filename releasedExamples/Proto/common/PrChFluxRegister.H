@@ -171,6 +171,10 @@ namespace PrCh_Tools
     {
       
       CH_TIME("PrChFluxRegister::setCoarFlux");
+      if(a_verbose)
+      {
+        Chombo::pout() << " Entering setCoarFlux: " << endl;
+      } // end verbosity check
       a_xflux_coar->copyTo(*m_xflux_coar);
       a_yflux_coar->copyTo(*m_yflux_coar);
 #if DIM==3      
@@ -178,12 +182,7 @@ namespace PrCh_Tools
 #endif
       if(a_verbose)
       {
-        Chombo::pout() << " after setCoarFlux: " << endl;
-        Chombo::pout() << " m_xflux_coar->max() = " << m_xflux_coar->max() << " m_xflux_coar->min() = " << m_xflux_coar->min()  << endl;
-        Chombo::pout() << " m_yflux_coar->max() = " << m_yflux_coar->max() << " m_yflux_coar->min() = " << m_yflux_coar->min()  << endl;
-#if DIM==3                                                                                                                     
-        Chombo::pout() << " m_zflux_coar->max() = " << m_zflux_coar->max() << " m_zflux_coar->min() = " << m_zflux_coar->min()  << endl;
-#endif
+        Chombo::pout() << " Leaving setCoarFlux: " << endl;
       } // end verbosity check
     }   // end function setCoarFlux
     
@@ -197,6 +196,10 @@ namespace PrCh_Tools
                      bool a_verbose)
     {
       CH_TIME("PrChFluxRegister::setFineFlux");
+      if(a_verbose)
+      {
+        Chombo::pout() << " Entering setFineFlux: " << endl;
+      } // end verbosity check
       //create temporary cofi flux buffers
       shared_ptr<pr_xfac_data> t_xflux_cofi(new pr_xfac_data(m_grids_cofi, pr_pt::Zeros()));
       shared_ptr<pr_yfac_data> t_yflux_cofi(new pr_yfac_data(m_grids_cofi, pr_pt::Zeros()));
@@ -214,15 +217,6 @@ namespace PrCh_Tools
         auto & fine_zfab = (*a_zflux_fine)[dit[ibox]];
         auto & cofi_zfab = (*t_zflux_cofi)[dit[ibox]];
 #endif
-        if(a_verbose)
-        {
-          Chombo::pout() << " going into setFineFlux: " << endl;
-          Chombo::pout() << " a_xflux_fine->max() = " << a_xflux_fine->max() << " a_xflux_fine->min() = " << a_xflux_fine->min()  << endl;
-          Chombo::pout() << " a_yflux_fine->max() = " << a_yflux_fine->max() << " a_yflux_fine->min() = " << a_yflux_fine->min()  << endl;
-#if DIM==3        
-          Chombo::pout() << " a_zflux_fine->max() = " << a_zflux_fine->max() << " a_zflux_fine->min() = " << a_zflux_fine->min()  << endl;
-#endif
-        }   // end verbosity check
         
         pr_box cofi_valid = m_grids_cofi[dit[ibox]];
         for(int icomp = 0; icomp < ncomp; icomp++)
@@ -242,15 +236,6 @@ namespace PrCh_Tools
 #endif
         } // end loop over components
       }   // end loop over boxes
-      if(a_verbose)
-      {
-        Chombo::pout() << " after setFineFlux: " << endl;
-        Chombo::pout() << " t_xflux_cofi->max() = " << t_xflux_cofi->max() << " t_xflux_cofi->min() = " << t_xflux_cofi->min()  << endl;
-        Chombo::pout() << " t_yflux_cofi->max() = " << t_yflux_cofi->max() << " t_yflux_cofi->min() = " << t_yflux_cofi->min()  << endl;
-#if DIM==3                                                                                                         
-        Chombo::pout() << " t_zflux_cofi->max() = " << t_zflux_cofi->max() << " t_zflux_cofi->min() = " << t_zflux_cofi->min()  << endl;
-#endif
-      }   // end verbosity check
 
       /**
        // Copy over to coarse distribution.  There will be many faces that are on  the coarse
@@ -262,6 +247,12 @@ namespace PrCh_Tools
 #if DIM==3                                                                                                         
       m_zflux_fine->setVal(0.);
 #endif    
+
+      if(a_verbose)
+      {
+        Chombo::pout() << " setFineFlux: before copyTo" << endl;
+      } // end verbosity check
+      
       t_xflux_cofi->copyTo(*m_xflux_fine);
       t_yflux_cofi->copyTo(*m_yflux_fine);
 #if DIM==3                                                                                                         
@@ -269,12 +260,7 @@ namespace PrCh_Tools
 #endif
       if(a_verbose)
       {
-        Chombo::pout() << " Laving setFineFlux: " << endl;
-        Chombo::pout() << " m_xflux_fine->max() = " << m_xflux_fine->max() << " m_xflux_fine->min() = " << m_xflux_fine->min()  << endl;
-        Chombo::pout() << " m_yflux_fine->max() = " << m_yflux_fine->max() << " m_yflux_fine->min() = " << m_yflux_fine->min()  << endl;
-#if DIM==3                                                                                                         
-        Chombo::pout() << " m_zflux_fine->max() = " << m_zflux_fine->max() << " m_zflux_fine->min() = " << m_zflux_fine->min()  << endl;
-#endif
+        Chombo::pout() << " Leaving setFineFlux: " << endl;
       } // end verbosity check
     }     // end function setFineFlux
 
@@ -387,8 +373,7 @@ namespace PrCh_Tools
       
       if(a_verbose)
       {
-        Chombo::pout() << " entering reflux: " << endl;
-        Chombo::pout() << " a_solut_coar.max() = " << a_solut_coar.max() << " a_solut_coar.min() = " << a_solut_coar.min()  << endl;
+        Chombo::pout() << " entering reFlux: " << endl;
       } // end verbosity check
       /**
        // Stage 1: 
@@ -425,8 +410,7 @@ namespace PrCh_Tools
 
       if(a_verbose)
       {
-        Chombo::pout() << " leaving reflux: " << endl;
-        Chombo::pout() << " a_solut_coar.max() = " << a_solut_coar.max() << " a_solut_coar.min() = " << a_solut_coar.min()  << endl;
+        Chombo::pout() << " leaving reFlux " << endl;
       } // end verbosity check
       return;
     } //end function reflux
