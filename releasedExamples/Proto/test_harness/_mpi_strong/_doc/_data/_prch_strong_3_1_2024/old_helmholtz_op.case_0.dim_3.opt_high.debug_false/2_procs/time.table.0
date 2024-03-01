@@ -1,0 +1,2097 @@
+-----------
+Timer report 0 (460 timers)
+--------------
+---------------------------------------------------------
+[0]main 0.08406 1 f=30386432 MFlop/s=361
+    49.0%    0.04117        1 runSolver [1] f=30386432
+    49.0%                  Total 
+---------------------------------------------------------
+[1]runSolver 0.04117 1 f=30386432 MFlop/s=738
+    81.5%    0.03356        1 AMRMultiGrid::solve [2] f=30206208
+    11.2%    0.00462        1 WriteAMRHierarchyHDF5 [15] f=0
+     0.7%    0.00030        1 setupSolver [70] f=0
+     0.5%    0.00020        1 AMRMultiGrid<T>::computeAMROperator [84] f=180224
+     0.4%    0.00015        1 PrChUtilities::setupGridsWithTagLocation [100] f=0
+     0.2%    0.00009        1 ~AMRMultiGrid [137] f=0
+     0.0%    0.00000        2 ~LayoutData [332] f=0
+     0.0%    0.00000        1 setRHS [343] f=0
+     0.0%    0.00000        4 ~Copier [372] f=0
+     0.0%    0.00000        2 ~BoxLayoutData [427] f=0
+     0.0%    0.00000        2 ~LevelData [452] f=0
+    94.5%                  Total 
+---------------------------------------------------------
+[2]AMRMultiGrid::solve 0.03356 1 f=30206208 MFlop/s=900
+    99.9%    0.03352        1 AMRMultiGrid::solveNoInit [3] f=30206208
+     0.1%    0.00004        1 AMRMultiGrid::init [182] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [459] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solveNoInit 0.03352 1 f=30206208 MFlop/s=901
+    100.0%    0.03350        1 AMRMultiGrid::solveNo-InitResid [4] f=30206208
+     0.0%    0.00001        1 AMRPoissonOp::create [275] f=0
+     0.0%    0.00000        1 ~LayoutData [393] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [440] f=0
+     0.0%    0.00000        1 ~Copier [449] f=0
+     0.0%    0.00000        1 ~LevelData [453] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::solveNo-InitResid 0.03350 1 f=30206208 MFlop/s=902
+    96.1%    0.03219        8 AMRMultiGrid::AMRVcycle [5] f=28436736
+     2.5%    0.00085        8 AMRMultiGrid::computeAMRResidual [45] f=1572864
+     0.3%    0.00011        1 uberCorrection creation [121] f=0
+     0.3%    0.00011        1 Initial AMR Residual [122] f=196608
+     0.2%    0.00007        8 AMRPoissonOp::incr [151] f=0
+     0.2%    0.00005        9 AMRPoissonOp::setToZero [171] f=0
+     0.0%    0.00000        1 ~Copier [407] f=0
+     0.0%    0.00000        1 ~LayoutData [421] f=0
+     0.0%    0.00000        1 ~BoxLayoutData [434] f=0
+     0.0%    0.00000        1 ~LevelData [456] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[5]AMRMultiGrid::AMRVcycle 0.03219 8 f=28436736 MFlop/s=883
+    99.3%    0.03195        8 Multigrid::oneCycle [6] f=28436736
+     0.4%    0.00014        8 AMRPoissonOp::setToZero [105] f=0
+     0.3%    0.00009        8 AMRPoissonOp::assignLocal [133] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[6]Multigrid::oneCycle 0.03195 8 f=28436736 MFlop/s=890
+    100.0%    0.03195        8 Multigrid::cycle [7] f=28436736
+    100.0%                  Total 
+---------------------------------------------------------
+[7]Multigrid::cycle 0.03195 8 f=28436736 MFlop/s=890
+    58.1%    0.01856       16 AMRPoissonOp::relax [8] f=23068672
+    37.0%    0.01183        8 Multigrid::cycle [11] f=3664128
+     2.7%    0.00086        8 AMRPoissonOp::restrictResidual [44] f=1572864
+     2.1%    0.00067        8 AMRPoissonOp::prolongIncrement [50] f=131072
+     0.1%    0.00003        8 AMRPoissonOp::setToZero [202] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[8]AMRPoissonOp::relax 0.01856 16 f=23068672 MFlop/s=1243
+    100.0%    0.01855       64 AMRPoissonOp::slowGSRB [9] f=23068672
+    100.0%                  Total 
+---------------------------------------------------------
+[9]AMRPoissonOp::slowGSRB 0.01855 64 f=23068672 MFlop/s=1244
+    82.5%    0.01530      128 AMRPoissonOp::residualSlowly [10] f=23068672
+    16.0%    0.00297      512 FORT_GSRBSLOWLY [30] f=0
+     0.4%    0.00008       64 AMRPoissonOp::create [149] f=0
+     0.2%    0.00004       64 ~LayoutData [183] f=0
+     0.0%    0.00000       64 ~BoxLayoutData [349] f=0
+     0.0%    0.00000       64 ~Copier [403] f=0
+     0.0%    0.00000       64 ~LevelData [414] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[10]AMRPoissonOp::residualSlowly 0.01530 128 f=23068672 MFlop/s=1508
+    24.2%    0.00370      512 FORT_OPERATORLAP [24] f=23068672
+    20.9%    0.00320      128 LevelData::exchange (exchange + copier) [27] f=0
+    17.7%    0.00270      128 AMRPoissonOp::axby [31] f=0
+     3.0%    0.00046      128 AMRPoissonOp::setToZero [61] f=0
+     1.0%    0.00015      128 AMRPoissonOp::create [99] f=0
+     0.5%    0.00007      128 ~LayoutData [153] f=0
+     0.0%    0.00001      128 ~BoxLayoutData [301] f=0
+     0.0%    0.00000      128 ~Copier [353] f=0
+     0.0%    0.00000      128 ~LevelData [387] f=0
+    67.3%                  Total 
+---------------------------------------------------------
+[11]Multigrid::cycle 0.01183 8 f=3664128 MFlop/s=310
+    59.2%    0.00701        8 Multigrid::cycle [12] f=567552
+    37.9%    0.00448       16 AMRPoissonOp::relax [16] f=2883584
+     2.0%    0.00024        8 AMRPoissonOp::restrictResidual [78] f=196608
+     0.8%    0.00009        8 AMRPoissonOp::prolongIncrement [132] f=16384
+     0.1%    0.00001        8 AMRPoissonOp::setToZero [272] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[12]Multigrid::cycle 0.00701 8 f=567552 MFlop/s=81
+    71.8%    0.00503        8 Multigrid::cycle [13] f=180480
+    26.2%    0.00183       16 AMRPoissonOp::relax [32] f=360448
+     1.7%    0.00012        8 AMRPoissonOp::restrictResidual [116] f=24576
+     0.2%    0.00002        8 AMRPoissonOp::prolongIncrement [240] f=2048
+     0.0%    0.00000        8 AMRPoissonOp::setToZero [347] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[13]Multigrid::cycle 0.00503 8 f=180480 MFlop/s=36
+    100.0%    0.00503        8 Multigrid::cycle:bottom-solve [14] f=180480
+    100.0%                  Total 
+---------------------------------------------------------
+[14]Multigrid::cycle:bottom-solve 0.00503 8 f=180480 MFlop/s=36
+    87.6%    0.00441        8 BiCGStabSolver::solve [18] f=157952
+    12.3%    0.00062        8 AMRPoissonOp::relax [52] f=22528
+    100.0%                  Total 
+---------------------------------------------------------
+[15]WriteAMRHierarchyHDF5 0.00462 1
+    73.4%    0.00339        1 CreateFile [26] f=0
+    19.9%    0.00092        1 WriteFile [43] f=0
+     5.9%    0.00027        1 CloseFile [75] f=0
+     0.3%    0.00002        2 Barrier [247] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[16]AMRPoissonOp::relax 0.00448 16 f=2883584 MFlop/s=643
+    99.9%    0.00448       64 AMRPoissonOp::slowGSRB [17] f=2883584
+    99.9%                  Total 
+---------------------------------------------------------
+[17]AMRPoissonOp::slowGSRB 0.00448 64 f=2883584 MFlop/s=644
+    85.4%    0.00383      128 AMRPoissonOp::residualSlowly [23] f=2883584
+     9.1%    0.00041      512 FORT_GSRBSLOWLY [63] f=0
+     2.6%    0.00012       64 AMRPoissonOp::create [117] f=0
+     0.4%    0.00002       64 ~LayoutData [241] f=0
+     0.1%    0.00000       64 ~BoxLayoutData [351] f=0
+     0.0%    0.00000       64 ~Copier [398] f=0
+     0.0%    0.00000       64 ~LevelData [404] f=0
+    97.5%                  Total 
+---------------------------------------------------------
+[18]BiCGStabSolver::solve 0.00441 8 f=157952 MFlop/s=36
+    93.3%    0.00411        8 BiCGStabSolver::solve::MainLoop [19] f=154880
+     5.4%    0.00024        8 BiCGStabSolver::solve::Initialize [79] f=3072
+     0.3%    0.00001       64 ~LayoutData [254] f=0
+     0.2%    0.00001       64 ~Copier [284] f=0
+     0.1%    0.00000       64 ~BoxLayoutData [362] f=0
+     0.1%    0.00000        8 BiCGStabSolver::solve::Cleanup [364] f=0
+     0.0%    0.00000       64 ~LevelData [405] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[19]BiCGStabSolver::solve::MainLoop 0.00411 8 f=154880 MFlop/s=38
+    97.8%    0.00402        8 AMRPoissonOp::preCond [20] f=152064
+     1.2%    0.00005        8 AMRPoissonOp::applyOp [174] f=2816
+     0.4%    0.00002       16 AMRPoissonOp::dotProduct [235] f=0
+     0.3%    0.00001        8 AMRPoissonOp::norm [265] f=0
+     0.1%    0.00001       16 AMRPoissonOp::incr [311] f=0
+     0.1%    0.00000        8 AMRPoissonOp::assignLocal [368] f=0
+     0.0%    0.00000        8 AMRPoissonOp::setToZero [416] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[20]AMRPoissonOp::preCond 0.00402 8 f=152064 MFlop/s=38
+    100.0%    0.00402        8 AMRPoissonOp::relax [21] f=152064
+    100.0%                  Total 
+---------------------------------------------------------
+[21]AMRPoissonOp::relax 0.00402 8 f=152064 MFlop/s=38
+    99.8%    0.00401      216 AMRPoissonOp::slowGSRB [22] f=152064
+    99.8%                  Total 
+---------------------------------------------------------
+[22]AMRPoissonOp::slowGSRB 0.00401 216 f=152064 MFlop/s=38
+    85.2%    0.00342      432 AMRPoissonOp::residualSlowly [25] f=152064
+     3.3%    0.00013      216 AMRPoissonOp::create [107] f=0
+     2.0%    0.00008     1728 FORT_GSRBSLOWLY [142] f=0
+     0.9%    0.00004      216 ~LayoutData [194] f=0
+     0.2%    0.00001      216 ~BoxLayoutData [273] f=0
+     0.1%    0.00000      216 ~Copier [334] f=0
+     0.1%    0.00000      216 ~LevelData [354] f=0
+    91.8%                  Total 
+---------------------------------------------------------
+[23]AMRPoissonOp::residualSlowly 0.00383 128 f=2883584 MFlop/s=754
+    26.5%    0.00101      128 LevelData::exchange (exchange + copier) [40] f=0
+    14.2%    0.00054      512 FORT_OPERATORLAP [55] f=2883584
+    11.6%    0.00044      128 AMRPoissonOp::axby [62] f=0
+     3.8%    0.00014      128 AMRPoissonOp::create [104] f=0
+     1.4%    0.00006      128 AMRPoissonOp::setToZero [169] f=0
+     1.0%    0.00004      128 ~LayoutData [190] f=0
+     0.1%    0.00001      128 ~BoxLayoutData [321] f=0
+     0.0%    0.00000      128 ~Copier [380] f=0
+     0.0%    0.00000      128 ~LevelData [383] f=0
+    58.7%                  Total 
+---------------------------------------------------------
+[24]FORT_OPERATORLAP 0.00370 512 f=23068672 MFlop/s=6232
+---------------------------------------------------------
+[25]AMRPoissonOp::residualSlowly 0.00342 432 f=152064 MFlop/s=44
+    36.9%    0.00126      432 LevelData::exchange (exchange + copier) [37] f=0
+     7.1%    0.00024      432 AMRPoissonOp::create [77] f=0
+     6.5%    0.00022      432 AMRPoissonOp::axby [82] f=0
+     3.6%    0.00012     1728 FORT_OPERATORLAP [110] f=152064
+     2.2%    0.00008      432 ~LayoutData [150] f=0
+     0.9%    0.00003      432 AMRPoissonOp::setToZero [201] f=0
+     0.5%    0.00002      432 ~BoxLayoutData [238] f=0
+     0.2%    0.00001      432 ~Copier [290] f=0
+     0.2%    0.00001      432 ~LevelData [323] f=0
+    58.1%                  Total 
+---------------------------------------------------------
+[26]CreateFile 0.00339 1
+---------------------------------------------------------
+[27]LevelData::exchange (exchange + copier) 0.00320 128
+    99.6%    0.00318      128 LevelData::exchange (actual exchange) [28] f=0
+     0.2%    0.00001        1 LevelData::exchange (defining copier) [291] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[28]LevelData::exchange (actual exchange) 0.00318 128
+    99.7%    0.00317      128 exchange [29] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[29]exchange 0.00317 128
+    57.0%    0.00181      128 completePendingSends [34] f=0
+    22.4%    0.00071      128 local copying [49] f=0
+     9.2%    0.00029      128 write Data to buffers [72] f=0
+     7.7%    0.00025      128 unpack_messages [76] f=0
+     2.3%    0.00007      128 post_messages [152] f=0
+     0.2%    0.00001      128 MPI_allocateBuffers [278] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[30]FORT_GSRBSLOWLY 0.00297 512
+---------------------------------------------------------
+[31]AMRPoissonOp::axby 0.00270 128
+---------------------------------------------------------
+[32]AMRPoissonOp::relax 0.00183 16 f=360448 MFlop/s=196
+    99.8%    0.00183       64 AMRPoissonOp::slowGSRB [33] f=360448
+    99.8%                  Total 
+---------------------------------------------------------
+[33]AMRPoissonOp::slowGSRB 0.00183 64 f=360448 MFlop/s=197
+    87.1%    0.00160      128 AMRPoissonOp::residualSlowly [36] f=360448
+     4.4%    0.00008      512 FORT_GSRBSLOWLY [147] f=0
+     2.1%    0.00004       64 AMRPoissonOp::create [187] f=0
+     0.7%    0.00001       64 ~LayoutData [258] f=0
+     0.1%    0.00000       64 ~BoxLayoutData [357] f=0
+     0.1%    0.00000       64 ~Copier [400] f=0
+     0.0%    0.00000       64 ~LevelData [408] f=0
+    94.6%                  Total 
+---------------------------------------------------------
+[34]completePendingSends 0.00181 128
+    99.8%    0.00181      128 MPI_Waitall [35] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[35]MPI_Waitall 0.00181 128
+---------------------------------------------------------
+[36]AMRPoissonOp::residualSlowly 0.00160 128 f=360448 MFlop/s=226
+    33.9%    0.00054      128 LevelData::exchange (exchange + copier) [56] f=0
+     9.6%    0.00015      128 AMRPoissonOp::axby [98] f=0
+     6.5%    0.00010      512 FORT_OPERATORLAP [124] f=360448
+     5.3%    0.00008      128 AMRPoissonOp::create [140] f=0
+     1.6%    0.00003      128 ~LayoutData [214] f=0
+     0.9%    0.00001      128 AMRPoissonOp::setToZero [253] f=0
+     0.3%    0.00001      128 ~BoxLayoutData [319] f=0
+     0.1%    0.00000      128 ~Copier [367] f=0
+     0.1%    0.00000      128 ~LevelData [388] f=0
+    58.3%                  Total 
+---------------------------------------------------------
+[37]LevelData::exchange (exchange + copier) 0.00126 432
+    94.5%    0.00119      432 LevelData::exchange (actual exchange) [38] f=0
+     4.5%    0.00006        8 LevelData::exchange (defining copier) [165] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[38]LevelData::exchange (actual exchange) 0.00119 432
+    99.0%    0.00118      432 exchange [39] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[39]exchange 0.00118 432
+    28.7%    0.00034      432 completePendingSends [67] f=0
+    17.6%    0.00021      432 unpack_messages [83] f=0
+    16.1%    0.00019      432 local copying [89] f=0
+    15.9%    0.00019      432 post_messages [90] f=0
+    14.5%    0.00017      432 write Data to buffers [93] f=0
+     1.7%    0.00002      432 MPI_allocateBuffers [229] f=0
+    94.5%                  Total 
+---------------------------------------------------------
+[40]LevelData::exchange (exchange + copier) 0.00101 128
+    99.0%    0.00100      128 LevelData::exchange (actual exchange) [41] f=0
+     0.6%    0.00001        1 LevelData::exchange (defining copier) [304] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[41]LevelData::exchange (actual exchange) 0.00100 128
+    99.5%    0.00100      128 exchange [42] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[42]exchange 0.00100 128
+    37.3%    0.00037      128 completePendingSends [65] f=0
+    23.6%    0.00024      128 local copying [80] f=0
+    14.8%    0.00015      128 write Data to buffers [101] f=0
+    14.7%    0.00015      128 unpack_messages [103] f=0
+     6.7%    0.00007      128 post_messages [157] f=0
+     0.4%    0.00000      128 MPI_allocateBuffers [331] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[43]WriteFile 0.00092 1
+    62.1%    0.00057        1 Write Level [54] f=0
+    62.1%                  Total 
+---------------------------------------------------------
+[44]AMRPoissonOp::restrictResidual 0.00086 8 f=1572864 MFlop/s=1837
+    46.2%    0.00040       32 FORT_RESTRICTRES [64] f=1572864
+    14.1%    0.00012        8 LevelData::exchange (exchange + copier) [112] f=0
+     0.9%    0.00001        8 AMRPoissonOp::CFInterp [283] f=0
+    61.2%                  Total 
+---------------------------------------------------------
+[45]AMRMultiGrid::computeAMRResidual 0.00085 8 f=1572864 MFlop/s=1854
+    87.6%    0.00074        8 AMRMultiGrid<T>::computeAMRResidualLevel [46] f=1572864
+    10.4%    0.00009        8 AMRPoissonOp::localMaxNorm [136] f=0
+     1.7%    0.00001        8 MPI_Allreduce [252] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[46]AMRMultiGrid<T>::computeAMRResidualLevel 0.00074 8 f=1572864 MFlop/s=2117
+    99.8%    0.00074        8 AMRPoissonOp::residual [47] f=1572864
+    99.8%                  Total 
+---------------------------------------------------------
+[47]AMRPoissonOp::residual 0.00074 8 f=1572864 MFlop/s=2120
+    99.9%    0.00074        8 AMRPoissonOp::residualI [48] f=1572864
+    99.9%                  Total 
+---------------------------------------------------------
+[48]AMRPoissonOp::residualI 0.00074 8 f=1572864 MFlop/s=2123
+    38.4%    0.00028       32 FORT_OPERATORLAPRES [73] f=1572864
+    38.2%    0.00028        8 AMRPoissonOP::BCs [74] f=0
+    22.5%    0.00017        8 LevelData::exchange (exchange + copier) [94] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[49]local copying 0.00071 128
+---------------------------------------------------------
+[50]AMRPoissonOp::prolongIncrement 0.00067 8 f=131072 MFlop/s=195
+    99.5%    0.00067       32 FORT_PROLONG [51] f=131072
+    99.5%                  Total 
+---------------------------------------------------------
+[51]FORT_PROLONG 0.00067 32 f=131072 MFlop/s=196
+---------------------------------------------------------
+[52]AMRPoissonOp::relax 0.00062 8 f=22528 MFlop/s=36
+    99.8%    0.00062       32 AMRPoissonOp::slowGSRB [53] f=22528
+    99.8%                  Total 
+---------------------------------------------------------
+[53]AMRPoissonOp::slowGSRB 0.00062 32 f=22528 MFlop/s=36
+    85.1%    0.00053       64 AMRPoissonOp::residualSlowly [59] f=22528
+     3.3%    0.00002       32 AMRPoissonOp::create [230] f=0
+     2.1%    0.00001      256 FORT_GSRBSLOWLY [261] f=0
+     1.0%    0.00001       32 ~LayoutData [296] f=0
+     0.2%    0.00000       32 ~BoxLayoutData [390] f=0
+     0.1%    0.00000       32 ~Copier [417] f=0
+     0.1%    0.00000       32 ~LevelData [426] f=0
+    92.0%                  Total 
+---------------------------------------------------------
+[54]Write Level 0.00057 1
+    88.9%    0.00051        1 write_Level [60] f=0
+     3.7%    0.00002        1 writeToFile [225] f=0
+     1.0%    0.00001        1 setGroup [308] f=0
+     0.0%    0.00000        1 calc minimum in outputGhost [454] f=0
+    93.6%                  Total 
+---------------------------------------------------------
+[55]FORT_OPERATORLAP 0.00054 512 f=2883584 MFlop/s=5311
+---------------------------------------------------------
+[56]LevelData::exchange (exchange + copier) 0.00054 128
+    98.1%    0.00053      128 LevelData::exchange (actual exchange) [57] f=0
+     1.0%    0.00001        1 LevelData::exchange (defining copier) [318] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[57]LevelData::exchange (actual exchange) 0.00053 128
+    99.4%    0.00053      128 exchange [58] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[58]exchange 0.00053 128
+    23.2%    0.00012      128 completePendingSends [111] f=0
+    21.5%    0.00011      128 local copying [118] f=0
+    17.7%    0.00009      128 write Data to buffers [131] f=0
+    17.3%    0.00009      128 unpack_messages [134] f=0
+    15.8%    0.00008      128 post_messages [141] f=0
+     0.7%    0.00000      128 MPI_allocateBuffers [335] f=0
+    96.1%                  Total 
+---------------------------------------------------------
+[59]AMRPoissonOp::residualSlowly 0.00053 64 f=22528 MFlop/s=43
+    36.7%    0.00019       64 LevelData::exchange (exchange + copier) [88] f=0
+     7.8%    0.00004       64 AMRPoissonOp::create [181] f=0
+     6.6%    0.00003       64 AMRPoissonOp::axby [195] f=0
+     3.5%    0.00002      256 FORT_OPERATORLAP [234] f=22528
+     2.2%    0.00001       64 ~LayoutData [263] f=0
+     1.0%    0.00001       64 AMRPoissonOp::setToZero [317] f=0
+     0.5%    0.00000       64 ~BoxLayoutData [356] f=0
+     0.2%    0.00000       64 ~Copier [392] f=0
+     0.1%    0.00000       64 ~LevelData [410] f=0
+    58.7%                  Total 
+---------------------------------------------------------
+[60]write_Level 0.00051 1
+    63.9%    0.00032        1 linearize_H5Dwrite [69] f=0
+    19.2%    0.00010        1 WriteAttributes [126] f=0
+     6.0%    0.00003        1 H5S_H5D_offsets_create [203] f=0
+     4.1%    0.00002        1 H5Dcreate [226] f=0
+     2.6%    0.00001        1 WriteOffsets [259] f=0
+     0.7%    0.00000        1 getOffsets [341] f=0
+     0.5%    0.00000        1 H5S_H5D_offsets_close [350] f=0
+     0.4%    0.00000        1 H5Dclose [373] f=0
+     0.2%    0.00000        1 H5Screate [399] f=0
+     0.2%    0.00000        1 mallocMT_buffers [401] f=0
+     0.1%    0.00000        1 freeMT [415] f=0
+     0.1%    0.00000        1 H5Sclose [419] f=0
+     0.1%    0.00000        1 ComputeBufferCapacity [420] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[61]AMRPoissonOp::setToZero 0.00046 128
+---------------------------------------------------------
+[62]AMRPoissonOp::axby 0.00044 128
+---------------------------------------------------------
+[63]FORT_GSRBSLOWLY 0.00041 512
+---------------------------------------------------------
+[64]FORT_RESTRICTRES 0.00040 32 f=1572864 MFlop/s=3977
+---------------------------------------------------------
+[65]completePendingSends 0.00037 128
+    98.5%    0.00037      128 MPI_Waitall [66] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[66]MPI_Waitall 0.00037 128
+---------------------------------------------------------
+[67]completePendingSends 0.00034 432
+    96.3%    0.00033      432 MPI_Waitall [68] f=0
+    96.3%                  Total 
+---------------------------------------------------------
+[68]MPI_Waitall 0.00033 432
+---------------------------------------------------------
+[69]linearize_H5Dwrite 0.00032 1
+    90.2%    0.00029        4 H5Dwrite [71] f=0
+     6.6%    0.00002        4 linearize [224] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[70]setupSolver 0.00030 1
+    66.1%    0.00020        1 AMRMultiGrid::define [86] f=0
+    26.4%    0.00008        1 AMRPoissonOpFactory::define [145] f=0
+     0.7%    0.00000        6 ~LayoutData [369] f=0
+     0.0%    0.00000        1 ~Copier [450] f=0
+    93.3%                  Total 
+---------------------------------------------------------
+[71]H5Dwrite 0.00029 4
+---------------------------------------------------------
+[72]write Data to buffers 0.00029 128
+---------------------------------------------------------
+[73]FORT_OPERATORLAPRES 0.00028 32 f=1572864 MFlop/s=5524
+---------------------------------------------------------
+[74]AMRPoissonOP::BCs 0.00028 8
+---------------------------------------------------------
+[75]CloseFile 0.00027 1
+---------------------------------------------------------
+[76]unpack_messages 0.00025 128
+     2.6%    0.00001      128 MPI_Waitall [295] f=0
+     2.6%                  Total 
+---------------------------------------------------------
+[77]AMRPoissonOp::create 0.00024 432
+    94.6%    0.00023      432 LevelData<T>::define(dbl,comps,ghost,factory) [81] f=0
+    94.6%                  Total 
+---------------------------------------------------------
+[78]AMRPoissonOp::restrictResidual 0.00024 8 f=196608 MFlop/s=821
+    25.3%    0.00006        8 LevelData::exchange (exchange + copier) [159] f=0
+    23.2%    0.00006       32 FORT_RESTRICTRES [168] f=196608
+     3.2%    0.00001        8 AMRPoissonOp::CFInterp [281] f=0
+    51.8%                  Total 
+---------------------------------------------------------
+[79]BiCGStabSolver::solve::Initialize 0.00024 8 f=3072 MFlop/s=13
+    29.8%    0.00007       64 AMRPoissonOp::create [155] f=0
+    24.6%    0.00006        8 AMRPoissonOp::residual [163] f=3072
+     6.8%    0.00002        8 AMRPoissonOp::norm [244] f=0
+     3.0%    0.00001       32 AMRPoissonOp::setToZero [287] f=0
+     1.0%    0.00000        8 AMRPoissonOp::assignLocal [361] f=0
+    65.1%                  Total 
+---------------------------------------------------------
+[80]local copying 0.00024 128
+---------------------------------------------------------
+[81]LevelData<T>::define(dbl,comps,ghost,factory) 0.00023 432
+---------------------------------------------------------
+[82]AMRPoissonOp::axby 0.00022 432
+---------------------------------------------------------
+[83]unpack_messages 0.00021 432
+     6.1%    0.00001      432 MPI_Waitall [262] f=0
+     6.1%                  Total 
+---------------------------------------------------------
+[84]AMRMultiGrid<T>::computeAMROperator 0.00020 1 f=180224 MFlop/s=892
+    99.8%    0.00020        1 AMRPoissonOp::applyOp [85] f=180224
+    99.8%                  Total 
+---------------------------------------------------------
+[85]AMRPoissonOp::applyOp 0.00020 1 f=180224 MFlop/s=894
+    98.7%    0.00020        1 AMRPoissonOp::applyOpI [87] f=180224
+     0.8%    0.00000        1 AMRPoissonOp::CFInterp [377] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[86]AMRMultiGrid::define 0.00020 1
+    77.5%    0.00016        1 MultiGrid::define [97] f=0
+    14.2%    0.00003        1 AMRPoissonOpFactory::AMRnewOp [205] f=0
+     0.0%    0.00000        2 ~Copier [448] f=0
+    91.7%                  Total 
+---------------------------------------------------------
+[87]AMRPoissonOp::applyOpI 0.00020 1 f=180224 MFlop/s=906
+    48.1%    0.00010        1 LevelData::exchange (exchange + copier) [127] f=0
+    31.8%    0.00006        4 FORT_OPERATORLAP [158] f=180224
+    19.5%    0.00004        1 AMRPoissonOp::applyOpIBC [185] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[88]LevelData::exchange (exchange + copier) 0.00019 64
+    95.9%    0.00019       64 LevelData::exchange (actual exchange) [91] f=0
+     3.0%    0.00001        1 LevelData::exchange (defining copier) [306] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[89]local copying 0.00019 432
+---------------------------------------------------------
+[90]post_messages 0.00019 432
+    59.9%    0.00011      432 post_Sends [120] f=0
+    28.9%    0.00005      432 post_Receives [170] f=0
+    88.8%                  Total 
+---------------------------------------------------------
+[91]LevelData::exchange (actual exchange) 0.00019 64
+    99.0%    0.00018       64 exchange [92] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[92]exchange 0.00018 64
+    31.5%    0.00006       64 completePendingSends [164] f=0
+    16.9%    0.00003       64 unpack_messages [200] f=0
+    15.6%    0.00003       64 local copying [204] f=0
+    15.3%    0.00003       64 post_messages [206] f=0
+    14.0%    0.00003       64 write Data to buffers [213] f=0
+     1.4%    0.00000       64 MPI_allocateBuffers [352] f=0
+    94.7%                  Total 
+---------------------------------------------------------
+[93]write Data to buffers 0.00017 432
+---------------------------------------------------------
+[94]LevelData::exchange (exchange + copier) 0.00017 8
+    99.7%    0.00017        8 LevelData::exchange (actual exchange) [95] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[95]LevelData::exchange (actual exchange) 0.00017 8
+    99.7%    0.00017        8 exchange [96] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[96]exchange 0.00017 8
+    48.2%    0.00008        8 completePendingSends [146] f=0
+    26.7%    0.00004        8 local copying [175] f=0
+    10.6%    0.00002        8 write Data to buffers [236] f=0
+     9.9%    0.00002        8 unpack_messages [243] f=0
+     2.8%    0.00000        8 post_messages [326] f=0
+     0.1%    0.00000        8 MPI_allocateBuffers [444] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[97]MultiGrid::define 0.00016 1
+    79.3%    0.00012        4 AMRPoissonOpFactory::MGnewOp [109] f=0
+    79.3%                  Total 
+---------------------------------------------------------
+[98]AMRPoissonOp::axby 0.00015 128
+---------------------------------------------------------
+[99]AMRPoissonOp::create 0.00015 128
+    96.6%    0.00015      128 LevelData<T>::define(dbl,comps,ghost,factory) [102] f=0
+    96.6%                  Total 
+---------------------------------------------------------
+[100]PrChUtilities::setupGridsWithTagLocation 0.00015 1
+    55.1%    0.00008        1 setupGrids: BaseGridCreation [143] f=0
+    55.1%                  Total 
+---------------------------------------------------------
+[101]write Data to buffers 0.00015 128
+---------------------------------------------------------
+[102]LevelData<T>::define(dbl,comps,ghost,factory) 0.00015 128
+---------------------------------------------------------
+[103]unpack_messages 0.00015 128
+     4.2%    0.00001      128 MPI_Waitall [300] f=0
+     4.2%                  Total 
+---------------------------------------------------------
+[104]AMRPoissonOp::create 0.00014 128
+    97.2%    0.00014      128 LevelData<T>::define(dbl,comps,ghost,factory) [106] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[105]AMRPoissonOp::setToZero 0.00014 8
+---------------------------------------------------------
+[106]LevelData<T>::define(dbl,comps,ghost,factory) 0.00014 128
+---------------------------------------------------------
+[107]AMRPoissonOp::create 0.00013 216
+    94.6%    0.00013      216 LevelData<T>::define(dbl,comps,ghost,factory) [108] f=0
+    94.6%                  Total 
+---------------------------------------------------------
+[108]LevelData<T>::define(dbl,comps,ghost,factory) 0.00013 216
+---------------------------------------------------------
+[109]AMRPoissonOpFactory::MGnewOp 0.00012 4
+    12.8%    0.00002        3 AMRPoissonOp::define4 [245] f=0
+     4.4%    0.00001       18 ~LayoutData [316] f=0
+     0.0%    0.00000        3 ~Copier [447] f=0
+    17.3%                  Total 
+---------------------------------------------------------
+[110]FORT_OPERATORLAP 0.00012 1728 f=152064 MFlop/s=1236
+---------------------------------------------------------
+[111]completePendingSends 0.00012 128
+    97.1%    0.00012      128 MPI_Waitall [115] f=0
+    97.1%                  Total 
+---------------------------------------------------------
+[112]LevelData::exchange (exchange + copier) 0.00012 8
+    99.7%    0.00012        8 LevelData::exchange (actual exchange) [113] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[113]LevelData::exchange (actual exchange) 0.00012 8
+    99.6%    0.00012        8 exchange [114] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[114]exchange 0.00012 8
+    36.5%    0.00004        8 local copying [176] f=0
+    31.2%    0.00004        8 completePendingSends [188] f=0
+    13.8%    0.00002        8 write Data to buffers [242] f=0
+    12.8%    0.00002        8 unpack_messages [246] f=0
+     3.8%    0.00000        8 post_messages [327] f=0
+     0.1%    0.00000        8 MPI_allocateBuffers [441] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[115]MPI_Waitall 0.00012 128
+---------------------------------------------------------
+[116]AMRPoissonOp::restrictResidual 0.00012 8 f=24576 MFlop/s=211
+    27.3%    0.00003        8 LevelData::exchange (exchange + copier) [196] f=0
+    12.2%    0.00001        8 AMRPoissonOp::CFInterp [251] f=0
+     8.5%    0.00001       32 FORT_RESTRICTRES [267] f=24576
+    48.1%                  Total 
+---------------------------------------------------------
+[117]AMRPoissonOp::create 0.00012 64
+    98.2%    0.00011       64 LevelData<T>::define(dbl,comps,ghost,factory) [119] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[118]local copying 0.00011 128
+---------------------------------------------------------
+[119]LevelData<T>::define(dbl,comps,ghost,factory) 0.00011 64
+---------------------------------------------------------
+[120]post_Sends 0.00011 432
+---------------------------------------------------------
+[121]uberCorrection creation 0.00011 1
+    90.9%    0.00010        2 AMRPoissonOp::setToZero [125] f=0
+     7.0%    0.00001        2 AMRPoissonOp::create [279] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[122]Initial AMR Residual 0.00011 1 f=196608 MFlop/s=1817
+    99.8%    0.00011        1 AMRMultiGrid::computeAMRResidual [123] f=196608
+    99.8%                  Total 
+---------------------------------------------------------
+[123]AMRMultiGrid::computeAMRResidual 0.00011 1 f=196608 MFlop/s=1820
+    87.8%    0.00009        1 AMRMultiGrid<T>::computeAMRResidualLevel [128] f=196608
+    10.2%    0.00001        1 AMRPoissonOp::localMaxNorm [264] f=0
+     1.4%    0.00000        1 MPI_Allreduce [382] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[124]FORT_OPERATORLAP 0.00010 512 f=360448 MFlop/s=3476
+---------------------------------------------------------
+[125]AMRPoissonOp::setToZero 0.00010 2
+---------------------------------------------------------
+[126]WriteAttributes 0.00010 1
+---------------------------------------------------------
+[127]LevelData::exchange (exchange + copier) 0.00010 1
+    89.5%    0.00009        1 LevelData::exchange (actual exchange) [138] f=0
+    10.1%    0.00001        1 LevelData::exchange (defining copier) [268] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[128]AMRMultiGrid<T>::computeAMRResidualLevel 0.00009 1 f=196608 MFlop/s=2073
+    99.8%    0.00009        1 AMRPoissonOp::residual [129] f=196608
+    99.8%                  Total 
+---------------------------------------------------------
+[129]AMRPoissonOp::residual 0.00009 1 f=196608 MFlop/s=2078
+    99.9%    0.00009        1 AMRPoissonOp::residualI [130] f=196608
+    99.9%                  Total 
+---------------------------------------------------------
+[130]AMRPoissonOp::residualI 0.00009 1 f=196608 MFlop/s=2081
+    38.6%    0.00004        4 FORT_OPERATORLAPRES [191] f=196608
+    38.3%    0.00004        1 AMRPoissonOP::BCs [192] f=0
+    21.9%    0.00002        1 LevelData::exchange (exchange + copier) [227] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[131]write Data to buffers 0.00009 128
+---------------------------------------------------------
+[132]AMRPoissonOp::prolongIncrement 0.00009 8 f=16384 MFlop/s=178
+    97.1%    0.00009       32 FORT_PROLONG [135] f=16384
+    97.1%                  Total 
+---------------------------------------------------------
+[133]AMRPoissonOp::assignLocal 0.00009 8
+---------------------------------------------------------
+[134]unpack_messages 0.00009 128
+     4.2%    0.00000      128 MPI_Waitall [336] f=0
+     4.2%                  Total 
+---------------------------------------------------------
+[135]FORT_PROLONG 0.00009 32 f=16384 MFlop/s=184
+---------------------------------------------------------
+[136]AMRPoissonOp::localMaxNorm 0.00009 8
+---------------------------------------------------------
+[137]~AMRMultiGrid 0.00009 1
+    32.0%    0.00003       95 ~LayoutData [209] f=0
+     4.9%    0.00000       31 ~Copier [328] f=0
+     1.3%    0.00000       23 ~BoxLayoutData [395] f=0
+     0.3%    0.00000       19 ~LevelData [433] f=0
+    38.4%                  Total 
+---------------------------------------------------------
+[138]LevelData::exchange (actual exchange) 0.00009 1
+    99.5%    0.00009        1 exchange [139] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[139]exchange 0.00009 1
+    48.5%    0.00004        1 completePendingSends [178] f=0
+    16.8%    0.00001        1 MPI_allocateBuffers [248] f=0
+    12.4%    0.00001        1 post_messages [266] f=0
+     8.7%    0.00001        1 local copying [282] f=0
+     8.3%    0.00001        1 write Data to buffers [286] f=0
+     3.3%    0.00000        1 unpack_messages [348] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[140]AMRPoissonOp::create 0.00008 128
+    95.6%    0.00008      128 LevelData<T>::define(dbl,comps,ghost,factory) [144] f=0
+    95.6%                  Total 
+---------------------------------------------------------
+[141]post_messages 0.00008 128
+    71.0%    0.00006      128 post_Sends [162] f=0
+    20.5%    0.00002      128 post_Receives [237] f=0
+    91.5%                  Total 
+---------------------------------------------------------
+[142]FORT_GSRBSLOWLY 0.00008 1728
+---------------------------------------------------------
+[143]setupGrids: BaseGridCreation 0.00008 1
+    59.0%    0.00005        1 LoadBalance:VectorBoxEntry [173] f=0
+     7.9%    0.00001        1 DisjointBoxLayout::computeNeighbors [292] f=0
+     7.4%    0.00001        1 BRMeshRefine::domainSplit [303] f=0
+    74.3%                  Total 
+---------------------------------------------------------
+[144]LevelData<T>::define(dbl,comps,ghost,factory) 0.00008 128
+---------------------------------------------------------
+[145]AMRPoissonOpFactory::define 0.00008 1
+    34.9%    0.00003       24 CFIVS::define(fast) [208] f=0
+    24.3%    0.00002        1 Copier::exchangeDefine [233] f=0
+     0.6%    0.00000        6 ~LayoutData [418] f=0
+     0.1%    0.00000        2 ~Copier [446] f=0
+    59.8%                  Total 
+---------------------------------------------------------
+[146]completePendingSends 0.00008 8
+    99.6%    0.00008        8 MPI_Waitall [148] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[147]FORT_GSRBSLOWLY 0.00008 512
+---------------------------------------------------------
+[148]MPI_Waitall 0.00008 8
+---------------------------------------------------------
+[149]AMRPoissonOp::create 0.00008 64
+    96.8%    0.00007       64 LevelData<T>::define(dbl,comps,ghost,factory) [154] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[150]~LayoutData 0.00008 432
+---------------------------------------------------------
+[151]AMRPoissonOp::incr 0.00007 8
+---------------------------------------------------------
+[152]post_messages 0.00007 128
+    52.0%    0.00004      128 post_Sends [186] f=0
+    37.7%    0.00003      128 post_Receives [207] f=0
+    89.7%                  Total 
+---------------------------------------------------------
+[153]~LayoutData 0.00007 128
+---------------------------------------------------------
+[154]LevelData<T>::define(dbl,comps,ghost,factory) 0.00007 64
+---------------------------------------------------------
+[155]AMRPoissonOp::create 0.00007 64
+    97.2%    0.00007       64 LevelData<T>::define(dbl,comps,ghost,factory) [156] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[156]LevelData<T>::define(dbl,comps,ghost,factory) 0.00007 64
+---------------------------------------------------------
+[157]post_messages 0.00007 128
+    47.2%    0.00003      128 post_Sends [198] f=0
+    40.1%    0.00003      128 post_Receives [210] f=0
+    87.3%                  Total 
+---------------------------------------------------------
+[158]FORT_OPERATORLAP 0.00006 4 f=180224 MFlop/s=2846
+---------------------------------------------------------
+[159]LevelData::exchange (exchange + copier) 0.00006 8
+    99.2%    0.00006        8 LevelData::exchange (actual exchange) [160] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[160]LevelData::exchange (actual exchange) 0.00006 8
+    99.4%    0.00006        8 exchange [161] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[161]exchange 0.00006 8
+    36.8%    0.00002        8 completePendingSends [221] f=0
+    24.0%    0.00001        8 local copying [249] f=0
+    14.9%    0.00001        8 write Data to buffers [270] f=0
+    14.6%    0.00001        8 unpack_messages [271] f=0
+     6.1%    0.00000        8 post_messages [338] f=0
+     0.2%    0.00000        8 MPI_allocateBuffers [442] f=0
+    96.7%                  Total 
+---------------------------------------------------------
+[162]post_Sends 0.00006 128
+---------------------------------------------------------
+[163]AMRPoissonOp::residual 0.00006 8 f=3072 MFlop/s=52
+    84.7%    0.00005        8 AMRPoissonOp::residualI [172] f=3072
+    14.0%    0.00001        8 AMRPoissonOp::CFInterp [274] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[164]completePendingSends 0.00006 64
+    97.0%    0.00006       64 MPI_Waitall [166] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[165]LevelData::exchange (defining copier) 0.00006 8
+    97.3%    0.00006        8 Copier::define [167] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[166]MPI_Waitall 0.00006 64
+---------------------------------------------------------
+[167]Copier::define 0.00006 8
+---------------------------------------------------------
+[168]FORT_RESTRICTRES 0.00006 32 f=196608 MFlop/s=3532
+---------------------------------------------------------
+[169]AMRPoissonOp::setToZero 0.00006 128
+---------------------------------------------------------
+[170]post_Receives 0.00005 432
+---------------------------------------------------------
+[171]AMRPoissonOp::setToZero 0.00005 9
+---------------------------------------------------------
+[172]AMRPoissonOp::residualI 0.00005 8 f=3072 MFlop/s=62
+    49.3%    0.00002        8 LevelData::exchange (exchange + copier) [215] f=0
+    28.8%    0.00001        8 AMRPoissonOP::BCs [250] f=0
+     6.7%    0.00000       32 FORT_OPERATORLAPRES [342] f=3072
+    84.9%                  Total 
+---------------------------------------------------------
+[173]LoadBalance:VectorBoxEntry 0.00005 1
+    88.5%    0.00004        1 LoadBalance:VectorBoxSimple [177] f=0
+    88.5%                  Total 
+---------------------------------------------------------
+[174]AMRPoissonOp::applyOp 0.00005 8 f=2816 MFlop/s=59
+    86.4%    0.00004        8 AMRPoissonOp::applyOpI [180] f=2816
+    11.7%    0.00001        8 AMRPoissonOp::CFInterp [314] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[175]local copying 0.00004 8
+---------------------------------------------------------
+[176]local copying 0.00004 8
+---------------------------------------------------------
+[177]LoadBalance:VectorBoxSimple 0.00004 1
+---------------------------------------------------------
+[178]completePendingSends 0.00004 1
+    99.6%    0.00004        1 MPI_Waitall [179] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[179]MPI_Waitall 0.00004 1
+---------------------------------------------------------
+[180]AMRPoissonOp::applyOpI 0.00004 8 f=2816 MFlop/s=69
+    54.6%    0.00002        8 LevelData::exchange (exchange + copier) [219] f=0
+    34.1%    0.00001        8 AMRPoissonOp::applyOpIBC [255] f=0
+     6.2%    0.00000       32 FORT_OPERATORLAP [355] f=2816
+    94.8%                  Total 
+---------------------------------------------------------
+[181]AMRPoissonOp::create 0.00004 64
+    95.4%    0.00004       64 LevelData<T>::define(dbl,comps,ghost,factory) [184] f=0
+    95.4%                  Total 
+---------------------------------------------------------
+[182]AMRMultiGrid::init 0.00004 1
+    64.7%    0.00003        1 MutliGrid::init [211] f=0
+    33.6%    0.00001        2 AMRPoissonOp::create [256] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[183]~LayoutData 0.00004 64
+---------------------------------------------------------
+[184]LevelData<T>::define(dbl,comps,ghost,factory) 0.00004 64
+---------------------------------------------------------
+[185]AMRPoissonOp::applyOpIBC 0.00004 1
+---------------------------------------------------------
+[186]post_Sends 0.00004 128
+---------------------------------------------------------
+[187]AMRPoissonOp::create 0.00004 64
+    94.6%    0.00004       64 LevelData<T>::define(dbl,comps,ghost,factory) [193] f=0
+    94.6%                  Total 
+---------------------------------------------------------
+[188]completePendingSends 0.00004 8
+    99.0%    0.00004        8 MPI_Waitall [189] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[189]MPI_Waitall 0.00004 8
+---------------------------------------------------------
+[190]~LayoutData 0.00004 128
+---------------------------------------------------------
+[191]FORT_OPERATORLAPRES 0.00004 4 f=196608 MFlop/s=5388
+---------------------------------------------------------
+[192]AMRPoissonOP::BCs 0.00004 1
+---------------------------------------------------------
+[193]LevelData<T>::define(dbl,comps,ghost,factory) 0.00004 64
+---------------------------------------------------------
+[194]~LayoutData 0.00004 216
+---------------------------------------------------------
+[195]AMRPoissonOp::axby 0.00003 64
+---------------------------------------------------------
+[196]LevelData::exchange (exchange + copier) 0.00003 8
+    98.9%    0.00003        8 LevelData::exchange (actual exchange) [197] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[197]LevelData::exchange (actual exchange) 0.00003 8
+    98.8%    0.00003        8 exchange [199] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[198]post_Sends 0.00003 128
+---------------------------------------------------------
+[199]exchange 0.00003 8
+    22.4%    0.00001        8 local copying [288] f=0
+    20.1%    0.00001        8 completePendingSends [298] f=0
+    18.0%    0.00001        8 write Data to buffers [312] f=0
+    18.0%    0.00001        8 unpack_messages [313] f=0
+    15.5%    0.00000        8 post_messages [325] f=0
+     0.4%    0.00000        8 MPI_allocateBuffers [437] f=0
+    94.4%                  Total 
+---------------------------------------------------------
+[200]unpack_messages 0.00003 64
+     6.2%    0.00000       64 MPI_Waitall [374] f=0
+     6.2%                  Total 
+---------------------------------------------------------
+[201]AMRPoissonOp::setToZero 0.00003 432
+---------------------------------------------------------
+[202]AMRPoissonOp::setToZero 0.00003 8
+---------------------------------------------------------
+[203]H5S_H5D_offsets_create 0.00003 1
+---------------------------------------------------------
+[204]local copying 0.00003 64
+---------------------------------------------------------
+[205]AMRPoissonOpFactory::AMRnewOp 0.00003 1
+    22.0%    0.00001        1 AMRPoissonOp::define4 [297] f=0
+    22.0%                  Total 
+---------------------------------------------------------
+[206]post_messages 0.00003 64
+    59.8%    0.00002       64 post_Sends [239] f=0
+    28.8%    0.00001       64 post_Receives [276] f=0
+    88.6%                  Total 
+---------------------------------------------------------
+[207]post_Receives 0.00003 128
+---------------------------------------------------------
+[208]CFIVS::define(fast) 0.00003 24
+---------------------------------------------------------
+[209]~LayoutData 0.00003 95
+---------------------------------------------------------
+[210]post_Receives 0.00003 128
+---------------------------------------------------------
+[211]MutliGrid::init 0.00003 1
+    98.0%    0.00003        6 AMRPoissonOp::createCoarser [212] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[212]AMRPoissonOp::createCoarser 0.00003 6
+    88.5%    0.00002        6 LevelData<T>::define(dbl,comps,ghost,factory) [218] f=0
+    88.5%                  Total 
+---------------------------------------------------------
+[213]write Data to buffers 0.00003 64
+---------------------------------------------------------
+[214]~LayoutData 0.00003 128
+---------------------------------------------------------
+[215]LevelData::exchange (exchange + copier) 0.00002 8
+    98.5%    0.00002        8 LevelData::exchange (actual exchange) [216] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[216]LevelData::exchange (actual exchange) 0.00002 8
+    98.8%    0.00002        8 exchange [217] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[217]exchange 0.00002 8
+    29.9%    0.00001        8 completePendingSends [285] f=0
+    17.2%    0.00000        8 unpack_messages [329] f=0
+    17.0%    0.00000        8 post_messages [330] f=0
+    14.8%    0.00000        8 local copying [339] f=0
+    13.8%    0.00000        8 write Data to buffers [344] f=0
+     0.5%    0.00000        8 MPI_allocateBuffers [439] f=0
+    93.1%                  Total 
+---------------------------------------------------------
+[218]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 6
+---------------------------------------------------------
+[219]LevelData::exchange (exchange + copier) 0.00002 8
+    98.4%    0.00002        8 LevelData::exchange (actual exchange) [220] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[220]LevelData::exchange (actual exchange) 0.00002 8
+    98.7%    0.00002        8 exchange [222] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[221]completePendingSends 0.00002 8
+    98.8%    0.00002        8 MPI_Waitall [223] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[222]exchange 0.00002 8
+    25.6%    0.00001        8 completePendingSends [315] f=0
+    17.9%    0.00000        8 unpack_messages [333] f=0
+    17.2%    0.00000        8 post_messages [337] f=0
+    16.2%    0.00000        8 local copying [340] f=0
+    15.0%    0.00000        8 write Data to buffers [345] f=0
+     0.6%    0.00000        8 MPI_allocateBuffers [435] f=0
+    92.5%                  Total 
+---------------------------------------------------------
+[223]MPI_Waitall 0.00002 8
+---------------------------------------------------------
+[224]linearize 0.00002 4
+---------------------------------------------------------
+[225]writeToFile 0.00002 1
+---------------------------------------------------------
+[226]H5Dcreate 0.00002 1
+---------------------------------------------------------
+[227]LevelData::exchange (exchange + copier) 0.00002 1
+    99.4%    0.00002        1 LevelData::exchange (actual exchange) [228] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[228]LevelData::exchange (actual exchange) 0.00002 1
+    99.5%    0.00002        1 exchange [231] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[229]MPI_allocateBuffers 0.00002 432
+---------------------------------------------------------
+[230]AMRPoissonOp::create 0.00002 32
+    95.1%    0.00002       32 LevelData<T>::define(dbl,comps,ghost,factory) [232] f=0
+    95.1%                  Total 
+---------------------------------------------------------
+[231]exchange 0.00002 1
+    30.3%    0.00001        1 completePendingSends [299] f=0
+    28.4%    0.00001        1 local copying [307] f=0
+    12.0%    0.00000        1 write Data to buffers [358] f=0
+    10.9%    0.00000        1 unpack_messages [365] f=0
+     7.7%    0.00000        1 post_messages [381] f=0
+     0.1%    0.00000        1 MPI_allocateBuffers [451] f=0
+    89.5%                  Total 
+---------------------------------------------------------
+[232]LevelData<T>::define(dbl,comps,ghost,factory) 0.00002 32
+---------------------------------------------------------
+[233]Copier::exchangeDefine 0.00002 1
+---------------------------------------------------------
+[234]FORT_OPERATORLAP 0.00002 256 f=22528 MFlop/s=1209
+---------------------------------------------------------
+[235]AMRPoissonOp::dotProduct 0.00002 16
+---------------------------------------------------------
+[236]write Data to buffers 0.00002 8
+---------------------------------------------------------
+[237]post_Receives 0.00002 128
+---------------------------------------------------------
+[238]~BoxLayoutData 0.00002 432
+    29.3%    0.00000      432 completePendingSends [324] f=0
+    29.3%                  Total 
+---------------------------------------------------------
+[239]post_Sends 0.00002 64
+---------------------------------------------------------
+[240]AMRPoissonOp::prolongIncrement 0.00002 8 f=2048 MFlop/s=122
+    80.6%    0.00001       32 FORT_PROLONG [257] f=2048
+    80.6%                  Total 
+---------------------------------------------------------
+[241]~LayoutData 0.00002 64
+---------------------------------------------------------
+[242]write Data to buffers 0.00002 8
+---------------------------------------------------------
+[243]unpack_messages 0.00002 8
+     1.9%    0.00000        8 MPI_Waitall [429] f=0
+     1.9%                  Total 
+---------------------------------------------------------
+[244]AMRPoissonOp::norm 0.00002 8
+---------------------------------------------------------
+[245]AMRPoissonOp::define4 0.00002 3
+---------------------------------------------------------
+[246]unpack_messages 0.00002 8
+     2.5%    0.00000        8 MPI_Waitall [424] f=0
+     2.5%                  Total 
+---------------------------------------------------------
+[247]Barrier 0.00002 2
+---------------------------------------------------------
+[248]MPI_allocateBuffers 0.00001 1
+---------------------------------------------------------
+[249]local copying 0.00001 8
+---------------------------------------------------------
+[250]AMRPoissonOP::BCs 0.00001 8
+---------------------------------------------------------
+[251]AMRPoissonOp::CFInterp 0.00001 8
+---------------------------------------------------------
+[252]MPI_Allreduce 0.00001 8
+---------------------------------------------------------
+[253]AMRPoissonOp::setToZero 0.00001 128
+---------------------------------------------------------
+[254]~LayoutData 0.00001 64
+---------------------------------------------------------
+[255]AMRPoissonOp::applyOpIBC 0.00001 8
+---------------------------------------------------------
+[256]AMRPoissonOp::create 0.00001 2
+    98.5%    0.00001        2 LevelData<T>::define(dbl,comps,ghost,factory) [260] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[257]FORT_PROLONG 0.00001 32 f=2048 MFlop/s=152
+---------------------------------------------------------
+[258]~LayoutData 0.00001 64
+---------------------------------------------------------
+[259]WriteOffsets 0.00001 1
+---------------------------------------------------------
+[260]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 2
+---------------------------------------------------------
+[261]FORT_GSRBSLOWLY 0.00001 256
+---------------------------------------------------------
+[262]MPI_Waitall 0.00001 432
+---------------------------------------------------------
+[263]~LayoutData 0.00001 64
+---------------------------------------------------------
+[264]AMRPoissonOp::localMaxNorm 0.00001 1
+---------------------------------------------------------
+[265]AMRPoissonOp::norm 0.00001 8
+---------------------------------------------------------
+[266]post_messages 0.00001 1
+    72.8%    0.00001        1 post_Sends [280] f=0
+    22.6%    0.00000        1 post_Receives [360] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[267]FORT_RESTRICTRES 0.00001 32 f=24576 MFlop/s=2490
+---------------------------------------------------------
+[268]LevelData::exchange (defining copier) 0.00001 1
+    94.4%    0.00001        1 Copier::define [269] f=0
+    94.4%                  Total 
+---------------------------------------------------------
+[269]Copier::define 0.00001 1
+---------------------------------------------------------
+[270]write Data to buffers 0.00001 8
+---------------------------------------------------------
+[271]unpack_messages 0.00001 8
+     4.6%    0.00000        8 MPI_Waitall [423] f=0
+     4.6%                  Total 
+---------------------------------------------------------
+[272]AMRPoissonOp::setToZero 0.00001 8
+---------------------------------------------------------
+[273]~BoxLayoutData 0.00001 216
+    28.2%    0.00000      216 completePendingSends [359] f=0
+    28.2%                  Total 
+---------------------------------------------------------
+[274]AMRPoissonOp::CFInterp 0.00001 8
+---------------------------------------------------------
+[275]AMRPoissonOp::create 0.00001 1
+    97.9%    0.00001        1 LevelData<T>::define(dbl,comps,ghost,factory) [277] f=0
+    97.9%                  Total 
+---------------------------------------------------------
+[276]post_Receives 0.00001 64
+---------------------------------------------------------
+[277]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 1
+---------------------------------------------------------
+[278]MPI_allocateBuffers 0.00001 128
+---------------------------------------------------------
+[279]AMRPoissonOp::create 0.00001 2
+    81.8%    0.00001        2 LevelData<T>::define(dbl,comps,ghost,factory) [294] f=0
+    81.8%                  Total 
+---------------------------------------------------------
+[280]post_Sends 0.00001 1
+---------------------------------------------------------
+[281]AMRPoissonOp::CFInterp 0.00001 8
+---------------------------------------------------------
+[282]local copying 0.00001 1
+---------------------------------------------------------
+[283]AMRPoissonOp::CFInterp 0.00001 8
+---------------------------------------------------------
+[284]~Copier 0.00001 64
+---------------------------------------------------------
+[285]completePendingSends 0.00001 8
+    96.5%    0.00001        8 MPI_Waitall [289] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[286]write Data to buffers 0.00001 1
+---------------------------------------------------------
+[287]AMRPoissonOp::setToZero 0.00001 32
+---------------------------------------------------------
+[288]local copying 0.00001 8
+---------------------------------------------------------
+[289]MPI_Waitall 0.00001 8
+---------------------------------------------------------
+[290]~Copier 0.00001 432
+---------------------------------------------------------
+[291]LevelData::exchange (defining copier) 0.00001 1
+    95.5%    0.00001        1 Copier::define [293] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[292]DisjointBoxLayout::computeNeighbors 0.00001 1
+---------------------------------------------------------
+[293]Copier::define 0.00001 1
+---------------------------------------------------------
+[294]LevelData<T>::define(dbl,comps,ghost,factory) 0.00001 2
+---------------------------------------------------------
+[295]MPI_Waitall 0.00001 128
+---------------------------------------------------------
+[296]~LayoutData 0.00001 32
+---------------------------------------------------------
+[297]AMRPoissonOp::define4 0.00001 1
+---------------------------------------------------------
+[298]completePendingSends 0.00001 8
+    95.4%    0.00001        8 MPI_Waitall [305] f=0
+    95.4%                  Total 
+---------------------------------------------------------
+[299]completePendingSends 0.00001 1
+    98.7%    0.00001        1 MPI_Waitall [302] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[300]MPI_Waitall 0.00001 128
+---------------------------------------------------------
+[301]~BoxLayoutData 0.00001 128
+    24.1%    0.00000      128 completePendingSends [386] f=0
+    24.1%                  Total 
+---------------------------------------------------------
+[302]MPI_Waitall 0.00001 1
+---------------------------------------------------------
+[303]BRMeshRefine::domainSplit 0.00001 1
+---------------------------------------------------------
+[304]LevelData::exchange (defining copier) 0.00001 1
+    97.0%    0.00001        1 Copier::define [309] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[305]MPI_Waitall 0.00001 8
+---------------------------------------------------------
+[306]LevelData::exchange (defining copier) 0.00001 1
+    98.1%    0.00001        1 Copier::define [310] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[307]local copying 0.00001 1
+---------------------------------------------------------
+[308]setGroup 0.00001 1
+---------------------------------------------------------
+[309]Copier::define 0.00001 1
+---------------------------------------------------------
+[310]Copier::define 0.00001 1
+---------------------------------------------------------
+[311]AMRPoissonOp::incr 0.00001 16
+---------------------------------------------------------
+[312]write Data to buffers 0.00001 8
+---------------------------------------------------------
+[313]unpack_messages 0.00001 8
+     4.8%    0.00000        8 MPI_Waitall [430] f=0
+     4.8%                  Total 
+---------------------------------------------------------
+[314]AMRPoissonOp::CFInterp 0.00001 8
+---------------------------------------------------------
+[315]completePendingSends 0.00001 8
+    95.1%    0.00001        8 MPI_Waitall [320] f=0
+    95.1%                  Total 
+---------------------------------------------------------
+[316]~LayoutData 0.00001 18
+---------------------------------------------------------
+[317]AMRPoissonOp::setToZero 0.00001 64
+---------------------------------------------------------
+[318]LevelData::exchange (defining copier) 0.00001 1
+    97.4%    0.00001        1 Copier::define [322] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[319]~BoxLayoutData 0.00001 128
+    28.4%    0.00000      128 completePendingSends [385] f=0
+    28.4%                  Total 
+---------------------------------------------------------
+[320]MPI_Waitall 0.00001 8
+---------------------------------------------------------
+[321]~BoxLayoutData 0.00001 128
+    28.7%    0.00000      128 completePendingSends [384] f=0
+    28.7%                  Total 
+---------------------------------------------------------
+[322]Copier::define 0.00001 1
+---------------------------------------------------------
+[323]~LevelData 0.00001 432
+---------------------------------------------------------
+[324]completePendingSends 0.00000 432
+---------------------------------------------------------
+[325]post_messages 0.00000 8
+    63.3%    0.00000        8 post_Sends [346] f=0
+    22.6%    0.00000        8 post_Receives [396] f=0
+    85.9%                  Total 
+---------------------------------------------------------
+[326]post_messages 0.00000 8
+    47.8%    0.00000        8 post_Sends [363] f=0
+    35.9%    0.00000        8 post_Receives [378] f=0
+    83.7%                  Total 
+---------------------------------------------------------
+[327]post_messages 0.00000 8
+    46.2%    0.00000        8 post_Sends [371] f=0
+    37.1%    0.00000        8 post_Receives [376] f=0
+    83.3%                  Total 
+---------------------------------------------------------
+[328]~Copier 0.00000 31
+---------------------------------------------------------
+[329]unpack_messages 0.00000 8
+     7.5%    0.00000        8 MPI_Waitall [428] f=0
+     7.5%                  Total 
+---------------------------------------------------------
+[330]post_messages 0.00000 8
+    54.5%    0.00000        8 post_Sends [366] f=0
+    32.7%    0.00000        8 post_Receives [389] f=0
+    87.2%                  Total 
+---------------------------------------------------------
+[331]MPI_allocateBuffers 0.00000 128
+---------------------------------------------------------
+[332]~LayoutData 0.00000 2
+---------------------------------------------------------
+[333]unpack_messages 0.00000 8
+     6.7%    0.00000        8 MPI_Waitall [431] f=0
+     6.7%                  Total 
+---------------------------------------------------------
+[334]~Copier 0.00000 216
+---------------------------------------------------------
+[335]MPI_allocateBuffers 0.00000 128
+---------------------------------------------------------
+[336]MPI_Waitall 0.00000 128
+---------------------------------------------------------
+[337]post_messages 0.00000 8
+    57.2%    0.00000        8 post_Sends [370] f=0
+    28.9%    0.00000        8 post_Receives [397] f=0
+    86.1%                  Total 
+---------------------------------------------------------
+[338]post_messages 0.00000 8
+    46.3%    0.00000        8 post_Sends [379] f=0
+    32.9%    0.00000        8 post_Receives [391] f=0
+    79.2%                  Total 
+---------------------------------------------------------
+[339]local copying 0.00000 8
+---------------------------------------------------------
+[340]local copying 0.00000 8
+---------------------------------------------------------
+[341]getOffsets 0.00000 1
+    32.7%    0.00000        1 offsets.resize [394] f=0
+     4.1%    0.00000        8 dataSize [436] f=0
+     2.9%    0.00000        8 offsets calc [443] f=0
+    39.8%                  Total 
+---------------------------------------------------------
+[342]FORT_OPERATORLAPRES 0.00000 32 f=3072 MFlop/s=917
+---------------------------------------------------------
+[343]setRHS 0.00000 1
+---------------------------------------------------------
+[344]write Data to buffers 0.00000 8
+---------------------------------------------------------
+[345]write Data to buffers 0.00000 8
+---------------------------------------------------------
+[346]post_Sends 0.00000 8
+---------------------------------------------------------
+[347]AMRPoissonOp::setToZero 0.00000 8
+---------------------------------------------------------
+[348]unpack_messages 0.00000 1
+     4.2%    0.00000        1 MPI_Waitall [438] f=0
+     4.2%                  Total 
+---------------------------------------------------------
+[349]~BoxLayoutData 0.00000 64
+    27.3%    0.00000       64 completePendingSends [406] f=0
+    27.3%                  Total 
+---------------------------------------------------------
+[350]H5S_H5D_offsets_close 0.00000 1
+---------------------------------------------------------
+[351]~BoxLayoutData 0.00000 64
+    27.5%    0.00000       64 completePendingSends [413] f=0
+    27.5%                  Total 
+---------------------------------------------------------
+[352]MPI_allocateBuffers 0.00000 64
+---------------------------------------------------------
+[353]~Copier 0.00000 128
+---------------------------------------------------------
+[354]~LevelData 0.00000 216
+---------------------------------------------------------
+[355]FORT_OPERATORLAP 0.00000 32 f=2816 MFlop/s=1109
+---------------------------------------------------------
+[356]~BoxLayoutData 0.00000 64
+    29.6%    0.00000       64 completePendingSends [411] f=0
+    29.6%                  Total 
+---------------------------------------------------------
+[357]~BoxLayoutData 0.00000 64
+    30.4%    0.00000       64 completePendingSends [409] f=0
+    30.4%                  Total 
+---------------------------------------------------------
+[358]write Data to buffers 0.00000 1
+---------------------------------------------------------
+[359]completePendingSends 0.00000 216
+---------------------------------------------------------
+[360]post_Receives 0.00000 1
+---------------------------------------------------------
+[361]AMRPoissonOp::assignLocal 0.00000 8
+---------------------------------------------------------
+[362]~BoxLayoutData 0.00000 64
+    31.1%    0.00000       64 completePendingSends [412] f=0
+    31.1%                  Total 
+---------------------------------------------------------
+[363]post_Sends 0.00000 8
+---------------------------------------------------------
+[364]BiCGStabSolver::solve::Cleanup 0.00000 8
+    85.3%    0.00000        8 AMRPoissonOp::incr [375] f=0
+    85.3%                  Total 
+---------------------------------------------------------
+[365]unpack_messages 0.00000 1
+     3.1%    0.00000        1 MPI_Waitall [445] f=0
+     3.1%                  Total 
+---------------------------------------------------------
+[366]post_Sends 0.00000 8
+---------------------------------------------------------
+[367]~Copier 0.00000 128
+---------------------------------------------------------
+[368]AMRPoissonOp::assignLocal 0.00000 8
+---------------------------------------------------------
+[369]~LayoutData 0.00000 6
+---------------------------------------------------------
+[370]post_Sends 0.00000 8
+---------------------------------------------------------
+[371]post_Sends 0.00000 8
+---------------------------------------------------------
+[372]~Copier 0.00000 4
+---------------------------------------------------------
+[373]H5Dclose 0.00000 1
+---------------------------------------------------------
+[374]MPI_Waitall 0.00000 64
+---------------------------------------------------------
+[375]AMRPoissonOp::incr 0.00000 8
+---------------------------------------------------------
+[376]post_Receives 0.00000 8
+---------------------------------------------------------
+[377]AMRPoissonOp::CFInterp 0.00000 1
+---------------------------------------------------------
+[378]post_Receives 0.00000 8
+---------------------------------------------------------
+[379]post_Sends 0.00000 8
+---------------------------------------------------------
+[380]~Copier 0.00000 128
+---------------------------------------------------------
+[381]post_messages 0.00000 1
+    55.4%    0.00000        1 post_Sends [402] f=0
+    28.7%    0.00000        1 post_Receives [422] f=0
+    84.1%                  Total 
+---------------------------------------------------------
+[382]MPI_Allreduce 0.00000 1
+---------------------------------------------------------
+[383]~LevelData 0.00000 128
+---------------------------------------------------------
+[384]completePendingSends 0.00000 128
+---------------------------------------------------------
+[385]completePendingSends 0.00000 128
+---------------------------------------------------------
+[386]completePendingSends 0.00000 128
+---------------------------------------------------------
+[387]~LevelData 0.00000 128
+---------------------------------------------------------
+[388]~LevelData 0.00000 128
+---------------------------------------------------------
+[389]post_Receives 0.00000 8
+---------------------------------------------------------
+[390]~BoxLayoutData 0.00000 32
+    29.0%    0.00000       32 completePendingSends [425] f=0
+    29.0%                  Total 
+---------------------------------------------------------
+[391]post_Receives 0.00000 8
+---------------------------------------------------------
+[392]~Copier 0.00000 64
+---------------------------------------------------------
+[393]~LayoutData 0.00000 1
+---------------------------------------------------------
+[394]offsets.resize 0.00000 1
+---------------------------------------------------------
+[395]~BoxLayoutData 0.00000 23
+    22.5%    0.00000       23 completePendingSends [432] f=0
+    22.5%                  Total 
+---------------------------------------------------------
+[396]post_Receives 0.00000 8
+---------------------------------------------------------
+[397]post_Receives 0.00000 8
+---------------------------------------------------------
+[398]~Copier 0.00000 64
+---------------------------------------------------------
+[399]H5Screate 0.00000 1
+---------------------------------------------------------
+[400]~Copier 0.00000 64
+---------------------------------------------------------
+[401]mallocMT_buffers 0.00000 1
+---------------------------------------------------------
+[402]post_Sends 0.00000 1
+---------------------------------------------------------
+[403]~Copier 0.00000 64
+---------------------------------------------------------
+[404]~LevelData 0.00000 64
+---------------------------------------------------------
+[405]~LevelData 0.00000 64
+---------------------------------------------------------
+[406]completePendingSends 0.00000 64
+---------------------------------------------------------
+[407]~Copier 0.00000 1
+---------------------------------------------------------
+[408]~LevelData 0.00000 64
+---------------------------------------------------------
+[409]completePendingSends 0.00000 64
+---------------------------------------------------------
+[410]~LevelData 0.00000 64
+---------------------------------------------------------
+[411]completePendingSends 0.00000 64
+---------------------------------------------------------
+[412]completePendingSends 0.00000 64
+---------------------------------------------------------
+[413]completePendingSends 0.00000 64
+---------------------------------------------------------
+[414]~LevelData 0.00000 64
+---------------------------------------------------------
+[415]freeMT 0.00000 1
+---------------------------------------------------------
+[416]AMRPoissonOp::setToZero 0.00000 8
+---------------------------------------------------------
+[417]~Copier 0.00000 32
+---------------------------------------------------------
+[418]~LayoutData 0.00000 6
+---------------------------------------------------------
+[419]H5Sclose 0.00000 1
+---------------------------------------------------------
+[420]ComputeBufferCapacity 0.00000 1
+---------------------------------------------------------
+[421]~LayoutData 0.00000 1
+---------------------------------------------------------
+[422]post_Receives 0.00000 1
+---------------------------------------------------------
+[423]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[424]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[425]completePendingSends 0.00000 32
+---------------------------------------------------------
+[426]~LevelData 0.00000 32
+---------------------------------------------------------
+[427]~BoxLayoutData 0.00000 2
+     5.9%    0.00000        2 completePendingSends [455] f=0
+     5.9%                  Total 
+---------------------------------------------------------
+[428]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[429]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[430]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[431]MPI_Waitall 0.00000 8
+---------------------------------------------------------
+[432]completePendingSends 0.00000 23
+---------------------------------------------------------
+[433]~LevelData 0.00000 19
+---------------------------------------------------------
+[434]~BoxLayoutData 0.00000 1
+     5.6%    0.00000        1 completePendingSends [457] f=0
+     5.6%                  Total 
+---------------------------------------------------------
+[435]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[436]dataSize 0.00000 8
+---------------------------------------------------------
+[437]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[438]MPI_Waitall 0.00000 1
+---------------------------------------------------------
+[439]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[440]~BoxLayoutData 0.00000 1
+     9.1%    0.00000        1 completePendingSends [458] f=0
+     9.1%                  Total 
+---------------------------------------------------------
+[441]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[442]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[443]offsets calc 0.00000 8
+---------------------------------------------------------
+[444]MPI_allocateBuffers 0.00000 8
+---------------------------------------------------------
+[445]MPI_Waitall 0.00000 1
+---------------------------------------------------------
+[446]~Copier 0.00000 2
+---------------------------------------------------------
+[447]~Copier 0.00000 3
+---------------------------------------------------------
+[448]~Copier 0.00000 2
+---------------------------------------------------------
+[449]~Copier 0.00000 1
+---------------------------------------------------------
+[450]~Copier 0.00000 1
+---------------------------------------------------------
+[451]MPI_allocateBuffers 0.00000 1
+---------------------------------------------------------
+[452]~LevelData 0.00000 2
+---------------------------------------------------------
+[453]~LevelData 0.00000 1
+---------------------------------------------------------
+[454]calc minimum in outputGhost 0.00000 1
+---------------------------------------------------------
+[455]completePendingSends 0.00000 2
+---------------------------------------------------------
+[456]~LevelData 0.00000 1
+---------------------------------------------------------
+[457]completePendingSends 0.00000 1
+---------------------------------------------------------
+[458]completePendingSends 0.00000 1
+---------------------------------------------------------
+[459]AMRMultiGrid::revert 0.00000 1
+=======================================================
+    0.00      512  FORT_OPERATORLAP [24] f=23068672 MFlop/s=6232
+    0.00      512  FORT_GSRBSLOWLY [30]
+    0.00       32  FORT_PROLONG [51] f=131072 MFlop/s=196
+    0.00      512  FORT_OPERATORLAP [55] f=2883584 MFlop/s=5311
+    0.00      512  FORT_GSRBSLOWLY [63]
+    0.00       32  FORT_RESTRICTRES [64] f=1572864 MFlop/s=3977
+    0.00       32  FORT_OPERATORLAPRES [73] f=1572864 MFlop/s=5524
+    0.00     1728  FORT_OPERATORLAP [110] f=152064 MFlop/s=1236
+    0.00      512  FORT_OPERATORLAP [124] f=360448 MFlop/s=3476
+    0.00       32  FORT_PROLONG [135] f=16384 MFlop/s=184
+    0.00     1728  FORT_GSRBSLOWLY [142]
+    0.00      512  FORT_GSRBSLOWLY [147]
+    0.00        4  FORT_OPERATORLAP [158] f=180224 MFlop/s=2846
+    0.00       32  FORT_RESTRICTRES [168] f=196608 MFlop/s=3532
+    0.00        4  FORT_OPERATORLAPRES [191] f=196608 MFlop/s=5388
+    0.00      256  FORT_OPERATORLAP [234] f=22528 MFlop/s=1209
+    0.00       32  FORT_PROLONG [257] f=2048 MFlop/s=152
+    0.00      256  FORT_GSRBSLOWLY [261]
+    0.00       32  FORT_RESTRICTRES [267] f=24576 MFlop/s=2490
+    0.00       32  FORT_OPERATORLAPRES [342] f=3072 MFlop/s=917
+    0.00       32  FORT_OPERATORLAP [355] f=2816 MFlop/s=1109
+     0.00967   11.5%    Total
+=======================================================
+    0.00      128  MPI_Waitall [35]
+    0.00      128  MPI_Waitall [66]
+    0.00      432  MPI_Waitall [68]
+    0.00      128  MPI_Waitall [115]
+    0.00        8  MPI_Waitall [148]
+    0.00       64  MPI_Waitall [166]
+    0.00        1  MPI_Waitall [179]
+    0.00        8  MPI_Waitall [189]
+    0.00        8  MPI_Waitall [223]
+    0.00      432  MPI_allocateBuffers [229]
+    0.00        1  MPI_allocateBuffers [248]
+    0.00        8  MPI_Allreduce [252]
+    0.00      432  MPI_Waitall [262]
+    0.00      128  MPI_allocateBuffers [278]
+    0.00        8  MPI_Waitall [289]
+    0.00      128  MPI_Waitall [295]
+    0.00      128  MPI_Waitall [300]
+    0.00        1  MPI_Waitall [302]
+    0.00        8  MPI_Waitall [305]
+    0.00        8  MPI_Waitall [320]
+    0.00      128  MPI_allocateBuffers [331]
+    0.00      128  MPI_allocateBuffers [335]
+    0.00      128  MPI_Waitall [336]
+    0.00       64  MPI_allocateBuffers [352]
+    0.00       64  MPI_Waitall [374]
+    0.00        1  MPI_Allreduce [382]
+    0.00        8  MPI_Waitall [423]
+    0.00        8  MPI_Waitall [424]
+    0.00        8  MPI_Waitall [428]
+    0.00        8  MPI_Waitall [429]
+    0.00        8  MPI_Waitall [430]
+    0.00        8  MPI_Waitall [431]
+    0.00        8  MPI_allocateBuffers [435]
+    0.00        8  MPI_allocateBuffers [437]
+    0.00        1  MPI_Waitall [438]
+    0.00        8  MPI_allocateBuffers [439]
+    0.00        8  MPI_allocateBuffers [441]
+    0.00        8  MPI_allocateBuffers [442]
+    0.00        8  MPI_allocateBuffers [444]
+    0.00        1  MPI_Waitall [445]
+    0.00        1  MPI_allocateBuffers [451]
+     0.00298    3.5%    Total
+[0] main 0.08406 100.0% 1 30386432 361 MFlops 
+   [1] runSolver 0.04117 49.0% 1 30386432 738 MFlops 
+      [2] AMRMultiGrid::solve 0.03356 39.9% 1 30206208 900 MFlops 
+         [3] AMRMultiGrid::solveNoInit 0.03352 39.9% 1 30206208 901 MFlops 
+            [4] AMRMultiGrid::solveNo-InitResid 0.03350 39.9% 1 30206208 902 MFlops 
+               [5] AMRMultiGrid::AMRVcycle 0.03219 38.3% 8 28436736 883 MFlops 
+                  [6] Multigrid::oneCycle 0.03195 38.0% 8 28436736 890 MFlops 
+                     [7] Multigrid::cycle 0.03195 38.0% 8 28436736 890 MFlops 
+                        [8] AMRPoissonOp::relax 0.01856 22.1% 16 23068672 1243 MFlops 
+                           [9] AMRPoissonOp::slowGSRB 0.01855 22.1% 64 23068672 1244 MFlops 
+                              [10] AMRPoissonOp::residualSlowly 0.01530 18.2% 128 23068672 1508 MFlops 
+                                 [24] FORT_OPERATORLAP 0.00370  4.4% 512 23068672 6232 MFlops 
+                                 [27] LevelData::exchange (exchange + copier) 0.00320  3.8% 128 0 0 MFlops 
+                                    [28] LevelData::exchange (actual exchange) 0.00318  3.8% 128 0 0 MFlops 
+                                       [29] exchange 0.00317  3.8% 128 0 0 MFlops 
+                                          [34] completePendingSends 0.00181  2.2% 128 0 0 MFlops 
+                                             [35] MPI_Waitall 0.00181  2.1% 128 0 0 MFlops 
+                                          [49] local copying 0.00071  0.8% 128 0 0 MFlops 
+                                          [72] write Data to buffers 0.00029  0.3% 128 0 0 MFlops 
+                                          [76] unpack_messages 0.00025  0.3% 128 0 0 MFlops 
+                                             [295] MPI_Waitall 0.00001  0.0% 128 0 0 MFlops 
+                                          [152] post_messages 0.00007  0.1% 128 0 0 MFlops 
+                                             [186] post_Sends 0.00004  0.0% 128 0 0 MFlops 
+                                             [207] post_Receives 0.00003  0.0% 128 0 0 MFlops 
+                                          [278] MPI_allocateBuffers 0.00001  0.0% 128 0 0 MFlops 
+                                    [291] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                       [293] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                                 [31] AMRPoissonOp::axby 0.00270  3.2% 128 0 0 MFlops 
+                                 [61] AMRPoissonOp::setToZero 0.00046  0.5% 128 0 0 MFlops 
+                                 [99] AMRPoissonOp::create 0.00015  0.2% 128 0 0 MFlops 
+                                    [102] LevelData<T>::define(dbl,comps,ghost,factory) 0.00015  0.2% 128 0 0 MFlops 
+                                 [153] ~LayoutData 0.00007  0.1% 128 0 0 MFlops 
+                                 [301] ~BoxLayoutData 0.00001  0.0% 128 0 0 MFlops 
+                                    [386] completePendingSends 0.00000  0.0% 128 0 0 MFlops 
+                                 [353] ~Copier 0.00000  0.0% 128 0 0 MFlops 
+                                 [387] ~LevelData 0.00000  0.0% 128 0 0 MFlops 
+                              [30] FORT_GSRBSLOWLY 0.00297  3.5% 512 0 0 MFlops 
+                              [149] AMRPoissonOp::create 0.00008  0.1% 64 0 0 MFlops 
+                                 [154] LevelData<T>::define(dbl,comps,ghost,factory) 0.00007  0.1% 64 0 0 MFlops 
+                              [183] ~LayoutData 0.00004  0.0% 64 0 0 MFlops 
+                              [349] ~BoxLayoutData 0.00000  0.0% 64 0 0 MFlops 
+                                 [406] completePendingSends 0.00000  0.0% 64 0 0 MFlops 
+                              [403] ~Copier 0.00000  0.0% 64 0 0 MFlops 
+                              [414] ~LevelData 0.00000  0.0% 64 0 0 MFlops 
+                        [11] Multigrid::cycle 0.01183 14.1% 8 3664128 310 MFlops 
+                           [12] Multigrid::cycle 0.00701  8.3% 8 567552 81 MFlops 
+                              [13] Multigrid::cycle 0.00503  6.0% 8 180480 36 MFlops 
+                                 [14] Multigrid::cycle:bottom-solve 0.00503  6.0% 8 180480 36 MFlops 
+                                    [18] BiCGStabSolver::solve 0.00441  5.2% 8 157952 36 MFlops 
+                                       [19] BiCGStabSolver::solve::MainLoop 0.00411  4.9% 8 154880 38 MFlops 
+                                          [20] AMRPoissonOp::preCond 0.00402  4.8% 8 152064 38 MFlops 
+                                             [21] AMRPoissonOp::relax 0.00402  4.8% 8 152064 38 MFlops 
+                                                [22] AMRPoissonOp::slowGSRB 0.00401  4.8% 216 152064 38 MFlops 
+                                                   [25] AMRPoissonOp::residualSlowly 0.00342  4.1% 432 152064 44 MFlops 
+                                                      [37] LevelData::exchange (exchange + copier) 0.00126  1.5% 432 0 0 MFlops 
+                                                         [38] LevelData::exchange (actual exchange) 0.00119  1.4% 432 0 0 MFlops 
+                                                            [39] exchange 0.00118  1.4% 432 0 0 MFlops 
+                                                               [67] completePendingSends 0.00034  0.4% 432 0 0 MFlops 
+                                                                  [68] MPI_Waitall 0.00033  0.4% 432 0 0 MFlops 
+                                                               [83] unpack_messages 0.00021  0.2% 432 0 0 MFlops 
+                                                                  [262] MPI_Waitall 0.00001  0.0% 432 0 0 MFlops 
+                                                               [89] local copying 0.00019  0.2% 432 0 0 MFlops 
+                                                               [90] post_messages 0.00019  0.2% 432 0 0 MFlops 
+                                                                  [120] post_Sends 0.00011  0.1% 432 0 0 MFlops 
+                                                                  [170] post_Receives 0.00005  0.1% 432 0 0 MFlops 
+                                                               [93] write Data to buffers 0.00017  0.2% 432 0 0 MFlops 
+                                                               [229] MPI_allocateBuffers 0.00002  0.0% 432 0 0 MFlops 
+                                                         [165] LevelData::exchange (defining copier) 0.00006  0.1% 8 0 0 MFlops 
+                                                            [167] Copier::define 0.00006  0.1% 8 0 0 MFlops 
+                                                      [77] AMRPoissonOp::create 0.00024  0.3% 432 0 0 MFlops 
+                                                         [81] LevelData<T>::define(dbl,comps,ghost,factory) 0.00023  0.3% 432 0 0 MFlops 
+                                                      [82] AMRPoissonOp::axby 0.00022  0.3% 432 0 0 MFlops 
+                                                      [110] FORT_OPERATORLAP 0.00012  0.1% 1728 152064 1236 MFlops 
+                                                      [150] ~LayoutData 0.00008  0.1% 432 0 0 MFlops 
+                                                      [201] AMRPoissonOp::setToZero 0.00003  0.0% 432 0 0 MFlops 
+                                                      [238] ~BoxLayoutData 0.00002  0.0% 432 0 0 MFlops 
+                                                         [324] completePendingSends 0.00000  0.0% 432 0 0 MFlops 
+                                                      [290] ~Copier 0.00001  0.0% 432 0 0 MFlops 
+                                                      [323] ~LevelData 0.00001  0.0% 432 0 0 MFlops 
+                                                   [107] AMRPoissonOp::create 0.00013  0.2% 216 0 0 MFlops 
+                                                      [108] LevelData<T>::define(dbl,comps,ghost,factory) 0.00013  0.1% 216 0 0 MFlops 
+                                                   [142] FORT_GSRBSLOWLY 0.00008  0.1% 1728 0 0 MFlops 
+                                                   [194] ~LayoutData 0.00004  0.0% 216 0 0 MFlops 
+                                                   [273] ~BoxLayoutData 0.00001  0.0% 216 0 0 MFlops 
+                                                      [359] completePendingSends 0.00000  0.0% 216 0 0 MFlops 
+                                                   [334] ~Copier 0.00000  0.0% 216 0 0 MFlops 
+                                                   [354] ~LevelData 0.00000  0.0% 216 0 0 MFlops 
+                                          [174] AMRPoissonOp::applyOp 0.00005  0.1% 8 2816 59 MFlops 
+                                             [180] AMRPoissonOp::applyOpI 0.00004  0.0% 8 2816 69 MFlops 
+                                                [219] LevelData::exchange (exchange + copier) 0.00002  0.0% 8 0 0 MFlops 
+                                                   [220] LevelData::exchange (actual exchange) 0.00002  0.0% 8 0 0 MFlops 
+                                                      [222] exchange 0.00002  0.0% 8 0 0 MFlops 
+                                                         [315] completePendingSends 0.00001  0.0% 8 0 0 MFlops 
+                                                            [320] MPI_Waitall 0.00001  0.0% 8 0 0 MFlops 
+                                                         [333] unpack_messages 0.00000  0.0% 8 0 0 MFlops 
+                                                            [431] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                                         [337] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                                            [370] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                                            [397] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                                         [340] local copying 0.00000  0.0% 8 0 0 MFlops 
+                                                         [345] write Data to buffers 0.00000  0.0% 8 0 0 MFlops 
+                                                         [435] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                                                [255] AMRPoissonOp::applyOpIBC 0.00001  0.0% 8 0 0 MFlops 
+                                                [355] FORT_OPERATORLAP 0.00000  0.0% 32 2816 1109 MFlops 
+                                             [314] AMRPoissonOp::CFInterp 0.00001  0.0% 8 0 0 MFlops 
+                                          [235] AMRPoissonOp::dotProduct 0.00002  0.0% 16 0 0 MFlops 
+                                          [265] AMRPoissonOp::norm 0.00001  0.0% 8 0 0 MFlops 
+                                          [311] AMRPoissonOp::incr 0.00001  0.0% 16 0 0 MFlops 
+                                          [368] AMRPoissonOp::assignLocal 0.00000  0.0% 8 0 0 MFlops 
+                                          [416] AMRPoissonOp::setToZero 0.00000  0.0% 8 0 0 MFlops 
+                                       [79] BiCGStabSolver::solve::Initialize 0.00024  0.3% 8 3072 13 MFlops 
+                                          [155] AMRPoissonOp::create 0.00007  0.1% 64 0 0 MFlops 
+                                             [156] LevelData<T>::define(dbl,comps,ghost,factory) 0.00007  0.1% 64 0 0 MFlops 
+                                          [163] AMRPoissonOp::residual 0.00006  0.1% 8 3072 52 MFlops 
+                                             [172] AMRPoissonOp::residualI 0.00005  0.1% 8 3072 62 MFlops 
+                                                [215] LevelData::exchange (exchange + copier) 0.00002  0.0% 8 0 0 MFlops 
+                                                   [216] LevelData::exchange (actual exchange) 0.00002  0.0% 8 0 0 MFlops 
+                                                      [217] exchange 0.00002  0.0% 8 0 0 MFlops 
+                                                         [285] completePendingSends 0.00001  0.0% 8 0 0 MFlops 
+                                                            [289] MPI_Waitall 0.00001  0.0% 8 0 0 MFlops 
+                                                         [329] unpack_messages 0.00000  0.0% 8 0 0 MFlops 
+                                                            [428] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                                         [330] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                                            [366] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                                            [389] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                                         [339] local copying 0.00000  0.0% 8 0 0 MFlops 
+                                                         [344] write Data to buffers 0.00000  0.0% 8 0 0 MFlops 
+                                                         [439] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                                                [250] AMRPoissonOP::BCs 0.00001  0.0% 8 0 0 MFlops 
+                                                [342] FORT_OPERATORLAPRES 0.00000  0.0% 32 3072 917 MFlops 
+                                             [274] AMRPoissonOp::CFInterp 0.00001  0.0% 8 0 0 MFlops 
+                                          [244] AMRPoissonOp::norm 0.00002  0.0% 8 0 0 MFlops 
+                                          [287] AMRPoissonOp::setToZero 0.00001  0.0% 32 0 0 MFlops 
+                                          [361] AMRPoissonOp::assignLocal 0.00000  0.0% 8 0 0 MFlops 
+                                       [254] ~LayoutData 0.00001  0.0% 64 0 0 MFlops 
+                                       [284] ~Copier 0.00001  0.0% 64 0 0 MFlops 
+                                       [362] ~BoxLayoutData 0.00000  0.0% 64 0 0 MFlops 
+                                          [412] completePendingSends 0.00000  0.0% 64 0 0 MFlops 
+                                       [364] BiCGStabSolver::solve::Cleanup 0.00000  0.0% 8 0 0 MFlops 
+                                          [375] AMRPoissonOp::incr 0.00000  0.0% 8 0 0 MFlops 
+                                       [405] ~LevelData 0.00000  0.0% 64 0 0 MFlops 
+                                    [52] AMRPoissonOp::relax 0.00062  0.7% 8 22528 36 MFlops 
+                                       [53] AMRPoissonOp::slowGSRB 0.00062  0.7% 32 22528 36 MFlops 
+                                          [59] AMRPoissonOp::residualSlowly 0.00053  0.6% 64 22528 43 MFlops 
+                                             [88] LevelData::exchange (exchange + copier) 0.00019  0.2% 64 0 0 MFlops 
+                                                [91] LevelData::exchange (actual exchange) 0.00019  0.2% 64 0 0 MFlops 
+                                                   [92] exchange 0.00018  0.2% 64 0 0 MFlops 
+                                                      [164] completePendingSends 0.00006  0.1% 64 0 0 MFlops 
+                                                         [166] MPI_Waitall 0.00006  0.1% 64 0 0 MFlops 
+                                                      [200] unpack_messages 0.00003  0.0% 64 0 0 MFlops 
+                                                         [374] MPI_Waitall 0.00000  0.0% 64 0 0 MFlops 
+                                                      [204] local copying 0.00003  0.0% 64 0 0 MFlops 
+                                                      [206] post_messages 0.00003  0.0% 64 0 0 MFlops 
+                                                         [239] post_Sends 0.00002  0.0% 64 0 0 MFlops 
+                                                         [276] post_Receives 0.00001  0.0% 64 0 0 MFlops 
+                                                      [213] write Data to buffers 0.00003  0.0% 64 0 0 MFlops 
+                                                      [352] MPI_allocateBuffers 0.00000  0.0% 64 0 0 MFlops 
+                                                [306] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                                   [310] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                                             [181] AMRPoissonOp::create 0.00004  0.0% 64 0 0 MFlops 
+                                                [184] LevelData<T>::define(dbl,comps,ghost,factory) 0.00004  0.0% 64 0 0 MFlops 
+                                             [195] AMRPoissonOp::axby 0.00003  0.0% 64 0 0 MFlops 
+                                             [234] FORT_OPERATORLAP 0.00002  0.0% 256 22528 1209 MFlops 
+                                             [263] ~LayoutData 0.00001  0.0% 64 0 0 MFlops 
+                                             [317] AMRPoissonOp::setToZero 0.00001  0.0% 64 0 0 MFlops 
+                                             [356] ~BoxLayoutData 0.00000  0.0% 64 0 0 MFlops 
+                                                [411] completePendingSends 0.00000  0.0% 64 0 0 MFlops 
+                                             [392] ~Copier 0.00000  0.0% 64 0 0 MFlops 
+                                             [410] ~LevelData 0.00000  0.0% 64 0 0 MFlops 
+                                          [230] AMRPoissonOp::create 0.00002  0.0% 32 0 0 MFlops 
+                                             [232] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 32 0 0 MFlops 
+                                          [261] FORT_GSRBSLOWLY 0.00001  0.0% 256 0 0 MFlops 
+                                          [296] ~LayoutData 0.00001  0.0% 32 0 0 MFlops 
+                                          [390] ~BoxLayoutData 0.00000  0.0% 32 0 0 MFlops 
+                                             [425] completePendingSends 0.00000  0.0% 32 0 0 MFlops 
+                                          [417] ~Copier 0.00000  0.0% 32 0 0 MFlops 
+                                          [426] ~LevelData 0.00000  0.0% 32 0 0 MFlops 
+                              [32] AMRPoissonOp::relax 0.00183  2.2% 16 360448 196 MFlops 
+                                 [33] AMRPoissonOp::slowGSRB 0.00183  2.2% 64 360448 197 MFlops 
+                                    [36] AMRPoissonOp::residualSlowly 0.00160  1.9% 128 360448 226 MFlops 
+                                       [56] LevelData::exchange (exchange + copier) 0.00054  0.6% 128 0 0 MFlops 
+                                          [57] LevelData::exchange (actual exchange) 0.00053  0.6% 128 0 0 MFlops 
+                                             [58] exchange 0.00053  0.6% 128 0 0 MFlops 
+                                                [111] completePendingSends 0.00012  0.1% 128 0 0 MFlops 
+                                                   [115] MPI_Waitall 0.00012  0.1% 128 0 0 MFlops 
+                                                [118] local copying 0.00011  0.1% 128 0 0 MFlops 
+                                                [131] write Data to buffers 0.00009  0.1% 128 0 0 MFlops 
+                                                [134] unpack_messages 0.00009  0.1% 128 0 0 MFlops 
+                                                   [336] MPI_Waitall 0.00000  0.0% 128 0 0 MFlops 
+                                                [141] post_messages 0.00008  0.1% 128 0 0 MFlops 
+                                                   [162] post_Sends 0.00006  0.1% 128 0 0 MFlops 
+                                                   [237] post_Receives 0.00002  0.0% 128 0 0 MFlops 
+                                                [335] MPI_allocateBuffers 0.00000  0.0% 128 0 0 MFlops 
+                                          [318] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                             [322] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                                       [98] AMRPoissonOp::axby 0.00015  0.2% 128 0 0 MFlops 
+                                       [124] FORT_OPERATORLAP 0.00010  0.1% 512 360448 3476 MFlops 
+                                       [140] AMRPoissonOp::create 0.00008  0.1% 128 0 0 MFlops 
+                                          [144] LevelData<T>::define(dbl,comps,ghost,factory) 0.00008  0.1% 128 0 0 MFlops 
+                                       [214] ~LayoutData 0.00003  0.0% 128 0 0 MFlops 
+                                       [253] AMRPoissonOp::setToZero 0.00001  0.0% 128 0 0 MFlops 
+                                       [319] ~BoxLayoutData 0.00001  0.0% 128 0 0 MFlops 
+                                          [385] completePendingSends 0.00000  0.0% 128 0 0 MFlops 
+                                       [367] ~Copier 0.00000  0.0% 128 0 0 MFlops 
+                                       [388] ~LevelData 0.00000  0.0% 128 0 0 MFlops 
+                                    [147] FORT_GSRBSLOWLY 0.00008  0.1% 512 0 0 MFlops 
+                                    [187] AMRPoissonOp::create 0.00004  0.0% 64 0 0 MFlops 
+                                       [193] LevelData<T>::define(dbl,comps,ghost,factory) 0.00004  0.0% 64 0 0 MFlops 
+                                    [258] ~LayoutData 0.00001  0.0% 64 0 0 MFlops 
+                                    [357] ~BoxLayoutData 0.00000  0.0% 64 0 0 MFlops 
+                                       [409] completePendingSends 0.00000  0.0% 64 0 0 MFlops 
+                                    [400] ~Copier 0.00000  0.0% 64 0 0 MFlops 
+                                    [408] ~LevelData 0.00000  0.0% 64 0 0 MFlops 
+                              [116] AMRPoissonOp::restrictResidual 0.00012  0.1% 8 24576 211 MFlops 
+                                 [196] LevelData::exchange (exchange + copier) 0.00003  0.0% 8 0 0 MFlops 
+                                    [197] LevelData::exchange (actual exchange) 0.00003  0.0% 8 0 0 MFlops 
+                                       [199] exchange 0.00003  0.0% 8 0 0 MFlops 
+                                          [288] local copying 0.00001  0.0% 8 0 0 MFlops 
+                                          [298] completePendingSends 0.00001  0.0% 8 0 0 MFlops 
+                                             [305] MPI_Waitall 0.00001  0.0% 8 0 0 MFlops 
+                                          [312] write Data to buffers 0.00001  0.0% 8 0 0 MFlops 
+                                          [313] unpack_messages 0.00001  0.0% 8 0 0 MFlops 
+                                             [430] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                          [325] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                             [346] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                             [396] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                          [437] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                                 [251] AMRPoissonOp::CFInterp 0.00001  0.0% 8 0 0 MFlops 
+                                 [267] FORT_RESTRICTRES 0.00001  0.0% 32 24576 2490 MFlops 
+                              [240] AMRPoissonOp::prolongIncrement 0.00002  0.0% 8 2048 122 MFlops 
+                                 [257] FORT_PROLONG 0.00001  0.0% 32 2048 152 MFlops 
+                              [347] AMRPoissonOp::setToZero 0.00000  0.0% 8 0 0 MFlops 
+                           [16] AMRPoissonOp::relax 0.00448  5.3% 16 2883584 643 MFlops 
+                              [17] AMRPoissonOp::slowGSRB 0.00448  5.3% 64 2883584 644 MFlops 
+                                 [23] AMRPoissonOp::residualSlowly 0.00383  4.6% 128 2883584 754 MFlops 
+                                    [40] LevelData::exchange (exchange + copier) 0.00101  1.2% 128 0 0 MFlops 
+                                       [41] LevelData::exchange (actual exchange) 0.00100  1.2% 128 0 0 MFlops 
+                                          [42] exchange 0.00100  1.2% 128 0 0 MFlops 
+                                             [65] completePendingSends 0.00037  0.4% 128 0 0 MFlops 
+                                                [66] MPI_Waitall 0.00037  0.4% 128 0 0 MFlops 
+                                             [80] local copying 0.00024  0.3% 128 0 0 MFlops 
+                                             [101] write Data to buffers 0.00015  0.2% 128 0 0 MFlops 
+                                             [103] unpack_messages 0.00015  0.2% 128 0 0 MFlops 
+                                                [300] MPI_Waitall 0.00001  0.0% 128 0 0 MFlops 
+                                             [157] post_messages 0.00007  0.1% 128 0 0 MFlops 
+                                                [198] post_Sends 0.00003  0.0% 128 0 0 MFlops 
+                                                [210] post_Receives 0.00003  0.0% 128 0 0 MFlops 
+                                             [331] MPI_allocateBuffers 0.00000  0.0% 128 0 0 MFlops 
+                                       [304] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                                          [309] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+                                    [55] FORT_OPERATORLAP 0.00054  0.6% 512 2883584 5311 MFlops 
+                                    [62] AMRPoissonOp::axby 0.00044  0.5% 128 0 0 MFlops 
+                                    [104] AMRPoissonOp::create 0.00014  0.2% 128 0 0 MFlops 
+                                       [106] LevelData<T>::define(dbl,comps,ghost,factory) 0.00014  0.2% 128 0 0 MFlops 
+                                    [169] AMRPoissonOp::setToZero 0.00006  0.1% 128 0 0 MFlops 
+                                    [190] ~LayoutData 0.00004  0.0% 128 0 0 MFlops 
+                                    [321] ~BoxLayoutData 0.00001  0.0% 128 0 0 MFlops 
+                                       [384] completePendingSends 0.00000  0.0% 128 0 0 MFlops 
+                                    [380] ~Copier 0.00000  0.0% 128 0 0 MFlops 
+                                    [383] ~LevelData 0.00000  0.0% 128 0 0 MFlops 
+                                 [63] FORT_GSRBSLOWLY 0.00041  0.5% 512 0 0 MFlops 
+                                 [117] AMRPoissonOp::create 0.00012  0.1% 64 0 0 MFlops 
+                                    [119] LevelData<T>::define(dbl,comps,ghost,factory) 0.00011  0.1% 64 0 0 MFlops 
+                                 [241] ~LayoutData 0.00002  0.0% 64 0 0 MFlops 
+                                 [351] ~BoxLayoutData 0.00000  0.0% 64 0 0 MFlops 
+                                    [413] completePendingSends 0.00000  0.0% 64 0 0 MFlops 
+                                 [398] ~Copier 0.00000  0.0% 64 0 0 MFlops 
+                                 [404] ~LevelData 0.00000  0.0% 64 0 0 MFlops 
+                           [78] AMRPoissonOp::restrictResidual 0.00024  0.3% 8 196608 821 MFlops 
+                              [159] LevelData::exchange (exchange + copier) 0.00006  0.1% 8 0 0 MFlops 
+                                 [160] LevelData::exchange (actual exchange) 0.00006  0.1% 8 0 0 MFlops 
+                                    [161] exchange 0.00006  0.1% 8 0 0 MFlops 
+                                       [221] completePendingSends 0.00002  0.0% 8 0 0 MFlops 
+                                          [223] MPI_Waitall 0.00002  0.0% 8 0 0 MFlops 
+                                       [249] local copying 0.00001  0.0% 8 0 0 MFlops 
+                                       [270] write Data to buffers 0.00001  0.0% 8 0 0 MFlops 
+                                       [271] unpack_messages 0.00001  0.0% 8 0 0 MFlops 
+                                          [423] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                       [338] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                          [379] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                          [391] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                       [442] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                              [168] FORT_RESTRICTRES 0.00006  0.1% 32 196608 3532 MFlops 
+                              [281] AMRPoissonOp::CFInterp 0.00001  0.0% 8 0 0 MFlops 
+                           [132] AMRPoissonOp::prolongIncrement 0.00009  0.1% 8 16384 178 MFlops 
+                              [135] FORT_PROLONG 0.00009  0.1% 32 16384 184 MFlops 
+                           [272] AMRPoissonOp::setToZero 0.00001  0.0% 8 0 0 MFlops 
+                        [44] AMRPoissonOp::restrictResidual 0.00086  1.0% 8 1572864 1837 MFlops 
+                           [64] FORT_RESTRICTRES 0.00040  0.5% 32 1572864 3977 MFlops 
+                           [112] LevelData::exchange (exchange + copier) 0.00012  0.1% 8 0 0 MFlops 
+                              [113] LevelData::exchange (actual exchange) 0.00012  0.1% 8 0 0 MFlops 
+                                 [114] exchange 0.00012  0.1% 8 0 0 MFlops 
+                                    [176] local copying 0.00004  0.1% 8 0 0 MFlops 
+                                    [188] completePendingSends 0.00004  0.0% 8 0 0 MFlops 
+                                       [189] MPI_Waitall 0.00004  0.0% 8 0 0 MFlops 
+                                    [242] write Data to buffers 0.00002  0.0% 8 0 0 MFlops 
+                                    [246] unpack_messages 0.00002  0.0% 8 0 0 MFlops 
+                                       [424] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                    [327] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                       [371] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                       [376] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                    [441] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                           [283] AMRPoissonOp::CFInterp 0.00001  0.0% 8 0 0 MFlops 
+                        [50] AMRPoissonOp::prolongIncrement 0.00067  0.8% 8 131072 195 MFlops 
+                           [51] FORT_PROLONG 0.00067  0.8% 32 131072 196 MFlops 
+                        [202] AMRPoissonOp::setToZero 0.00003  0.0% 8 0 0 MFlops 
+                  [105] AMRPoissonOp::setToZero 0.00014  0.2% 8 0 0 MFlops 
+                  [133] AMRPoissonOp::assignLocal 0.00009  0.1% 8 0 0 MFlops 
+               [45] AMRMultiGrid::computeAMRResidual 0.00085  1.0% 8 1572864 1854 MFlops 
+                  [46] AMRMultiGrid<T>::computeAMRResidualLevel 0.00074  0.9% 8 1572864 2117 MFlops 
+                     [47] AMRPoissonOp::residual 0.00074  0.9% 8 1572864 2120 MFlops 
+                        [48] AMRPoissonOp::residualI 0.00074  0.9% 8 1572864 2123 MFlops 
+                           [73] FORT_OPERATORLAPRES 0.00028  0.3% 32 1572864 5524 MFlops 
+                           [74] AMRPoissonOP::BCs 0.00028  0.3% 8 0 0 MFlops 
+                           [94] LevelData::exchange (exchange + copier) 0.00017  0.2% 8 0 0 MFlops 
+                              [95] LevelData::exchange (actual exchange) 0.00017  0.2% 8 0 0 MFlops 
+                                 [96] exchange 0.00017  0.2% 8 0 0 MFlops 
+                                    [146] completePendingSends 0.00008  0.1% 8 0 0 MFlops 
+                                       [148] MPI_Waitall 0.00008  0.1% 8 0 0 MFlops 
+                                    [175] local copying 0.00004  0.1% 8 0 0 MFlops 
+                                    [236] write Data to buffers 0.00002  0.0% 8 0 0 MFlops 
+                                    [243] unpack_messages 0.00002  0.0% 8 0 0 MFlops 
+                                       [429] MPI_Waitall 0.00000  0.0% 8 0 0 MFlops 
+                                    [326] post_messages 0.00000  0.0% 8 0 0 MFlops 
+                                       [363] post_Sends 0.00000  0.0% 8 0 0 MFlops 
+                                       [378] post_Receives 0.00000  0.0% 8 0 0 MFlops 
+                                    [444] MPI_allocateBuffers 0.00000  0.0% 8 0 0 MFlops 
+                  [136] AMRPoissonOp::localMaxNorm 0.00009  0.1% 8 0 0 MFlops 
+                  [252] MPI_Allreduce 0.00001  0.0% 8 0 0 MFlops 
+               [121] uberCorrection creation 0.00011  0.1% 1 0 0 MFlops 
+                  [125] AMRPoissonOp::setToZero 0.00010  0.1% 2 0 0 MFlops 
+                  [279] AMRPoissonOp::create 0.00001  0.0% 2 0 0 MFlops 
+                     [294] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 2 0 0 MFlops 
+               [122] Initial AMR Residual 0.00011  0.1% 1 196608 1817 MFlops 
+                  [123] AMRMultiGrid::computeAMRResidual 0.00011  0.1% 1 196608 1820 MFlops 
+                     [128] AMRMultiGrid<T>::computeAMRResidualLevel 0.00009  0.1% 1 196608 2073 MFlops 
+                        [129] AMRPoissonOp::residual 0.00009  0.1% 1 196608 2078 MFlops 
+                           [130] AMRPoissonOp::residualI 0.00009  0.1% 1 196608 2081 MFlops 
+                              [191] FORT_OPERATORLAPRES 0.00004  0.0% 4 196608 5388 MFlops 
+                              [192] AMRPoissonOP::BCs 0.00004  0.0% 1 0 0 MFlops 
+                              [227] LevelData::exchange (exchange + copier) 0.00002  0.0% 1 0 0 MFlops 
+                                 [228] LevelData::exchange (actual exchange) 0.00002  0.0% 1 0 0 MFlops 
+                                    [231] exchange 0.00002  0.0% 1 0 0 MFlops 
+                                       [299] completePendingSends 0.00001  0.0% 1 0 0 MFlops 
+                                          [302] MPI_Waitall 0.00001  0.0% 1 0 0 MFlops 
+                                       [307] local copying 0.00001  0.0% 1 0 0 MFlops 
+                                       [358] write Data to buffers 0.00000  0.0% 1 0 0 MFlops 
+                                       [365] unpack_messages 0.00000  0.0% 1 0 0 MFlops 
+                                          [445] MPI_Waitall 0.00000  0.0% 1 0 0 MFlops 
+                                       [381] post_messages 0.00000  0.0% 1 0 0 MFlops 
+                                          [402] post_Sends 0.00000  0.0% 1 0 0 MFlops 
+                                          [422] post_Receives 0.00000  0.0% 1 0 0 MFlops 
+                                       [451] MPI_allocateBuffers 0.00000  0.0% 1 0 0 MFlops 
+                     [264] AMRPoissonOp::localMaxNorm 0.00001  0.0% 1 0 0 MFlops 
+                     [382] MPI_Allreduce 0.00000  0.0% 1 0 0 MFlops 
+               [151] AMRPoissonOp::incr 0.00007  0.1% 8 0 0 MFlops 
+               [171] AMRPoissonOp::setToZero 0.00005  0.1% 9 0 0 MFlops 
+               [407] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+               [421] ~LayoutData 0.00000  0.0% 1 0 0 MFlops 
+               [434] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+                  [457] completePendingSends 0.00000  0.0% 1 0 0 MFlops 
+               [456] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+            [275] AMRPoissonOp::create 0.00001  0.0% 1 0 0 MFlops 
+               [277] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 1 0 0 MFlops 
+            [393] ~LayoutData 0.00000  0.0% 1 0 0 MFlops 
+            [440] ~BoxLayoutData 0.00000  0.0% 1 0 0 MFlops 
+               [458] completePendingSends 0.00000  0.0% 1 0 0 MFlops 
+            [449] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+            [453] ~LevelData 0.00000  0.0% 1 0 0 MFlops 
+         [182] AMRMultiGrid::init 0.00004  0.0% 1 0 0 MFlops 
+            [211] MutliGrid::init 0.00003  0.0% 1 0 0 MFlops 
+               [212] AMRPoissonOp::createCoarser 0.00003  0.0% 6 0 0 MFlops 
+                  [218] LevelData<T>::define(dbl,comps,ghost,factory) 0.00002  0.0% 6 0 0 MFlops 
+            [256] AMRPoissonOp::create 0.00001  0.0% 2 0 0 MFlops 
+               [260] LevelData<T>::define(dbl,comps,ghost,factory) 0.00001  0.0% 2 0 0 MFlops 
+         [459] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+      [15] WriteAMRHierarchyHDF5 0.00462  5.5% 1 0 0 MFlops 
+         [26] CreateFile 0.00339  4.0% 1 0 0 MFlops 
+         [43] WriteFile 0.00092  1.1% 1 0 0 MFlops 
+            [54] Write Level 0.00057  0.7% 1 0 0 MFlops 
+               [60] write_Level 0.00051  0.6% 1 0 0 MFlops 
+                  [69] linearize_H5Dwrite 0.00032  0.4% 1 0 0 MFlops 
+                     [71] H5Dwrite 0.00029  0.3% 4 0 0 MFlops 
+                     [224] linearize 0.00002  0.0% 4 0 0 MFlops 
+                  [126] WriteAttributes 0.00010  0.1% 1 0 0 MFlops 
+                  [203] H5S_H5D_offsets_create 0.00003  0.0% 1 0 0 MFlops 
+                  [226] H5Dcreate 0.00002  0.0% 1 0 0 MFlops 
+                  [259] WriteOffsets 0.00001  0.0% 1 0 0 MFlops 
+                  [341] getOffsets 0.00000  0.0% 1 0 0 MFlops 
+                     [394] offsets.resize 0.00000  0.0% 1 0 0 MFlops 
+                     [436] dataSize 0.00000  0.0% 8 0 0 MFlops 
+                     [443] offsets calc 0.00000  0.0% 8 0 0 MFlops 
+                  [350] H5S_H5D_offsets_close 0.00000  0.0% 1 0 0 MFlops 
+                  [373] H5Dclose 0.00000  0.0% 1 0 0 MFlops 
+                  [399] H5Screate 0.00000  0.0% 1 0 0 MFlops 
+                  [401] mallocMT_buffers 0.00000  0.0% 1 0 0 MFlops 
+                  [415] freeMT 0.00000  0.0% 1 0 0 MFlops 
+                  [419] H5Sclose 0.00000  0.0% 1 0 0 MFlops 
+                  [420] ComputeBufferCapacity 0.00000  0.0% 1 0 0 MFlops 
+               [225] writeToFile 0.00002  0.0% 1 0 0 MFlops 
+               [308] setGroup 0.00001  0.0% 1 0 0 MFlops 
+               [454] calc minimum in outputGhost 0.00000  0.0% 1 0 0 MFlops 
+         [75] CloseFile 0.00027  0.3% 1 0 0 MFlops 
+         [247] Barrier 0.00002  0.0% 2 0 0 MFlops 
+      [70] setupSolver 0.00030  0.4% 1 0 0 MFlops 
+         [86] AMRMultiGrid::define 0.00020  0.2% 1 0 0 MFlops 
+            [97] MultiGrid::define 0.00016  0.2% 1 0 0 MFlops 
+               [109] AMRPoissonOpFactory::MGnewOp 0.00012  0.1% 4 0 0 MFlops 
+                  [245] AMRPoissonOp::define4 0.00002  0.0% 3 0 0 MFlops 
+                  [316] ~LayoutData 0.00001  0.0% 18 0 0 MFlops 
+                  [447] ~Copier 0.00000  0.0% 3 0 0 MFlops 
+            [205] AMRPoissonOpFactory::AMRnewOp 0.00003  0.0% 1 0 0 MFlops 
+               [297] AMRPoissonOp::define4 0.00001  0.0% 1 0 0 MFlops 
+            [448] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+         [145] AMRPoissonOpFactory::define 0.00008  0.1% 1 0 0 MFlops 
+            [208] CFIVS::define(fast) 0.00003  0.0% 24 0 0 MFlops 
+            [233] Copier::exchangeDefine 0.00002  0.0% 1 0 0 MFlops 
+            [418] ~LayoutData 0.00000  0.0% 6 0 0 MFlops 
+            [446] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+         [369] ~LayoutData 0.00000  0.0% 6 0 0 MFlops 
+         [450] ~Copier 0.00000  0.0% 1 0 0 MFlops 
+      [84] AMRMultiGrid<T>::computeAMROperator 0.00020  0.2% 1 180224 892 MFlops 
+         [85] AMRPoissonOp::applyOp 0.00020  0.2% 1 180224 894 MFlops 
+            [87] AMRPoissonOp::applyOpI 0.00020  0.2% 1 180224 906 MFlops 
+               [127] LevelData::exchange (exchange + copier) 0.00010  0.1% 1 0 0 MFlops 
+                  [138] LevelData::exchange (actual exchange) 0.00009  0.1% 1 0 0 MFlops 
+                     [139] exchange 0.00009  0.1% 1 0 0 MFlops 
+                        [178] completePendingSends 0.00004  0.0% 1 0 0 MFlops 
+                           [179] MPI_Waitall 0.00004  0.0% 1 0 0 MFlops 
+                        [248] MPI_allocateBuffers 0.00001  0.0% 1 0 0 MFlops 
+                        [266] post_messages 0.00001  0.0% 1 0 0 MFlops 
+                           [280] post_Sends 0.00001  0.0% 1 0 0 MFlops 
+                           [360] post_Receives 0.00000  0.0% 1 0 0 MFlops 
+                        [282] local copying 0.00001  0.0% 1 0 0 MFlops 
+                        [286] write Data to buffers 0.00001  0.0% 1 0 0 MFlops 
+                        [348] unpack_messages 0.00000  0.0% 1 0 0 MFlops 
+                           [438] MPI_Waitall 0.00000  0.0% 1 0 0 MFlops 
+                  [268] LevelData::exchange (defining copier) 0.00001  0.0% 1 0 0 MFlops 
+                     [269] Copier::define 0.00001  0.0% 1 0 0 MFlops 
+               [158] FORT_OPERATORLAP 0.00006  0.1% 4 180224 2846 MFlops 
+               [185] AMRPoissonOp::applyOpIBC 0.00004  0.0% 1 0 0 MFlops 
+            [377] AMRPoissonOp::CFInterp 0.00000  0.0% 1 0 0 MFlops 
+      [100] PrChUtilities::setupGridsWithTagLocation 0.00015  0.2% 1 0 0 MFlops 
+         [143] setupGrids: BaseGridCreation 0.00008  0.1% 1 0 0 MFlops 
+            [173] LoadBalance:VectorBoxEntry 0.00005  0.1% 1 0 0 MFlops 
+               [177] LoadBalance:VectorBoxSimple 0.00004  0.1% 1 0 0 MFlops 
+            [292] DisjointBoxLayout::computeNeighbors 0.00001  0.0% 1 0 0 MFlops 
+            [303] BRMeshRefine::domainSplit 0.00001  0.0% 1 0 0 MFlops 
+      [137] ~AMRMultiGrid 0.00009  0.1% 1 0 0 MFlops 
+         [209] ~LayoutData 0.00003  0.0% 95 0 0 MFlops 
+         [328] ~Copier 0.00000  0.0% 31 0 0 MFlops 
+         [395] ~BoxLayoutData 0.00000  0.0% 23 0 0 MFlops 
+            [432] completePendingSends 0.00000  0.0% 23 0 0 MFlops 
+         [433] ~LevelData 0.00000  0.0% 19 0 0 MFlops 
+      [332] ~LayoutData 0.00000  0.0% 2 0 0 MFlops 
+      [343] setRHS 0.00000  0.0% 1 0 0 MFlops 
+      [372] ~Copier 0.00000  0.0% 4 0 0 MFlops 
+      [427] ~BoxLayoutData 0.00000  0.0% 2 0 0 MFlops 
+         [455] completePendingSends 0.00000  0.0% 2 0 0 MFlops 
+      [452] ~LevelData 0.00000  0.0% 2 0 0 MFlops 
+stack top 0x51da38, stack bottom 0x51d3b9, stack size =    0.002 MB 
+[459] AMRMultiGrid::revert

@@ -1,0 +1,1544 @@
+-----------
+Timer report 0 (356 timers)
+--------------
+---------------------------------------------------------
+[0]main 0.57706 1
+    92.8%    0.53541        1 runSolver [1] f=0
+    92.8%                  Total 
+---------------------------------------------------------
+[1]runSolver 0.53541 1
+    98.1%    0.52546        1 solveForPhi [2] f=0
+     1.6%    0.00875        1 WriteAMRHierarchyHDF5 [66] f=0
+     0.1%    0.00079        1 PrChUtilities::setupGridsWithTagLocation [145] f=0
+     0.0%    0.00022        1 setRHS [188] f=0
+     0.0%    0.00008        6 ~LayoutData [214] f=0
+     0.0%    0.00000        6 ~BoxLayoutData [335] f=0
+     0.0%    0.00000        6 ~Copier [337] f=0
+     0.0%    0.00000        6 ~LevelData [349] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]solveForPhi 0.52546 1
+    99.8%    0.52428        1 AMRMultiGrid::solve [3] f=0
+     0.1%    0.00040        1 PrChUtilities::setupSolver [169] f=0
+     0.0%    0.00025        3 PrChUtilities::copyToDevice-Cell [184] f=0
+     0.0%    0.00019        3 PrChUtilities::copyToHost [193] f=0
+     0.0%    0.00010        1 ~AMRMultiGrid [209] f=0
+     0.0%    0.00005        3 PrChUtilities::getProtoLayout [224] f=0
+     0.0%    0.00000        6 ~Copier [336] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solve 0.52428 1
+    100.0%    0.52406        1 AMRMultiGrid::solveNoInit [4] f=0
+     0.0%    0.00022        1 AMRMultiGrid::init [189] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [353] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::solveNoInit 0.52406 1
+    100.0%    0.52401        1 AMRMultiGrid::solveNo-InitResid [5] f=0
+     0.0%    0.00001        3 Base_Proto_AMRLevelOp::create [268] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[5]AMRMultiGrid::solveNo-InitResid 0.52401 1
+    85.5%    0.44809        9 AMRMultiGrid::AMRVcycle [6] f=0
+    11.5%    0.06028        9 AMRMultiGrid::computeAMRResidual [15] f=0
+     2.3%    0.01196        1 Initial AMR Residual [53] f=0
+     0.2%    0.00112       27 Base_Simplified_AMRLevelOp::incr [134] f=0
+     0.1%    0.00076        3 uberCorrection creation [148] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[6]AMRMultiGrid::AMRVcycle 0.44809 9
+    73.6%    0.32974        9 Multigrid::oneCycle [7] f=0
+    11.7%    0.05228       18 AMRMultiGrid<T>::computeAMRResidualLevel [18] f=0
+     9.2%    0.04109       36 AMRMultiGrid::relax [25] f=0
+     1.8%    0.00817       18 Base_Simplified_AMRLevelOp::AMRRestrict [70] f=0
+     1.5%    0.00672       18 Base_Simplified_AMRLevelOp::AMRUpdateResidual [78] f=0
+     1.1%    0.00506       63 Base_Proto_AMRLevelOp::assign [87] f=0
+     0.5%    0.00236       18 Base_Simplified_AMRLevelOp::AMRProlong [109] f=0
+     0.3%    0.00114       45 Base_Simplified_AMRLevelOp::incr [132] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[7]Multigrid::oneCycle 0.32974 9
+    100.0%    0.32974        9 Multigrid::cycle [8] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[8]Multigrid::cycle 0.32974 9
+    55.3%    0.18235       18 Proto_Helmholtz::relax [9] f=0
+    40.7%    0.13424        9 Multigrid::cycle [12] f=0
+     3.3%    0.01091        9 Base_Simplified_AMRLevelOp::restrictResidual [61] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[9]Proto_Helmholtz::relax 0.18235 18
+    87.4%    0.15944      144 Base_Simplified_AMRLevelOp::residual [10] f=0
+     0.0%    0.00004       18 Base_Proto_AMRLevelOp::create [232] f=0
+    87.5%                  Total 
+---------------------------------------------------------
+[10]Base_Simplified_AMRLevelOp::residual 0.15944 144
+    86.9%    0.13853      144 Base_Simplified_AMRLevelOp::applyOp [11] f=0
+     7.9%    0.01264      144 Proto_Helmholtz::axby [50] f=0
+     0.1%    0.00023      144 Base_Proto_AMRLevelOp::create [186] f=0
+    95.0%                  Total 
+---------------------------------------------------------
+[11]Base_Simplified_AMRLevelOp::applyOp 0.13853 144
+    45.1%    0.06245      144 Proto_Helmholtz_Op::applyOperator [14] f=0
+    37.5%    0.05193      144 Proto_Helmholtz::fillGhostDataOutsideDomain [19] f=0
+    17.4%    0.02409      144 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [40] f=0
+     0.0%    0.00001      144 Base_Proto_AMRLevelOp::getDomainFromData [262] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[12]Multigrid::cycle 0.13424 9
+    59.0%    0.07925        9 Multigrid::cycle [13] f=0
+    38.1%    0.05110       18 Proto_Helmholtz::relax [20] f=0
+     2.4%    0.00328        9 Base_Simplified_AMRLevelOp::restrictResidual [97] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[13]Multigrid::cycle 0.07925 9
+    72.0%    0.05703        9 Multigrid::cycle [16] f=0
+    26.0%    0.02059       18 Proto_Helmholtz::relax [41] f=0
+     1.8%    0.00140        9 Base_Simplified_AMRLevelOp::restrictResidual [126] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[14]Proto_Helmholtz_Op::applyOperator 0.06245 144
+---------------------------------------------------------
+[15]AMRMultiGrid::computeAMRResidual 0.06028 9
+    89.7%    0.05404       27 AMRMultiGrid<T>::computeAMRResidualLevel [17] f=0
+     6.4%    0.00385       27 Base_Proto_AMRLevelOp::norm [94] f=0
+     3.9%    0.00234       18 Base_Proto_AMRLevelOp::assign [111] f=0
+     0.0%    0.00003        9 MPI_Allreduce [241] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[16]Multigrid::cycle 0.05703 9
+    74.8%    0.04267        9 Multigrid::cycle [23] f=0
+    23.3%    0.01327       18 Proto_Helmholtz::relax [47] f=0
+     1.6%    0.00092        9 Base_Simplified_AMRLevelOp::restrictResidual [141] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[17]AMRMultiGrid<T>::computeAMRResidualLevel 0.05404 27
+    75.1%    0.04060        9 Base_Simplified_AMRLevelOp::AMRResidualNC [30] f=0
+    20.5%    0.01105        9 Base_Simplified_AMRLevelOp::AMRResidual [59] f=0
+     4.4%    0.00238        9 Base_Simplified_AMRLevelOp::AMRResidualNF [107] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[18]AMRMultiGrid<T>::computeAMRResidualLevel 0.05228 18
+    77.7%    0.04062        9 Base_Simplified_AMRLevelOp::AMRResidualNC [29] f=0
+    22.3%    0.01166        9 Base_Simplified_AMRLevelOp::AMRResidual [55] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[19]Proto_Helmholtz::fillGhostDataOutsideDomain 0.05193 144
+---------------------------------------------------------
+[20]Proto_Helmholtz::relax 0.05110 18
+    93.8%    0.04794      144 Base_Simplified_AMRLevelOp::residual [21] f=0
+     0.1%    0.00003       18 Base_Proto_AMRLevelOp::create [235] f=0
+    93.9%                  Total 
+---------------------------------------------------------
+[21]Base_Simplified_AMRLevelOp::residual 0.04794 144
+    89.5%    0.04289      144 Base_Simplified_AMRLevelOp::applyOp [22] f=0
+     5.7%    0.00271      144 Proto_Helmholtz::axby [102] f=0
+     0.4%    0.00021      144 Base_Proto_AMRLevelOp::create [190] f=0
+    95.6%                  Total 
+---------------------------------------------------------
+[22]Base_Simplified_AMRLevelOp::applyOp 0.04289 144
+    41.7%    0.01787      144 Proto_Helmholtz::fillGhostDataOutsideDomain [44] f=0
+    30.0%    0.01286      144 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [49] f=0
+    28.3%    0.01213      144 Proto_Helmholtz_Op::applyOperator [52] f=0
+     0.0%    0.00001      144 Base_Proto_AMRLevelOp::getDomainFromData [265] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[23]Multigrid::cycle 0.04267 9
+    100.0%    0.04267        9 Multigrid::cycle:bottom-solve [24] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[24]Multigrid::cycle:bottom-solve 0.04267 9
+    87.8%    0.03744        9 BiCGStabSolver::solve [34] f=0
+    12.2%    0.00522        9 Proto_Helmholtz::relax [84] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[25]AMRMultiGrid::relax 0.04109 36
+    100.0%    0.04108       36 Proto_Helmholtz::relax [26] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[26]Proto_Helmholtz::relax 0.04108 36
+    99.9%    0.04104      288 Base_Simplified_AMRLevelOp::residual [27] f=0
+     0.0%    0.00001       36 Base_Proto_AMRLevelOp::create [252] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[27]Base_Simplified_AMRLevelOp::residual 0.04104 288
+    99.2%    0.04069      288 Base_Simplified_AMRLevelOp::applyOp [28] f=0
+     0.3%    0.00012      288 Base_Proto_AMRLevelOp::create [203] f=0
+     0.2%    0.00006      288 Proto_Helmholtz::axby [218] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[28]Base_Simplified_AMRLevelOp::applyOp 0.04069 288
+    98.6%    0.04012      288 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [31] f=0
+     1.1%    0.00045      288 Proto_Helmholtz::fillGhostDataOutsideDomain [168] f=0
+     0.2%    0.00006      288 Proto_Helmholtz_Op::applyOperator [219] f=0
+     0.0%    0.00002      288 Base_Proto_AMRLevelOp::getDomainFromData [248] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[29]Base_Simplified_AMRLevelOp::AMRResidualNC 0.04062 9
+    97.4%    0.03956        9 Base_Simplified_AMRLevelOp::AMROperatorNC [32] f=0
+     2.6%    0.00106        9 Proto_Helmholtz::axby [140] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[30]Base_Simplified_AMRLevelOp::AMRResidualNC 0.04060 9
+    97.4%    0.03953        9 Base_Simplified_AMRLevelOp::AMROperatorNC [33] f=0
+     2.6%    0.00107        9 Proto_Helmholtz::axby [139] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[31]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.04012 288
+---------------------------------------------------------
+[32]Base_Simplified_AMRLevelOp::AMROperatorNC 0.03956 9
+    27.0%    0.01070        9 PrChFluxRegister::setFineFlux [62] f=0
+    18.9%    0.00746       54 Proto_Helmholtz::getFlux [75] f=0
+    16.6%    0.00657       27 Proto_Helmholtz::fillGhostDataOutsideDomain [82] f=0
+    11.8%    0.00466        9 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [89] f=0
+     9.8%    0.00387        9 Proto_Helmholtz_Op::applyOperator [93] f=0
+     6.3%    0.00251        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [106] f=0
+     3.5%    0.00138        9 PrChFluxRegister::setCoarFlux [127] f=0
+     0.4%    0.00016        9 PrChFluxRegister constructor [199] f=0
+     0.4%    0.00014        9 PrChFluxRegister::reflux [201] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [307] f=0
+     0.0%    0.00000        9 PrChFluxRegister destructor [345] f=0
+    94.7%                  Total 
+---------------------------------------------------------
+[33]Base_Simplified_AMRLevelOp::AMROperatorNC 0.03953 9
+    29.3%    0.01156        9 PrChFluxRegister::setFineFlux [57] f=0
+    18.6%    0.00736       54 Proto_Helmholtz::getFlux [76] f=0
+    16.8%    0.00666       27 Proto_Helmholtz::fillGhostDataOutsideDomain [81] f=0
+    11.4%    0.00449        9 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [90] f=0
+     9.9%    0.00390        9 Proto_Helmholtz_Op::applyOperator [92] f=0
+     4.9%    0.00193        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [120] f=0
+     2.8%    0.00109        9 PrChFluxRegister::setCoarFlux [137] f=0
+     0.4%    0.00015        9 PrChFluxRegister::reflux [200] f=0
+     0.3%    0.00014        9 PrChFluxRegister constructor [202] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [305] f=0
+     0.0%    0.00000        9 PrChFluxRegister destructor [348] f=0
+    94.3%                  Total 
+---------------------------------------------------------
+[34]BiCGStabSolver::solve 0.03744 9
+    96.0%    0.03594        9 BiCGStabSolver::solve::MainLoop [35] f=0
+     3.9%    0.00145        9 BiCGStabSolver::solve::Initialize [124] f=0
+     0.0%    0.00001        9 BiCGStabSolver::solve::Cleanup [251] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[35]BiCGStabSolver::solve::MainLoop 0.03594 9
+    97.7%    0.03511        9 Base_Simplified_AMRLevelOp::preCond [36] f=0
+     1.7%    0.00059        9 Base_Simplified_AMRLevelOp::applyOp [161] f=0
+     0.3%    0.00010       18 Base_Proto_AMRLevelOp::createCoarser [210] f=0
+     0.2%    0.00008        9 Base_Proto_AMRLevelOp::norm [213] f=0
+     0.1%    0.00003       18 Base_Simplified_AMRLevelOp::incr [238] f=0
+     0.0%    0.00001        9 Base_Proto_AMRLevelOp::assign [270] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[36]Base_Simplified_AMRLevelOp::preCond 0.03511 9
+    100.0%    0.03511        9 Proto_Helmholtz::relax [37] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[37]Proto_Helmholtz::relax 0.03511 9
+    98.5%    0.03458      486 Base_Simplified_AMRLevelOp::residual [38] f=0
+     0.0%    0.00001        9 Base_Proto_AMRLevelOp::create [269] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[38]Base_Simplified_AMRLevelOp::residual 0.03458 486
+    93.6%    0.03236      486 Base_Simplified_AMRLevelOp::applyOp [39] f=0
+     2.2%    0.00077      486 Proto_Helmholtz::axby [147] f=0
+     1.5%    0.00053      486 Base_Proto_AMRLevelOp::create [164] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[39]Base_Simplified_AMRLevelOp::applyOp 0.03236 486
+    52.4%    0.01696      486 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [45] f=0
+    43.2%    0.01397      486 Proto_Helmholtz::fillGhostDataOutsideDomain [46] f=0
+     4.1%    0.00134      486 Proto_Helmholtz_Op::applyOperator [128] f=0
+     0.1%    0.00003      486 Base_Proto_AMRLevelOp::getDomainFromData [236] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[40]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02409 144
+---------------------------------------------------------
+[41]Proto_Helmholtz::relax 0.02059 18
+    96.4%    0.01985      144 Base_Simplified_AMRLevelOp::residual [42] f=0
+     0.2%    0.00004       18 Base_Proto_AMRLevelOp::create [230] f=0
+    96.6%                  Total 
+---------------------------------------------------------
+[42]Base_Simplified_AMRLevelOp::residual 0.01985 144
+    92.2%    0.01831      144 Base_Simplified_AMRLevelOp::applyOp [43] f=0
+     3.2%    0.00064      144 Proto_Helmholtz::axby [157] f=0
+     1.0%    0.00020      144 Base_Proto_AMRLevelOp::create [191] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[43]Base_Simplified_AMRLevelOp::applyOp 0.01831 144
+    44.9%    0.00822      144 Proto_Helmholtz::fillGhostDataOutsideDomain [69] f=0
+    40.0%    0.00732      144 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [77] f=0
+    15.0%    0.00274      144 Proto_Helmholtz_Op::applyOperator [101] f=0
+     0.0%    0.00001      144 Base_Proto_AMRLevelOp::getDomainFromData [275] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[44]Proto_Helmholtz::fillGhostDataOutsideDomain 0.01787 144
+---------------------------------------------------------
+[45]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01696 486
+---------------------------------------------------------
+[46]Proto_Helmholtz::fillGhostDataOutsideDomain 0.01397 486
+---------------------------------------------------------
+[47]Proto_Helmholtz::relax 0.01327 18
+    98.0%    0.01299      144 Base_Simplified_AMRLevelOp::residual [48] f=0
+     0.2%    0.00002       18 Base_Proto_AMRLevelOp::create [245] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[48]Base_Simplified_AMRLevelOp::residual 0.01299 144
+    93.7%    0.01217      144 Base_Simplified_AMRLevelOp::applyOp [51] f=0
+     2.4%    0.00031      144 Proto_Helmholtz::axby [177] f=0
+     1.2%    0.00016      144 Base_Proto_AMRLevelOp::create [197] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[49]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01286 144
+---------------------------------------------------------
+[50]Proto_Helmholtz::axby 0.01264 144
+---------------------------------------------------------
+[51]Base_Simplified_AMRLevelOp::applyOp 0.01217 144
+    50.2%    0.00611      144 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [83] f=0
+    42.7%    0.00520      144 Proto_Helmholtz::fillGhostDataOutsideDomain [85] f=0
+     6.9%    0.00084      144 Proto_Helmholtz_Op::applyOperator [142] f=0
+     0.1%    0.00001      144 Base_Proto_AMRLevelOp::getDomainFromData [277] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[52]Proto_Helmholtz_Op::applyOperator 0.01213 144
+---------------------------------------------------------
+[53]Initial AMR Residual 0.01196 1
+    100.0%    0.01195        1 AMRMultiGrid::computeAMRResidual [54] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[54]AMRMultiGrid::computeAMRResidual 0.01195 1
+    94.9%    0.01135        3 AMRMultiGrid<T>::computeAMRResidualLevel [58] f=0
+     3.0%    0.00036        2 Base_Proto_AMRLevelOp::assign [172] f=0
+     2.0%    0.00024        3 Base_Proto_AMRLevelOp::norm [185] f=0
+     0.0%    0.00000        1 MPI_Allreduce [301] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[55]Base_Simplified_AMRLevelOp::AMRResidual 0.01166 9
+    100.0%    0.01166        9 Base_Simplified_AMRLevelOp::AMROperator [56] f=0
+     0.0%    0.00000        9 Proto_Helmholtz::axby [310] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[56]Base_Simplified_AMRLevelOp::AMROperator 0.01166 9
+    72.3%    0.00843       18 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [68] f=0
+    19.8%    0.00231        9 PrChFluxRegister::setFineFlux [112] f=0
+     5.4%    0.00062        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [159] f=0
+     0.4%    0.00004       27 Proto_Helmholtz::fillGhostDataOutsideDomain [229] f=0
+     0.3%    0.00003        9 PrChFluxRegister constructor [234] f=0
+     0.1%    0.00001        9 PrChFluxRegister::setCoarFlux [264] f=0
+     0.0%    0.00001        9 PrChFluxRegister::reflux [285] f=0
+     0.0%    0.00000       27 Base_Proto_AMRLevelOp::getDomainFromData [299] f=0
+     0.0%    0.00000        9 Proto_Helmholtz_Op::applyOperator [312] f=0
+     0.0%    0.00000        9 PrChFluxRegister destructor [344] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[57]PrChFluxRegister::setFineFlux 0.01156 9
+---------------------------------------------------------
+[58]AMRMultiGrid<T>::computeAMRResidualLevel 0.01135 3
+    84.5%    0.00959        1 Base_Simplified_AMRLevelOp::AMRResidualNC [64] f=0
+    13.2%    0.00150        1 Base_Simplified_AMRLevelOp::AMRResidual [121] f=0
+     2.3%    0.00026        1 Base_Simplified_AMRLevelOp::AMRResidualNF [179] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[59]Base_Simplified_AMRLevelOp::AMRResidual 0.01105 9
+    100.0%    0.01105        9 Base_Simplified_AMRLevelOp::AMROperator [60] f=0
+     0.0%    0.00000        9 Proto_Helmholtz::axby [309] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[60]Base_Simplified_AMRLevelOp::AMROperator 0.01105 9
+    70.6%    0.00780       18 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [74] f=0
+    20.9%    0.00231        9 PrChFluxRegister::setFineFlux [113] f=0
+     5.7%    0.00063        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [158] f=0
+     0.4%    0.00004       27 Proto_Helmholtz::fillGhostDataOutsideDomain [228] f=0
+     0.3%    0.00003        9 PrChFluxRegister constructor [233] f=0
+     0.1%    0.00001        9 PrChFluxRegister::setCoarFlux [263] f=0
+     0.1%    0.00001        9 PrChFluxRegister::reflux [286] f=0
+     0.1%    0.00001       27 Base_Proto_AMRLevelOp::getDomainFromData [287] f=0
+     0.0%    0.00000        9 Proto_Helmholtz_Op::applyOperator [306] f=0
+     0.0%    0.00000        9 PrChFluxRegister destructor [346] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[61]Base_Simplified_AMRLevelOp::restrictResidual 0.01091 9
+    89.5%    0.00977        9 Base_Simplified_AMRLevelOp::residual [63] f=0
+     0.1%    0.00001        9 Base_Proto_AMRLevelOp::create [250] f=0
+    89.7%                  Total 
+---------------------------------------------------------
+[62]PrChFluxRegister::setFineFlux 0.01070 9
+---------------------------------------------------------
+[63]Base_Simplified_AMRLevelOp::residual 0.00977 9
+    86.8%    0.00848        9 Base_Simplified_AMRLevelOp::applyOp [67] f=0
+     8.0%    0.00078        9 Proto_Helmholtz::axby [146] f=0
+     0.1%    0.00001        9 Base_Proto_AMRLevelOp::create [261] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[64]Base_Simplified_AMRLevelOp::AMRResidualNC 0.00959 1
+    98.8%    0.00947        1 Base_Simplified_AMRLevelOp::AMROperatorNC [65] f=0
+     1.2%    0.00012        1 Proto_Helmholtz::axby [205] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[65]Base_Simplified_AMRLevelOp::AMROperatorNC 0.00947 1
+    21.4%    0.00203        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [118] f=0
+    20.4%    0.00193        6 Proto_Helmholtz::getFlux [119] f=0
+    15.8%    0.00149        1 PrChFluxRegister::setFineFlux [123] f=0
+    13.5%    0.00128        3 Proto_Helmholtz::fillGhostDataOutsideDomain [129] f=0
+     8.0%    0.00076        1 Proto_Helmholtz_Op::applyOperator [149] f=0
+     7.5%    0.00071        1 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [153] f=0
+     6.1%    0.00058        1 PrChFluxRegister::setCoarFlux [162] f=0
+     0.7%    0.00007        1 PrChFluxRegister constructor [215] f=0
+     0.2%    0.00002        1 PrChFluxRegister::reflux [249] f=0
+     0.0%    0.00000        3 Base_Proto_AMRLevelOp::getDomainFromData [325] f=0
+     0.0%    0.00000        1 PrChFluxRegister destructor [354] f=0
+    93.6%                  Total 
+---------------------------------------------------------
+[66]WriteAMRHierarchyHDF5 0.00875 1
+    48.0%    0.00420        1 CreateFile [91] f=0
+    37.8%    0.00331        1 WriteFile [96] f=0
+     8.3%    0.00073        2 Barrier [152] f=0
+     5.7%    0.00050        1 CloseFile [166] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[67]Base_Simplified_AMRLevelOp::applyOp 0.00848 9
+    45.4%    0.00385        9 Proto_Helmholtz_Op::applyOperator [95] f=0
+    37.7%    0.00320        9 Proto_Helmholtz::fillGhostDataOutsideDomain [98] f=0
+    16.8%    0.00142        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [125] f=0
+     0.0%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [326] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[68]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00843 18
+---------------------------------------------------------
+[69]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00822 144
+---------------------------------------------------------
+[70]Base_Simplified_AMRLevelOp::AMRRestrict 0.00817 18
+    99.5%    0.00813       18 Base_Simplified_AMRLevelOp::AMRResidualNF [71] f=0
+     0.1%    0.00001       18 Base_Proto_AMRLevelOp::create [279] f=0
+     0.1%    0.00001       18 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [280] f=0
+     0.1%    0.00001       18 Base_Proto_AMRLevelOp::copyTo [282] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[71]Base_Simplified_AMRLevelOp::AMRResidualNF 0.00813 18
+    99.9%    0.00812       18 Base_Simplified_AMRLevelOp::AMROperatorNF [72] f=0
+     0.0%    0.00000       18 Proto_Helmholtz::axby [296] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[72]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00812 18
+    99.5%    0.00808       18 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [73] f=0
+     0.4%    0.00003       18 Proto_Helmholtz::fillGhostDataOutsideDomain [240] f=0
+     0.0%    0.00000       18 Proto_Helmholtz_Op::applyOperator [295] f=0
+     0.0%    0.00000       18 Base_Proto_AMRLevelOp::getDomainFromData [297] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[73]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00808 18
+---------------------------------------------------------
+[74]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00780 18
+---------------------------------------------------------
+[75]Proto_Helmholtz::getFlux 0.00746 54
+---------------------------------------------------------
+[76]Proto_Helmholtz::getFlux 0.00736 54
+---------------------------------------------------------
+[77]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00732 144
+---------------------------------------------------------
+[78]Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.00672 18
+    99.8%    0.00671       18 Base_Simplified_AMRLevelOp::AMROperatorNF [79] f=0
+     0.1%    0.00001       18 Base_Proto_AMRLevelOp::create [283] f=0
+     0.1%    0.00000       18 Proto_Helmholtz::axby [293] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[79]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00671 18
+    99.4%    0.00667       18 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [80] f=0
+     0.4%    0.00003       18 Proto_Helmholtz::fillGhostDataOutsideDomain [237] f=0
+     0.1%    0.00000       18 Proto_Helmholtz_Op::applyOperator [294] f=0
+     0.0%    0.00000       18 Base_Proto_AMRLevelOp::getDomainFromData [317] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[80]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00667 18
+---------------------------------------------------------
+[81]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00666 27
+---------------------------------------------------------
+[82]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00657 27
+---------------------------------------------------------
+[83]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00611 144
+---------------------------------------------------------
+[84]Proto_Helmholtz::relax 0.00522 9
+    98.3%    0.00513       72 Base_Simplified_AMRLevelOp::residual [86] f=0
+     0.2%    0.00001        9 Base_Proto_AMRLevelOp::create [272] f=0
+    98.4%                  Total 
+---------------------------------------------------------
+[85]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00520 144
+---------------------------------------------------------
+[86]Base_Simplified_AMRLevelOp::residual 0.00513 72
+    93.6%    0.00480       72 Base_Simplified_AMRLevelOp::applyOp [88] f=0
+     2.2%    0.00011       72 Proto_Helmholtz::axby [207] f=0
+     1.5%    0.00008       72 Base_Proto_AMRLevelOp::create [212] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[87]Base_Proto_AMRLevelOp::assign 0.00506 63
+---------------------------------------------------------
+[88]Base_Simplified_AMRLevelOp::applyOp 0.00480 72
+    52.6%    0.00252       72 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [105] f=0
+    43.0%    0.00207       72 Proto_Helmholtz::fillGhostDataOutsideDomain [117] f=0
+     4.1%    0.00020       72 Proto_Helmholtz_Op::applyOperator [192] f=0
+     0.1%    0.00000       72 Base_Proto_AMRLevelOp::getDomainFromData [291] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[89]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00466 9
+---------------------------------------------------------
+[90]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00449 9
+---------------------------------------------------------
+[91]CreateFile 0.00420 1
+---------------------------------------------------------
+[92]Proto_Helmholtz_Op::applyOperator 0.00390 9
+---------------------------------------------------------
+[93]Proto_Helmholtz_Op::applyOperator 0.00387 9
+---------------------------------------------------------
+[94]Base_Proto_AMRLevelOp::norm 0.00385 27
+---------------------------------------------------------
+[95]Proto_Helmholtz_Op::applyOperator 0.00385 9
+---------------------------------------------------------
+[96]WriteFile 0.00331 1
+    84.9%    0.00281        3 Write Level [100] f=0
+    84.9%                  Total 
+---------------------------------------------------------
+[97]Base_Simplified_AMRLevelOp::restrictResidual 0.00328 9
+    90.7%    0.00298        9 Base_Simplified_AMRLevelOp::residual [99] f=0
+     0.4%    0.00001        9 Base_Proto_AMRLevelOp::create [256] f=0
+    91.1%                  Total 
+---------------------------------------------------------
+[98]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00320 9
+---------------------------------------------------------
+[99]Base_Simplified_AMRLevelOp::residual 0.00298 9
+    89.5%    0.00267        9 Base_Simplified_AMRLevelOp::applyOp [103] f=0
+     5.7%    0.00017        9 Proto_Helmholtz::axby [195] f=0
+     0.4%    0.00001        9 Base_Proto_AMRLevelOp::create [267] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[100]Write Level 0.00281 3
+    93.6%    0.00263        3 write_Level [104] f=0
+     2.1%    0.00006        3 writeToFile [221] f=0
+     0.6%    0.00002        3 setGroup [247] f=0
+     0.0%    0.00000        3 calc minimum in outputGhost [352] f=0
+    96.3%                  Total 
+---------------------------------------------------------
+[101]Proto_Helmholtz_Op::applyOperator 0.00274 144
+---------------------------------------------------------
+[102]Proto_Helmholtz::axby 0.00271 144
+---------------------------------------------------------
+[103]Base_Simplified_AMRLevelOp::applyOp 0.00267 9
+    41.6%    0.00111        9 Proto_Helmholtz::fillGhostDataOutsideDomain [136] f=0
+    29.9%    0.00080        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [144] f=0
+    28.4%    0.00076        9 Proto_Helmholtz_Op::applyOperator [151] f=0
+     0.0%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [328] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[104]write_Level 0.00263 3
+    82.9%    0.00218        3 linearize_H5Dwrite [115] f=0
+     9.7%    0.00025        3 WriteAttributes [183] f=0
+     3.2%    0.00008        3 H5S_H5D_offsets_create [211] f=0
+     2.3%    0.00006        3 H5Dcreate [220] f=0
+     0.3%    0.00001        3 H5S_H5D_offsets_close [281] f=0
+     0.3%    0.00001        3 getOffsets [284] f=0
+     0.2%    0.00001        3 H5Dclose [288] f=0
+     0.1%    0.00000        3 H5Screate [304] f=0
+     0.1%    0.00000        3 freeMT [316] f=0
+     0.1%    0.00000        3 H5Sclose [318] f=0
+     0.1%    0.00000        3 mallocMT_buffers [319] f=0
+     0.0%    0.00000        3 ComputeBufferCapacity [321] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[105]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00252 72
+---------------------------------------------------------
+[106]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00251 9
+---------------------------------------------------------
+[107]Base_Simplified_AMRLevelOp::AMRResidualNF 0.00238 9
+    99.9%    0.00238        9 Base_Simplified_AMRLevelOp::AMROperatorNF [108] f=0
+     0.1%    0.00000        9 Proto_Helmholtz::axby [308] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[108]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00238 9
+    99.2%    0.00236        9 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [110] f=0
+     0.6%    0.00001        9 Proto_Helmholtz::fillGhostDataOutsideDomain [255] f=0
+     0.1%    0.00000        9 Proto_Helmholtz_Op::applyOperator [311] f=0
+     0.0%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [331] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[109]Base_Simplified_AMRLevelOp::AMRProlong 0.00236 18
+    95.5%    0.00226       18 Base_Proto_AMRLevelOp::copyTo [114] f=0
+     0.9%    0.00002       18 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [244] f=0
+    96.5%                  Total 
+---------------------------------------------------------
+[110]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00236 9
+---------------------------------------------------------
+[111]Base_Proto_AMRLevelOp::assign 0.00234 18
+---------------------------------------------------------
+[112]PrChFluxRegister::setFineFlux 0.00231 9
+---------------------------------------------------------
+[113]PrChFluxRegister::setFineFlux 0.00231 9
+---------------------------------------------------------
+[114]Base_Proto_AMRLevelOp::copyTo 0.00226 18
+---------------------------------------------------------
+[115]linearize_H5Dwrite 0.00218 3
+    96.5%    0.00210        2 H5Dwrite [116] f=0
+     3.1%    0.00007        2 linearize [216] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[116]H5Dwrite 0.00210 2
+---------------------------------------------------------
+[117]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00207 72
+---------------------------------------------------------
+[118]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00203 1
+---------------------------------------------------------
+[119]Proto_Helmholtz::getFlux 0.00193 6
+---------------------------------------------------------
+[120]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00193 9
+---------------------------------------------------------
+[121]Base_Simplified_AMRLevelOp::AMRResidual 0.00150 1
+    100.0%    0.00150        1 Base_Simplified_AMRLevelOp::AMROperator [122] f=0
+     0.0%    0.00000        1 Proto_Helmholtz::axby [339] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[122]Base_Simplified_AMRLevelOp::AMROperator 0.00150 1
+    72.0%    0.00108        2 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [138] f=0
+    20.7%    0.00031        1 PrChFluxRegister::setFineFlux [175] f=0
+     4.5%    0.00007        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [217] f=0
+     0.3%    0.00000        3 Proto_Helmholtz::fillGhostDataOutsideDomain [289] f=0
+     0.3%    0.00000        1 PrChFluxRegister constructor [292] f=0
+     0.1%    0.00000        1 PrChFluxRegister::setCoarFlux [320] f=0
+     0.0%    0.00000        3 Base_Proto_AMRLevelOp::getDomainFromData [329] f=0
+     0.0%    0.00000        1 PrChFluxRegister::reflux [330] f=0
+     0.0%    0.00000        1 Proto_Helmholtz_Op::applyOperator [338] f=0
+     0.0%    0.00000        1 PrChFluxRegister destructor [355] f=0
+    98.0%                  Total 
+---------------------------------------------------------
+[123]PrChFluxRegister::setFineFlux 0.00149 1
+---------------------------------------------------------
+[124]BiCGStabSolver::solve::Initialize 0.00145 9
+    46.9%    0.00068        9 Base_Simplified_AMRLevelOp::residual [154] f=0
+    36.3%    0.00053       72 Base_Proto_AMRLevelOp::create [163] f=0
+     8.4%    0.00012        9 Base_Proto_AMRLevelOp::norm [204] f=0
+     0.9%    0.00001        9 Base_Proto_AMRLevelOp::assign [259] f=0
+    92.6%                  Total 
+---------------------------------------------------------
+[125]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00142 9
+---------------------------------------------------------
+[126]Base_Simplified_AMRLevelOp::restrictResidual 0.00140 9
+    89.1%    0.00124        9 Base_Simplified_AMRLevelOp::residual [130] f=0
+     1.0%    0.00001        9 Base_Proto_AMRLevelOp::create [258] f=0
+    90.1%                  Total 
+---------------------------------------------------------
+[127]PrChFluxRegister::setCoarFlux 0.00138 9
+---------------------------------------------------------
+[128]Proto_Helmholtz_Op::applyOperator 0.00134 486
+---------------------------------------------------------
+[129]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00128 3
+---------------------------------------------------------
+[130]Base_Simplified_AMRLevelOp::residual 0.00124 9
+    92.3%    0.00115        9 Base_Simplified_AMRLevelOp::applyOp [131] f=0
+     3.2%    0.00004        9 Proto_Helmholtz::axby [231] f=0
+     0.9%    0.00001        9 Base_Proto_AMRLevelOp::create [266] f=0
+    96.4%                  Total 
+---------------------------------------------------------
+[131]Base_Simplified_AMRLevelOp::applyOp 0.00115 9
+    44.7%    0.00051        9 Proto_Helmholtz::fillGhostDataOutsideDomain [165] f=0
+    40.3%    0.00046        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [167] f=0
+    14.8%    0.00017        9 Proto_Helmholtz_Op::applyOperator [194] f=0
+     0.0%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [333] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[132]Base_Simplified_AMRLevelOp::incr 0.00114 45
+    99.7%    0.00114       45 Proto_Helmholtz::axby [133] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[133]Proto_Helmholtz::axby 0.00114 45
+---------------------------------------------------------
+[134]Base_Simplified_AMRLevelOp::incr 0.00112 27
+    99.7%    0.00112       27 Proto_Helmholtz::axby [135] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[135]Proto_Helmholtz::axby 0.00112 27
+---------------------------------------------------------
+[136]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00111 9
+---------------------------------------------------------
+[137]PrChFluxRegister::setCoarFlux 0.00109 9
+---------------------------------------------------------
+[138]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00108 2
+---------------------------------------------------------
+[139]Proto_Helmholtz::axby 0.00107 9
+---------------------------------------------------------
+[140]Proto_Helmholtz::axby 0.00106 9
+---------------------------------------------------------
+[141]Base_Simplified_AMRLevelOp::restrictResidual 0.00092 9
+    87.8%    0.00081        9 Base_Simplified_AMRLevelOp::residual [143] f=0
+     1.1%    0.00001        9 Base_Proto_AMRLevelOp::create [273] f=0
+    88.8%                  Total 
+---------------------------------------------------------
+[142]Proto_Helmholtz_Op::applyOperator 0.00084 144
+---------------------------------------------------------
+[143]Base_Simplified_AMRLevelOp::residual 0.00081 9
+    93.6%    0.00076        9 Base_Simplified_AMRLevelOp::applyOp [150] f=0
+     2.4%    0.00002        9 Proto_Helmholtz::axby [246] f=0
+     1.3%    0.00001        9 Base_Proto_AMRLevelOp::create [271] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[144]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00080 9
+---------------------------------------------------------
+[145]PrChUtilities::setupGridsWithTagLocation 0.00079 1
+    80.4%    0.00064        1 setupGrids: meshRefine and all that [155] f=0
+     6.3%    0.00005        1 setupGrids: BaseGridCreation [227] f=0
+    86.7%                  Total 
+---------------------------------------------------------
+[146]Proto_Helmholtz::axby 0.00078 9
+---------------------------------------------------------
+[147]Proto_Helmholtz::axby 0.00077 486
+---------------------------------------------------------
+[148]uberCorrection creation 0.00076 3
+     6.8%    0.00005        6 Base_Proto_AMRLevelOp::create [225] f=0
+     6.8%                  Total 
+---------------------------------------------------------
+[149]Proto_Helmholtz_Op::applyOperator 0.00076 1
+---------------------------------------------------------
+[150]Base_Simplified_AMRLevelOp::applyOp 0.00076 9
+    49.9%    0.00038        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [171] f=0
+    43.0%    0.00032        9 Proto_Helmholtz::fillGhostDataOutsideDomain [174] f=0
+     6.8%    0.00005        9 Proto_Helmholtz_Op::applyOperator [226] f=0
+     0.1%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [332] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[151]Proto_Helmholtz_Op::applyOperator 0.00076 9
+---------------------------------------------------------
+[152]Barrier 0.00073 2
+---------------------------------------------------------
+[153]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00071 1
+---------------------------------------------------------
+[154]Base_Simplified_AMRLevelOp::residual 0.00068 9
+    93.5%    0.00064        9 Base_Simplified_AMRLevelOp::applyOp [156] f=0
+     2.1%    0.00001        9 Proto_Helmholtz::axby [253] f=0
+     1.9%    0.00001        9 Base_Proto_AMRLevelOp::create [260] f=0
+    97.5%                  Total 
+---------------------------------------------------------
+[155]setupGrids: meshRefine and all that 0.00064 1
+    93.9%    0.00060        1 MeshRefine::regrid [160] f=0
+     0.7%    0.00000        3 DisjointBoxLayout::computeNeighbors [290] f=0
+     0.3%    0.00000        3 LoadBalance:VectorBoxEntry [313] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[156]Base_Simplified_AMRLevelOp::applyOp 0.00064 9
+    54.1%    0.00034        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [173] f=0
+    41.6%    0.00026        9 Proto_Helmholtz::fillGhostDataOutsideDomain [178] f=0
+     3.9%    0.00002        9 Proto_Helmholtz_Op::applyOperator [242] f=0
+     0.1%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [327] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[157]Proto_Helmholtz::axby 0.00064 144
+---------------------------------------------------------
+[158]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00063 9
+---------------------------------------------------------
+[159]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00062 9
+---------------------------------------------------------
+[160]MeshRefine::regrid 0.00060 1
+     1.5%    0.00001        3 BRMeshRefine::makeBoxes [274] f=0
+     1.5%                  Total 
+---------------------------------------------------------
+[161]Base_Simplified_AMRLevelOp::applyOp 0.00059 9
+    52.1%    0.00031        9 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [176] f=0
+    43.3%    0.00026        9 Proto_Helmholtz::fillGhostDataOutsideDomain [182] f=0
+     4.2%    0.00002        9 Proto_Helmholtz_Op::applyOperator [243] f=0
+     0.1%    0.00000        9 Base_Proto_AMRLevelOp::getDomainFromData [334] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[162]PrChFluxRegister::setCoarFlux 0.00058 1
+---------------------------------------------------------
+[163]Base_Proto_AMRLevelOp::create 0.00053 72
+---------------------------------------------------------
+[164]Base_Proto_AMRLevelOp::create 0.00053 486
+---------------------------------------------------------
+[165]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00051 9
+---------------------------------------------------------
+[166]CloseFile 0.00050 1
+---------------------------------------------------------
+[167]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00046 9
+---------------------------------------------------------
+[168]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00045 288
+---------------------------------------------------------
+[169]PrChUtilities::setupSolver 0.00040 1
+    95.5%    0.00038        1 AMRMultiGrid::define [170] f=0
+    95.5%                  Total 
+---------------------------------------------------------
+[170]AMRMultiGrid::define 0.00038 1
+    57.9%    0.00022        3 Proto_Helmholtz_Op::Proto_Helmholtz_Op [187] f=0
+    30.7%    0.00012        3 MultiGrid::define [206] f=0
+     0.0%    0.00000        6 ~Copier [343] f=0
+    88.7%                  Total 
+---------------------------------------------------------
+[171]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00038 9
+---------------------------------------------------------
+[172]Base_Proto_AMRLevelOp::assign 0.00036 2
+---------------------------------------------------------
+[173]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00034 9
+---------------------------------------------------------
+[174]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00032 9
+---------------------------------------------------------
+[175]PrChFluxRegister::setFineFlux 0.00031 1
+---------------------------------------------------------
+[176]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00031 9
+---------------------------------------------------------
+[177]Proto_Helmholtz::axby 0.00031 144
+---------------------------------------------------------
+[178]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00026 9
+---------------------------------------------------------
+[179]Base_Simplified_AMRLevelOp::AMRResidualNF 0.00026 1
+    99.8%    0.00026        1 Base_Simplified_AMRLevelOp::AMROperatorNF [180] f=0
+     0.1%    0.00000        1 Proto_Helmholtz::axby [341] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[180]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00026 1
+    99.0%    0.00026        1 Proto_Helmholtz::fillGhostDataOverCoarseFineInterface [181] f=0
+     0.6%    0.00000        1 Proto_Helmholtz::fillGhostDataOutsideDomain [315] f=0
+     0.1%    0.00000        1 Proto_Helmholtz_Op::applyOperator [340] f=0
+     0.0%    0.00000        1 Base_Proto_AMRLevelOp::getDomainFromData [351] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[181]Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00026 1
+---------------------------------------------------------
+[182]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00026 9
+---------------------------------------------------------
+[183]WriteAttributes 0.00025 3
+---------------------------------------------------------
+[184]PrChUtilities::copyToDevice-Cell 0.00025 3
+     0.5%    0.00000        3 PrChUtilities::getRaHostData [322] f=0
+     0.5%                  Total 
+---------------------------------------------------------
+[185]Base_Proto_AMRLevelOp::norm 0.00024 3
+---------------------------------------------------------
+[186]Base_Proto_AMRLevelOp::create 0.00023 144
+---------------------------------------------------------
+[187]Proto_Helmholtz_Op::Proto_Helmholtz_Op 0.00022 3
+---------------------------------------------------------
+[188]setRHS 0.00022 1
+---------------------------------------------------------
+[189]AMRMultiGrid::init 0.00022 1
+    72.7%    0.00016        3 MutliGrid::init [196] f=0
+    25.3%    0.00006        6 Base_Proto_AMRLevelOp::create [222] f=0
+     0.7%    0.00000        2 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [314] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[190]Base_Proto_AMRLevelOp::create 0.00021 144
+---------------------------------------------------------
+[191]Base_Proto_AMRLevelOp::create 0.00020 144
+---------------------------------------------------------
+[192]Proto_Helmholtz_Op::applyOperator 0.00020 72
+---------------------------------------------------------
+[193]PrChUtilities::copyToHost 0.00019 3
+     1.5%    0.00000        3 PrChUtilities::getRaHostData [300] f=0
+     1.5%                  Total 
+---------------------------------------------------------
+[194]Proto_Helmholtz_Op::applyOperator 0.00017 9
+---------------------------------------------------------
+[195]Proto_Helmholtz::axby 0.00017 9
+---------------------------------------------------------
+[196]MutliGrid::init 0.00016 3
+    99.3%    0.00016        8 Base_Proto_AMRLevelOp::createCoarser [198] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[197]Base_Proto_AMRLevelOp::create 0.00016 144
+---------------------------------------------------------
+[198]Base_Proto_AMRLevelOp::createCoarser 0.00016 8
+---------------------------------------------------------
+[199]PrChFluxRegister constructor 0.00016 9
+---------------------------------------------------------
+[200]PrChFluxRegister::reflux 0.00015 9
+---------------------------------------------------------
+[201]PrChFluxRegister::reflux 0.00014 9
+---------------------------------------------------------
+[202]PrChFluxRegister constructor 0.00014 9
+---------------------------------------------------------
+[203]Base_Proto_AMRLevelOp::create 0.00012 288
+---------------------------------------------------------
+[204]Base_Proto_AMRLevelOp::norm 0.00012 9
+---------------------------------------------------------
+[205]Proto_Helmholtz::axby 0.00012 1
+---------------------------------------------------------
+[206]MultiGrid::define 0.00012 3
+    86.2%    0.00010       10 Proto_Helmholtz_Op::Proto_Helmholtz_Op [208] f=0
+    86.2%                  Total 
+---------------------------------------------------------
+[207]Proto_Helmholtz::axby 0.00011 72
+---------------------------------------------------------
+[208]Proto_Helmholtz_Op::Proto_Helmholtz_Op 0.00010 10
+---------------------------------------------------------
+[209]~AMRMultiGrid 0.00010 1
+---------------------------------------------------------
+[210]Base_Proto_AMRLevelOp::createCoarser 0.00010 18
+    55.9%    0.00005       18 Base_Proto_AMRLevelOp::createCoarser [223] f=0
+    55.9%                  Total 
+---------------------------------------------------------
+[211]H5S_H5D_offsets_create 0.00008 3
+---------------------------------------------------------
+[212]Base_Proto_AMRLevelOp::create 0.00008 72
+---------------------------------------------------------
+[213]Base_Proto_AMRLevelOp::norm 0.00008 9
+---------------------------------------------------------
+[214]~LayoutData 0.00008 6
+---------------------------------------------------------
+[215]PrChFluxRegister constructor 0.00007 1
+---------------------------------------------------------
+[216]linearize 0.00007 2
+---------------------------------------------------------
+[217]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00007 1
+---------------------------------------------------------
+[218]Proto_Helmholtz::axby 0.00006 288
+---------------------------------------------------------
+[219]Proto_Helmholtz_Op::applyOperator 0.00006 288
+---------------------------------------------------------
+[220]H5Dcreate 0.00006 3
+---------------------------------------------------------
+[221]writeToFile 0.00006 3
+---------------------------------------------------------
+[222]Base_Proto_AMRLevelOp::create 0.00006 6
+---------------------------------------------------------
+[223]Base_Proto_AMRLevelOp::createCoarser 0.00005 18
+---------------------------------------------------------
+[224]PrChUtilities::getProtoLayout 0.00005 3
+     6.5%    0.00000        3 PrChUtilities::getRawLayout [298] f=0
+     6.5%                  Total 
+---------------------------------------------------------
+[225]Base_Proto_AMRLevelOp::create 0.00005 6
+---------------------------------------------------------
+[226]Proto_Helmholtz_Op::applyOperator 0.00005 9
+---------------------------------------------------------
+[227]setupGrids: BaseGridCreation 0.00005 1
+    17.9%    0.00001        1 LoadBalance:VectorBoxEntry [276] f=0
+    16.7%    0.00001        1 DisjointBoxLayout::computeNeighbors [278] f=0
+     5.0%    0.00000        1 BRMeshRefine::domainSplit [303] f=0
+    39.6%                  Total 
+---------------------------------------------------------
+[228]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00004 27
+---------------------------------------------------------
+[229]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00004 27
+---------------------------------------------------------
+[230]Base_Proto_AMRLevelOp::create 0.00004 18
+---------------------------------------------------------
+[231]Proto_Helmholtz::axby 0.00004 9
+---------------------------------------------------------
+[232]Base_Proto_AMRLevelOp::create 0.00004 18
+---------------------------------------------------------
+[233]PrChFluxRegister constructor 0.00003 9
+---------------------------------------------------------
+[234]PrChFluxRegister constructor 0.00003 9
+---------------------------------------------------------
+[235]Base_Proto_AMRLevelOp::create 0.00003 18
+---------------------------------------------------------
+[236]Base_Proto_AMRLevelOp::getDomainFromData 0.00003 486
+---------------------------------------------------------
+[237]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00003 18
+---------------------------------------------------------
+[238]Base_Simplified_AMRLevelOp::incr 0.00003 18
+    97.4%    0.00003       18 Proto_Helmholtz::axby [239] f=0
+    97.4%                  Total 
+---------------------------------------------------------
+[239]Proto_Helmholtz::axby 0.00003 18
+---------------------------------------------------------
+[240]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00003 18
+---------------------------------------------------------
+[241]MPI_Allreduce 0.00003 9
+---------------------------------------------------------
+[242]Proto_Helmholtz_Op::applyOperator 0.00002 9
+---------------------------------------------------------
+[243]Proto_Helmholtz_Op::applyOperator 0.00002 9
+---------------------------------------------------------
+[244]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00002 18
+---------------------------------------------------------
+[245]Base_Proto_AMRLevelOp::create 0.00002 18
+---------------------------------------------------------
+[246]Proto_Helmholtz::axby 0.00002 9
+---------------------------------------------------------
+[247]setGroup 0.00002 3
+---------------------------------------------------------
+[248]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 288
+---------------------------------------------------------
+[249]PrChFluxRegister::reflux 0.00002 1
+---------------------------------------------------------
+[250]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[251]BiCGStabSolver::solve::Cleanup 0.00001 9
+    95.6%    0.00001        9 Base_Simplified_AMRLevelOp::incr [254] f=0
+    95.6%                  Total 
+---------------------------------------------------------
+[252]Base_Proto_AMRLevelOp::create 0.00001 36
+---------------------------------------------------------
+[253]Proto_Helmholtz::axby 0.00001 9
+---------------------------------------------------------
+[254]Base_Simplified_AMRLevelOp::incr 0.00001 9
+    97.7%    0.00001        9 Proto_Helmholtz::axby [257] f=0
+    97.7%                  Total 
+---------------------------------------------------------
+[255]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00001 9
+---------------------------------------------------------
+[256]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[257]Proto_Helmholtz::axby 0.00001 9
+---------------------------------------------------------
+[258]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[259]Base_Proto_AMRLevelOp::assign 0.00001 9
+---------------------------------------------------------
+[260]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[261]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[262]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 144
+---------------------------------------------------------
+[263]PrChFluxRegister::setCoarFlux 0.00001 9
+---------------------------------------------------------
+[264]PrChFluxRegister::setCoarFlux 0.00001 9
+---------------------------------------------------------
+[265]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 144
+---------------------------------------------------------
+[266]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[267]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[268]Base_Proto_AMRLevelOp::create 0.00001 3
+---------------------------------------------------------
+[269]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[270]Base_Proto_AMRLevelOp::assign 0.00001 9
+---------------------------------------------------------
+[271]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[272]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[273]Base_Proto_AMRLevelOp::create 0.00001 9
+---------------------------------------------------------
+[274]BRMeshRefine::makeBoxes 0.00001 3
+---------------------------------------------------------
+[275]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 144
+---------------------------------------------------------
+[276]LoadBalance:VectorBoxEntry 0.00001 1
+    11.4%    0.00000        1 LoadBalance:VectorBoxSimple [323] f=0
+    11.4%                  Total 
+---------------------------------------------------------
+[277]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 144
+---------------------------------------------------------
+[278]DisjointBoxLayout::computeNeighbors 0.00001 1
+---------------------------------------------------------
+[279]Base_Proto_AMRLevelOp::create 0.00001 18
+---------------------------------------------------------
+[280]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00001 18
+---------------------------------------------------------
+[281]H5S_H5D_offsets_close 0.00001 3
+---------------------------------------------------------
+[282]Base_Proto_AMRLevelOp::copyTo 0.00001 18
+---------------------------------------------------------
+[283]Base_Proto_AMRLevelOp::create 0.00001 18
+---------------------------------------------------------
+[284]getOffsets 0.00001 3
+    35.7%    0.00000        3 offsets.resize [302] f=0
+     2.4%    0.00000       10 dataSize [342] f=0
+     1.5%    0.00000       10 offsets calc [347] f=0
+    39.6%                  Total 
+---------------------------------------------------------
+[285]PrChFluxRegister::reflux 0.00001 9
+---------------------------------------------------------
+[286]PrChFluxRegister::reflux 0.00001 9
+---------------------------------------------------------
+[287]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 27
+---------------------------------------------------------
+[288]H5Dclose 0.00001 3
+---------------------------------------------------------
+[289]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00000 3
+---------------------------------------------------------
+[290]DisjointBoxLayout::computeNeighbors 0.00000 3
+---------------------------------------------------------
+[291]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 72
+---------------------------------------------------------
+[292]PrChFluxRegister constructor 0.00000 1
+---------------------------------------------------------
+[293]Proto_Helmholtz::axby 0.00000 18
+---------------------------------------------------------
+[294]Proto_Helmholtz_Op::applyOperator 0.00000 18
+---------------------------------------------------------
+[295]Proto_Helmholtz_Op::applyOperator 0.00000 18
+---------------------------------------------------------
+[296]Proto_Helmholtz::axby 0.00000 18
+---------------------------------------------------------
+[297]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 18
+---------------------------------------------------------
+[298]PrChUtilities::getRawLayout 0.00000 3
+---------------------------------------------------------
+[299]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[300]PrChUtilities::getRaHostData 0.00000 3
+---------------------------------------------------------
+[301]MPI_Allreduce 0.00000 1
+---------------------------------------------------------
+[302]offsets.resize 0.00000 3
+---------------------------------------------------------
+[303]BRMeshRefine::domainSplit 0.00000 1
+---------------------------------------------------------
+[304]H5Screate 0.00000 3
+---------------------------------------------------------
+[305]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[306]Proto_Helmholtz_Op::applyOperator 0.00000 9
+---------------------------------------------------------
+[307]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 27
+---------------------------------------------------------
+[308]Proto_Helmholtz::axby 0.00000 9
+---------------------------------------------------------
+[309]Proto_Helmholtz::axby 0.00000 9
+---------------------------------------------------------
+[310]Proto_Helmholtz::axby 0.00000 9
+---------------------------------------------------------
+[311]Proto_Helmholtz_Op::applyOperator 0.00000 9
+---------------------------------------------------------
+[312]Proto_Helmholtz_Op::applyOperator 0.00000 9
+---------------------------------------------------------
+[313]LoadBalance:VectorBoxEntry 0.00000 3
+    51.5%    0.00000        3 LoadBalance:VectorBoxSimple [324] f=0
+    51.5%                  Total 
+---------------------------------------------------------
+[314]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00000 2
+---------------------------------------------------------
+[315]Proto_Helmholtz::fillGhostDataOutsideDomain 0.00000 1
+---------------------------------------------------------
+[316]freeMT 0.00000 3
+---------------------------------------------------------
+[317]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 18
+---------------------------------------------------------
+[318]H5Sclose 0.00000 3
+---------------------------------------------------------
+[319]mallocMT_buffers 0.00000 3
+---------------------------------------------------------
+[320]PrChFluxRegister::setCoarFlux 0.00000 1
+---------------------------------------------------------
+[321]ComputeBufferCapacity 0.00000 3
+---------------------------------------------------------
+[322]PrChUtilities::getRaHostData 0.00000 3
+---------------------------------------------------------
+[323]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[324]LoadBalance:VectorBoxSimple 0.00000 3
+---------------------------------------------------------
+[325]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 3
+---------------------------------------------------------
+[326]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[327]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[328]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[329]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 3
+---------------------------------------------------------
+[330]PrChFluxRegister::reflux 0.00000 1
+---------------------------------------------------------
+[331]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[332]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[333]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[334]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 9
+---------------------------------------------------------
+[335]~BoxLayoutData 0.00000 6
+    17.0%    0.00000        6 completePendingSends [350] f=0
+    17.0%                  Total 
+---------------------------------------------------------
+[336]~Copier 0.00000 6
+---------------------------------------------------------
+[337]~Copier 0.00000 6
+---------------------------------------------------------
+[338]Proto_Helmholtz_Op::applyOperator 0.00000 1
+---------------------------------------------------------
+[339]Proto_Helmholtz::axby 0.00000 1
+---------------------------------------------------------
+[340]Proto_Helmholtz_Op::applyOperator 0.00000 1
+---------------------------------------------------------
+[341]Proto_Helmholtz::axby 0.00000 1
+---------------------------------------------------------
+[342]dataSize 0.00000 10
+---------------------------------------------------------
+[343]~Copier 0.00000 6
+---------------------------------------------------------
+[344]PrChFluxRegister destructor 0.00000 9
+---------------------------------------------------------
+[345]PrChFluxRegister destructor 0.00000 9
+---------------------------------------------------------
+[346]PrChFluxRegister destructor 0.00000 9
+---------------------------------------------------------
+[347]offsets calc 0.00000 10
+---------------------------------------------------------
+[348]PrChFluxRegister destructor 0.00000 9
+---------------------------------------------------------
+[349]~LevelData 0.00000 6
+---------------------------------------------------------
+[350]completePendingSends 0.00000 6
+---------------------------------------------------------
+[351]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 1
+---------------------------------------------------------
+[352]calc minimum in outputGhost 0.00000 3
+---------------------------------------------------------
+[353]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[354]PrChFluxRegister destructor 0.00000 1
+---------------------------------------------------------
+[355]PrChFluxRegister destructor 0.00000 1
+=======================================================
+=======================================================
+    0.00        9  MPI_Allreduce [241]
+    0.00        1  MPI_Allreduce [301]
+     0.00003    0.0%    Total
+[0] main 0.57706 100.0% 1 0 0 MFlops 
+   [1] runSolver 0.53541 92.8% 1 0 0 MFlops 
+      [2] solveForPhi 0.52546 91.1% 1 0 0 MFlops 
+         [3] AMRMultiGrid::solve 0.52428 90.9% 1 0 0 MFlops 
+            [4] AMRMultiGrid::solveNoInit 0.52406 90.8% 1 0 0 MFlops 
+               [5] AMRMultiGrid::solveNo-InitResid 0.52401 90.8% 1 0 0 MFlops 
+                  [6] AMRMultiGrid::AMRVcycle 0.44809 77.7% 9 0 0 MFlops 
+                     [7] Multigrid::oneCycle 0.32974 57.1% 9 0 0 MFlops 
+                        [8] Multigrid::cycle 0.32974 57.1% 9 0 0 MFlops 
+                           [9] Proto_Helmholtz::relax 0.18235 31.6% 18 0 0 MFlops 
+                              [10] Base_Simplified_AMRLevelOp::residual 0.15944 27.6% 144 0 0 MFlops 
+                                 [11] Base_Simplified_AMRLevelOp::applyOp 0.13853 24.0% 144 0 0 MFlops 
+                                    [14] Proto_Helmholtz_Op::applyOperator 0.06245 10.8% 144 0 0 MFlops 
+                                    [19] Proto_Helmholtz::fillGhostDataOutsideDomain 0.05193  9.0% 144 0 0 MFlops 
+                                    [40] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02409  4.2% 144 0 0 MFlops 
+                                    [262] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 144 0 0 MFlops 
+                                 [50] Proto_Helmholtz::axby 0.01264  2.2% 144 0 0 MFlops 
+                                 [186] Base_Proto_AMRLevelOp::create 0.00023  0.0% 144 0 0 MFlops 
+                              [232] Base_Proto_AMRLevelOp::create 0.00004  0.0% 18 0 0 MFlops 
+                           [12] Multigrid::cycle 0.13424 23.3% 9 0 0 MFlops 
+                              [13] Multigrid::cycle 0.07925 13.7% 9 0 0 MFlops 
+                                 [16] Multigrid::cycle 0.05703  9.9% 9 0 0 MFlops 
+                                    [23] Multigrid::cycle 0.04267  7.4% 9 0 0 MFlops 
+                                       [24] Multigrid::cycle:bottom-solve 0.04267  7.4% 9 0 0 MFlops 
+                                          [34] BiCGStabSolver::solve 0.03744  6.5% 9 0 0 MFlops 
+                                             [35] BiCGStabSolver::solve::MainLoop 0.03594  6.2% 9 0 0 MFlops 
+                                                [36] Base_Simplified_AMRLevelOp::preCond 0.03511  6.1% 9 0 0 MFlops 
+                                                   [37] Proto_Helmholtz::relax 0.03511  6.1% 9 0 0 MFlops 
+                                                      [38] Base_Simplified_AMRLevelOp::residual 0.03458  6.0% 486 0 0 MFlops 
+                                                         [39] Base_Simplified_AMRLevelOp::applyOp 0.03236  5.6% 486 0 0 MFlops 
+                                                            [45] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01696  2.9% 486 0 0 MFlops 
+                                                            [46] Proto_Helmholtz::fillGhostDataOutsideDomain 0.01397  2.4% 486 0 0 MFlops 
+                                                            [128] Proto_Helmholtz_Op::applyOperator 0.00134  0.2% 486 0 0 MFlops 
+                                                            [236] Base_Proto_AMRLevelOp::getDomainFromData 0.00003  0.0% 486 0 0 MFlops 
+                                                         [147] Proto_Helmholtz::axby 0.00077  0.1% 486 0 0 MFlops 
+                                                         [164] Base_Proto_AMRLevelOp::create 0.00053  0.1% 486 0 0 MFlops 
+                                                      [269] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                                [161] Base_Simplified_AMRLevelOp::applyOp 0.00059  0.1% 9 0 0 MFlops 
+                                                   [176] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00031  0.1% 9 0 0 MFlops 
+                                                   [182] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00026  0.0% 9 0 0 MFlops 
+                                                   [243] Proto_Helmholtz_Op::applyOperator 0.00002  0.0% 9 0 0 MFlops 
+                                                   [334] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                                [210] Base_Proto_AMRLevelOp::createCoarser 0.00010  0.0% 18 0 0 MFlops 
+                                                   [223] Base_Proto_AMRLevelOp::createCoarser 0.00005  0.0% 18 0 0 MFlops 
+                                                [213] Base_Proto_AMRLevelOp::norm 0.00008  0.0% 9 0 0 MFlops 
+                                                [238] Base_Simplified_AMRLevelOp::incr 0.00003  0.0% 18 0 0 MFlops 
+                                                   [239] Proto_Helmholtz::axby 0.00003  0.0% 18 0 0 MFlops 
+                                                [270] Base_Proto_AMRLevelOp::assign 0.00001  0.0% 9 0 0 MFlops 
+                                             [124] BiCGStabSolver::solve::Initialize 0.00145  0.3% 9 0 0 MFlops 
+                                                [154] Base_Simplified_AMRLevelOp::residual 0.00068  0.1% 9 0 0 MFlops 
+                                                   [156] Base_Simplified_AMRLevelOp::applyOp 0.00064  0.1% 9 0 0 MFlops 
+                                                      [173] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00034  0.1% 9 0 0 MFlops 
+                                                      [178] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00026  0.0% 9 0 0 MFlops 
+                                                      [242] Proto_Helmholtz_Op::applyOperator 0.00002  0.0% 9 0 0 MFlops 
+                                                      [327] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                                   [253] Proto_Helmholtz::axby 0.00001  0.0% 9 0 0 MFlops 
+                                                   [260] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                                [163] Base_Proto_AMRLevelOp::create 0.00053  0.1% 72 0 0 MFlops 
+                                                [204] Base_Proto_AMRLevelOp::norm 0.00012  0.0% 9 0 0 MFlops 
+                                                [259] Base_Proto_AMRLevelOp::assign 0.00001  0.0% 9 0 0 MFlops 
+                                             [251] BiCGStabSolver::solve::Cleanup 0.00001  0.0% 9 0 0 MFlops 
+                                                [254] Base_Simplified_AMRLevelOp::incr 0.00001  0.0% 9 0 0 MFlops 
+                                                   [257] Proto_Helmholtz::axby 0.00001  0.0% 9 0 0 MFlops 
+                                          [84] Proto_Helmholtz::relax 0.00522  0.9% 9 0 0 MFlops 
+                                             [86] Base_Simplified_AMRLevelOp::residual 0.00513  0.9% 72 0 0 MFlops 
+                                                [88] Base_Simplified_AMRLevelOp::applyOp 0.00480  0.8% 72 0 0 MFlops 
+                                                   [105] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00252  0.4% 72 0 0 MFlops 
+                                                   [117] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00207  0.4% 72 0 0 MFlops 
+                                                   [192] Proto_Helmholtz_Op::applyOperator 0.00020  0.0% 72 0 0 MFlops 
+                                                   [291] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 72 0 0 MFlops 
+                                                [207] Proto_Helmholtz::axby 0.00011  0.0% 72 0 0 MFlops 
+                                                [212] Base_Proto_AMRLevelOp::create 0.00008  0.0% 72 0 0 MFlops 
+                                             [272] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                    [47] Proto_Helmholtz::relax 0.01327  2.3% 18 0 0 MFlops 
+                                       [48] Base_Simplified_AMRLevelOp::residual 0.01299  2.3% 144 0 0 MFlops 
+                                          [51] Base_Simplified_AMRLevelOp::applyOp 0.01217  2.1% 144 0 0 MFlops 
+                                             [83] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00611  1.1% 144 0 0 MFlops 
+                                             [85] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00520  0.9% 144 0 0 MFlops 
+                                             [142] Proto_Helmholtz_Op::applyOperator 0.00084  0.1% 144 0 0 MFlops 
+                                             [277] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 144 0 0 MFlops 
+                                          [177] Proto_Helmholtz::axby 0.00031  0.1% 144 0 0 MFlops 
+                                          [197] Base_Proto_AMRLevelOp::create 0.00016  0.0% 144 0 0 MFlops 
+                                       [245] Base_Proto_AMRLevelOp::create 0.00002  0.0% 18 0 0 MFlops 
+                                    [141] Base_Simplified_AMRLevelOp::restrictResidual 0.00092  0.2% 9 0 0 MFlops 
+                                       [143] Base_Simplified_AMRLevelOp::residual 0.00081  0.1% 9 0 0 MFlops 
+                                          [150] Base_Simplified_AMRLevelOp::applyOp 0.00076  0.1% 9 0 0 MFlops 
+                                             [171] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00038  0.1% 9 0 0 MFlops 
+                                             [174] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00032  0.1% 9 0 0 MFlops 
+                                             [226] Proto_Helmholtz_Op::applyOperator 0.00005  0.0% 9 0 0 MFlops 
+                                             [332] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                          [246] Proto_Helmholtz::axby 0.00002  0.0% 9 0 0 MFlops 
+                                          [271] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                       [273] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                 [41] Proto_Helmholtz::relax 0.02059  3.6% 18 0 0 MFlops 
+                                    [42] Base_Simplified_AMRLevelOp::residual 0.01985  3.4% 144 0 0 MFlops 
+                                       [43] Base_Simplified_AMRLevelOp::applyOp 0.01831  3.2% 144 0 0 MFlops 
+                                          [69] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00822  1.4% 144 0 0 MFlops 
+                                          [77] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00732  1.3% 144 0 0 MFlops 
+                                          [101] Proto_Helmholtz_Op::applyOperator 0.00274  0.5% 144 0 0 MFlops 
+                                          [275] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 144 0 0 MFlops 
+                                       [157] Proto_Helmholtz::axby 0.00064  0.1% 144 0 0 MFlops 
+                                       [191] Base_Proto_AMRLevelOp::create 0.00020  0.0% 144 0 0 MFlops 
+                                    [230] Base_Proto_AMRLevelOp::create 0.00004  0.0% 18 0 0 MFlops 
+                                 [126] Base_Simplified_AMRLevelOp::restrictResidual 0.00140  0.2% 9 0 0 MFlops 
+                                    [130] Base_Simplified_AMRLevelOp::residual 0.00124  0.2% 9 0 0 MFlops 
+                                       [131] Base_Simplified_AMRLevelOp::applyOp 0.00115  0.2% 9 0 0 MFlops 
+                                          [165] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00051  0.1% 9 0 0 MFlops 
+                                          [167] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00046  0.1% 9 0 0 MFlops 
+                                          [194] Proto_Helmholtz_Op::applyOperator 0.00017  0.0% 9 0 0 MFlops 
+                                          [333] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                       [231] Proto_Helmholtz::axby 0.00004  0.0% 9 0 0 MFlops 
+                                       [266] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                    [258] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                              [20] Proto_Helmholtz::relax 0.05110  8.9% 18 0 0 MFlops 
+                                 [21] Base_Simplified_AMRLevelOp::residual 0.04794  8.3% 144 0 0 MFlops 
+                                    [22] Base_Simplified_AMRLevelOp::applyOp 0.04289  7.4% 144 0 0 MFlops 
+                                       [44] Proto_Helmholtz::fillGhostDataOutsideDomain 0.01787  3.1% 144 0 0 MFlops 
+                                       [49] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01286  2.2% 144 0 0 MFlops 
+                                       [52] Proto_Helmholtz_Op::applyOperator 0.01213  2.1% 144 0 0 MFlops 
+                                       [265] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 144 0 0 MFlops 
+                                    [102] Proto_Helmholtz::axby 0.00271  0.5% 144 0 0 MFlops 
+                                    [190] Base_Proto_AMRLevelOp::create 0.00021  0.0% 144 0 0 MFlops 
+                                 [235] Base_Proto_AMRLevelOp::create 0.00003  0.0% 18 0 0 MFlops 
+                              [97] Base_Simplified_AMRLevelOp::restrictResidual 0.00328  0.6% 9 0 0 MFlops 
+                                 [99] Base_Simplified_AMRLevelOp::residual 0.00298  0.5% 9 0 0 MFlops 
+                                    [103] Base_Simplified_AMRLevelOp::applyOp 0.00267  0.5% 9 0 0 MFlops 
+                                       [136] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00111  0.2% 9 0 0 MFlops 
+                                       [144] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00080  0.1% 9 0 0 MFlops 
+                                       [151] Proto_Helmholtz_Op::applyOperator 0.00076  0.1% 9 0 0 MFlops 
+                                       [328] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                    [195] Proto_Helmholtz::axby 0.00017  0.0% 9 0 0 MFlops 
+                                    [267] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                                 [256] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                           [61] Base_Simplified_AMRLevelOp::restrictResidual 0.01091  1.9% 9 0 0 MFlops 
+                              [63] Base_Simplified_AMRLevelOp::residual 0.00977  1.7% 9 0 0 MFlops 
+                                 [67] Base_Simplified_AMRLevelOp::applyOp 0.00848  1.5% 9 0 0 MFlops 
+                                    [95] Proto_Helmholtz_Op::applyOperator 0.00385  0.7% 9 0 0 MFlops 
+                                    [98] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00320  0.6% 9 0 0 MFlops 
+                                    [125] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00142  0.2% 9 0 0 MFlops 
+                                    [326] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                                 [146] Proto_Helmholtz::axby 0.00078  0.1% 9 0 0 MFlops 
+                                 [261] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                              [250] Base_Proto_AMRLevelOp::create 0.00001  0.0% 9 0 0 MFlops 
+                     [18] AMRMultiGrid<T>::computeAMRResidualLevel 0.05228  9.1% 18 0 0 MFlops 
+                        [29] Base_Simplified_AMRLevelOp::AMRResidualNC 0.04062  7.0% 9 0 0 MFlops 
+                           [32] Base_Simplified_AMRLevelOp::AMROperatorNC 0.03956  6.9% 9 0 0 MFlops 
+                              [62] PrChFluxRegister::setFineFlux 0.01070  1.9% 9 0 0 MFlops 
+                              [75] Proto_Helmholtz::getFlux 0.00746  1.3% 54 0 0 MFlops 
+                              [82] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00657  1.1% 27 0 0 MFlops 
+                              [89] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00466  0.8% 9 0 0 MFlops 
+                              [93] Proto_Helmholtz_Op::applyOperator 0.00387  0.7% 9 0 0 MFlops 
+                              [106] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00251  0.4% 9 0 0 MFlops 
+                              [127] PrChFluxRegister::setCoarFlux 0.00138  0.2% 9 0 0 MFlops 
+                              [199] PrChFluxRegister constructor 0.00016  0.0% 9 0 0 MFlops 
+                              [201] PrChFluxRegister::reflux 0.00014  0.0% 9 0 0 MFlops 
+                              [307] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                              [345] PrChFluxRegister destructor 0.00000  0.0% 9 0 0 MFlops 
+                           [140] Proto_Helmholtz::axby 0.00106  0.2% 9 0 0 MFlops 
+                        [55] Base_Simplified_AMRLevelOp::AMRResidual 0.01166  2.0% 9 0 0 MFlops 
+                           [56] Base_Simplified_AMRLevelOp::AMROperator 0.01166  2.0% 9 0 0 MFlops 
+                              [68] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00843  1.5% 18 0 0 MFlops 
+                              [112] PrChFluxRegister::setFineFlux 0.00231  0.4% 9 0 0 MFlops 
+                              [159] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00062  0.1% 9 0 0 MFlops 
+                              [229] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00004  0.0% 27 0 0 MFlops 
+                              [234] PrChFluxRegister constructor 0.00003  0.0% 9 0 0 MFlops 
+                              [264] PrChFluxRegister::setCoarFlux 0.00001  0.0% 9 0 0 MFlops 
+                              [285] PrChFluxRegister::reflux 0.00001  0.0% 9 0 0 MFlops 
+                              [299] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                              [312] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 9 0 0 MFlops 
+                              [344] PrChFluxRegister destructor 0.00000  0.0% 9 0 0 MFlops 
+                           [310] Proto_Helmholtz::axby 0.00000  0.0% 9 0 0 MFlops 
+                     [25] AMRMultiGrid::relax 0.04109  7.1% 36 0 0 MFlops 
+                        [26] Proto_Helmholtz::relax 0.04108  7.1% 36 0 0 MFlops 
+                           [27] Base_Simplified_AMRLevelOp::residual 0.04104  7.1% 288 0 0 MFlops 
+                              [28] Base_Simplified_AMRLevelOp::applyOp 0.04069  7.1% 288 0 0 MFlops 
+                                 [31] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.04012  7.0% 288 0 0 MFlops 
+                                 [168] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00045  0.1% 288 0 0 MFlops 
+                                 [219] Proto_Helmholtz_Op::applyOperator 0.00006  0.0% 288 0 0 MFlops 
+                                 [248] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 288 0 0 MFlops 
+                              [203] Base_Proto_AMRLevelOp::create 0.00012  0.0% 288 0 0 MFlops 
+                              [218] Proto_Helmholtz::axby 0.00006  0.0% 288 0 0 MFlops 
+                           [252] Base_Proto_AMRLevelOp::create 0.00001  0.0% 36 0 0 MFlops 
+                     [70] Base_Simplified_AMRLevelOp::AMRRestrict 0.00817  1.4% 18 0 0 MFlops 
+                        [71] Base_Simplified_AMRLevelOp::AMRResidualNF 0.00813  1.4% 18 0 0 MFlops 
+                           [72] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00812  1.4% 18 0 0 MFlops 
+                              [73] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00808  1.4% 18 0 0 MFlops 
+                              [240] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00003  0.0% 18 0 0 MFlops 
+                              [295] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 18 0 0 MFlops 
+                              [297] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 18 0 0 MFlops 
+                           [296] Proto_Helmholtz::axby 0.00000  0.0% 18 0 0 MFlops 
+                        [279] Base_Proto_AMRLevelOp::create 0.00001  0.0% 18 0 0 MFlops 
+                        [280] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00001  0.0% 18 0 0 MFlops 
+                        [282] Base_Proto_AMRLevelOp::copyTo 0.00001  0.0% 18 0 0 MFlops 
+                     [78] Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.00672  1.2% 18 0 0 MFlops 
+                        [79] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00671  1.2% 18 0 0 MFlops 
+                           [80] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00667  1.2% 18 0 0 MFlops 
+                           [237] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00003  0.0% 18 0 0 MFlops 
+                           [294] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 18 0 0 MFlops 
+                           [317] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 18 0 0 MFlops 
+                        [283] Base_Proto_AMRLevelOp::create 0.00001  0.0% 18 0 0 MFlops 
+                        [293] Proto_Helmholtz::axby 0.00000  0.0% 18 0 0 MFlops 
+                     [87] Base_Proto_AMRLevelOp::assign 0.00506  0.9% 63 0 0 MFlops 
+                     [109] Base_Simplified_AMRLevelOp::AMRProlong 0.00236  0.4% 18 0 0 MFlops 
+                        [114] Base_Proto_AMRLevelOp::copyTo 0.00226  0.4% 18 0 0 MFlops 
+                        [244] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00002  0.0% 18 0 0 MFlops 
+                     [132] Base_Simplified_AMRLevelOp::incr 0.00114  0.2% 45 0 0 MFlops 
+                        [133] Proto_Helmholtz::axby 0.00114  0.2% 45 0 0 MFlops 
+                  [15] AMRMultiGrid::computeAMRResidual 0.06028 10.4% 9 0 0 MFlops 
+                     [17] AMRMultiGrid<T>::computeAMRResidualLevel 0.05404  9.4% 27 0 0 MFlops 
+                        [30] Base_Simplified_AMRLevelOp::AMRResidualNC 0.04060  7.0% 9 0 0 MFlops 
+                           [33] Base_Simplified_AMRLevelOp::AMROperatorNC 0.03953  6.8% 9 0 0 MFlops 
+                              [57] PrChFluxRegister::setFineFlux 0.01156  2.0% 9 0 0 MFlops 
+                              [76] Proto_Helmholtz::getFlux 0.00736  1.3% 54 0 0 MFlops 
+                              [81] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00666  1.2% 27 0 0 MFlops 
+                              [90] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00449  0.8% 9 0 0 MFlops 
+                              [92] Proto_Helmholtz_Op::applyOperator 0.00390  0.7% 9 0 0 MFlops 
+                              [120] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00193  0.3% 9 0 0 MFlops 
+                              [137] PrChFluxRegister::setCoarFlux 0.00109  0.2% 9 0 0 MFlops 
+                              [200] PrChFluxRegister::reflux 0.00015  0.0% 9 0 0 MFlops 
+                              [202] PrChFluxRegister constructor 0.00014  0.0% 9 0 0 MFlops 
+                              [305] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 27 0 0 MFlops 
+                              [348] PrChFluxRegister destructor 0.00000  0.0% 9 0 0 MFlops 
+                           [139] Proto_Helmholtz::axby 0.00107  0.2% 9 0 0 MFlops 
+                        [59] Base_Simplified_AMRLevelOp::AMRResidual 0.01105  1.9% 9 0 0 MFlops 
+                           [60] Base_Simplified_AMRLevelOp::AMROperator 0.01105  1.9% 9 0 0 MFlops 
+                              [74] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00780  1.4% 18 0 0 MFlops 
+                              [113] PrChFluxRegister::setFineFlux 0.00231  0.4% 9 0 0 MFlops 
+                              [158] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00063  0.1% 9 0 0 MFlops 
+                              [228] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00004  0.0% 27 0 0 MFlops 
+                              [233] PrChFluxRegister constructor 0.00003  0.0% 9 0 0 MFlops 
+                              [263] PrChFluxRegister::setCoarFlux 0.00001  0.0% 9 0 0 MFlops 
+                              [286] PrChFluxRegister::reflux 0.00001  0.0% 9 0 0 MFlops 
+                              [287] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 27 0 0 MFlops 
+                              [306] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 9 0 0 MFlops 
+                              [346] PrChFluxRegister destructor 0.00000  0.0% 9 0 0 MFlops 
+                           [309] Proto_Helmholtz::axby 0.00000  0.0% 9 0 0 MFlops 
+                        [107] Base_Simplified_AMRLevelOp::AMRResidualNF 0.00238  0.4% 9 0 0 MFlops 
+                           [108] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00238  0.4% 9 0 0 MFlops 
+                              [110] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00236  0.4% 9 0 0 MFlops 
+                              [255] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00001  0.0% 9 0 0 MFlops 
+                              [311] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 9 0 0 MFlops 
+                              [331] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 9 0 0 MFlops 
+                           [308] Proto_Helmholtz::axby 0.00000  0.0% 9 0 0 MFlops 
+                     [94] Base_Proto_AMRLevelOp::norm 0.00385  0.7% 27 0 0 MFlops 
+                     [111] Base_Proto_AMRLevelOp::assign 0.00234  0.4% 18 0 0 MFlops 
+                     [241] MPI_Allreduce 0.00003  0.0% 9 0 0 MFlops 
+                  [53] Initial AMR Residual 0.01196  2.1% 1 0 0 MFlops 
+                     [54] AMRMultiGrid::computeAMRResidual 0.01195  2.1% 1 0 0 MFlops 
+                        [58] AMRMultiGrid<T>::computeAMRResidualLevel 0.01135  2.0% 3 0 0 MFlops 
+                           [64] Base_Simplified_AMRLevelOp::AMRResidualNC 0.00959  1.7% 1 0 0 MFlops 
+                              [65] Base_Simplified_AMRLevelOp::AMROperatorNC 0.00947  1.6% 1 0 0 MFlops 
+                                 [118] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00203  0.4% 1 0 0 MFlops 
+                                 [119] Proto_Helmholtz::getFlux 0.00193  0.3% 6 0 0 MFlops 
+                                 [123] PrChFluxRegister::setFineFlux 0.00149  0.3% 1 0 0 MFlops 
+                                 [129] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00128  0.2% 3 0 0 MFlops 
+                                 [149] Proto_Helmholtz_Op::applyOperator 0.00076  0.1% 1 0 0 MFlops 
+                                 [153] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00071  0.1% 1 0 0 MFlops 
+                                 [162] PrChFluxRegister::setCoarFlux 0.00058  0.1% 1 0 0 MFlops 
+                                 [215] PrChFluxRegister constructor 0.00007  0.0% 1 0 0 MFlops 
+                                 [249] PrChFluxRegister::reflux 0.00002  0.0% 1 0 0 MFlops 
+                                 [325] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 3 0 0 MFlops 
+                                 [354] PrChFluxRegister destructor 0.00000  0.0% 1 0 0 MFlops 
+                              [205] Proto_Helmholtz::axby 0.00012  0.0% 1 0 0 MFlops 
+                           [121] Base_Simplified_AMRLevelOp::AMRResidual 0.00150  0.3% 1 0 0 MFlops 
+                              [122] Base_Simplified_AMRLevelOp::AMROperator 0.00150  0.3% 1 0 0 MFlops 
+                                 [138] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00108  0.2% 2 0 0 MFlops 
+                                 [175] PrChFluxRegister::setFineFlux 0.00031  0.1% 1 0 0 MFlops 
+                                 [217] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00007  0.0% 1 0 0 MFlops 
+                                 [289] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00000  0.0% 3 0 0 MFlops 
+                                 [292] PrChFluxRegister constructor 0.00000  0.0% 1 0 0 MFlops 
+                                 [320] PrChFluxRegister::setCoarFlux 0.00000  0.0% 1 0 0 MFlops 
+                                 [329] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 3 0 0 MFlops 
+                                 [330] PrChFluxRegister::reflux 0.00000  0.0% 1 0 0 MFlops 
+                                 [338] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 1 0 0 MFlops 
+                                 [355] PrChFluxRegister destructor 0.00000  0.0% 1 0 0 MFlops 
+                              [339] Proto_Helmholtz::axby 0.00000  0.0% 1 0 0 MFlops 
+                           [179] Base_Simplified_AMRLevelOp::AMRResidualNF 0.00026  0.0% 1 0 0 MFlops 
+                              [180] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00026  0.0% 1 0 0 MFlops 
+                                 [181] Proto_Helmholtz::fillGhostDataOverCoarseFineInterface 0.00026  0.0% 1 0 0 MFlops 
+                                 [315] Proto_Helmholtz::fillGhostDataOutsideDomain 0.00000  0.0% 1 0 0 MFlops 
+                                 [340] Proto_Helmholtz_Op::applyOperator 0.00000  0.0% 1 0 0 MFlops 
+                                 [351] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 1 0 0 MFlops 
+                              [341] Proto_Helmholtz::axby 0.00000  0.0% 1 0 0 MFlops 
+                        [172] Base_Proto_AMRLevelOp::assign 0.00036  0.1% 2 0 0 MFlops 
+                        [185] Base_Proto_AMRLevelOp::norm 0.00024  0.0% 3 0 0 MFlops 
+                        [301] MPI_Allreduce 0.00000  0.0% 1 0 0 MFlops 
+                  [134] Base_Simplified_AMRLevelOp::incr 0.00112  0.2% 27 0 0 MFlops 
+                     [135] Proto_Helmholtz::axby 0.00112  0.2% 27 0 0 MFlops 
+                  [148] uberCorrection creation 0.00076  0.1% 3 0 0 MFlops 
+                     [225] Base_Proto_AMRLevelOp::create 0.00005  0.0% 6 0 0 MFlops 
+               [268] Base_Proto_AMRLevelOp::create 0.00001  0.0% 3 0 0 MFlops 
+            [189] AMRMultiGrid::init 0.00022  0.0% 1 0 0 MFlops 
+               [196] MutliGrid::init 0.00016  0.0% 3 0 0 MFlops 
+                  [198] Base_Proto_AMRLevelOp::createCoarser 0.00016  0.0% 8 0 0 MFlops 
+               [222] Base_Proto_AMRLevelOp::create 0.00006  0.0% 6 0 0 MFlops 
+               [314] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00000  0.0% 2 0 0 MFlops 
+            [353] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+         [169] PrChUtilities::setupSolver 0.00040  0.1% 1 0 0 MFlops 
+            [170] AMRMultiGrid::define 0.00038  0.1% 1 0 0 MFlops 
+               [187] Proto_Helmholtz_Op::Proto_Helmholtz_Op 0.00022  0.0% 3 0 0 MFlops 
+               [206] MultiGrid::define 0.00012  0.0% 3 0 0 MFlops 
+                  [208] Proto_Helmholtz_Op::Proto_Helmholtz_Op 0.00010  0.0% 10 0 0 MFlops 
+               [343] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+         [184] PrChUtilities::copyToDevice-Cell 0.00025  0.0% 3 0 0 MFlops 
+            [322] PrChUtilities::getRaHostData 0.00000  0.0% 3 0 0 MFlops 
+         [193] PrChUtilities::copyToHost 0.00019  0.0% 3 0 0 MFlops 
+            [300] PrChUtilities::getRaHostData 0.00000  0.0% 3 0 0 MFlops 
+         [209] ~AMRMultiGrid 0.00010  0.0% 1 0 0 MFlops 
+         [224] PrChUtilities::getProtoLayout 0.00005  0.0% 3 0 0 MFlops 
+            [298] PrChUtilities::getRawLayout 0.00000  0.0% 3 0 0 MFlops 
+         [336] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+      [66] WriteAMRHierarchyHDF5 0.00875  1.5% 1 0 0 MFlops 
+         [91] CreateFile 0.00420  0.7% 1 0 0 MFlops 
+         [96] WriteFile 0.00331  0.6% 1 0 0 MFlops 
+            [100] Write Level 0.00281  0.5% 3 0 0 MFlops 
+               [104] write_Level 0.00263  0.5% 3 0 0 MFlops 
+                  [115] linearize_H5Dwrite 0.00218  0.4% 3 0 0 MFlops 
+                     [116] H5Dwrite 0.00210  0.4% 2 0 0 MFlops 
+                     [216] linearize 0.00007  0.0% 2 0 0 MFlops 
+                  [183] WriteAttributes 0.00025  0.0% 3 0 0 MFlops 
+                  [211] H5S_H5D_offsets_create 0.00008  0.0% 3 0 0 MFlops 
+                  [220] H5Dcreate 0.00006  0.0% 3 0 0 MFlops 
+                  [281] H5S_H5D_offsets_close 0.00001  0.0% 3 0 0 MFlops 
+                  [284] getOffsets 0.00001  0.0% 3 0 0 MFlops 
+                     [302] offsets.resize 0.00000  0.0% 3 0 0 MFlops 
+                     [342] dataSize 0.00000  0.0% 10 0 0 MFlops 
+                     [347] offsets calc 0.00000  0.0% 10 0 0 MFlops 
+                  [288] H5Dclose 0.00001  0.0% 3 0 0 MFlops 
+                  [304] H5Screate 0.00000  0.0% 3 0 0 MFlops 
+                  [316] freeMT 0.00000  0.0% 3 0 0 MFlops 
+                  [318] H5Sclose 0.00000  0.0% 3 0 0 MFlops 
+                  [319] mallocMT_buffers 0.00000  0.0% 3 0 0 MFlops 
+                  [321] ComputeBufferCapacity 0.00000  0.0% 3 0 0 MFlops 
+               [221] writeToFile 0.00006  0.0% 3 0 0 MFlops 
+               [247] setGroup 0.00002  0.0% 3 0 0 MFlops 
+               [352] calc minimum in outputGhost 0.00000  0.0% 3 0 0 MFlops 
+         [152] Barrier 0.00073  0.1% 2 0 0 MFlops 
+         [166] CloseFile 0.00050  0.1% 1 0 0 MFlops 
+      [145] PrChUtilities::setupGridsWithTagLocation 0.00079  0.1% 1 0 0 MFlops 
+         [155] setupGrids: meshRefine and all that 0.00064  0.1% 1 0 0 MFlops 
+            [160] MeshRefine::regrid 0.00060  0.1% 1 0 0 MFlops 
+               [274] BRMeshRefine::makeBoxes 0.00001  0.0% 3 0 0 MFlops 
+            [290] DisjointBoxLayout::computeNeighbors 0.00000  0.0% 3 0 0 MFlops 
+            [313] LoadBalance:VectorBoxEntry 0.00000  0.0% 3 0 0 MFlops 
+               [324] LoadBalance:VectorBoxSimple 0.00000  0.0% 3 0 0 MFlops 
+         [227] setupGrids: BaseGridCreation 0.00005  0.0% 1 0 0 MFlops 
+            [276] LoadBalance:VectorBoxEntry 0.00001  0.0% 1 0 0 MFlops 
+               [323] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+            [278] DisjointBoxLayout::computeNeighbors 0.00001  0.0% 1 0 0 MFlops 
+            [303] BRMeshRefine::domainSplit 0.00000  0.0% 1 0 0 MFlops 
+      [188] setRHS 0.00022  0.0% 1 0 0 MFlops 
+      [214] ~LayoutData 0.00008  0.0% 6 0 0 MFlops 
+      [335] ~BoxLayoutData 0.00000  0.0% 6 0 0 MFlops 
+         [350] completePendingSends 0.00000  0.0% 6 0 0 MFlops 
+      [337] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+      [349] ~LevelData 0.00000  0.0% 6 0 0 MFlops 
+stack top 0x50c1f9, stack bottom 0x50bcf9, stack size =    0.001 MB 
+[353] AMRMultiGrid::revert

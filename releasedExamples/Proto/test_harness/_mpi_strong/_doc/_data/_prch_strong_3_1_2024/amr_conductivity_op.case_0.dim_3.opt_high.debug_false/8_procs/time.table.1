@@ -1,0 +1,1071 @@
+-----------
+Timer report 0 (241 timers)
+--------------
+---------------------------------------------------------
+[0]main 0.28114 1
+    81.1%    0.22812        1 runSolver [1] f=0
+    81.1%                  Total 
+---------------------------------------------------------
+[1]runSolver 0.22812 1
+    97.0%    0.22118        1 solveForPhi [2] f=0
+     2.9%    0.00661        1 WriteAMRHierarchyHDF5 [42] f=0
+     0.1%    0.00016        1 PrChUtilities::setupGridsWithTagLocation [128] f=0
+     0.0%    0.00007        1 setRHS [150] f=0
+     0.0%    0.00000        2 ~LayoutData [205] f=0
+     0.0%    0.00000        2 ~Copier [229] f=0
+     0.0%    0.00000        2 ~BoxLayoutData [230] f=0
+     0.0%    0.00000        2 ~LevelData [237] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]solveForPhi 0.22118 1
+    98.9%    0.21878        1 AMRMultiGrid::solve [3] f=0
+     0.8%    0.00178        1 PrChUtilities::setupSolver [71] f=0
+     0.1%    0.00015        1 PrChUtilities::getProtoConductivityFactory [131] f=0
+     0.0%    0.00010        1 defineAndSetCoefficients [144] f=0
+     0.0%    0.00009        2 PrChUtilities::getProtoLayout [146] f=0
+     0.0%    0.00006        1 PrChUtilities::copyToDevice-Cell [158] f=0
+     0.0%    0.00002        1 PrChUtilities::copyToHost [178] f=0
+     0.0%    0.00001        1 ~AMRMultiGrid [185] f=0
+     0.0%    0.00000        2 ~LayoutData [213] f=0
+     0.0%    0.00000        2 ~BoxLayoutData [222] f=0
+     0.0%    0.00000        4 ~Copier [231] f=0
+     0.0%    0.00000        2 ~LevelData [235] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solve 0.21878 1
+    99.9%    0.21855        1 AMRMultiGrid::solveNoInit [4] f=0
+     0.1%    0.00023        1 AMRMultiGrid::init [122] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [239] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::solveNoInit 0.21855 1
+    100.0%    0.21852        1 AMRMultiGrid::solveNo-InitResid [5] f=0
+     0.0%    0.00003        1 Base_Proto_AMRLevelOp::create [173] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[5]AMRMultiGrid::solveNo-InitResid 0.21852 1
+    94.7%    0.20690        7 AMRMultiGrid::AMRVcycle [6] f=0
+     2.7%    0.00589        7 AMRMultiGrid::computeAMRResidual [46] f=0
+     2.3%    0.00492        1 Initial AMR Residual [53] f=0
+     0.1%    0.00027        1 uberCorrection creation [120] f=0
+     0.0%    0.00008        7 Base_Simplified_AMRLevelOp::incr [147] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[6]AMRMultiGrid::AMRVcycle 0.20690 7
+    99.4%    0.20557        7 Multigrid::oneCycle [7] f=0
+     0.5%    0.00111        7 Base_Proto_AMRLevelOp::assign [86] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[7]Multigrid::oneCycle 0.20557 7
+    100.0%    0.20557        7 Multigrid::cycle [8] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[8]Multigrid::cycle 0.20557 7
+    57.6%    0.11836        7 Multigrid::cycle [9] f=0
+    39.3%    0.08075       14 Pr_Conductivity::relax [11] f=0
+     3.0%    0.00615        7 Base_Simplified_AMRLevelOp::restrictResidual [44] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[9]Multigrid::cycle 0.11836 7
+    70.3%    0.08325        7 Multigrid::cycle [10] f=0
+    27.8%    0.03286       14 Pr_Conductivity::relax [22] f=0
+     1.8%    0.00212        7 Base_Simplified_AMRLevelOp::restrictResidual [67] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[10]Multigrid::cycle 0.08325 7
+    76.1%    0.06338        7 Multigrid::cycle [14] f=0
+    22.2%    0.01851       14 Pr_Conductivity::relax [30] f=0
+     1.5%    0.00126        7 Base_Simplified_AMRLevelOp::restrictResidual [80] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[11]Pr_Conductivity::relax 0.08075 14
+    98.1%    0.07922      112 Base_Simplified_AMRLevelOp::residual [12] f=0
+     0.2%    0.00015       14 Base_Proto_AMRLevelOp::create [130] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[12]Base_Simplified_AMRLevelOp::residual 0.07922 112
+    94.0%    0.07443      112 Base_Simplified_AMRLevelOp::applyOp [13] f=0
+     1.4%    0.00114      112 Base_Proto_AMRLevelOp::create [84] f=0
+     1.4%    0.00111      112 Proto_Helmholtz::axby [85] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[13]Base_Simplified_AMRLevelOp::applyOp 0.07443 112
+    39.5%    0.02937      112 Proto_Conductivity_Op::applyOperator [25] f=0
+    33.1%    0.02461      112 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [26] f=0
+    27.4%    0.02041      112 Pr_Conductivity::fillGhostdataOutsideDomain [29] f=0
+     0.0%    0.00001      112 Base_Proto_AMRLevelOp::getDomainFromData [187] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[14]Multigrid::cycle 0.06338 7
+    100.0%    0.06338        7 Multigrid::cycle:bottom-solve [15] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[15]Multigrid::cycle:bottom-solve 0.06338 7
+    87.7%    0.05556        7 BiCGStabSolver::solve [16] f=0
+    12.3%    0.00781        7 Pr_Conductivity::relax [36] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[16]BiCGStabSolver::solve 0.05556 7
+    96.1%    0.05339        7 BiCGStabSolver::solve::MainLoop [17] f=0
+     3.8%    0.00213        7 BiCGStabSolver::solve::Initialize [66] f=0
+     0.0%    0.00001        7 BiCGStabSolver::solve::Cleanup [193] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[17]BiCGStabSolver::solve::MainLoop 0.05339 7
+    97.4%    0.05199        7 Base_Simplified_AMRLevelOp::preCond [18] f=0
+     1.5%    0.00082        7 Base_Simplified_AMRLevelOp::applyOp [96] f=0
+     0.5%    0.00026        7 Base_Proto_AMRLevelOp::assign [121] f=0
+     0.3%    0.00017       14 Base_Proto_AMRLevelOp::createCoarser [125] f=0
+     0.2%    0.00010        7 Base_Proto_AMRLevelOp::norm [142] f=0
+     0.0%    0.00001       14 Base_Simplified_AMRLevelOp::incr [184] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[18]Base_Simplified_AMRLevelOp::preCond 0.05199 7
+    100.0%    0.05199        7 Pr_Conductivity::relax [19] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[19]Pr_Conductivity::relax 0.05199 7
+    99.3%    0.05163      378 Base_Simplified_AMRLevelOp::residual [20] f=0
+     0.1%    0.00007        7 Base_Proto_AMRLevelOp::create [153] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[20]Base_Simplified_AMRLevelOp::residual 0.05163 378
+    89.6%    0.04626      378 Base_Simplified_AMRLevelOp::applyOp [21] f=0
+     6.7%    0.00346      378 Base_Proto_AMRLevelOp::create [60] f=0
+     0.7%    0.00037      378 Proto_Helmholtz::axby [116] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[21]Base_Simplified_AMRLevelOp::applyOp 0.04626 378
+    45.1%    0.02086      378 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [28] f=0
+    39.7%    0.01836      378 Pr_Conductivity::fillGhostdataOutsideDomain [31] f=0
+    15.0%    0.00695      378 Proto_Conductivity_Op::applyOperator [40] f=0
+     0.0%    0.00002      378 Base_Proto_AMRLevelOp::getDomainFromData [179] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[22]Pr_Conductivity::relax 0.03286 14
+    98.5%    0.03237      112 Base_Simplified_AMRLevelOp::residual [23] f=0
+     0.4%    0.00013       14 Base_Proto_AMRLevelOp::create [136] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[23]Base_Simplified_AMRLevelOp::residual 0.03237 112
+    93.1%    0.03013      112 Base_Simplified_AMRLevelOp::applyOp [24] f=0
+     3.1%    0.00102      112 Base_Proto_AMRLevelOp::create [91] f=0
+     0.9%    0.00029      112 Proto_Helmholtz::axby [119] f=0
+    97.1%                  Total 
+---------------------------------------------------------
+[24]Base_Simplified_AMRLevelOp::applyOp 0.03013 112
+    43.7%    0.01317      112 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [34] f=0
+    32.6%    0.00982      112 Pr_Conductivity::fillGhostdataOutsideDomain [35] f=0
+    23.6%    0.00711      112 Proto_Conductivity_Op::applyOperator [39] f=0
+     0.0%    0.00001      112 Base_Proto_AMRLevelOp::getDomainFromData [189] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[25]Proto_Conductivity_Op::applyOperator 0.02937 112
+    81.3%    0.02388      336 Pr_Conductivity::getDivergenceIcrement [27] f=0
+    81.3%                  Total 
+---------------------------------------------------------
+[26]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02461 112
+---------------------------------------------------------
+[27]Pr_Conductivity::getDivergenceIcrement 0.02388 336
+---------------------------------------------------------
+[28]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02086 378
+---------------------------------------------------------
+[29]Pr_Conductivity::fillGhostdataOutsideDomain 0.02041 112
+---------------------------------------------------------
+[30]Pr_Conductivity::relax 0.01851 14
+    98.6%    0.01825      112 Base_Simplified_AMRLevelOp::residual [32] f=0
+     0.7%    0.00013       14 Base_Proto_AMRLevelOp::create [137] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[31]Pr_Conductivity::fillGhostdataOutsideDomain 0.01836 378
+---------------------------------------------------------
+[32]Base_Simplified_AMRLevelOp::residual 0.01825 112
+    90.7%    0.01656      112 Base_Simplified_AMRLevelOp::applyOp [33] f=0
+     5.3%    0.00097      112 Base_Proto_AMRLevelOp::create [92] f=0
+     0.8%    0.00014      112 Proto_Helmholtz::axby [134] f=0
+    96.8%                  Total 
+---------------------------------------------------------
+[33]Base_Simplified_AMRLevelOp::applyOp 0.01656 112
+    43.5%    0.00721      112 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [38] f=0
+    38.9%    0.00645      112 Pr_Conductivity::fillGhostdataOutsideDomain [43] f=0
+    17.4%    0.00287      112 Proto_Conductivity_Op::applyOperator [62] f=0
+     0.0%    0.00001      112 Base_Proto_AMRLevelOp::getDomainFromData [200] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[34]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01317 112
+---------------------------------------------------------
+[35]Pr_Conductivity::fillGhostdataOutsideDomain 0.00982 112
+---------------------------------------------------------
+[36]Pr_Conductivity::relax 0.00781 7
+    98.6%    0.00770       56 Base_Simplified_AMRLevelOp::residual [37] f=0
+     0.8%    0.00006        7 Base_Proto_AMRLevelOp::create [159] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[37]Base_Simplified_AMRLevelOp::residual 0.00770 56
+    89.7%    0.00691       56 Base_Simplified_AMRLevelOp::applyOp [41] f=0
+     6.6%    0.00051       56 Base_Proto_AMRLevelOp::create [106] f=0
+     0.8%    0.00006       56 Proto_Helmholtz::axby [162] f=0
+    97.0%                  Total 
+---------------------------------------------------------
+[38]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00721 112
+---------------------------------------------------------
+[39]Proto_Conductivity_Op::applyOperator 0.00711 112
+    82.8%    0.00588      336 Pr_Conductivity::getDivergenceIcrement [47] f=0
+    82.8%                  Total 
+---------------------------------------------------------
+[40]Proto_Conductivity_Op::applyOperator 0.00695 378
+    81.9%    0.00570     1134 Pr_Conductivity::getDivergenceIcrement [48] f=0
+    81.9%                  Total 
+---------------------------------------------------------
+[41]Base_Simplified_AMRLevelOp::applyOp 0.00691 56
+    43.1%    0.00298       56 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [61] f=0
+    41.4%    0.00286       56 Pr_Conductivity::fillGhostdataOutsideDomain [63] f=0
+    15.2%    0.00105       56 Proto_Conductivity_Op::applyOperator [89] f=0
+     0.0%    0.00000       56 Base_Proto_AMRLevelOp::getDomainFromData [204] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[42]WriteAMRHierarchyHDF5 0.00661 1
+    74.6%    0.00493        1 CreateFile [52] f=0
+    16.4%    0.00108        1 WriteFile [87] f=0
+     5.6%    0.00037        1 CloseFile [114] f=0
+     3.0%    0.00020        2 Barrier [123] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[43]Pr_Conductivity::fillGhostdataOutsideDomain 0.00645 112
+---------------------------------------------------------
+[44]Base_Simplified_AMRLevelOp::restrictResidual 0.00615 7
+    96.3%    0.00592        7 Base_Simplified_AMRLevelOp::residual [45] f=0
+     1.1%    0.00006        7 Base_Proto_AMRLevelOp::create [157] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[45]Base_Simplified_AMRLevelOp::residual 0.00592 7
+    94.8%    0.00561        7 Base_Simplified_AMRLevelOp::applyOp [49] f=0
+     1.2%    0.00007        7 Base_Proto_AMRLevelOp::create [151] f=0
+     1.1%    0.00007        7 Proto_Helmholtz::axby [152] f=0
+    97.1%                  Total 
+---------------------------------------------------------
+[46]AMRMultiGrid::computeAMRResidual 0.00589 7
+    85.7%    0.00505        7 AMRMultiGrid<T>::computeAMRResidualLevel [50] f=0
+    13.6%    0.00080        7 Base_Proto_AMRLevelOp::norm [97] f=0
+     0.6%    0.00004        7 MPI_Allreduce [172] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[47]Pr_Conductivity::getDivergenceIcrement 0.00588 336
+---------------------------------------------------------
+[48]Pr_Conductivity::getDivergenceIcrement 0.00570 1134
+---------------------------------------------------------
+[49]Base_Simplified_AMRLevelOp::applyOp 0.00561 7
+    45.3%    0.00254        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [64] f=0
+    32.6%    0.00183        7 Proto_Conductivity_Op::applyOperator [70] f=0
+    22.0%    0.00124        7 Pr_Conductivity::fillGhostdataOutsideDomain [82] f=0
+     0.0%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [220] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[50]AMRMultiGrid<T>::computeAMRResidualLevel 0.00505 7
+    100.0%    0.00505        7 Base_Simplified_AMRLevelOp::residual [51] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[51]Base_Simplified_AMRLevelOp::residual 0.00505 7
+    94.6%    0.00477        7 Base_Simplified_AMRLevelOp::applyOp [57] f=0
+     1.4%    0.00007        7 Proto_Helmholtz::axby [149] f=0
+     1.3%    0.00007        7 Base_Proto_AMRLevelOp::create [155] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[52]CreateFile 0.00493 1
+---------------------------------------------------------
+[53]Initial AMR Residual 0.00492 1
+    100.0%    0.00492        1 AMRMultiGrid::computeAMRResidual [54] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[54]AMRMultiGrid::computeAMRResidual 0.00492 1
+    97.5%    0.00480        1 AMRMultiGrid<T>::computeAMRResidualLevel [55] f=0
+     2.3%    0.00011        1 Base_Proto_AMRLevelOp::norm [141] f=0
+     0.2%    0.00001        1 MPI_Allreduce [188] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[55]AMRMultiGrid<T>::computeAMRResidualLevel 0.00480 1
+    100.0%    0.00480        1 Base_Simplified_AMRLevelOp::residual [56] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[56]Base_Simplified_AMRLevelOp::residual 0.00480 1
+    97.9%    0.00470        1 Base_Simplified_AMRLevelOp::applyOp [58] f=0
+     0.6%    0.00003        1 Base_Proto_AMRLevelOp::create [174] f=0
+     0.6%    0.00003        1 Proto_Helmholtz::axby [176] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[57]Base_Simplified_AMRLevelOp::applyOp 0.00477 7
+    37.1%    0.00177        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [72] f=0
+    36.6%    0.00175        7 Proto_Conductivity_Op::applyOperator [73] f=0
+    26.2%    0.00125        7 Pr_Conductivity::fillGhostdataOutsideDomain [81] f=0
+     0.0%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [219] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[58]Base_Simplified_AMRLevelOp::applyOp 0.00470 1
+    73.7%    0.00346        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [59] f=0
+    16.1%    0.00076        1 Proto_Conductivity_Op::applyOperator [100] f=0
+    10.1%    0.00047        1 Pr_Conductivity::fillGhostdataOutsideDomain [107] f=0
+     0.0%    0.00000        1 Base_Proto_AMRLevelOp::getDomainFromData [223] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[59]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00346 1
+---------------------------------------------------------
+[60]Base_Proto_AMRLevelOp::create 0.00346 378
+---------------------------------------------------------
+[61]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00298 56
+---------------------------------------------------------
+[62]Proto_Conductivity_Op::applyOperator 0.00287 112
+    82.6%    0.00237      336 Pr_Conductivity::getDivergenceIcrement [65] f=0
+    82.6%                  Total 
+---------------------------------------------------------
+[63]Pr_Conductivity::fillGhostdataOutsideDomain 0.00286 56
+---------------------------------------------------------
+[64]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00254 7
+---------------------------------------------------------
+[65]Pr_Conductivity::getDivergenceIcrement 0.00237 336
+---------------------------------------------------------
+[66]BiCGStabSolver::solve::Initialize 0.00213 7
+    49.9%    0.00106        7 Base_Simplified_AMRLevelOp::residual [88] f=0
+    24.2%    0.00052       56 Base_Proto_AMRLevelOp::create [105] f=0
+    14.6%    0.00031        7 Base_Proto_AMRLevelOp::assign [118] f=0
+     6.4%    0.00014        7 Base_Proto_AMRLevelOp::norm [135] f=0
+    95.1%                  Total 
+---------------------------------------------------------
+[67]Base_Simplified_AMRLevelOp::restrictResidual 0.00212 7
+    93.8%    0.00198        7 Base_Simplified_AMRLevelOp::residual [68] f=0
+     2.9%    0.00006        7 Base_Proto_AMRLevelOp::create [160] f=0
+    96.7%                  Total 
+---------------------------------------------------------
+[68]Base_Simplified_AMRLevelOp::residual 0.00198 7
+    93.4%    0.00185        7 Base_Simplified_AMRLevelOp::applyOp [69] f=0
+     3.0%    0.00006        7 Base_Proto_AMRLevelOp::create [167] f=0
+     0.8%    0.00002        7 Proto_Helmholtz::axby [183] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[69]Base_Simplified_AMRLevelOp::applyOp 0.00185 7
+    42.5%    0.00079        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [98] f=0
+    33.3%    0.00062        7 Pr_Conductivity::fillGhostdataOutsideDomain [101] f=0
+    24.1%    0.00045        7 Proto_Conductivity_Op::applyOperator [110] f=0
+     0.0%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [221] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[70]Proto_Conductivity_Op::applyOperator 0.00183 7
+    80.9%    0.00148       21 Pr_Conductivity::getDivergenceIcrement [78] f=0
+    80.9%                  Total 
+---------------------------------------------------------
+[71]PrChUtilities::setupSolver 0.00178 1
+    98.3%    0.00175        1 AMRMultiGrid::define [74] f=0
+    98.3%                  Total 
+---------------------------------------------------------
+[72]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00177 7
+---------------------------------------------------------
+[73]Proto_Conductivity_Op::applyOperator 0.00175 7
+    83.2%    0.00145       21 Pr_Conductivity::getDivergenceIcrement [79] f=0
+    83.2%                  Total 
+---------------------------------------------------------
+[74]AMRMultiGrid::define 0.00175 1
+    95.1%    0.00166        1 MultiGrid::define [75] f=0
+     3.4%    0.00006        1 Pr_Conductivity_Factory_AMRnewOp [163] f=0
+     0.0%    0.00000        2 ~Copier [233] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[75]MultiGrid::define 0.00166 1
+    99.3%    0.00165        4 Pr_Conductivity_Factory_MGnewOp [76] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[76]Pr_Conductivity_Factory_MGnewOp 0.00165 4
+    98.0%    0.00162        3 Pr_Conductivity_Factory_getCoefficients [77] f=0
+     1.7%    0.00003        3 Proto_Conductivity_Op::Proto_Conductivity_Op [175] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[77]Pr_Conductivity_Factory_getCoefficients 0.00162 3
+---------------------------------------------------------
+[78]Pr_Conductivity::getDivergenceIcrement 0.00148 21
+---------------------------------------------------------
+[79]Pr_Conductivity::getDivergenceIcrement 0.00145 21
+---------------------------------------------------------
+[80]Base_Simplified_AMRLevelOp::restrictResidual 0.00126 7
+    91.1%    0.00114        7 Base_Simplified_AMRLevelOp::residual [83] f=0
+     4.9%    0.00006        7 Base_Proto_AMRLevelOp::create [161] f=0
+    96.0%                  Total 
+---------------------------------------------------------
+[81]Pr_Conductivity::fillGhostdataOutsideDomain 0.00125 7
+---------------------------------------------------------
+[82]Pr_Conductivity::fillGhostdataOutsideDomain 0.00124 7
+---------------------------------------------------------
+[83]Base_Simplified_AMRLevelOp::residual 0.00114 7
+    91.0%    0.00104        7 Base_Simplified_AMRLevelOp::applyOp [90] f=0
+     5.1%    0.00006        7 Base_Proto_AMRLevelOp::create [168] f=0
+     0.7%    0.00001        7 Proto_Helmholtz::axby [191] f=0
+    96.9%                  Total 
+---------------------------------------------------------
+[84]Base_Proto_AMRLevelOp::create 0.00114 112
+---------------------------------------------------------
+[85]Proto_Helmholtz::axby 0.00111 112
+---------------------------------------------------------
+[86]Base_Proto_AMRLevelOp::assign 0.00111 7
+---------------------------------------------------------
+[87]WriteFile 0.00108 1
+    77.7%    0.00084        1 Write Level [95] f=0
+    77.7%                  Total 
+---------------------------------------------------------
+[88]Base_Simplified_AMRLevelOp::residual 0.00106 7
+    90.5%    0.00096        7 Base_Simplified_AMRLevelOp::applyOp [93] f=0
+     6.1%    0.00006        7 Base_Proto_AMRLevelOp::create [156] f=0
+     0.6%    0.00001        7 Proto_Helmholtz::axby [197] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[89]Proto_Conductivity_Op::applyOperator 0.00105 56
+    81.8%    0.00086      168 Pr_Conductivity::getDivergenceIcrement [94] f=0
+    81.8%                  Total 
+---------------------------------------------------------
+[90]Base_Simplified_AMRLevelOp::applyOp 0.00104 7
+    43.1%    0.00045        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [109] f=0
+    39.2%    0.00041        7 Pr_Conductivity::fillGhostdataOutsideDomain [111] f=0
+    17.5%    0.00018        7 Proto_Conductivity_Op::applyOperator [124] f=0
+     0.0%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [228] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[91]Base_Proto_AMRLevelOp::create 0.00102 112
+---------------------------------------------------------
+[92]Base_Proto_AMRLevelOp::create 0.00097 112
+---------------------------------------------------------
+[93]Base_Simplified_AMRLevelOp::applyOp 0.00096 7
+    47.3%    0.00046        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [108] f=0
+    38.1%    0.00037        7 Pr_Conductivity::fillGhostdataOutsideDomain [115] f=0
+    14.4%    0.00014        7 Proto_Conductivity_Op::applyOperator [133] f=0
+     0.1%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [224] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[94]Pr_Conductivity::getDivergenceIcrement 0.00086 168
+---------------------------------------------------------
+[95]Write Level 0.00084 1
+    93.2%    0.00078        1 write_Level [99] f=0
+     2.3%    0.00002        1 writeToFile [181] f=0
+     0.7%    0.00001        1 setGroup [202] f=0
+     0.0%    0.00000        1 calc minimum in outputGhost [240] f=0
+    96.2%                  Total 
+---------------------------------------------------------
+[96]Base_Simplified_AMRLevelOp::applyOp 0.00082 7
+    46.3%    0.00038        7 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [112] f=0
+    38.8%    0.00032        7 Pr_Conductivity::fillGhostdataOutsideDomain [117] f=0
+    14.6%    0.00012        7 Proto_Conductivity_Op::applyOperator [139] f=0
+     0.1%    0.00000        7 Base_Proto_AMRLevelOp::getDomainFromData [225] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[97]Base_Proto_AMRLevelOp::norm 0.00080 7
+---------------------------------------------------------
+[98]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00079 7
+---------------------------------------------------------
+[99]write_Level 0.00078 1
+    76.3%    0.00060        1 linearize_H5Dwrite [102] f=0
+    13.0%    0.00010        1 WriteAttributes [143] f=0
+     4.8%    0.00004        1 H5S_H5D_offsets_create [171] f=0
+     2.5%    0.00002        1 H5Dcreate [182] f=0
+     0.5%    0.00000        1 getOffsets [203] f=0
+     0.4%    0.00000        1 H5S_H5D_offsets_close [206] f=0
+     0.3%    0.00000        1 H5Dclose [207] f=0
+     0.3%    0.00000        1 freeMT [209] f=0
+     0.2%    0.00000        1 mallocMT_buffers [211] f=0
+     0.1%    0.00000        1 H5Screate [215] f=0
+     0.1%    0.00000        1 H5Sclose [216] f=0
+     0.1%    0.00000        1 ComputeBufferCapacity [226] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[100]Proto_Conductivity_Op::applyOperator 0.00076 1
+    73.2%    0.00055        3 Pr_Conductivity::getDivergenceIcrement [104] f=0
+    73.2%                  Total 
+---------------------------------------------------------
+[101]Pr_Conductivity::fillGhostdataOutsideDomain 0.00062 7
+---------------------------------------------------------
+[102]linearize_H5Dwrite 0.00060 1
+    97.7%    0.00058        1 H5Dwrite [103] f=0
+     1.2%    0.00001        1 linearize [196] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[103]H5Dwrite 0.00058 1
+---------------------------------------------------------
+[104]Pr_Conductivity::getDivergenceIcrement 0.00055 3
+---------------------------------------------------------
+[105]Base_Proto_AMRLevelOp::create 0.00052 56
+---------------------------------------------------------
+[106]Base_Proto_AMRLevelOp::create 0.00051 56
+---------------------------------------------------------
+[107]Pr_Conductivity::fillGhostdataOutsideDomain 0.00047 1
+---------------------------------------------------------
+[108]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00046 7
+---------------------------------------------------------
+[109]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00045 7
+---------------------------------------------------------
+[110]Proto_Conductivity_Op::applyOperator 0.00045 7
+    83.5%    0.00037       21 Pr_Conductivity::getDivergenceIcrement [113] f=0
+    83.5%                  Total 
+---------------------------------------------------------
+[111]Pr_Conductivity::fillGhostdataOutsideDomain 0.00041 7
+---------------------------------------------------------
+[112]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00038 7
+---------------------------------------------------------
+[113]Pr_Conductivity::getDivergenceIcrement 0.00037 21
+---------------------------------------------------------
+[114]CloseFile 0.00037 1
+---------------------------------------------------------
+[115]Pr_Conductivity::fillGhostdataOutsideDomain 0.00037 7
+---------------------------------------------------------
+[116]Proto_Helmholtz::axby 0.00037 378
+---------------------------------------------------------
+[117]Pr_Conductivity::fillGhostdataOutsideDomain 0.00032 7
+---------------------------------------------------------
+[118]Base_Proto_AMRLevelOp::assign 0.00031 7
+---------------------------------------------------------
+[119]Proto_Helmholtz::axby 0.00029 112
+---------------------------------------------------------
+[120]uberCorrection creation 0.00027 1
+    24.6%    0.00007        2 Base_Proto_AMRLevelOp::create [154] f=0
+    24.6%                  Total 
+---------------------------------------------------------
+[121]Base_Proto_AMRLevelOp::assign 0.00026 7
+---------------------------------------------------------
+[122]AMRMultiGrid::init 0.00023 1
+    73.6%    0.00017        1 MutliGrid::init [126] f=0
+    25.9%    0.00006        2 Base_Proto_AMRLevelOp::create [166] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[123]Barrier 0.00020 2
+---------------------------------------------------------
+[124]Proto_Conductivity_Op::applyOperator 0.00018 7
+    82.9%    0.00015       21 Pr_Conductivity::getDivergenceIcrement [129] f=0
+    82.9%                  Total 
+---------------------------------------------------------
+[125]Base_Proto_AMRLevelOp::createCoarser 0.00017 14
+    70.2%    0.00012       14 Base_Proto_AMRLevelOp::createCoarser [138] f=0
+    70.2%                  Total 
+---------------------------------------------------------
+[126]MutliGrid::init 0.00017 1
+    99.3%    0.00017        6 Base_Proto_AMRLevelOp::createCoarser [127] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[127]Base_Proto_AMRLevelOp::createCoarser 0.00017 6
+---------------------------------------------------------
+[128]PrChUtilities::setupGridsWithTagLocation 0.00016 1
+    28.2%    0.00004        1 setupGrids: BaseGridCreation [170] f=0
+    28.2%                  Total 
+---------------------------------------------------------
+[129]Pr_Conductivity::getDivergenceIcrement 0.00015 21
+---------------------------------------------------------
+[130]Base_Proto_AMRLevelOp::create 0.00015 14
+---------------------------------------------------------
+[131]PrChUtilities::getProtoConductivityFactory 0.00015 1
+    94.6%    0.00014        1 PrChUtilities::protoizeConductivityArguments [132] f=0
+     4.2%    0.00001        1 Pr_Conductivity_Factory_Constructor [201] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[132]PrChUtilities::protoizeConductivityArguments 0.00014 1
+    42.7%    0.00006        1 PrChUtilities::copyToDevice-Flux [164] f=0
+    14.1%    0.00002        1 PrChUtilities::copyToDevice-Cell [180] f=0
+     6.1%    0.00001        1 PrChUtilities::getProtoLayout [190] f=0
+    63.0%                  Total 
+---------------------------------------------------------
+[133]Proto_Conductivity_Op::applyOperator 0.00014 7
+    81.7%    0.00011       21 Pr_Conductivity::getDivergenceIcrement [140] f=0
+    81.7%                  Total 
+---------------------------------------------------------
+[134]Proto_Helmholtz::axby 0.00014 112
+---------------------------------------------------------
+[135]Base_Proto_AMRLevelOp::norm 0.00014 7
+---------------------------------------------------------
+[136]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[137]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[138]Base_Proto_AMRLevelOp::createCoarser 0.00012 14
+---------------------------------------------------------
+[139]Proto_Conductivity_Op::applyOperator 0.00012 7
+    81.5%    0.00010       21 Pr_Conductivity::getDivergenceIcrement [145] f=0
+    81.5%                  Total 
+---------------------------------------------------------
+[140]Pr_Conductivity::getDivergenceIcrement 0.00011 21
+---------------------------------------------------------
+[141]Base_Proto_AMRLevelOp::norm 0.00011 1
+---------------------------------------------------------
+[142]Base_Proto_AMRLevelOp::norm 0.00010 7
+---------------------------------------------------------
+[143]WriteAttributes 0.00010 1
+---------------------------------------------------------
+[144]defineAndSetCoefficients 0.00010 1
+---------------------------------------------------------
+[145]Pr_Conductivity::getDivergenceIcrement 0.00010 21
+---------------------------------------------------------
+[146]PrChUtilities::getProtoLayout 0.00009 2
+     7.1%    0.00001        2 PrChUtilities::getRawLayout [199] f=0
+     7.1%                  Total 
+---------------------------------------------------------
+[147]Base_Simplified_AMRLevelOp::incr 0.00008 7
+    98.7%    0.00008        7 Proto_Helmholtz::axby [148] f=0
+    98.7%                  Total 
+---------------------------------------------------------
+[148]Proto_Helmholtz::axby 0.00008 7
+---------------------------------------------------------
+[149]Proto_Helmholtz::axby 0.00007 7
+---------------------------------------------------------
+[150]setRHS 0.00007 1
+---------------------------------------------------------
+[151]Base_Proto_AMRLevelOp::create 0.00007 7
+---------------------------------------------------------
+[152]Proto_Helmholtz::axby 0.00007 7
+---------------------------------------------------------
+[153]Base_Proto_AMRLevelOp::create 0.00007 7
+---------------------------------------------------------
+[154]Base_Proto_AMRLevelOp::create 0.00007 2
+---------------------------------------------------------
+[155]Base_Proto_AMRLevelOp::create 0.00007 7
+---------------------------------------------------------
+[156]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[157]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[158]PrChUtilities::copyToDevice-Cell 0.00006 1
+     1.2%    0.00000        1 PrChUtilities::getRaHostData [217] f=0
+     1.2%                  Total 
+---------------------------------------------------------
+[159]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[160]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[161]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[162]Proto_Helmholtz::axby 0.00006 56
+---------------------------------------------------------
+[163]Pr_Conductivity_Factory_AMRnewOp 0.00006 1
+    98.5%    0.00006        1 Proto_Conductivity_Op::Proto_Conductivity_Op [165] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[164]PrChUtilities::copyToDevice-Flux 0.00006 1
+---------------------------------------------------------
+[165]Proto_Conductivity_Op::Proto_Conductivity_Op 0.00006 1
+    98.9%    0.00006        1 Pr_Conductivity::defineAndSetRelaxationCoefficient [169] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[166]Base_Proto_AMRLevelOp::create 0.00006 2
+---------------------------------------------------------
+[167]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[168]Base_Proto_AMRLevelOp::create 0.00006 7
+---------------------------------------------------------
+[169]Pr_Conductivity::defineAndSetRelaxationCoefficient 0.00006 1
+---------------------------------------------------------
+[170]setupGrids: BaseGridCreation 0.00004 1
+    18.6%    0.00001        1 LoadBalance:VectorBoxEntry [192] f=0
+    16.6%    0.00001        1 DisjointBoxLayout::computeNeighbors [194] f=0
+     5.4%    0.00000        1 BRMeshRefine::domainSplit [208] f=0
+    40.6%                  Total 
+---------------------------------------------------------
+[171]H5S_H5D_offsets_create 0.00004 1
+---------------------------------------------------------
+[172]MPI_Allreduce 0.00004 7
+---------------------------------------------------------
+[173]Base_Proto_AMRLevelOp::create 0.00003 1
+---------------------------------------------------------
+[174]Base_Proto_AMRLevelOp::create 0.00003 1
+---------------------------------------------------------
+[175]Proto_Conductivity_Op::Proto_Conductivity_Op 0.00003 3
+    95.4%    0.00003        3 Pr_Conductivity::defineAndSetRelaxationCoefficient [177] f=0
+    95.4%                  Total 
+---------------------------------------------------------
+[176]Proto_Helmholtz::axby 0.00003 1
+---------------------------------------------------------
+[177]Pr_Conductivity::defineAndSetRelaxationCoefficient 0.00003 3
+---------------------------------------------------------
+[178]PrChUtilities::copyToHost 0.00002 1
+     5.8%    0.00000        1 PrChUtilities::getRaHostData [214] f=0
+     5.8%                  Total 
+---------------------------------------------------------
+[179]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 378
+---------------------------------------------------------
+[180]PrChUtilities::copyToDevice-Cell 0.00002 1
+     3.7%    0.00000        1 PrChUtilities::getRaHostData [218] f=0
+     3.7%                  Total 
+---------------------------------------------------------
+[181]writeToFile 0.00002 1
+---------------------------------------------------------
+[182]H5Dcreate 0.00002 1
+---------------------------------------------------------
+[183]Proto_Helmholtz::axby 0.00002 7
+---------------------------------------------------------
+[184]Base_Simplified_AMRLevelOp::incr 0.00001 14
+    95.2%    0.00001       14 Proto_Helmholtz::axby [186] f=0
+    95.2%                  Total 
+---------------------------------------------------------
+[185]~AMRMultiGrid 0.00001 1
+---------------------------------------------------------
+[186]Proto_Helmholtz::axby 0.00001 14
+---------------------------------------------------------
+[187]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 112
+---------------------------------------------------------
+[188]MPI_Allreduce 0.00001 1
+---------------------------------------------------------
+[189]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 112
+---------------------------------------------------------
+[190]PrChUtilities::getProtoLayout 0.00001 1
+    24.4%    0.00000        1 PrChUtilities::getRawLayout [210] f=0
+    24.4%                  Total 
+---------------------------------------------------------
+[191]Proto_Helmholtz::axby 0.00001 7
+---------------------------------------------------------
+[192]LoadBalance:VectorBoxEntry 0.00001 1
+     4.6%    0.00000        1 LoadBalance:VectorBoxSimple [227] f=0
+     4.6%                  Total 
+---------------------------------------------------------
+[193]BiCGStabSolver::solve::Cleanup 0.00001 7
+    89.8%    0.00001        7 Base_Simplified_AMRLevelOp::incr [195] f=0
+    89.8%                  Total 
+---------------------------------------------------------
+[194]DisjointBoxLayout::computeNeighbors 0.00001 1
+---------------------------------------------------------
+[195]Base_Simplified_AMRLevelOp::incr 0.00001 7
+    92.3%    0.00001        7 Proto_Helmholtz::axby [198] f=0
+    92.3%                  Total 
+---------------------------------------------------------
+[196]linearize 0.00001 1
+---------------------------------------------------------
+[197]Proto_Helmholtz::axby 0.00001 7
+---------------------------------------------------------
+[198]Proto_Helmholtz::axby 0.00001 7
+---------------------------------------------------------
+[199]PrChUtilities::getRawLayout 0.00001 2
+---------------------------------------------------------
+[200]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 112
+---------------------------------------------------------
+[201]Pr_Conductivity_Factory_Constructor 0.00001 1
+---------------------------------------------------------
+[202]setGroup 0.00001 1
+---------------------------------------------------------
+[203]getOffsets 0.00000 1
+    41.8%    0.00000        1 offsets.resize [212] f=0
+     3.0%    0.00000        8 dataSize [232] f=0
+     2.5%    0.00000        8 offsets calc [234] f=0
+    47.3%                  Total 
+---------------------------------------------------------
+[204]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 56
+---------------------------------------------------------
+[205]~LayoutData 0.00000 2
+---------------------------------------------------------
+[206]H5S_H5D_offsets_close 0.00000 1
+---------------------------------------------------------
+[207]H5Dclose 0.00000 1
+---------------------------------------------------------
+[208]BRMeshRefine::domainSplit 0.00000 1
+---------------------------------------------------------
+[209]freeMT 0.00000 1
+---------------------------------------------------------
+[210]PrChUtilities::getRawLayout 0.00000 1
+---------------------------------------------------------
+[211]mallocMT_buffers 0.00000 1
+---------------------------------------------------------
+[212]offsets.resize 0.00000 1
+---------------------------------------------------------
+[213]~LayoutData 0.00000 2
+---------------------------------------------------------
+[214]PrChUtilities::getRaHostData 0.00000 1
+---------------------------------------------------------
+[215]H5Screate 0.00000 1
+---------------------------------------------------------
+[216]H5Sclose 0.00000 1
+---------------------------------------------------------
+[217]PrChUtilities::getRaHostData 0.00000 1
+---------------------------------------------------------
+[218]PrChUtilities::getRaHostData 0.00000 1
+---------------------------------------------------------
+[219]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[220]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[221]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[222]~BoxLayoutData 0.00000 2
+     3.9%    0.00000        2 completePendingSends [236] f=0
+     3.9%                  Total 
+---------------------------------------------------------
+[223]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 1
+---------------------------------------------------------
+[224]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[225]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[226]ComputeBufferCapacity 0.00000 1
+---------------------------------------------------------
+[227]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[228]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 7
+---------------------------------------------------------
+[229]~Copier 0.00000 2
+---------------------------------------------------------
+[230]~BoxLayoutData 0.00000 2
+     7.4%    0.00000        2 completePendingSends [238] f=0
+     7.4%                  Total 
+---------------------------------------------------------
+[231]~Copier 0.00000 4
+---------------------------------------------------------
+[232]dataSize 0.00000 8
+---------------------------------------------------------
+[233]~Copier 0.00000 2
+---------------------------------------------------------
+[234]offsets calc 0.00000 8
+---------------------------------------------------------
+[235]~LevelData 0.00000 2
+---------------------------------------------------------
+[236]completePendingSends 0.00000 2
+---------------------------------------------------------
+[237]~LevelData 0.00000 2
+---------------------------------------------------------
+[238]completePendingSends 0.00000 2
+---------------------------------------------------------
+[239]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[240]calc minimum in outputGhost 0.00000 1
+=======================================================
+=======================================================
+    0.00        7  MPI_Allreduce [172]
+    0.00        1  MPI_Allreduce [188]
+     0.00004    0.0%    Total
+[0] main 0.28114 100.0% 1 0 0 MFlops 
+   [1] runSolver 0.22812 81.1% 1 0 0 MFlops 
+      [2] solveForPhi 0.22118 78.7% 1 0 0 MFlops 
+         [3] AMRMultiGrid::solve 0.21878 77.8% 1 0 0 MFlops 
+            [4] AMRMultiGrid::solveNoInit 0.21855 77.7% 1 0 0 MFlops 
+               [5] AMRMultiGrid::solveNo-InitResid 0.21852 77.7% 1 0 0 MFlops 
+                  [6] AMRMultiGrid::AMRVcycle 0.20690 73.6% 7 0 0 MFlops 
+                     [7] Multigrid::oneCycle 0.20557 73.1% 7 0 0 MFlops 
+                        [8] Multigrid::cycle 0.20557 73.1% 7 0 0 MFlops 
+                           [9] Multigrid::cycle 0.11836 42.1% 7 0 0 MFlops 
+                              [10] Multigrid::cycle 0.08325 29.6% 7 0 0 MFlops 
+                                 [14] Multigrid::cycle 0.06338 22.5% 7 0 0 MFlops 
+                                    [15] Multigrid::cycle:bottom-solve 0.06338 22.5% 7 0 0 MFlops 
+                                       [16] BiCGStabSolver::solve 0.05556 19.8% 7 0 0 MFlops 
+                                          [17] BiCGStabSolver::solve::MainLoop 0.05339 19.0% 7 0 0 MFlops 
+                                             [18] Base_Simplified_AMRLevelOp::preCond 0.05199 18.5% 7 0 0 MFlops 
+                                                [19] Pr_Conductivity::relax 0.05199 18.5% 7 0 0 MFlops 
+                                                   [20] Base_Simplified_AMRLevelOp::residual 0.05163 18.4% 378 0 0 MFlops 
+                                                      [21] Base_Simplified_AMRLevelOp::applyOp 0.04626 16.5% 378 0 0 MFlops 
+                                                         [28] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02086  7.4% 378 0 0 MFlops 
+                                                         [31] Pr_Conductivity::fillGhostdataOutsideDomain 0.01836  6.5% 378 0 0 MFlops 
+                                                         [40] Proto_Conductivity_Op::applyOperator 0.00695  2.5% 378 0 0 MFlops 
+                                                            [48] Pr_Conductivity::getDivergenceIcrement 0.00570  2.0% 1134 0 0 MFlops 
+                                                         [179] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 378 0 0 MFlops 
+                                                      [60] Base_Proto_AMRLevelOp::create 0.00346  1.2% 378 0 0 MFlops 
+                                                      [116] Proto_Helmholtz::axby 0.00037  0.1% 378 0 0 MFlops 
+                                                   [153] Base_Proto_AMRLevelOp::create 0.00007  0.0% 7 0 0 MFlops 
+                                             [96] Base_Simplified_AMRLevelOp::applyOp 0.00082  0.3% 7 0 0 MFlops 
+                                                [112] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00038  0.1% 7 0 0 MFlops 
+                                                [117] Pr_Conductivity::fillGhostdataOutsideDomain 0.00032  0.1% 7 0 0 MFlops 
+                                                [139] Proto_Conductivity_Op::applyOperator 0.00012  0.0% 7 0 0 MFlops 
+                                                   [145] Pr_Conductivity::getDivergenceIcrement 0.00010  0.0% 21 0 0 MFlops 
+                                                [225] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                                             [121] Base_Proto_AMRLevelOp::assign 0.00026  0.1% 7 0 0 MFlops 
+                                             [125] Base_Proto_AMRLevelOp::createCoarser 0.00017  0.1% 14 0 0 MFlops 
+                                                [138] Base_Proto_AMRLevelOp::createCoarser 0.00012  0.0% 14 0 0 MFlops 
+                                             [142] Base_Proto_AMRLevelOp::norm 0.00010  0.0% 7 0 0 MFlops 
+                                             [184] Base_Simplified_AMRLevelOp::incr 0.00001  0.0% 14 0 0 MFlops 
+                                                [186] Proto_Helmholtz::axby 0.00001  0.0% 14 0 0 MFlops 
+                                          [66] BiCGStabSolver::solve::Initialize 0.00213  0.8% 7 0 0 MFlops 
+                                             [88] Base_Simplified_AMRLevelOp::residual 0.00106  0.4% 7 0 0 MFlops 
+                                                [93] Base_Simplified_AMRLevelOp::applyOp 0.00096  0.3% 7 0 0 MFlops 
+                                                   [108] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00046  0.2% 7 0 0 MFlops 
+                                                   [115] Pr_Conductivity::fillGhostdataOutsideDomain 0.00037  0.1% 7 0 0 MFlops 
+                                                   [133] Proto_Conductivity_Op::applyOperator 0.00014  0.0% 7 0 0 MFlops 
+                                                      [140] Pr_Conductivity::getDivergenceIcrement 0.00011  0.0% 21 0 0 MFlops 
+                                                   [224] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                                                [156] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                                                [197] Proto_Helmholtz::axby 0.00001  0.0% 7 0 0 MFlops 
+                                             [105] Base_Proto_AMRLevelOp::create 0.00052  0.2% 56 0 0 MFlops 
+                                             [118] Base_Proto_AMRLevelOp::assign 0.00031  0.1% 7 0 0 MFlops 
+                                             [135] Base_Proto_AMRLevelOp::norm 0.00014  0.0% 7 0 0 MFlops 
+                                          [193] BiCGStabSolver::solve::Cleanup 0.00001  0.0% 7 0 0 MFlops 
+                                             [195] Base_Simplified_AMRLevelOp::incr 0.00001  0.0% 7 0 0 MFlops 
+                                                [198] Proto_Helmholtz::axby 0.00001  0.0% 7 0 0 MFlops 
+                                       [36] Pr_Conductivity::relax 0.00781  2.8% 7 0 0 MFlops 
+                                          [37] Base_Simplified_AMRLevelOp::residual 0.00770  2.7% 56 0 0 MFlops 
+                                             [41] Base_Simplified_AMRLevelOp::applyOp 0.00691  2.5% 56 0 0 MFlops 
+                                                [61] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00298  1.1% 56 0 0 MFlops 
+                                                [63] Pr_Conductivity::fillGhostdataOutsideDomain 0.00286  1.0% 56 0 0 MFlops 
+                                                [89] Proto_Conductivity_Op::applyOperator 0.00105  0.4% 56 0 0 MFlops 
+                                                   [94] Pr_Conductivity::getDivergenceIcrement 0.00086  0.3% 168 0 0 MFlops 
+                                                [204] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 56 0 0 MFlops 
+                                             [106] Base_Proto_AMRLevelOp::create 0.00051  0.2% 56 0 0 MFlops 
+                                             [162] Proto_Helmholtz::axby 0.00006  0.0% 56 0 0 MFlops 
+                                          [159] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                                 [30] Pr_Conductivity::relax 0.01851  6.6% 14 0 0 MFlops 
+                                    [32] Base_Simplified_AMRLevelOp::residual 0.01825  6.5% 112 0 0 MFlops 
+                                       [33] Base_Simplified_AMRLevelOp::applyOp 0.01656  5.9% 112 0 0 MFlops 
+                                          [38] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00721  2.6% 112 0 0 MFlops 
+                                          [43] Pr_Conductivity::fillGhostdataOutsideDomain 0.00645  2.3% 112 0 0 MFlops 
+                                          [62] Proto_Conductivity_Op::applyOperator 0.00287  1.0% 112 0 0 MFlops 
+                                             [65] Pr_Conductivity::getDivergenceIcrement 0.00237  0.8% 336 0 0 MFlops 
+                                          [200] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 112 0 0 MFlops 
+                                       [92] Base_Proto_AMRLevelOp::create 0.00097  0.3% 112 0 0 MFlops 
+                                       [134] Proto_Helmholtz::axby 0.00014  0.0% 112 0 0 MFlops 
+                                    [137] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                                 [80] Base_Simplified_AMRLevelOp::restrictResidual 0.00126  0.4% 7 0 0 MFlops 
+                                    [83] Base_Simplified_AMRLevelOp::residual 0.00114  0.4% 7 0 0 MFlops 
+                                       [90] Base_Simplified_AMRLevelOp::applyOp 0.00104  0.4% 7 0 0 MFlops 
+                                          [109] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00045  0.2% 7 0 0 MFlops 
+                                          [111] Pr_Conductivity::fillGhostdataOutsideDomain 0.00041  0.1% 7 0 0 MFlops 
+                                          [124] Proto_Conductivity_Op::applyOperator 0.00018  0.1% 7 0 0 MFlops 
+                                             [129] Pr_Conductivity::getDivergenceIcrement 0.00015  0.1% 21 0 0 MFlops 
+                                          [228] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                                       [168] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                                       [191] Proto_Helmholtz::axby 0.00001  0.0% 7 0 0 MFlops 
+                                    [161] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                              [22] Pr_Conductivity::relax 0.03286 11.7% 14 0 0 MFlops 
+                                 [23] Base_Simplified_AMRLevelOp::residual 0.03237 11.5% 112 0 0 MFlops 
+                                    [24] Base_Simplified_AMRLevelOp::applyOp 0.03013 10.7% 112 0 0 MFlops 
+                                       [34] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01317  4.7% 112 0 0 MFlops 
+                                       [35] Pr_Conductivity::fillGhostdataOutsideDomain 0.00982  3.5% 112 0 0 MFlops 
+                                       [39] Proto_Conductivity_Op::applyOperator 0.00711  2.5% 112 0 0 MFlops 
+                                          [47] Pr_Conductivity::getDivergenceIcrement 0.00588  2.1% 336 0 0 MFlops 
+                                       [189] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 112 0 0 MFlops 
+                                    [91] Base_Proto_AMRLevelOp::create 0.00102  0.4% 112 0 0 MFlops 
+                                    [119] Proto_Helmholtz::axby 0.00029  0.1% 112 0 0 MFlops 
+                                 [136] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                              [67] Base_Simplified_AMRLevelOp::restrictResidual 0.00212  0.8% 7 0 0 MFlops 
+                                 [68] Base_Simplified_AMRLevelOp::residual 0.00198  0.7% 7 0 0 MFlops 
+                                    [69] Base_Simplified_AMRLevelOp::applyOp 0.00185  0.7% 7 0 0 MFlops 
+                                       [98] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00079  0.3% 7 0 0 MFlops 
+                                       [101] Pr_Conductivity::fillGhostdataOutsideDomain 0.00062  0.2% 7 0 0 MFlops 
+                                       [110] Proto_Conductivity_Op::applyOperator 0.00045  0.2% 7 0 0 MFlops 
+                                          [113] Pr_Conductivity::getDivergenceIcrement 0.00037  0.1% 21 0 0 MFlops 
+                                       [221] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                                    [167] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                                    [183] Proto_Helmholtz::axby 0.00002  0.0% 7 0 0 MFlops 
+                                 [160] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                           [11] Pr_Conductivity::relax 0.08075 28.7% 14 0 0 MFlops 
+                              [12] Base_Simplified_AMRLevelOp::residual 0.07922 28.2% 112 0 0 MFlops 
+                                 [13] Base_Simplified_AMRLevelOp::applyOp 0.07443 26.5% 112 0 0 MFlops 
+                                    [25] Proto_Conductivity_Op::applyOperator 0.02937 10.4% 112 0 0 MFlops 
+                                       [27] Pr_Conductivity::getDivergenceIcrement 0.02388  8.5% 336 0 0 MFlops 
+                                    [26] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02461  8.8% 112 0 0 MFlops 
+                                    [29] Pr_Conductivity::fillGhostdataOutsideDomain 0.02041  7.3% 112 0 0 MFlops 
+                                    [187] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 112 0 0 MFlops 
+                                 [84] Base_Proto_AMRLevelOp::create 0.00114  0.4% 112 0 0 MFlops 
+                                 [85] Proto_Helmholtz::axby 0.00111  0.4% 112 0 0 MFlops 
+                              [130] Base_Proto_AMRLevelOp::create 0.00015  0.1% 14 0 0 MFlops 
+                           [44] Base_Simplified_AMRLevelOp::restrictResidual 0.00615  2.2% 7 0 0 MFlops 
+                              [45] Base_Simplified_AMRLevelOp::residual 0.00592  2.1% 7 0 0 MFlops 
+                                 [49] Base_Simplified_AMRLevelOp::applyOp 0.00561  2.0% 7 0 0 MFlops 
+                                    [64] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00254  0.9% 7 0 0 MFlops 
+                                    [70] Proto_Conductivity_Op::applyOperator 0.00183  0.7% 7 0 0 MFlops 
+                                       [78] Pr_Conductivity::getDivergenceIcrement 0.00148  0.5% 21 0 0 MFlops 
+                                    [82] Pr_Conductivity::fillGhostdataOutsideDomain 0.00124  0.4% 7 0 0 MFlops 
+                                    [220] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                                 [151] Base_Proto_AMRLevelOp::create 0.00007  0.0% 7 0 0 MFlops 
+                                 [152] Proto_Helmholtz::axby 0.00007  0.0% 7 0 0 MFlops 
+                              [157] Base_Proto_AMRLevelOp::create 0.00006  0.0% 7 0 0 MFlops 
+                     [86] Base_Proto_AMRLevelOp::assign 0.00111  0.4% 7 0 0 MFlops 
+                  [46] AMRMultiGrid::computeAMRResidual 0.00589  2.1% 7 0 0 MFlops 
+                     [50] AMRMultiGrid<T>::computeAMRResidualLevel 0.00505  1.8% 7 0 0 MFlops 
+                        [51] Base_Simplified_AMRLevelOp::residual 0.00505  1.8% 7 0 0 MFlops 
+                           [57] Base_Simplified_AMRLevelOp::applyOp 0.00477  1.7% 7 0 0 MFlops 
+                              [72] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00177  0.6% 7 0 0 MFlops 
+                              [73] Proto_Conductivity_Op::applyOperator 0.00175  0.6% 7 0 0 MFlops 
+                                 [79] Pr_Conductivity::getDivergenceIcrement 0.00145  0.5% 21 0 0 MFlops 
+                              [81] Pr_Conductivity::fillGhostdataOutsideDomain 0.00125  0.4% 7 0 0 MFlops 
+                              [219] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 7 0 0 MFlops 
+                           [149] Proto_Helmholtz::axby 0.00007  0.0% 7 0 0 MFlops 
+                           [155] Base_Proto_AMRLevelOp::create 0.00007  0.0% 7 0 0 MFlops 
+                     [97] Base_Proto_AMRLevelOp::norm 0.00080  0.3% 7 0 0 MFlops 
+                     [172] MPI_Allreduce 0.00004  0.0% 7 0 0 MFlops 
+                  [53] Initial AMR Residual 0.00492  1.8% 1 0 0 MFlops 
+                     [54] AMRMultiGrid::computeAMRResidual 0.00492  1.8% 1 0 0 MFlops 
+                        [55] AMRMultiGrid<T>::computeAMRResidualLevel 0.00480  1.7% 1 0 0 MFlops 
+                           [56] Base_Simplified_AMRLevelOp::residual 0.00480  1.7% 1 0 0 MFlops 
+                              [58] Base_Simplified_AMRLevelOp::applyOp 0.00470  1.7% 1 0 0 MFlops 
+                                 [59] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00346  1.2% 1 0 0 MFlops 
+                                 [100] Proto_Conductivity_Op::applyOperator 0.00076  0.3% 1 0 0 MFlops 
+                                    [104] Pr_Conductivity::getDivergenceIcrement 0.00055  0.2% 3 0 0 MFlops 
+                                 [107] Pr_Conductivity::fillGhostdataOutsideDomain 0.00047  0.2% 1 0 0 MFlops 
+                                 [223] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 1 0 0 MFlops 
+                              [174] Base_Proto_AMRLevelOp::create 0.00003  0.0% 1 0 0 MFlops 
+                              [176] Proto_Helmholtz::axby 0.00003  0.0% 1 0 0 MFlops 
+                        [141] Base_Proto_AMRLevelOp::norm 0.00011  0.0% 1 0 0 MFlops 
+                        [188] MPI_Allreduce 0.00001  0.0% 1 0 0 MFlops 
+                  [120] uberCorrection creation 0.00027  0.1% 1 0 0 MFlops 
+                     [154] Base_Proto_AMRLevelOp::create 0.00007  0.0% 2 0 0 MFlops 
+                  [147] Base_Simplified_AMRLevelOp::incr 0.00008  0.0% 7 0 0 MFlops 
+                     [148] Proto_Helmholtz::axby 0.00008  0.0% 7 0 0 MFlops 
+               [173] Base_Proto_AMRLevelOp::create 0.00003  0.0% 1 0 0 MFlops 
+            [122] AMRMultiGrid::init 0.00023  0.1% 1 0 0 MFlops 
+               [126] MutliGrid::init 0.00017  0.1% 1 0 0 MFlops 
+                  [127] Base_Proto_AMRLevelOp::createCoarser 0.00017  0.1% 6 0 0 MFlops 
+               [166] Base_Proto_AMRLevelOp::create 0.00006  0.0% 2 0 0 MFlops 
+            [239] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+         [71] PrChUtilities::setupSolver 0.00178  0.6% 1 0 0 MFlops 
+            [74] AMRMultiGrid::define 0.00175  0.6% 1 0 0 MFlops 
+               [75] MultiGrid::define 0.00166  0.6% 1 0 0 MFlops 
+                  [76] Pr_Conductivity_Factory_MGnewOp 0.00165  0.6% 4 0 0 MFlops 
+                     [77] Pr_Conductivity_Factory_getCoefficients 0.00162  0.6% 3 0 0 MFlops 
+                     [175] Proto_Conductivity_Op::Proto_Conductivity_Op 0.00003  0.0% 3 0 0 MFlops 
+                        [177] Pr_Conductivity::defineAndSetRelaxationCoefficient 0.00003  0.0% 3 0 0 MFlops 
+               [163] Pr_Conductivity_Factory_AMRnewOp 0.00006  0.0% 1 0 0 MFlops 
+                  [165] Proto_Conductivity_Op::Proto_Conductivity_Op 0.00006  0.0% 1 0 0 MFlops 
+                     [169] Pr_Conductivity::defineAndSetRelaxationCoefficient 0.00006  0.0% 1 0 0 MFlops 
+               [233] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+         [131] PrChUtilities::getProtoConductivityFactory 0.00015  0.1% 1 0 0 MFlops 
+            [132] PrChUtilities::protoizeConductivityArguments 0.00014  0.0% 1 0 0 MFlops 
+               [164] PrChUtilities::copyToDevice-Flux 0.00006  0.0% 1 0 0 MFlops 
+               [180] PrChUtilities::copyToDevice-Cell 0.00002  0.0% 1 0 0 MFlops 
+                  [218] PrChUtilities::getRaHostData 0.00000  0.0% 1 0 0 MFlops 
+               [190] PrChUtilities::getProtoLayout 0.00001  0.0% 1 0 0 MFlops 
+                  [210] PrChUtilities::getRawLayout 0.00000  0.0% 1 0 0 MFlops 
+            [201] Pr_Conductivity_Factory_Constructor 0.00001  0.0% 1 0 0 MFlops 
+         [144] defineAndSetCoefficients 0.00010  0.0% 1 0 0 MFlops 
+         [146] PrChUtilities::getProtoLayout 0.00009  0.0% 2 0 0 MFlops 
+            [199] PrChUtilities::getRawLayout 0.00001  0.0% 2 0 0 MFlops 
+         [158] PrChUtilities::copyToDevice-Cell 0.00006  0.0% 1 0 0 MFlops 
+            [217] PrChUtilities::getRaHostData 0.00000  0.0% 1 0 0 MFlops 
+         [178] PrChUtilities::copyToHost 0.00002  0.0% 1 0 0 MFlops 
+            [214] PrChUtilities::getRaHostData 0.00000  0.0% 1 0 0 MFlops 
+         [185] ~AMRMultiGrid 0.00001  0.0% 1 0 0 MFlops 
+         [213] ~LayoutData 0.00000  0.0% 2 0 0 MFlops 
+         [222] ~BoxLayoutData 0.00000  0.0% 2 0 0 MFlops 
+            [236] completePendingSends 0.00000  0.0% 2 0 0 MFlops 
+         [231] ~Copier 0.00000  0.0% 4 0 0 MFlops 
+         [235] ~LevelData 0.00000  0.0% 2 0 0 MFlops 
+      [42] WriteAMRHierarchyHDF5 0.00661  2.4% 1 0 0 MFlops 
+         [52] CreateFile 0.00493  1.8% 1 0 0 MFlops 
+         [87] WriteFile 0.00108  0.4% 1 0 0 MFlops 
+            [95] Write Level 0.00084  0.3% 1 0 0 MFlops 
+               [99] write_Level 0.00078  0.3% 1 0 0 MFlops 
+                  [102] linearize_H5Dwrite 0.00060  0.2% 1 0 0 MFlops 
+                     [103] H5Dwrite 0.00058  0.2% 1 0 0 MFlops 
+                     [196] linearize 0.00001  0.0% 1 0 0 MFlops 
+                  [143] WriteAttributes 0.00010  0.0% 1 0 0 MFlops 
+                  [171] H5S_H5D_offsets_create 0.00004  0.0% 1 0 0 MFlops 
+                  [182] H5Dcreate 0.00002  0.0% 1 0 0 MFlops 
+                  [203] getOffsets 0.00000  0.0% 1 0 0 MFlops 
+                     [212] offsets.resize 0.00000  0.0% 1 0 0 MFlops 
+                     [232] dataSize 0.00000  0.0% 8 0 0 MFlops 
+                     [234] offsets calc 0.00000  0.0% 8 0 0 MFlops 
+                  [206] H5S_H5D_offsets_close 0.00000  0.0% 1 0 0 MFlops 
+                  [207] H5Dclose 0.00000  0.0% 1 0 0 MFlops 
+                  [209] freeMT 0.00000  0.0% 1 0 0 MFlops 
+                  [211] mallocMT_buffers 0.00000  0.0% 1 0 0 MFlops 
+                  [215] H5Screate 0.00000  0.0% 1 0 0 MFlops 
+                  [216] H5Sclose 0.00000  0.0% 1 0 0 MFlops 
+                  [226] ComputeBufferCapacity 0.00000  0.0% 1 0 0 MFlops 
+               [181] writeToFile 0.00002  0.0% 1 0 0 MFlops 
+               [202] setGroup 0.00001  0.0% 1 0 0 MFlops 
+               [240] calc minimum in outputGhost 0.00000  0.0% 1 0 0 MFlops 
+         [114] CloseFile 0.00037  0.1% 1 0 0 MFlops 
+         [123] Barrier 0.00020  0.1% 2 0 0 MFlops 
+      [128] PrChUtilities::setupGridsWithTagLocation 0.00016  0.1% 1 0 0 MFlops 
+         [170] setupGrids: BaseGridCreation 0.00004  0.0% 1 0 0 MFlops 
+            [192] LoadBalance:VectorBoxEntry 0.00001  0.0% 1 0 0 MFlops 
+               [227] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+            [194] DisjointBoxLayout::computeNeighbors 0.00001  0.0% 1 0 0 MFlops 
+            [208] BRMeshRefine::domainSplit 0.00000  0.0% 1 0 0 MFlops 
+      [150] setRHS 0.00007  0.0% 1 0 0 MFlops 
+      [205] ~LayoutData 0.00000  0.0% 2 0 0 MFlops 
+      [229] ~Copier 0.00000  0.0% 2 0 0 MFlops 
+      [230] ~BoxLayoutData 0.00000  0.0% 2 0 0 MFlops 
+         [238] completePendingSends 0.00000  0.0% 2 0 0 MFlops 
+      [237] ~LevelData 0.00000  0.0% 2 0 0 MFlops 
+stack top 0x51c305, stack bottom 0x51bd39, stack size =    0.001 MB 
+[239] AMRMultiGrid::revert

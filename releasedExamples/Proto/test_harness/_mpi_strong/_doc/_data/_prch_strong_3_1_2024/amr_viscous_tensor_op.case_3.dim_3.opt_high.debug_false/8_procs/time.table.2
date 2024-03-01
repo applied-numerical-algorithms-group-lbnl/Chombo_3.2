@@ -1,0 +1,2063 @@
+-----------
+Timer report 0 (465 timers)
+--------------
+---------------------------------------------------------
+[0]main 7.50801 1
+    99.4%    7.46270        1 runSolver [1] f=0
+    99.4%                  Total 
+---------------------------------------------------------
+[1]runSolver 7.46270 1
+    99.7%    7.43899        1 solveForPhi [2] f=0
+     0.3%    0.02143        1 WriteAMRHierarchyHDF5 [148] f=0
+     0.0%    0.00093        1 setRHS [287] f=0
+     0.0%    0.00093        1 PrChUtilities::setupGridsWithTagLocation [288] f=0
+     0.0%    0.00022        6 ~LayoutData [323] f=0
+     0.0%    0.00000        6 ~BoxLayoutData [443] f=0
+     0.0%    0.00000        6 ~Copier [446] f=0
+     0.0%    0.00000        6 ~LevelData [459] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[2]solveForPhi 7.43899 1
+    99.8%    7.42115        1 AMRMultiGrid::solve [3] f=0
+     0.2%    0.01293        1 PrChUtilities::setupSolver [172] f=0
+     0.0%    0.00144        1 PrChUtilities::getProtoViscousTensorOpFactory [272] f=0
+     0.0%    0.00127        3 defineAndSetCoefficients [276] f=0
+     0.0%    0.00070        1 ~AMRMultiGrid [299] f=0
+     0.0%    0.00051        3 PrChUtilities::copyToDevice-Cell [302] f=0
+     0.0%    0.00051        3 PrChUtilities::copyToHost [303] f=0
+     0.0%    0.00014        9 ~LayoutData [333] f=0
+     0.0%    0.00001        3 PrChUtilities::getProtoLayout [404] f=0
+     0.0%    0.00000       15 ~Copier [439] f=0
+     0.0%    0.00000        9 ~BoxLayoutData [440] f=0
+     0.0%    0.00000        9 ~LevelData [458] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[3]AMRMultiGrid::solve 7.42115 1
+    100.0%    7.42104        1 AMRMultiGrid::solveNoInit [4] f=0
+     0.0%    0.00012        1 AMRMultiGrid::init [341] f=0
+     0.0%    0.00000        1 AMRMultiGrid::revert [457] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[4]AMRMultiGrid::solveNoInit 7.42104 1
+    100.0%    7.42093        1 AMRMultiGrid::solveNo-InitResid [5] f=0
+     0.0%    0.00001        3 Base_Proto_AMRLevelOp::create [395] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[5]AMRMultiGrid::solveNo-InitResid 7.42093 1
+    91.7%    6.80253       14 AMRMultiGrid::AMRVcycle [6] f=0
+     7.4%    0.54994       14 AMRMultiGrid::computeAMRResidual [27] f=0
+     0.8%    0.06180        1 Initial AMR Residual [100] f=0
+     0.0%    0.00233       42 Base_Simplified_AMRLevelOp::incr [249] f=0
+     0.0%    0.00099        3 uberCorrection creation [282] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[6]AMRMultiGrid::AMRVcycle 6.80253 14
+    73.6%    5.00869       14 Multigrid::oneCycle [7] f=0
+    15.2%    1.03147       56 AMRMultiGrid::relax [17] f=0
+     7.7%    0.52617       28 AMRMultiGrid<T>::computeAMRResidualLevel [30] f=0
+     1.5%    0.10363       28 Base_Simplified_AMRLevelOp::AMRRestrict [79] f=0
+     1.0%    0.06509       98 Base_Proto_AMRLevelOp::assign [99] f=0
+     0.8%    0.05743       28 Base_Simplified_AMRLevelOp::AMRUpdateResidual [103] f=0
+     0.1%    0.00399       28 Base_Simplified_AMRLevelOp::AMRProlong [224] f=0
+     0.0%    0.00232       70 Base_Simplified_AMRLevelOp::incr [252] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[7]Multigrid::oneCycle 5.00869 14
+    100.0%    5.00868       14 Multigrid::cycle [8] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[8]Multigrid::cycle 5.00868 14
+    62.5%    3.12858       28 Pr_Viscous_Tensor::relax [9] f=0
+    33.5%    1.67707       14 Multigrid::cycle [14] f=0
+     3.9%    0.19698       14 Base_Simplified_AMRLevelOp::restrictResidual [53] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[9]Pr_Viscous_Tensor::relax 3.12858 28
+    99.0%    3.09702      224 Base_Simplified_AMRLevelOp::residual [10] f=0
+     0.0%    0.00041       28 Base_Proto_AMRLevelOp::create [307] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[10]Base_Simplified_AMRLevelOp::residual 3.09702 224
+    97.4%    3.01546      224 Base_Simplified_AMRLevelOp::applyOp [11] f=0
+     1.7%    0.05349      224 Proto_Viscous_Tensor::axby [112] f=0
+     0.2%    0.00513      224 Base_Proto_AMRLevelOp::create [216] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[11]Base_Simplified_AMRLevelOp::applyOp 3.01546 224
+    84.8%    2.55792      224 Proto_Viscous_Tensor_Op::applyOperator [12] f=0
+     9.8%    0.29679      224 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [45] f=0
+     5.3%    0.16009      224 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [60] f=0
+     0.0%    0.00018      224 Base_Proto_AMRLevelOp::getDomainFromData [329] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[12]Proto_Viscous_Tensor_Op::applyOperator 2.55792 224
+    72.5%    1.85454      672 Pr_Viscous_Tensor::getDivergenceIcrement [13] f=0
+    16.8%    0.43040      224 Proto_Viscous_Tensor::computeCCGradientLevel [39] f=0
+    89.3%                  Total 
+---------------------------------------------------------
+[13]Pr_Viscous_Tensor::getDivergenceIcrement 1.85454 672
+    85.1%    1.57750      672 Proto_Viscous_Tensor::getFluxDotNormal [15] f=0
+    85.1%                  Total 
+---------------------------------------------------------
+[14]Multigrid::cycle 1.67707 14
+    58.0%    0.97240       14 Multigrid::cycle [21] f=0
+    39.5%    0.66207       28 Pr_Viscous_Tensor::relax [24] f=0
+     2.5%    0.04128       14 Base_Simplified_AMRLevelOp::restrictResidual [120] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[15]Proto_Viscous_Tensor::getFluxDotNormal 1.57750 672
+    88.7%    1.39983      672 Proto_Viscous_Tensor::getFaceDivAndGrad [16] f=0
+    88.7%                  Total 
+---------------------------------------------------------
+[16]Proto_Viscous_Tensor::getFaceDivAndGrad 1.39983 672
+---------------------------------------------------------
+[17]AMRMultiGrid::relax 1.03147 56
+    100.0%    1.03144       56 Pr_Viscous_Tensor::relax [18] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[18]Pr_Viscous_Tensor::relax 1.03144 56
+    100.0%    1.03132      448 Base_Simplified_AMRLevelOp::residual [19] f=0
+     0.0%    0.00005       56 Base_Proto_AMRLevelOp::create [365] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[19]Base_Simplified_AMRLevelOp::residual 1.03132 448
+    99.9%    1.03053      448 Base_Simplified_AMRLevelOp::applyOp [20] f=0
+     0.0%    0.00041      448 Base_Proto_AMRLevelOp::create [308] f=0
+     0.0%    0.00010      448 Proto_Viscous_Tensor::axby [346] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[20]Base_Simplified_AMRLevelOp::applyOp 1.03053 448
+    90.4%    0.93151      448 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [22] f=0
+     9.5%    0.09821      448 Proto_Viscous_Tensor_Op::applyOperator [85] f=0
+     0.1%    0.00072      448 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [298] f=0
+     0.0%    0.00003      448 Base_Proto_AMRLevelOp::getDomainFromData [371] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[21]Multigrid::cycle 0.97240 14
+    72.2%    0.70192       14 Multigrid::cycle [23] f=0
+    26.1%    0.25384       28 Pr_Viscous_Tensor::relax [49] f=0
+     1.7%    0.01621       14 Base_Simplified_AMRLevelOp::restrictResidual [161] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[22]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.93151 448
+---------------------------------------------------------
+[23]Multigrid::cycle 0.70192 14
+    77.4%    0.54354       14 Multigrid::cycle [28] f=0
+    21.2%    0.14857       28 Pr_Viscous_Tensor::relax [62] f=0
+     1.4%    0.00952       14 Base_Simplified_AMRLevelOp::restrictResidual [187] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[24]Pr_Viscous_Tensor::relax 0.66207 28
+    99.4%    0.65803      224 Base_Simplified_AMRLevelOp::residual [25] f=0
+     0.1%    0.00046       28 Base_Proto_AMRLevelOp::create [305] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[25]Base_Simplified_AMRLevelOp::residual 0.65803 224
+    98.2%    0.64596      224 Base_Simplified_AMRLevelOp::applyOp [26] f=0
+     0.6%    0.00406      224 Proto_Viscous_Tensor::axby [222] f=0
+     0.3%    0.00212      224 Base_Proto_AMRLevelOp::create [257] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[26]Base_Simplified_AMRLevelOp::applyOp 0.64596 224
+    73.9%    0.47767      224 Proto_Viscous_Tensor_Op::applyOperator [33] f=0
+    17.2%    0.11108      224 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [75] f=0
+     8.8%    0.05708      224 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [106] f=0
+     0.0%    0.00003      224 Base_Proto_AMRLevelOp::getDomainFromData [368] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[27]AMRMultiGrid::computeAMRResidual 0.54994 14
+    94.5%    0.51945       42 AMRMultiGrid<T>::computeAMRResidualLevel [31] f=0
+     4.8%    0.02625       42 Base_Proto_AMRLevelOp::norm [143] f=0
+     0.8%    0.00413       28 Base_Proto_AMRLevelOp::assign [221] f=0
+     0.0%    0.00006       14 MPI_Allreduce [362] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[28]Multigrid::cycle 0.54354 14
+    100.0%    0.54354       14 Multigrid::cycle:bottom-solve [29] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[29]Multigrid::cycle:bottom-solve 0.54354 14
+    89.5%    0.48634       14 BiCGStabSolver::solve [32] f=0
+    10.5%    0.05719       14 Pr_Viscous_Tensor::relax [105] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[30]AMRMultiGrid<T>::computeAMRResidualLevel 0.52617 28
+    72.4%    0.38118       14 Base_Simplified_AMRLevelOp::AMRResidualNC [40] f=0
+    27.6%    0.14498       14 Base_Simplified_AMRLevelOp::AMRResidual [65] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[31]AMRMultiGrid<T>::computeAMRResidualLevel 0.51945 42
+    71.3%    0.37019       14 Base_Simplified_AMRLevelOp::AMRResidualNC [42] f=0
+    23.6%    0.12251       14 Base_Simplified_AMRLevelOp::AMRResidual [69] f=0
+     5.1%    0.02671       14 Base_Simplified_AMRLevelOp::AMRResidualNF [141] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[32]BiCGStabSolver::solve 0.48634 14
+    98.0%    0.47676       14 BiCGStabSolver::solve::MainLoop [34] f=0
+     2.0%    0.00950       14 BiCGStabSolver::solve::Initialize [188] f=0
+     0.0%    0.00002       14 BiCGStabSolver::solve::Cleanup [388] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[33]Proto_Viscous_Tensor_Op::applyOperator 0.47767 224
+    73.1%    0.34932      672 Pr_Viscous_Tensor::getDivergenceIcrement [44] f=0
+    24.1%    0.11517      224 Proto_Viscous_Tensor::computeCCGradientLevel [73] f=0
+    97.2%                  Total 
+---------------------------------------------------------
+[34]BiCGStabSolver::solve::MainLoop 0.47676 14
+    97.9%    0.46675       17 Base_Simplified_AMRLevelOp::preCond [35] f=0
+     1.8%    0.00837       17 Base_Simplified_AMRLevelOp::applyOp [194] f=0
+     0.2%    0.00079       14 Base_Proto_AMRLevelOp::assign [296] f=0
+     0.1%    0.00045       34 Base_Proto_AMRLevelOp::createCoarser [306] f=0
+     0.1%    0.00025       17 Base_Proto_AMRLevelOp::norm [319] f=0
+     0.0%    0.00004       34 Base_Simplified_AMRLevelOp::incr [367] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[35]Base_Simplified_AMRLevelOp::preCond 0.46675 17
+    100.0%    0.46675       17 Pr_Viscous_Tensor::relax [36] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[36]Pr_Viscous_Tensor::relax 0.46675 17
+    99.8%    0.46584      918 Base_Simplified_AMRLevelOp::residual [37] f=0
+     0.0%    0.00015       17 Base_Proto_AMRLevelOp::create [332] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[37]Base_Simplified_AMRLevelOp::residual 0.46584 918
+    97.2%    0.45300      918 Base_Simplified_AMRLevelOp::applyOp [38] f=0
+     1.7%    0.00806      918 Base_Proto_AMRLevelOp::create [197] f=0
+     0.2%    0.00094      918 Proto_Viscous_Tensor::axby [285] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[38]Base_Simplified_AMRLevelOp::applyOp 0.45300 918
+    64.4%    0.29193      918 Proto_Viscous_Tensor_Op::applyOperator [47] f=0
+    23.7%    0.10756      918 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [77] f=0
+    11.8%    0.05326      918 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [114] f=0
+     0.0%    0.00006      918 Base_Proto_AMRLevelOp::getDomainFromData [358] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[39]Proto_Viscous_Tensor::computeCCGradientLevel 0.43040 224
+    56.6%    0.24380      224 Proto_Viscous_Tensor::computeCCGradient [52] f=0
+    56.6%                  Total 
+---------------------------------------------------------
+[40]Base_Simplified_AMRLevelOp::AMRResidualNC 0.38118 14
+    99.2%    0.37829       14 Base_Simplified_AMRLevelOp::AMROperatorNC [41] f=0
+     0.8%    0.00288       14 Proto_Viscous_Tensor::axby [243] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[41]Base_Simplified_AMRLevelOp::AMROperatorNC 0.37829 14
+    37.5%    0.14199       14 Proto_Viscous_Tensor_Op::applyOperator [68] f=0
+    26.5%    0.10021       42 Proto_Viscous_Tensor::getFlux [82] f=0
+     9.9%    0.03734       42 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [127] f=0
+     8.1%    0.03079       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [134] f=0
+     6.6%    0.02497       14 PrChFluxRegister::setFineFlux [144] f=0
+     6.3%    0.02399       14 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [146] f=0
+     1.1%    0.00405       14 PrChFluxRegister::setCoarFlux [223] f=0
+     0.1%    0.00031       14 PrChFluxRegister constructor [315] f=0
+     0.1%    0.00022       14 PrChFluxRegister::reflux [324] f=0
+     0.0%    0.00002       42 Base_Proto_AMRLevelOp::getDomainFromData [387] f=0
+     0.0%    0.00000       14 PrChFluxRegister destructor [451] f=0
+    96.2%                  Total 
+---------------------------------------------------------
+[42]Base_Simplified_AMRLevelOp::AMRResidualNC 0.37019 14
+    99.2%    0.36706       14 Base_Simplified_AMRLevelOp::AMROperatorNC [43] f=0
+     0.8%    0.00311       14 Proto_Viscous_Tensor::axby [237] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[43]Base_Simplified_AMRLevelOp::AMROperatorNC 0.36706 14
+    39.8%    0.14610       14 Proto_Viscous_Tensor_Op::applyOperator [64] f=0
+    27.4%    0.10063       42 Proto_Viscous_Tensor::getFlux [80] f=0
+    10.1%    0.03697       42 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [128] f=0
+     7.6%    0.02791       14 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [137] f=0
+     6.7%    0.02472       14 PrChFluxRegister::setFineFlux [145] f=0
+     3.0%    0.01102       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [178] f=0
+     1.1%    0.00398       14 PrChFluxRegister::setCoarFlux [225] f=0
+     0.1%    0.00031       14 PrChFluxRegister constructor [314] f=0
+     0.1%    0.00022       14 PrChFluxRegister::reflux [325] f=0
+     0.0%    0.00002       42 Base_Proto_AMRLevelOp::getDomainFromData [385] f=0
+     0.0%    0.00000       14 PrChFluxRegister destructor [454] f=0
+    95.9%                  Total 
+---------------------------------------------------------
+[44]Pr_Viscous_Tensor::getDivergenceIcrement 0.34932 672
+    85.0%    0.29677      672 Proto_Viscous_Tensor::getFluxDotNormal [46] f=0
+    85.0%                  Total 
+---------------------------------------------------------
+[45]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.29679 224
+---------------------------------------------------------
+[46]Proto_Viscous_Tensor::getFluxDotNormal 0.29677 672
+    91.2%    0.27068      672 Proto_Viscous_Tensor::getFaceDivAndGrad [48] f=0
+    91.2%                  Total 
+---------------------------------------------------------
+[47]Proto_Viscous_Tensor_Op::applyOperator 0.29193 918
+    59.4%    0.17327     2754 Pr_Viscous_Tensor::getDivergenceIcrement [56] f=0
+    39.5%    0.11535      918 Proto_Viscous_Tensor::computeCCGradientLevel [72] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[48]Proto_Viscous_Tensor::getFaceDivAndGrad 0.27068 672
+---------------------------------------------------------
+[49]Pr_Viscous_Tensor::relax 0.25384 28
+    99.6%    0.25272      224 Base_Simplified_AMRLevelOp::residual [50] f=0
+     0.1%    0.00026       28 Base_Proto_AMRLevelOp::create [318] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[50]Base_Simplified_AMRLevelOp::residual 0.25272 224
+    97.9%    0.24732      224 Base_Simplified_AMRLevelOp::applyOp [51] f=0
+     0.8%    0.00203      224 Base_Proto_AMRLevelOp::create [259] f=0
+     0.4%    0.00093      224 Proto_Viscous_Tensor::axby [286] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[51]Base_Simplified_AMRLevelOp::applyOp 0.24732 224
+    66.5%    0.16451      224 Proto_Viscous_Tensor_Op::applyOperator [57] f=0
+    21.6%    0.05340      224 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [113] f=0
+    11.9%    0.02933      224 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [136] f=0
+     0.0%    0.00002      224 Base_Proto_AMRLevelOp::getDomainFromData [386] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[52]Proto_Viscous_Tensor::computeCCGradient 0.24380 224
+---------------------------------------------------------
+[53]Base_Simplified_AMRLevelOp::restrictResidual 0.19698 14
+    98.3%    0.19365       14 Base_Simplified_AMRLevelOp::residual [54] f=0
+     0.2%    0.00036       14 Base_Proto_AMRLevelOp::create [309] f=0
+    98.5%                  Total 
+---------------------------------------------------------
+[54]Base_Simplified_AMRLevelOp::residual 0.19365 14
+    97.5%    0.18886       14 Base_Simplified_AMRLevelOp::applyOp [55] f=0
+     1.7%    0.00330       14 Proto_Viscous_Tensor::axby [229] f=0
+     0.1%    0.00013       14 Base_Proto_AMRLevelOp::create [337] f=0
+    99.3%                  Total 
+---------------------------------------------------------
+[55]Base_Simplified_AMRLevelOp::applyOp 0.18886 14
+    84.8%    0.16021       14 Proto_Viscous_Tensor_Op::applyOperator [59] f=0
+     9.8%    0.01855       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [157] f=0
+     5.3%    0.01005       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [182] f=0
+     0.0%    0.00001       14 Base_Proto_AMRLevelOp::getDomainFromData [399] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[56]Pr_Viscous_Tensor::getDivergenceIcrement 0.17327 2754
+    92.5%    0.16027     2754 Proto_Viscous_Tensor::getFluxDotNormal [58] f=0
+    92.5%                  Total 
+---------------------------------------------------------
+[57]Proto_Viscous_Tensor_Op::applyOperator 0.16451 224
+    65.8%    0.10830      672 Pr_Viscous_Tensor::getDivergenceIcrement [76] f=0
+    32.4%    0.05325      224 Proto_Viscous_Tensor::computeCCGradientLevel [115] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[58]Proto_Viscous_Tensor::getFluxDotNormal 0.16027 2754
+    94.8%    0.15198     2754 Proto_Viscous_Tensor::getFaceDivAndGrad [61] f=0
+    94.8%                  Total 
+---------------------------------------------------------
+[59]Proto_Viscous_Tensor_Op::applyOperator 0.16021 14
+    72.3%    0.11588       42 Pr_Viscous_Tensor::getDivergenceIcrement [71] f=0
+    16.9%    0.02706       14 Proto_Viscous_Tensor::computeCCGradientLevel [140] f=0
+    89.2%                  Total 
+---------------------------------------------------------
+[60]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.16009 224
+---------------------------------------------------------
+[61]Proto_Viscous_Tensor::getFaceDivAndGrad 0.15198 2754
+---------------------------------------------------------
+[62]Pr_Viscous_Tensor::relax 0.14857 28
+    99.6%    0.14798      224 Base_Simplified_AMRLevelOp::residual [63] f=0
+     0.2%    0.00027       28 Base_Proto_AMRLevelOp::create [317] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[63]Base_Simplified_AMRLevelOp::residual 0.14798 224
+    97.6%    0.14442      224 Base_Simplified_AMRLevelOp::applyOp [67] f=0
+     1.3%    0.00199      224 Base_Proto_AMRLevelOp::create [260] f=0
+     0.2%    0.00035      224 Proto_Viscous_Tensor::axby [311] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[64]Proto_Viscous_Tensor_Op::applyOperator 0.14610 14
+    76.2%    0.11128       42 Pr_Viscous_Tensor::getDivergenceIcrement [74] f=0
+    18.6%    0.02723       14 Proto_Viscous_Tensor::computeCCGradientLevel [139] f=0
+    94.8%                  Total 
+---------------------------------------------------------
+[65]Base_Simplified_AMRLevelOp::AMRResidual 0.14498 14
+    100.0%    0.14497       14 Base_Simplified_AMRLevelOp::AMROperator [66] f=0
+     0.0%    0.00000       14 Proto_Viscous_Tensor::axby [418] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[66]Base_Simplified_AMRLevelOp::AMROperator 0.14497 14
+    65.0%    0.09417       28 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [88] f=0
+    27.6%    0.03998       14 PrChFluxRegister::setFineFlux [125] f=0
+     4.9%    0.00709       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [204] f=0
+     2.2%    0.00314       14 Proto_Viscous_Tensor_Op::applyOperator [235] f=0
+     0.0%    0.00007       42 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [357] f=0
+     0.0%    0.00005       14 PrChFluxRegister constructor [366] f=0
+     0.0%    0.00002       14 PrChFluxRegister::setCoarFlux [377] f=0
+     0.0%    0.00001       14 PrChFluxRegister::reflux [402] f=0
+     0.0%    0.00000       42 Base_Proto_AMRLevelOp::getDomainFromData [420] f=0
+     0.0%    0.00000       14 PrChFluxRegister destructor [453] f=0
+    99.7%                  Total 
+---------------------------------------------------------
+[67]Base_Simplified_AMRLevelOp::applyOp 0.14442 224
+    62.4%    0.09005      224 Proto_Viscous_Tensor_Op::applyOperator [91] f=0
+    23.7%    0.03420      224 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [132] f=0
+    13.9%    0.02010      224 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [152] f=0
+     0.0%    0.00002      224 Base_Proto_AMRLevelOp::getDomainFromData [390] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[68]Proto_Viscous_Tensor_Op::applyOperator 0.14199 14
+    75.6%    0.10733       42 Pr_Viscous_Tensor::getDivergenceIcrement [78] f=0
+    19.3%    0.02735       14 Proto_Viscous_Tensor::computeCCGradientLevel [138] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[69]Base_Simplified_AMRLevelOp::AMRResidual 0.12251 14
+    100.0%    0.12250       14 Base_Simplified_AMRLevelOp::AMROperator [70] f=0
+     0.0%    0.00000       14 Proto_Viscous_Tensor::axby [419] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[70]Base_Simplified_AMRLevelOp::AMROperator 0.12250 14
+    58.1%    0.07114       28 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [98] f=0
+    32.9%    0.04026       14 PrChFluxRegister::setFineFlux [124] f=0
+     5.8%    0.00715       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [202] f=0
+     2.6%    0.00323       14 Proto_Viscous_Tensor_Op::applyOperator [231] f=0
+     0.1%    0.00009       42 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [350] f=0
+     0.1%    0.00006       14 PrChFluxRegister constructor [361] f=0
+     0.0%    0.00003       42 Base_Proto_AMRLevelOp::getDomainFromData [376] f=0
+     0.0%    0.00002       14 PrChFluxRegister::setCoarFlux [384] f=0
+     0.0%    0.00001       14 PrChFluxRegister::reflux [401] f=0
+     0.0%    0.00000       14 PrChFluxRegister destructor [455] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[71]Pr_Viscous_Tensor::getDivergenceIcrement 0.11588 42
+    85.1%    0.09866       42 Proto_Viscous_Tensor::getFluxDotNormal [84] f=0
+    85.1%                  Total 
+---------------------------------------------------------
+[72]Proto_Viscous_Tensor::computeCCGradientLevel 0.11535 918
+     9.7%    0.01120      918 Proto_Viscous_Tensor::computeCCGradient [176] f=0
+     9.7%                  Total 
+---------------------------------------------------------
+[73]Proto_Viscous_Tensor::computeCCGradientLevel 0.11517 224
+    40.5%    0.04659      224 Proto_Viscous_Tensor::computeCCGradient [119] f=0
+    40.5%                  Total 
+---------------------------------------------------------
+[74]Pr_Viscous_Tensor::getDivergenceIcrement 0.11128 42
+    84.3%    0.09385       42 Proto_Viscous_Tensor::getFluxDotNormal [89] f=0
+    84.3%                  Total 
+---------------------------------------------------------
+[75]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.11108 224
+---------------------------------------------------------
+[76]Pr_Viscous_Tensor::getDivergenceIcrement 0.10830 672
+    87.8%    0.09510      672 Proto_Viscous_Tensor::getFluxDotNormal [87] f=0
+    87.8%                  Total 
+---------------------------------------------------------
+[77]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.10756 918
+---------------------------------------------------------
+[78]Pr_Viscous_Tensor::getDivergenceIcrement 0.10733 42
+    83.9%    0.09008       42 Proto_Viscous_Tensor::getFluxDotNormal [90] f=0
+    83.9%                  Total 
+---------------------------------------------------------
+[79]Base_Simplified_AMRLevelOp::AMRRestrict 0.10363 28
+    53.6%    0.05557       28 Base_Simplified_AMRLevelOp::AMRResidualNF [108] f=0
+    46.3%    0.04793       28 Base_Proto_AMRLevelOp::copyTo [117] f=0
+     0.1%    0.00006       28 Base_Proto_AMRLevelOp::create [364] f=0
+     0.0%    0.00003       28 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [374] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[80]Proto_Viscous_Tensor::getFlux 0.10063 42
+    99.9%    0.10054       42 Proto_Viscous_Tensor::getFluxDotNormal [81] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[81]Proto_Viscous_Tensor::getFluxDotNormal 0.10054 42
+    86.5%    0.08700       42 Proto_Viscous_Tensor::getFaceDivAndGrad [94] f=0
+    86.5%                  Total 
+---------------------------------------------------------
+[82]Proto_Viscous_Tensor::getFlux 0.10021 42
+    99.9%    0.10012       42 Proto_Viscous_Tensor::getFluxDotNormal [83] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[83]Proto_Viscous_Tensor::getFluxDotNormal 0.10012 42
+    86.6%    0.08672       42 Proto_Viscous_Tensor::getFaceDivAndGrad [95] f=0
+    86.6%                  Total 
+---------------------------------------------------------
+[84]Proto_Viscous_Tensor::getFluxDotNormal 0.09866 42
+    88.8%    0.08757       42 Proto_Viscous_Tensor::getFaceDivAndGrad [93] f=0
+    88.8%                  Total 
+---------------------------------------------------------
+[85]Proto_Viscous_Tensor_Op::applyOperator 0.09821 448
+    99.9%    0.09810      448 Proto_Viscous_Tensor::computeCCGradientLevel [86] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[86]Proto_Viscous_Tensor::computeCCGradientLevel 0.09810 448
+---------------------------------------------------------
+[87]Proto_Viscous_Tensor::getFluxDotNormal 0.09510 672
+    92.1%    0.08757      672 Proto_Viscous_Tensor::getFaceDivAndGrad [92] f=0
+    92.1%                  Total 
+---------------------------------------------------------
+[88]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.09417 28
+---------------------------------------------------------
+[89]Proto_Viscous_Tensor::getFluxDotNormal 0.09385 42
+    90.9%    0.08532       42 Proto_Viscous_Tensor::getFaceDivAndGrad [96] f=0
+    90.9%                  Total 
+---------------------------------------------------------
+[90]Proto_Viscous_Tensor::getFluxDotNormal 0.09008 42
+    90.5%    0.08154       42 Proto_Viscous_Tensor::getFaceDivAndGrad [97] f=0
+    90.5%                  Total 
+---------------------------------------------------------
+[91]Proto_Viscous_Tensor_Op::applyOperator 0.09005 224
+    61.7%    0.05556      672 Pr_Viscous_Tensor::getDivergenceIcrement [109] f=0
+    36.9%    0.03318      224 Proto_Viscous_Tensor::computeCCGradientLevel [133] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[92]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08757 672
+---------------------------------------------------------
+[93]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08757 42
+---------------------------------------------------------
+[94]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08700 42
+---------------------------------------------------------
+[95]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08672 42
+---------------------------------------------------------
+[96]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08532 42
+---------------------------------------------------------
+[97]Proto_Viscous_Tensor::getFaceDivAndGrad 0.08154 42
+---------------------------------------------------------
+[98]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.07114 28
+---------------------------------------------------------
+[99]Base_Proto_AMRLevelOp::assign 0.06509 98
+---------------------------------------------------------
+[100]Initial AMR Residual 0.06180 1
+    100.0%    0.06180        1 AMRMultiGrid::computeAMRResidual [101] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[101]AMRMultiGrid::computeAMRResidual 0.06180 1
+    95.1%    0.05877        3 AMRMultiGrid<T>::computeAMRResidualLevel [102] f=0
+     3.1%    0.00193        3 Base_Proto_AMRLevelOp::norm [264] f=0
+     1.8%    0.00109        2 Base_Proto_AMRLevelOp::assign [279] f=0
+     0.0%    0.00000        1 MPI_Allreduce [417] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[102]AMRMultiGrid<T>::computeAMRResidualLevel 0.05877 3
+    69.2%    0.04065        1 Base_Simplified_AMRLevelOp::AMRResidualNC [121] f=0
+    27.5%    0.01615        1 Base_Simplified_AMRLevelOp::AMRResidual [162] f=0
+     3.3%    0.00197        1 Base_Simplified_AMRLevelOp::AMRResidualNF [262] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[103]Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.05743 28
+    99.9%    0.05738       28 Base_Simplified_AMRLevelOp::AMROperatorNF [104] f=0
+     0.0%    0.00003       28 Base_Proto_AMRLevelOp::create [375] f=0
+     0.0%    0.00001       28 Proto_Viscous_Tensor::axby [410] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[104]Base_Simplified_AMRLevelOp::AMROperatorNF 0.05738 28
+    64.0%    0.03674       28 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [129] f=0
+    35.8%    0.02053       28 Proto_Viscous_Tensor_Op::applyOperator [150] f=0
+     0.1%    0.00006       28 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [360] f=0
+     0.0%    0.00002       28 Base_Proto_AMRLevelOp::getDomainFromData [389] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[105]Pr_Viscous_Tensor::relax 0.05719 14
+    99.6%    0.05696      112 Base_Simplified_AMRLevelOp::residual [107] f=0
+     0.2%    0.00013       14 Base_Proto_AMRLevelOp::create [336] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[106]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.05708 224
+---------------------------------------------------------
+[107]Base_Simplified_AMRLevelOp::residual 0.05696 112
+    97.3%    0.05540      112 Base_Simplified_AMRLevelOp::applyOp [111] f=0
+     1.7%    0.00099      112 Base_Proto_AMRLevelOp::create [281] f=0
+     0.2%    0.00012      112 Proto_Viscous_Tensor::axby [345] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[108]Base_Simplified_AMRLevelOp::AMRResidualNF 0.05557 28
+    100.0%    0.05555       28 Base_Simplified_AMRLevelOp::AMROperatorNF [110] f=0
+     0.0%    0.00001       28 Proto_Viscous_Tensor::axby [408] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[109]Pr_Viscous_Tensor::getDivergenceIcrement 0.05556 672
+    90.5%    0.05029      672 Proto_Viscous_Tensor::getFluxDotNormal [116] f=0
+    90.5%                  Total 
+---------------------------------------------------------
+[110]Base_Simplified_AMRLevelOp::AMROperatorNF 0.05555 28
+    63.6%    0.03536       28 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [131] f=0
+    36.1%    0.02007       28 Proto_Viscous_Tensor_Op::applyOperator [153] f=0
+     0.1%    0.00006       28 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [359] f=0
+     0.0%    0.00002       28 Base_Proto_AMRLevelOp::getDomainFromData [378] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[111]Base_Simplified_AMRLevelOp::applyOp 0.05540 112
+    64.6%    0.03577      112 Proto_Viscous_Tensor_Op::applyOperator [130] f=0
+    23.7%    0.01316      112 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [171] f=0
+    11.6%    0.00644      112 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [209] f=0
+     0.0%    0.00001      112 Base_Proto_AMRLevelOp::getDomainFromData [405] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[112]Proto_Viscous_Tensor::axby 0.05349 224
+---------------------------------------------------------
+[113]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.05340 224
+---------------------------------------------------------
+[114]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.05326 918
+---------------------------------------------------------
+[115]Proto_Viscous_Tensor::computeCCGradientLevel 0.05325 224
+    22.1%    0.01179      224 Proto_Viscous_Tensor::computeCCGradient [174] f=0
+    22.1%                  Total 
+---------------------------------------------------------
+[116]Proto_Viscous_Tensor::getFluxDotNormal 0.05029 672
+    93.8%    0.04718      672 Proto_Viscous_Tensor::getFaceDivAndGrad [118] f=0
+    93.8%                  Total 
+---------------------------------------------------------
+[117]Base_Proto_AMRLevelOp::copyTo 0.04793 28
+---------------------------------------------------------
+[118]Proto_Viscous_Tensor::getFaceDivAndGrad 0.04718 672
+---------------------------------------------------------
+[119]Proto_Viscous_Tensor::computeCCGradient 0.04659 224
+---------------------------------------------------------
+[120]Base_Simplified_AMRLevelOp::restrictResidual 0.04128 14
+    97.8%    0.04037       14 Base_Simplified_AMRLevelOp::residual [123] f=0
+     0.3%    0.00013       14 Base_Proto_AMRLevelOp::create [334] f=0
+    98.1%                  Total 
+---------------------------------------------------------
+[121]Base_Simplified_AMRLevelOp::AMRResidualNC 0.04065 1
+    99.5%    0.04044        1 Base_Simplified_AMRLevelOp::AMROperatorNC [122] f=0
+     0.5%    0.00021        1 Proto_Viscous_Tensor::axby [326] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[122]Base_Simplified_AMRLevelOp::AMROperatorNC 0.04044 1
+    34.7%    0.01402        1 Proto_Viscous_Tensor_Op::applyOperator [170] f=0
+    20.3%    0.00822        1 PrChFluxRegister::setFineFlux [195] f=0
+    18.4%    0.00745        3 Proto_Viscous_Tensor::getFlux [199] f=0
+    10.3%    0.00418        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [220] f=0
+     6.8%    0.00275        3 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [246] f=0
+     5.6%    0.00226        1 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [254] f=0
+     1.3%    0.00051        1 PrChFluxRegister::setCoarFlux [304] f=0
+     0.1%    0.00003        1 PrChFluxRegister constructor [370] f=0
+     0.0%    0.00002        1 PrChFluxRegister::reflux [391] f=0
+     0.0%    0.00000        3 Base_Proto_AMRLevelOp::getDomainFromData [423] f=0
+     0.0%    0.00000        1 PrChFluxRegister destructor [463] f=0
+    97.5%                  Total 
+---------------------------------------------------------
+[123]Base_Simplified_AMRLevelOp::residual 0.04037 14
+    98.2%    0.03963       14 Base_Simplified_AMRLevelOp::applyOp [126] f=0
+     0.6%    0.00025       14 Proto_Viscous_Tensor::axby [320] f=0
+     0.3%    0.00012       14 Base_Proto_AMRLevelOp::create [340] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[124]PrChFluxRegister::setFineFlux 0.04026 14
+---------------------------------------------------------
+[125]PrChFluxRegister::setFineFlux 0.03998 14
+---------------------------------------------------------
+[126]Base_Simplified_AMRLevelOp::applyOp 0.03963 14
+    74.8%    0.02964       14 Proto_Viscous_Tensor_Op::applyOperator [135] f=0
+    17.4%    0.00691       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [207] f=0
+     7.8%    0.00307       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [238] f=0
+     0.0%    0.00000       14 Base_Proto_AMRLevelOp::getDomainFromData [433] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[127]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03734 42
+---------------------------------------------------------
+[128]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03697 42
+---------------------------------------------------------
+[129]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.03674 28
+---------------------------------------------------------
+[130]Proto_Viscous_Tensor_Op::applyOperator 0.03577 112
+    59.2%    0.02120      336 Pr_Viscous_Tensor::getDivergenceIcrement [149] f=0
+    39.6%    0.01416      112 Proto_Viscous_Tensor::computeCCGradientLevel [169] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[131]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.03536 28
+---------------------------------------------------------
+[132]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03420 224
+---------------------------------------------------------
+[133]Proto_Viscous_Tensor::computeCCGradientLevel 0.03318 224
+    13.4%    0.00444      224 Proto_Viscous_Tensor::computeCCGradient [219] f=0
+    13.4%                  Total 
+---------------------------------------------------------
+[134]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.03079 14
+---------------------------------------------------------
+[135]Proto_Viscous_Tensor_Op::applyOperator 0.02964 14
+    73.4%    0.02176       42 Pr_Viscous_Tensor::getDivergenceIcrement [147] f=0
+    23.8%    0.00706       14 Proto_Viscous_Tensor::computeCCGradientLevel [205] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[136]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02933 224
+---------------------------------------------------------
+[137]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.02791 14
+---------------------------------------------------------
+[138]Proto_Viscous_Tensor::computeCCGradientLevel 0.02735 14
+    55.3%    0.01513       14 Proto_Viscous_Tensor::computeCCGradient [168] f=0
+    55.3%                  Total 
+---------------------------------------------------------
+[139]Proto_Viscous_Tensor::computeCCGradientLevel 0.02723 14
+    55.7%    0.01517       14 Proto_Viscous_Tensor::computeCCGradient [166] f=0
+    55.7%                  Total 
+---------------------------------------------------------
+[140]Proto_Viscous_Tensor::computeCCGradientLevel 0.02706 14
+    56.0%    0.01515       14 Proto_Viscous_Tensor::computeCCGradient [167] f=0
+    56.0%                  Total 
+---------------------------------------------------------
+[141]Base_Simplified_AMRLevelOp::AMRResidualNF 0.02671 14
+    100.0%    0.02671       14 Base_Simplified_AMRLevelOp::AMROperatorNF [142] f=0
+     0.0%    0.00000       14 Proto_Viscous_Tensor::axby [416] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[142]Base_Simplified_AMRLevelOp::AMROperatorNF 0.02671 14
+    62.4%    0.01665       14 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [160] f=0
+    37.5%    0.01002       14 Proto_Viscous_Tensor_Op::applyOperator [183] f=0
+     0.1%    0.00002       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [380] f=0
+     0.0%    0.00000       14 Base_Proto_AMRLevelOp::getDomainFromData [438] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[143]Base_Proto_AMRLevelOp::norm 0.02625 42
+---------------------------------------------------------
+[144]PrChFluxRegister::setFineFlux 0.02497 14
+---------------------------------------------------------
+[145]PrChFluxRegister::setFineFlux 0.02472 14
+---------------------------------------------------------
+[146]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.02399 14
+---------------------------------------------------------
+[147]Pr_Viscous_Tensor::getDivergenceIcrement 0.02176 42
+    84.9%    0.01847       42 Proto_Viscous_Tensor::getFluxDotNormal [158] f=0
+    84.9%                  Total 
+---------------------------------------------------------
+[148]WriteAMRHierarchyHDF5 0.02143 1
+    45.5%    0.00976        1 WriteFile [186] f=0
+    29.0%    0.00621        1 CreateFile [210] f=0
+    20.9%    0.00449        2 Barrier [218] f=0
+     4.3%    0.00092        1 CloseFile [289] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[149]Pr_Viscous_Tensor::getDivergenceIcrement 0.02120 336
+    92.5%    0.01961      336 Proto_Viscous_Tensor::getFluxDotNormal [155] f=0
+    92.5%                  Total 
+---------------------------------------------------------
+[150]Proto_Viscous_Tensor_Op::applyOperator 0.02053 28
+    99.9%    0.02051       28 Proto_Viscous_Tensor::computeCCGradientLevel [151] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[151]Proto_Viscous_Tensor::computeCCGradientLevel 0.02051 28
+---------------------------------------------------------
+[152]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02010 224
+---------------------------------------------------------
+[153]Proto_Viscous_Tensor_Op::applyOperator 0.02007 28
+    99.9%    0.02005       28 Proto_Viscous_Tensor::computeCCGradientLevel [154] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[154]Proto_Viscous_Tensor::computeCCGradientLevel 0.02005 28
+---------------------------------------------------------
+[155]Proto_Viscous_Tensor::getFluxDotNormal 0.01961 336
+    94.9%    0.01860      336 Proto_Viscous_Tensor::getFaceDivAndGrad [156] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[156]Proto_Viscous_Tensor::getFaceDivAndGrad 0.01860 336
+---------------------------------------------------------
+[157]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.01855 14
+---------------------------------------------------------
+[158]Proto_Viscous_Tensor::getFluxDotNormal 0.01847 42
+    91.2%    0.01685       42 Proto_Viscous_Tensor::getFaceDivAndGrad [159] f=0
+    91.2%                  Total 
+---------------------------------------------------------
+[159]Proto_Viscous_Tensor::getFaceDivAndGrad 0.01685 42
+---------------------------------------------------------
+[160]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.01665 14
+---------------------------------------------------------
+[161]Base_Simplified_AMRLevelOp::restrictResidual 0.01621 14
+    97.0%    0.01572       14 Base_Simplified_AMRLevelOp::residual [164] f=0
+     0.8%    0.00013       14 Base_Proto_AMRLevelOp::create [335] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[162]Base_Simplified_AMRLevelOp::AMRResidual 0.01615 1
+    100.0%    0.01615        1 Base_Simplified_AMRLevelOp::AMROperator [163] f=0
+     0.0%    0.00000        1 Proto_Viscous_Tensor::axby [449] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[163]Base_Simplified_AMRLevelOp::AMROperator 0.01615 1
+    68.0%    0.01097        2 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [179] f=0
+    18.1%    0.00292        1 PrChFluxRegister::setFineFlux [241] f=0
+     8.4%    0.00136        1 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [275] f=0
+     5.3%    0.00085        1 Proto_Viscous_Tensor_Op::applyOperator [291] f=0
+     0.0%    0.00001        3 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [412] f=0
+     0.0%    0.00000        1 PrChFluxRegister constructor [415] f=0
+     0.0%    0.00000        3 Base_Proto_AMRLevelOp::getDomainFromData [430] f=0
+     0.0%    0.00000        1 PrChFluxRegister::setCoarFlux [434] f=0
+     0.0%    0.00000        1 PrChFluxRegister::reflux [445] f=0
+     0.0%    0.00000        1 PrChFluxRegister destructor [464] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[164]Base_Simplified_AMRLevelOp::residual 0.01572 14
+    97.9%    0.01539       14 Base_Simplified_AMRLevelOp::applyOp [165] f=0
+     0.7%    0.00012       14 Base_Proto_AMRLevelOp::create [342] f=0
+     0.4%    0.00006       14 Proto_Viscous_Tensor::axby [363] f=0
+    99.0%                  Total 
+---------------------------------------------------------
+[165]Base_Simplified_AMRLevelOp::applyOp 0.01539 14
+    66.4%    0.01021       14 Proto_Viscous_Tensor_Op::applyOperator [181] f=0
+    21.7%    0.00333       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [228] f=0
+    11.9%    0.00184       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [265] f=0
+     0.0%    0.00000       14 Base_Proto_AMRLevelOp::getDomainFromData [436] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[166]Proto_Viscous_Tensor::computeCCGradient 0.01517 14
+---------------------------------------------------------
+[167]Proto_Viscous_Tensor::computeCCGradient 0.01515 14
+---------------------------------------------------------
+[168]Proto_Viscous_Tensor::computeCCGradient 0.01513 14
+---------------------------------------------------------
+[169]Proto_Viscous_Tensor::computeCCGradientLevel 0.01416 112
+     9.7%    0.00137      112 Proto_Viscous_Tensor::computeCCGradient [274] f=0
+     9.7%                  Total 
+---------------------------------------------------------
+[170]Proto_Viscous_Tensor_Op::applyOperator 0.01402 1
+    70.2%    0.00984        3 Pr_Viscous_Tensor::getDivergenceIcrement [185] f=0
+    20.1%    0.00282        1 Proto_Viscous_Tensor::computeCCGradientLevel [244] f=0
+    90.3%                  Total 
+---------------------------------------------------------
+[171]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.01316 112
+---------------------------------------------------------
+[172]PrChUtilities::setupSolver 0.01293 1
+    99.8%    0.01291        1 AMRMultiGrid::define [173] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[173]AMRMultiGrid::define 0.01291 1
+    86.8%    0.01120        3 MultiGrid::define [175] f=0
+    12.8%    0.00165        3 Pr_Viscous_Tensor_Factory_AMRnewOp [268] f=0
+     0.0%    0.00000        6 ~Copier [448] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[174]Proto_Viscous_Tensor::computeCCGradient 0.01179 224
+---------------------------------------------------------
+[175]MultiGrid::define 0.01120 3
+    99.9%    0.01119       13 Pr_Viscous_Tensor_Factory_MGnewOp [177] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[176]Proto_Viscous_Tensor::computeCCGradient 0.01120 918
+---------------------------------------------------------
+[177]Pr_Viscous_Tensor_Factory_MGnewOp 0.01119 13
+    96.8%    0.01083       10 Pr_Viscous_Tensor_Factory_getCoefficients [180] f=0
+     3.1%    0.00034       10 Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op [312] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[178]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01102 14
+---------------------------------------------------------
+[179]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.01097 2
+---------------------------------------------------------
+[180]Pr_Viscous_Tensor_Factory_getCoefficients 0.01083 10
+---------------------------------------------------------
+[181]Proto_Viscous_Tensor_Op::applyOperator 0.01021 14
+    66.2%    0.00677       42 Pr_Viscous_Tensor::getDivergenceIcrement [208] f=0
+    32.0%    0.00326       14 Proto_Viscous_Tensor::computeCCGradientLevel [230] f=0
+    98.2%                  Total 
+---------------------------------------------------------
+[182]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01005 14
+---------------------------------------------------------
+[183]Proto_Viscous_Tensor_Op::applyOperator 0.01002 14
+    100.0%    0.01002       14 Proto_Viscous_Tensor::computeCCGradientLevel [184] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[184]Proto_Viscous_Tensor::computeCCGradientLevel 0.01002 14
+---------------------------------------------------------
+[185]Pr_Viscous_Tensor::getDivergenceIcrement 0.00984 3
+    86.5%    0.00851        3 Proto_Viscous_Tensor::getFluxDotNormal [193] f=0
+    86.5%                  Total 
+---------------------------------------------------------
+[186]WriteFile 0.00976 1
+    92.0%    0.00898        3 Write Level [190] f=0
+    92.0%                  Total 
+---------------------------------------------------------
+[187]Base_Simplified_AMRLevelOp::restrictResidual 0.00952 14
+    96.0%    0.00913       14 Base_Simplified_AMRLevelOp::residual [189] f=0
+     1.3%    0.00012       14 Base_Proto_AMRLevelOp::create [338] f=0
+    97.3%                  Total 
+---------------------------------------------------------
+[188]BiCGStabSolver::solve::Initialize 0.00950 14
+    75.3%    0.00715       14 Base_Simplified_AMRLevelOp::residual [203] f=0
+     9.9%    0.00094      112 Base_Proto_AMRLevelOp::create [284] f=0
+     9.2%    0.00087       14 Base_Proto_AMRLevelOp::assign [290] f=0
+     3.3%    0.00032       14 Base_Proto_AMRLevelOp::norm [313] f=0
+    97.8%                  Total 
+---------------------------------------------------------
+[189]Base_Simplified_AMRLevelOp::residual 0.00913 14
+    97.7%    0.00892       14 Base_Simplified_AMRLevelOp::applyOp [191] f=0
+     1.3%    0.00012       14 Base_Proto_AMRLevelOp::create [344] f=0
+     0.2%    0.00002       14 Proto_Viscous_Tensor::axby [382] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[190]Write Level 0.00898 3
+    97.4%    0.00875        3 write_Level [192] f=0
+     0.9%    0.00008        3 writeToFile [355] f=0
+     0.3%    0.00002        3 setGroup [379] f=0
+     0.0%    0.00000        3 calc minimum in outputGhost [462] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[191]Base_Simplified_AMRLevelOp::applyOp 0.00892 14
+    62.9%    0.00561       14 Proto_Viscous_Tensor_Op::applyOperator [213] f=0
+    23.9%    0.00213       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [256] f=0
+    13.2%    0.00117       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [277] f=0
+     0.0%    0.00000       14 Base_Proto_AMRLevelOp::getDomainFromData [441] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[192]write_Level 0.00875 3
+    92.7%    0.00811        3 linearize_H5Dwrite [196] f=0
+     4.1%    0.00035        3 WriteAttributes [310] f=0
+     1.3%    0.00012        3 H5S_H5D_offsets_create [343] f=0
+     1.0%    0.00008        3 H5Dcreate [353] f=0
+     0.2%    0.00001        3 getOffsets [392] f=0
+     0.1%    0.00001        3 H5S_H5D_offsets_close [400] f=0
+     0.1%    0.00001        3 H5Dclose [409] f=0
+     0.1%    0.00001        3 mallocMT_buffers [411] f=0
+     0.0%    0.00000        3 H5Screate [421] f=0
+     0.0%    0.00000        3 ComputeBufferCapacity [424] f=0
+     0.0%    0.00000        3 H5Sclose [429] f=0
+     0.0%    0.00000        3 freeMT [432] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[193]Proto_Viscous_Tensor::getFluxDotNormal 0.00851 3
+    84.7%    0.00721        3 Proto_Viscous_Tensor::getFaceDivAndGrad [201] f=0
+    84.7%                  Total 
+---------------------------------------------------------
+[194]Base_Simplified_AMRLevelOp::applyOp 0.00837 17
+    64.6%    0.00541       17 Proto_Viscous_Tensor_Op::applyOperator [215] f=0
+    23.7%    0.00199       17 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [261] f=0
+    11.6%    0.00097       17 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [283] f=0
+     0.0%    0.00000       17 Base_Proto_AMRLevelOp::getDomainFromData [437] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[195]PrChFluxRegister::setFineFlux 0.00822 1
+---------------------------------------------------------
+[196]linearize_H5Dwrite 0.00811 3
+    97.4%    0.00791        1 H5Dwrite [198] f=0
+     2.4%    0.00020        1 linearize [328] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[197]Base_Proto_AMRLevelOp::create 0.00806 918
+---------------------------------------------------------
+[198]H5Dwrite 0.00791 1
+---------------------------------------------------------
+[199]Proto_Viscous_Tensor::getFlux 0.00745 3
+    99.9%    0.00744        3 Proto_Viscous_Tensor::getFluxDotNormal [200] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[200]Proto_Viscous_Tensor::getFluxDotNormal 0.00744 3
+    83.3%    0.00620        3 Proto_Viscous_Tensor::getFaceDivAndGrad [211] f=0
+    83.3%                  Total 
+---------------------------------------------------------
+[201]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00721 3
+---------------------------------------------------------
+[202]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00715 14
+---------------------------------------------------------
+[203]Base_Simplified_AMRLevelOp::residual 0.00715 14
+    97.3%    0.00696       14 Base_Simplified_AMRLevelOp::applyOp [206] f=0
+     1.7%    0.00012       14 Base_Proto_AMRLevelOp::create [339] f=0
+     0.2%    0.00001       14 Proto_Viscous_Tensor::axby [393] f=0
+    99.2%                  Total 
+---------------------------------------------------------
+[204]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00709 14
+---------------------------------------------------------
+[205]Proto_Viscous_Tensor::computeCCGradientLevel 0.00706 14
+    41.1%    0.00290       14 Proto_Viscous_Tensor::computeCCGradient [242] f=0
+    41.1%                  Total 
+---------------------------------------------------------
+[206]Base_Simplified_AMRLevelOp::applyOp 0.00696 14
+    64.6%    0.00449       14 Proto_Viscous_Tensor_Op::applyOperator [217] f=0
+    23.7%    0.00165       14 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [269] f=0
+    11.7%    0.00081       14 Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface [295] f=0
+     0.0%    0.00000       14 Base_Proto_AMRLevelOp::getDomainFromData [442] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[207]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00691 14
+---------------------------------------------------------
+[208]Pr_Viscous_Tensor::getDivergenceIcrement 0.00677 42
+    87.8%    0.00594       42 Proto_Viscous_Tensor::getFluxDotNormal [212] f=0
+    87.8%                  Total 
+---------------------------------------------------------
+[209]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00644 112
+---------------------------------------------------------
+[210]CreateFile 0.00621 1
+---------------------------------------------------------
+[211]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00620 3
+---------------------------------------------------------
+[212]Proto_Viscous_Tensor::getFluxDotNormal 0.00594 42
+    92.1%    0.00548       42 Proto_Viscous_Tensor::getFaceDivAndGrad [214] f=0
+    92.1%                  Total 
+---------------------------------------------------------
+[213]Proto_Viscous_Tensor_Op::applyOperator 0.00561 14
+    61.9%    0.00347       42 Pr_Viscous_Tensor::getDivergenceIcrement [227] f=0
+    36.7%    0.00206       14 Proto_Viscous_Tensor::computeCCGradientLevel [258] f=0
+    98.6%                  Total 
+---------------------------------------------------------
+[214]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00548 42
+---------------------------------------------------------
+[215]Proto_Viscous_Tensor_Op::applyOperator 0.00541 17
+    59.2%    0.00320       51 Pr_Viscous_Tensor::getDivergenceIcrement [233] f=0
+    39.7%    0.00215       17 Proto_Viscous_Tensor::computeCCGradientLevel [255] f=0
+    98.9%                  Total 
+---------------------------------------------------------
+[216]Base_Proto_AMRLevelOp::create 0.00513 224
+---------------------------------------------------------
+[217]Proto_Viscous_Tensor_Op::applyOperator 0.00449 14
+    59.1%    0.00265       42 Pr_Viscous_Tensor::getDivergenceIcrement [247] f=0
+    39.8%    0.00179       14 Proto_Viscous_Tensor::computeCCGradientLevel [266] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[218]Barrier 0.00449 2
+---------------------------------------------------------
+[219]Proto_Viscous_Tensor::computeCCGradient 0.00444 224
+---------------------------------------------------------
+[220]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00418 1
+---------------------------------------------------------
+[221]Base_Proto_AMRLevelOp::assign 0.00413 28
+---------------------------------------------------------
+[222]Proto_Viscous_Tensor::axby 0.00406 224
+---------------------------------------------------------
+[223]PrChFluxRegister::setCoarFlux 0.00405 14
+---------------------------------------------------------
+[224]Base_Simplified_AMRLevelOp::AMRProlong 0.00399 28
+    92.6%    0.00369       28 Base_Proto_AMRLevelOp::copyTo [226] f=0
+     1.8%    0.00007       28 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [356] f=0
+    94.3%                  Total 
+---------------------------------------------------------
+[225]PrChFluxRegister::setCoarFlux 0.00398 14
+---------------------------------------------------------
+[226]Base_Proto_AMRLevelOp::copyTo 0.00369 28
+---------------------------------------------------------
+[227]Pr_Viscous_Tensor::getDivergenceIcrement 0.00347 42
+    90.5%    0.00314       42 Proto_Viscous_Tensor::getFluxDotNormal [234] f=0
+    90.5%                  Total 
+---------------------------------------------------------
+[228]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00333 14
+---------------------------------------------------------
+[229]Proto_Viscous_Tensor::axby 0.00330 14
+---------------------------------------------------------
+[230]Proto_Viscous_Tensor::computeCCGradientLevel 0.00326 14
+    22.4%    0.00073       14 Proto_Viscous_Tensor::computeCCGradient [297] f=0
+    22.4%                  Total 
+---------------------------------------------------------
+[231]Proto_Viscous_Tensor_Op::applyOperator 0.00323 14
+    99.5%    0.00322       14 Proto_Viscous_Tensor::computeCCGradientLevel [232] f=0
+    99.5%                  Total 
+---------------------------------------------------------
+[232]Proto_Viscous_Tensor::computeCCGradientLevel 0.00322 14
+---------------------------------------------------------
+[233]Pr_Viscous_Tensor::getDivergenceIcrement 0.00320 51
+    92.5%    0.00296       51 Proto_Viscous_Tensor::getFluxDotNormal [239] f=0
+    92.5%                  Total 
+---------------------------------------------------------
+[234]Proto_Viscous_Tensor::getFluxDotNormal 0.00314 42
+    93.9%    0.00295       42 Proto_Viscous_Tensor::getFaceDivAndGrad [240] f=0
+    93.9%                  Total 
+---------------------------------------------------------
+[235]Proto_Viscous_Tensor_Op::applyOperator 0.00314 14
+    99.9%    0.00313       14 Proto_Viscous_Tensor::computeCCGradientLevel [236] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[236]Proto_Viscous_Tensor::computeCCGradientLevel 0.00313 14
+---------------------------------------------------------
+[237]Proto_Viscous_Tensor::axby 0.00311 14
+---------------------------------------------------------
+[238]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00307 14
+---------------------------------------------------------
+[239]Proto_Viscous_Tensor::getFluxDotNormal 0.00296 51
+    94.9%    0.00281       51 Proto_Viscous_Tensor::getFaceDivAndGrad [245] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[240]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00295 42
+---------------------------------------------------------
+[241]PrChFluxRegister::setFineFlux 0.00292 1
+---------------------------------------------------------
+[242]Proto_Viscous_Tensor::computeCCGradient 0.00290 14
+---------------------------------------------------------
+[243]Proto_Viscous_Tensor::axby 0.00288 14
+---------------------------------------------------------
+[244]Proto_Viscous_Tensor::computeCCGradientLevel 0.00282 1
+    62.3%    0.00176        1 Proto_Viscous_Tensor::computeCCGradient [267] f=0
+    62.3%                  Total 
+---------------------------------------------------------
+[245]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00281 51
+---------------------------------------------------------
+[246]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00275 3
+---------------------------------------------------------
+[247]Pr_Viscous_Tensor::getDivergenceIcrement 0.00265 42
+    92.5%    0.00246       42 Proto_Viscous_Tensor::getFluxDotNormal [248] f=0
+    92.5%                  Total 
+---------------------------------------------------------
+[248]Proto_Viscous_Tensor::getFluxDotNormal 0.00246 42
+    94.9%    0.00233       42 Proto_Viscous_Tensor::getFaceDivAndGrad [250] f=0
+    94.9%                  Total 
+---------------------------------------------------------
+[249]Base_Simplified_AMRLevelOp::incr 0.00233 42
+    99.8%    0.00233       42 Proto_Viscous_Tensor::axby [251] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[250]Proto_Viscous_Tensor::getFaceDivAndGrad 0.00233 42
+---------------------------------------------------------
+[251]Proto_Viscous_Tensor::axby 0.00233 42
+---------------------------------------------------------
+[252]Base_Simplified_AMRLevelOp::incr 0.00232 70
+    99.6%    0.00231       70 Proto_Viscous_Tensor::axby [253] f=0
+    99.6%                  Total 
+---------------------------------------------------------
+[253]Proto_Viscous_Tensor::axby 0.00231 70
+---------------------------------------------------------
+[254]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.00226 1
+---------------------------------------------------------
+[255]Proto_Viscous_Tensor::computeCCGradientLevel 0.00215 17
+     9.6%    0.00021       17 Proto_Viscous_Tensor::computeCCGradient [327] f=0
+     9.6%                  Total 
+---------------------------------------------------------
+[256]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00213 14
+---------------------------------------------------------
+[257]Base_Proto_AMRLevelOp::create 0.00212 224
+---------------------------------------------------------
+[258]Proto_Viscous_Tensor::computeCCGradientLevel 0.00206 14
+    13.5%    0.00028       14 Proto_Viscous_Tensor::computeCCGradient [316] f=0
+    13.5%                  Total 
+---------------------------------------------------------
+[259]Base_Proto_AMRLevelOp::create 0.00203 224
+---------------------------------------------------------
+[260]Base_Proto_AMRLevelOp::create 0.00199 224
+---------------------------------------------------------
+[261]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00199 17
+---------------------------------------------------------
+[262]Base_Simplified_AMRLevelOp::AMRResidualNF 0.00197 1
+    100.0%    0.00197        1 Base_Simplified_AMRLevelOp::AMROperatorNF [263] f=0
+     0.0%    0.00000        1 Proto_Viscous_Tensor::axby [450] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[263]Base_Simplified_AMRLevelOp::AMROperatorNF 0.00197 1
+    58.3%    0.00115        1 Proto_Viscous_Tensor::fillDataOverCoarseFineInterface [278] f=0
+    41.6%    0.00082        1 Proto_Viscous_Tensor_Op::applyOperator [293] f=0
+     0.1%    0.00000        1 Pr_Viscous_Tensor::fillGhostdataOutsideDomain [431] f=0
+     0.0%    0.00000        1 Base_Proto_AMRLevelOp::getDomainFromData [460] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[264]Base_Proto_AMRLevelOp::norm 0.00193 3
+---------------------------------------------------------
+[265]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00184 14
+---------------------------------------------------------
+[266]Proto_Viscous_Tensor::computeCCGradientLevel 0.00179 14
+     9.6%    0.00017       14 Proto_Viscous_Tensor::computeCCGradient [331] f=0
+     9.6%                  Total 
+---------------------------------------------------------
+[267]Proto_Viscous_Tensor::computeCCGradient 0.00176 1
+---------------------------------------------------------
+[268]Pr_Viscous_Tensor_Factory_AMRnewOp 0.00165 3
+    99.9%    0.00165        3 Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op [270] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[269]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00165 14
+---------------------------------------------------------
+[270]Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op 0.00165 3
+    94.6%    0.00156        3 Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient [271] f=0
+     5.3%    0.00009        3 Proto_Viscous_Tensor::defineAuxilliaries [349] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[271]Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient 0.00156 3
+---------------------------------------------------------
+[272]PrChUtilities::getProtoViscousTensorOpFactory 0.00144 1
+    99.0%    0.00143        1 PrChUtilities::protoizeCoefficients [273] f=0
+     0.8%    0.00001        1 Pr_Viscous_Tensor_Factory_Constructor [398] f=0
+    99.8%                  Total 
+---------------------------------------------------------
+[273]PrChUtilities::protoizeCoefficients 0.00143 1
+    73.1%    0.00105        6 PrChUtilities::copyToDevice-Flux [280] f=0
+    12.6%    0.00018        3 PrChUtilities::copyToDevice-Cell [330] f=0
+     6.7%    0.00010        3 PrChUtilities::getProtoLayout [348] f=0
+    92.3%                  Total 
+---------------------------------------------------------
+[274]Proto_Viscous_Tensor::computeCCGradient 0.00137 112
+---------------------------------------------------------
+[275]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00136 1
+---------------------------------------------------------
+[276]defineAndSetCoefficients 0.00127 3
+---------------------------------------------------------
+[277]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00117 14
+---------------------------------------------------------
+[278]Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.00115 1
+---------------------------------------------------------
+[279]Base_Proto_AMRLevelOp::assign 0.00109 2
+---------------------------------------------------------
+[280]PrChUtilities::copyToDevice-Flux 0.00105 6
+---------------------------------------------------------
+[281]Base_Proto_AMRLevelOp::create 0.00099 112
+---------------------------------------------------------
+[282]uberCorrection creation 0.00099 3
+     2.8%    0.00003        6 Base_Proto_AMRLevelOp::create [372] f=0
+     2.8%                  Total 
+---------------------------------------------------------
+[283]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00097 17
+---------------------------------------------------------
+[284]Base_Proto_AMRLevelOp::create 0.00094 112
+---------------------------------------------------------
+[285]Proto_Viscous_Tensor::axby 0.00094 918
+---------------------------------------------------------
+[286]Proto_Viscous_Tensor::axby 0.00093 224
+---------------------------------------------------------
+[287]setRHS 0.00093 1
+---------------------------------------------------------
+[288]PrChUtilities::setupGridsWithTagLocation 0.00093 1
+    68.2%    0.00063        1 setupGrids: meshRefine and all that [300] f=0
+     9.2%    0.00009        1 setupGrids: BaseGridCreation [351] f=0
+    77.4%                  Total 
+---------------------------------------------------------
+[289]CloseFile 0.00092 1
+---------------------------------------------------------
+[290]Base_Proto_AMRLevelOp::assign 0.00087 14
+---------------------------------------------------------
+[291]Proto_Viscous_Tensor_Op::applyOperator 0.00085 1
+    99.9%    0.00085        1 Proto_Viscous_Tensor::computeCCGradientLevel [292] f=0
+    99.9%                  Total 
+---------------------------------------------------------
+[292]Proto_Viscous_Tensor::computeCCGradientLevel 0.00085 1
+---------------------------------------------------------
+[293]Proto_Viscous_Tensor_Op::applyOperator 0.00082 1
+    100.0%    0.00082        1 Proto_Viscous_Tensor::computeCCGradientLevel [294] f=0
+    100.0%                  Total 
+---------------------------------------------------------
+[294]Proto_Viscous_Tensor::computeCCGradientLevel 0.00082 1
+---------------------------------------------------------
+[295]Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00081 14
+---------------------------------------------------------
+[296]Base_Proto_AMRLevelOp::assign 0.00079 14
+---------------------------------------------------------
+[297]Proto_Viscous_Tensor::computeCCGradient 0.00073 14
+---------------------------------------------------------
+[298]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00072 448
+---------------------------------------------------------
+[299]~AMRMultiGrid 0.00070 1
+---------------------------------------------------------
+[300]setupGrids: meshRefine and all that 0.00063 1
+    91.2%    0.00058        1 MeshRefine::regrid [301] f=0
+     1.5%    0.00001        3 DisjointBoxLayout::computeNeighbors [403] f=0
+     0.3%    0.00000        3 LoadBalance:VectorBoxEntry [425] f=0
+    93.0%                  Total 
+---------------------------------------------------------
+[301]MeshRefine::regrid 0.00058 1
+     2.5%    0.00001        3 BRMeshRefine::makeBoxes [394] f=0
+     2.5%                  Total 
+---------------------------------------------------------
+[302]PrChUtilities::copyToDevice-Cell 0.00051 3
+     0.3%    0.00000        3 PrChUtilities::getRaHostData [435] f=0
+     0.3%                  Total 
+---------------------------------------------------------
+[303]PrChUtilities::copyToHost 0.00051 3
+     1.6%    0.00001        3 PrChUtilities::getRaHostData [406] f=0
+     1.6%                  Total 
+---------------------------------------------------------
+[304]PrChFluxRegister::setCoarFlux 0.00051 1
+---------------------------------------------------------
+[305]Base_Proto_AMRLevelOp::create 0.00046 28
+---------------------------------------------------------
+[306]Base_Proto_AMRLevelOp::createCoarser 0.00045 34
+    50.2%    0.00022       34 Base_Proto_AMRLevelOp::createCoarser [322] f=0
+    50.2%                  Total 
+---------------------------------------------------------
+[307]Base_Proto_AMRLevelOp::create 0.00041 28
+---------------------------------------------------------
+[308]Base_Proto_AMRLevelOp::create 0.00041 448
+---------------------------------------------------------
+[309]Base_Proto_AMRLevelOp::create 0.00036 14
+---------------------------------------------------------
+[310]WriteAttributes 0.00035 3
+---------------------------------------------------------
+[311]Proto_Viscous_Tensor::axby 0.00035 224
+---------------------------------------------------------
+[312]Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op 0.00034 10
+    69.8%    0.00024       10 Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient [321] f=0
+    29.3%    0.00010       10 Proto_Viscous_Tensor::defineAuxilliaries [347] f=0
+    99.1%                  Total 
+---------------------------------------------------------
+[313]Base_Proto_AMRLevelOp::norm 0.00032 14
+---------------------------------------------------------
+[314]PrChFluxRegister constructor 0.00031 14
+---------------------------------------------------------
+[315]PrChFluxRegister constructor 0.00031 14
+---------------------------------------------------------
+[316]Proto_Viscous_Tensor::computeCCGradient 0.00028 14
+---------------------------------------------------------
+[317]Base_Proto_AMRLevelOp::create 0.00027 28
+---------------------------------------------------------
+[318]Base_Proto_AMRLevelOp::create 0.00026 28
+---------------------------------------------------------
+[319]Base_Proto_AMRLevelOp::norm 0.00025 17
+---------------------------------------------------------
+[320]Proto_Viscous_Tensor::axby 0.00025 14
+---------------------------------------------------------
+[321]Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient 0.00024 10
+---------------------------------------------------------
+[322]Base_Proto_AMRLevelOp::createCoarser 0.00022 34
+---------------------------------------------------------
+[323]~LayoutData 0.00022 6
+---------------------------------------------------------
+[324]PrChFluxRegister::reflux 0.00022 14
+---------------------------------------------------------
+[325]PrChFluxRegister::reflux 0.00022 14
+---------------------------------------------------------
+[326]Proto_Viscous_Tensor::axby 0.00021 1
+---------------------------------------------------------
+[327]Proto_Viscous_Tensor::computeCCGradient 0.00021 17
+---------------------------------------------------------
+[328]linearize 0.00020 1
+---------------------------------------------------------
+[329]Base_Proto_AMRLevelOp::getDomainFromData 0.00018 224
+---------------------------------------------------------
+[330]PrChUtilities::copyToDevice-Cell 0.00018 3
+     1.0%    0.00000        3 PrChUtilities::getRaHostData [428] f=0
+     1.0%                  Total 
+---------------------------------------------------------
+[331]Proto_Viscous_Tensor::computeCCGradient 0.00017 14
+---------------------------------------------------------
+[332]Base_Proto_AMRLevelOp::create 0.00015 17
+---------------------------------------------------------
+[333]~LayoutData 0.00014 9
+---------------------------------------------------------
+[334]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[335]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[336]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[337]Base_Proto_AMRLevelOp::create 0.00013 14
+---------------------------------------------------------
+[338]Base_Proto_AMRLevelOp::create 0.00012 14
+---------------------------------------------------------
+[339]Base_Proto_AMRLevelOp::create 0.00012 14
+---------------------------------------------------------
+[340]Base_Proto_AMRLevelOp::create 0.00012 14
+---------------------------------------------------------
+[341]AMRMultiGrid::init 0.00012 1
+    72.2%    0.00008        3 MutliGrid::init [352] f=0
+    23.3%    0.00003        6 Base_Proto_AMRLevelOp::create [373] f=0
+     1.6%    0.00000        2 Base_Proto_AMRLevelOp::createCoarsened (the AMR one) [427] f=0
+    97.1%                  Total 
+---------------------------------------------------------
+[342]Base_Proto_AMRLevelOp::create 0.00012 14
+---------------------------------------------------------
+[343]H5S_H5D_offsets_create 0.00012 3
+---------------------------------------------------------
+[344]Base_Proto_AMRLevelOp::create 0.00012 14
+---------------------------------------------------------
+[345]Proto_Viscous_Tensor::axby 0.00012 112
+---------------------------------------------------------
+[346]Proto_Viscous_Tensor::axby 0.00010 448
+---------------------------------------------------------
+[347]Proto_Viscous_Tensor::defineAuxilliaries 0.00010 10
+---------------------------------------------------------
+[348]PrChUtilities::getProtoLayout 0.00010 3
+     7.2%    0.00001        3 PrChUtilities::getRawLayout [407] f=0
+     7.2%                  Total 
+---------------------------------------------------------
+[349]Proto_Viscous_Tensor::defineAuxilliaries 0.00009 3
+---------------------------------------------------------
+[350]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00009 42
+---------------------------------------------------------
+[351]setupGrids: BaseGridCreation 0.00009 1
+    27.1%    0.00002        1 LoadBalance:VectorBoxEntry [381] f=0
+    25.5%    0.00002        1 DisjointBoxLayout::computeNeighbors [383] f=0
+     6.1%    0.00001        1 BRMeshRefine::domainSplit [414] f=0
+    58.6%                  Total 
+---------------------------------------------------------
+[352]MutliGrid::init 0.00008 3
+    98.8%    0.00008        8 Base_Proto_AMRLevelOp::createCoarser [354] f=0
+    98.8%                  Total 
+---------------------------------------------------------
+[353]H5Dcreate 0.00008 3
+---------------------------------------------------------
+[354]Base_Proto_AMRLevelOp::createCoarser 0.00008 8
+---------------------------------------------------------
+[355]writeToFile 0.00008 3
+---------------------------------------------------------
+[356]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00007 28
+---------------------------------------------------------
+[357]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00007 42
+---------------------------------------------------------
+[358]Base_Proto_AMRLevelOp::getDomainFromData 0.00006 918
+---------------------------------------------------------
+[359]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00006 28
+---------------------------------------------------------
+[360]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00006 28
+---------------------------------------------------------
+[361]PrChFluxRegister constructor 0.00006 14
+---------------------------------------------------------
+[362]MPI_Allreduce 0.00006 14
+---------------------------------------------------------
+[363]Proto_Viscous_Tensor::axby 0.00006 14
+---------------------------------------------------------
+[364]Base_Proto_AMRLevelOp::create 0.00006 28
+---------------------------------------------------------
+[365]Base_Proto_AMRLevelOp::create 0.00005 56
+---------------------------------------------------------
+[366]PrChFluxRegister constructor 0.00005 14
+---------------------------------------------------------
+[367]Base_Simplified_AMRLevelOp::incr 0.00004 34
+    95.4%    0.00003       34 Proto_Viscous_Tensor::axby [369] f=0
+    95.4%                  Total 
+---------------------------------------------------------
+[368]Base_Proto_AMRLevelOp::getDomainFromData 0.00003 224
+---------------------------------------------------------
+[369]Proto_Viscous_Tensor::axby 0.00003 34
+---------------------------------------------------------
+[370]PrChFluxRegister constructor 0.00003 1
+---------------------------------------------------------
+[371]Base_Proto_AMRLevelOp::getDomainFromData 0.00003 448
+---------------------------------------------------------
+[372]Base_Proto_AMRLevelOp::create 0.00003 6
+---------------------------------------------------------
+[373]Base_Proto_AMRLevelOp::create 0.00003 6
+---------------------------------------------------------
+[374]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00003 28
+---------------------------------------------------------
+[375]Base_Proto_AMRLevelOp::create 0.00003 28
+---------------------------------------------------------
+[376]Base_Proto_AMRLevelOp::getDomainFromData 0.00003 42
+---------------------------------------------------------
+[377]PrChFluxRegister::setCoarFlux 0.00002 14
+---------------------------------------------------------
+[378]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 28
+---------------------------------------------------------
+[379]setGroup 0.00002 3
+---------------------------------------------------------
+[380]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00002 14
+---------------------------------------------------------
+[381]LoadBalance:VectorBoxEntry 0.00002 1
+     8.6%    0.00000        1 LoadBalance:VectorBoxSimple [426] f=0
+     8.6%                  Total 
+---------------------------------------------------------
+[382]Proto_Viscous_Tensor::axby 0.00002 14
+---------------------------------------------------------
+[383]DisjointBoxLayout::computeNeighbors 0.00002 1
+---------------------------------------------------------
+[384]PrChFluxRegister::setCoarFlux 0.00002 14
+---------------------------------------------------------
+[385]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 42
+---------------------------------------------------------
+[386]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 224
+---------------------------------------------------------
+[387]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 42
+---------------------------------------------------------
+[388]BiCGStabSolver::solve::Cleanup 0.00002 14
+    74.1%    0.00001       14 Base_Simplified_AMRLevelOp::incr [396] f=0
+    74.1%                  Total 
+---------------------------------------------------------
+[389]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 28
+---------------------------------------------------------
+[390]Base_Proto_AMRLevelOp::getDomainFromData 0.00002 224
+---------------------------------------------------------
+[391]PrChFluxRegister::reflux 0.00002 1
+---------------------------------------------------------
+[392]getOffsets 0.00001 3
+    37.4%    0.00001        3 offsets.resize [413] f=0
+     2.0%    0.00000       10 dataSize [447] f=0
+     1.5%    0.00000       10 offsets calc [452] f=0
+    40.8%                  Total 
+---------------------------------------------------------
+[393]Proto_Viscous_Tensor::axby 0.00001 14
+---------------------------------------------------------
+[394]BRMeshRefine::makeBoxes 0.00001 3
+---------------------------------------------------------
+[395]Base_Proto_AMRLevelOp::create 0.00001 3
+---------------------------------------------------------
+[396]Base_Simplified_AMRLevelOp::incr 0.00001 14
+    94.5%    0.00001       14 Proto_Viscous_Tensor::axby [397] f=0
+    94.5%                  Total 
+---------------------------------------------------------
+[397]Proto_Viscous_Tensor::axby 0.00001 14
+---------------------------------------------------------
+[398]Pr_Viscous_Tensor_Factory_Constructor 0.00001 1
+---------------------------------------------------------
+[399]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 14
+---------------------------------------------------------
+[400]H5S_H5D_offsets_close 0.00001 3
+---------------------------------------------------------
+[401]PrChFluxRegister::reflux 0.00001 14
+---------------------------------------------------------
+[402]PrChFluxRegister::reflux 0.00001 14
+---------------------------------------------------------
+[403]DisjointBoxLayout::computeNeighbors 0.00001 3
+---------------------------------------------------------
+[404]PrChUtilities::getProtoLayout 0.00001 3
+    36.5%    0.00000        3 PrChUtilities::getRawLayout [422] f=0
+    36.5%                  Total 
+---------------------------------------------------------
+[405]Base_Proto_AMRLevelOp::getDomainFromData 0.00001 112
+---------------------------------------------------------
+[406]PrChUtilities::getRaHostData 0.00001 3
+---------------------------------------------------------
+[407]PrChUtilities::getRawLayout 0.00001 3
+---------------------------------------------------------
+[408]Proto_Viscous_Tensor::axby 0.00001 28
+---------------------------------------------------------
+[409]H5Dclose 0.00001 3
+---------------------------------------------------------
+[410]Proto_Viscous_Tensor::axby 0.00001 28
+---------------------------------------------------------
+[411]mallocMT_buffers 0.00001 3
+---------------------------------------------------------
+[412]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00001 3
+---------------------------------------------------------
+[413]offsets.resize 0.00001 3
+---------------------------------------------------------
+[414]BRMeshRefine::domainSplit 0.00001 1
+---------------------------------------------------------
+[415]PrChFluxRegister constructor 0.00000 1
+---------------------------------------------------------
+[416]Proto_Viscous_Tensor::axby 0.00000 14
+---------------------------------------------------------
+[417]MPI_Allreduce 0.00000 1
+---------------------------------------------------------
+[418]Proto_Viscous_Tensor::axby 0.00000 14
+---------------------------------------------------------
+[419]Proto_Viscous_Tensor::axby 0.00000 14
+---------------------------------------------------------
+[420]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 42
+---------------------------------------------------------
+[421]H5Screate 0.00000 3
+---------------------------------------------------------
+[422]PrChUtilities::getRawLayout 0.00000 3
+---------------------------------------------------------
+[423]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 3
+---------------------------------------------------------
+[424]ComputeBufferCapacity 0.00000 3
+---------------------------------------------------------
+[425]LoadBalance:VectorBoxEntry 0.00000 3
+    38.2%    0.00000        3 LoadBalance:VectorBoxSimple [444] f=0
+    38.2%                  Total 
+---------------------------------------------------------
+[426]LoadBalance:VectorBoxSimple 0.00000 1
+---------------------------------------------------------
+[427]Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00000 2
+---------------------------------------------------------
+[428]PrChUtilities::getRaHostData 0.00000 3
+---------------------------------------------------------
+[429]H5Sclose 0.00000 3
+---------------------------------------------------------
+[430]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 3
+---------------------------------------------------------
+[431]Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00000 1
+---------------------------------------------------------
+[432]freeMT 0.00000 3
+---------------------------------------------------------
+[433]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 14
+---------------------------------------------------------
+[434]PrChFluxRegister::setCoarFlux 0.00000 1
+---------------------------------------------------------
+[435]PrChUtilities::getRaHostData 0.00000 3
+---------------------------------------------------------
+[436]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 14
+---------------------------------------------------------
+[437]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 17
+---------------------------------------------------------
+[438]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 14
+---------------------------------------------------------
+[439]~Copier 0.00000 15
+---------------------------------------------------------
+[440]~BoxLayoutData 0.00000 9
+    10.4%    0.00000        9 completePendingSends [456] f=0
+    10.4%                  Total 
+---------------------------------------------------------
+[441]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 14
+---------------------------------------------------------
+[442]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 14
+---------------------------------------------------------
+[443]~BoxLayoutData 0.00000 6
+     7.7%    0.00000        6 completePendingSends [461] f=0
+     7.7%                  Total 
+---------------------------------------------------------
+[444]LoadBalance:VectorBoxSimple 0.00000 3
+---------------------------------------------------------
+[445]PrChFluxRegister::reflux 0.00000 1
+---------------------------------------------------------
+[446]~Copier 0.00000 6
+---------------------------------------------------------
+[447]dataSize 0.00000 10
+---------------------------------------------------------
+[448]~Copier 0.00000 6
+---------------------------------------------------------
+[449]Proto_Viscous_Tensor::axby 0.00000 1
+---------------------------------------------------------
+[450]Proto_Viscous_Tensor::axby 0.00000 1
+---------------------------------------------------------
+[451]PrChFluxRegister destructor 0.00000 14
+---------------------------------------------------------
+[452]offsets calc 0.00000 10
+---------------------------------------------------------
+[453]PrChFluxRegister destructor 0.00000 14
+---------------------------------------------------------
+[454]PrChFluxRegister destructor 0.00000 14
+---------------------------------------------------------
+[455]PrChFluxRegister destructor 0.00000 14
+---------------------------------------------------------
+[456]completePendingSends 0.00000 9
+---------------------------------------------------------
+[457]AMRMultiGrid::revert 0.00000 1
+---------------------------------------------------------
+[458]~LevelData 0.00000 9
+---------------------------------------------------------
+[459]~LevelData 0.00000 6
+---------------------------------------------------------
+[460]Base_Proto_AMRLevelOp::getDomainFromData 0.00000 1
+---------------------------------------------------------
+[461]completePendingSends 0.00000 6
+---------------------------------------------------------
+[462]calc minimum in outputGhost 0.00000 3
+---------------------------------------------------------
+[463]PrChFluxRegister destructor 0.00000 1
+---------------------------------------------------------
+[464]PrChFluxRegister destructor 0.00000 1
+=======================================================
+=======================================================
+    0.00       14  MPI_Allreduce [362]
+    0.00        1  MPI_Allreduce [417]
+     0.00006    0.0%    Total
+[0] main 7.50801 100.0% 1 0 0 MFlops 
+   [1] runSolver 7.46270 99.4% 1 0 0 MFlops 
+      [2] solveForPhi 7.43899 99.1% 1 0 0 MFlops 
+         [3] AMRMultiGrid::solve 7.42115 98.8% 1 0 0 MFlops 
+            [4] AMRMultiGrid::solveNoInit 7.42104 98.8% 1 0 0 MFlops 
+               [5] AMRMultiGrid::solveNo-InitResid 7.42093 98.8% 1 0 0 MFlops 
+                  [6] AMRMultiGrid::AMRVcycle 6.80253 90.6% 14 0 0 MFlops 
+                     [7] Multigrid::oneCycle 5.00869 66.7% 14 0 0 MFlops 
+                        [8] Multigrid::cycle 5.00868 66.7% 14 0 0 MFlops 
+                           [9] Pr_Viscous_Tensor::relax 3.12858 41.7% 28 0 0 MFlops 
+                              [10] Base_Simplified_AMRLevelOp::residual 3.09702 41.2% 224 0 0 MFlops 
+                                 [11] Base_Simplified_AMRLevelOp::applyOp 3.01546 40.2% 224 0 0 MFlops 
+                                    [12] Proto_Viscous_Tensor_Op::applyOperator 2.55792 34.1% 224 0 0 MFlops 
+                                       [13] Pr_Viscous_Tensor::getDivergenceIcrement 1.85454 24.7% 672 0 0 MFlops 
+                                          [15] Proto_Viscous_Tensor::getFluxDotNormal 1.57750 21.0% 672 0 0 MFlops 
+                                             [16] Proto_Viscous_Tensor::getFaceDivAndGrad 1.39983 18.6% 672 0 0 MFlops 
+                                       [39] Proto_Viscous_Tensor::computeCCGradientLevel 0.43040  5.7% 224 0 0 MFlops 
+                                          [52] Proto_Viscous_Tensor::computeCCGradient 0.24380  3.2% 224 0 0 MFlops 
+                                    [45] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.29679  4.0% 224 0 0 MFlops 
+                                    [60] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.16009  2.1% 224 0 0 MFlops 
+                                    [329] Base_Proto_AMRLevelOp::getDomainFromData 0.00018  0.0% 224 0 0 MFlops 
+                                 [112] Proto_Viscous_Tensor::axby 0.05349  0.7% 224 0 0 MFlops 
+                                 [216] Base_Proto_AMRLevelOp::create 0.00513  0.1% 224 0 0 MFlops 
+                              [307] Base_Proto_AMRLevelOp::create 0.00041  0.0% 28 0 0 MFlops 
+                           [14] Multigrid::cycle 1.67707 22.3% 14 0 0 MFlops 
+                              [21] Multigrid::cycle 0.97240 13.0% 14 0 0 MFlops 
+                                 [23] Multigrid::cycle 0.70192  9.3% 14 0 0 MFlops 
+                                    [28] Multigrid::cycle 0.54354  7.2% 14 0 0 MFlops 
+                                       [29] Multigrid::cycle:bottom-solve 0.54354  7.2% 14 0 0 MFlops 
+                                          [32] BiCGStabSolver::solve 0.48634  6.5% 14 0 0 MFlops 
+                                             [34] BiCGStabSolver::solve::MainLoop 0.47676  6.3% 14 0 0 MFlops 
+                                                [35] Base_Simplified_AMRLevelOp::preCond 0.46675  6.2% 17 0 0 MFlops 
+                                                   [36] Pr_Viscous_Tensor::relax 0.46675  6.2% 17 0 0 MFlops 
+                                                      [37] Base_Simplified_AMRLevelOp::residual 0.46584  6.2% 918 0 0 MFlops 
+                                                         [38] Base_Simplified_AMRLevelOp::applyOp 0.45300  6.0% 918 0 0 MFlops 
+                                                            [47] Proto_Viscous_Tensor_Op::applyOperator 0.29193  3.9% 918 0 0 MFlops 
+                                                               [56] Pr_Viscous_Tensor::getDivergenceIcrement 0.17327  2.3% 2754 0 0 MFlops 
+                                                                  [58] Proto_Viscous_Tensor::getFluxDotNormal 0.16027  2.1% 2754 0 0 MFlops 
+                                                                     [61] Proto_Viscous_Tensor::getFaceDivAndGrad 0.15198  2.0% 2754 0 0 MFlops 
+                                                               [72] Proto_Viscous_Tensor::computeCCGradientLevel 0.11535  1.5% 918 0 0 MFlops 
+                                                                  [176] Proto_Viscous_Tensor::computeCCGradient 0.01120  0.1% 918 0 0 MFlops 
+                                                            [77] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.10756  1.4% 918 0 0 MFlops 
+                                                            [114] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.05326  0.7% 918 0 0 MFlops 
+                                                            [358] Base_Proto_AMRLevelOp::getDomainFromData 0.00006  0.0% 918 0 0 MFlops 
+                                                         [197] Base_Proto_AMRLevelOp::create 0.00806  0.1% 918 0 0 MFlops 
+                                                         [285] Proto_Viscous_Tensor::axby 0.00094  0.0% 918 0 0 MFlops 
+                                                      [332] Base_Proto_AMRLevelOp::create 0.00015  0.0% 17 0 0 MFlops 
+                                                [194] Base_Simplified_AMRLevelOp::applyOp 0.00837  0.1% 17 0 0 MFlops 
+                                                   [215] Proto_Viscous_Tensor_Op::applyOperator 0.00541  0.1% 17 0 0 MFlops 
+                                                      [233] Pr_Viscous_Tensor::getDivergenceIcrement 0.00320  0.0% 51 0 0 MFlops 
+                                                         [239] Proto_Viscous_Tensor::getFluxDotNormal 0.00296  0.0% 51 0 0 MFlops 
+                                                            [245] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00281  0.0% 51 0 0 MFlops 
+                                                      [255] Proto_Viscous_Tensor::computeCCGradientLevel 0.00215  0.0% 17 0 0 MFlops 
+                                                         [327] Proto_Viscous_Tensor::computeCCGradient 0.00021  0.0% 17 0 0 MFlops 
+                                                   [261] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00199  0.0% 17 0 0 MFlops 
+                                                   [283] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00097  0.0% 17 0 0 MFlops 
+                                                   [437] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 17 0 0 MFlops 
+                                                [296] Base_Proto_AMRLevelOp::assign 0.00079  0.0% 14 0 0 MFlops 
+                                                [306] Base_Proto_AMRLevelOp::createCoarser 0.00045  0.0% 34 0 0 MFlops 
+                                                   [322] Base_Proto_AMRLevelOp::createCoarser 0.00022  0.0% 34 0 0 MFlops 
+                                                [319] Base_Proto_AMRLevelOp::norm 0.00025  0.0% 17 0 0 MFlops 
+                                                [367] Base_Simplified_AMRLevelOp::incr 0.00004  0.0% 34 0 0 MFlops 
+                                                   [369] Proto_Viscous_Tensor::axby 0.00003  0.0% 34 0 0 MFlops 
+                                             [188] BiCGStabSolver::solve::Initialize 0.00950  0.1% 14 0 0 MFlops 
+                                                [203] Base_Simplified_AMRLevelOp::residual 0.00715  0.1% 14 0 0 MFlops 
+                                                   [206] Base_Simplified_AMRLevelOp::applyOp 0.00696  0.1% 14 0 0 MFlops 
+                                                      [217] Proto_Viscous_Tensor_Op::applyOperator 0.00449  0.1% 14 0 0 MFlops 
+                                                         [247] Pr_Viscous_Tensor::getDivergenceIcrement 0.00265  0.0% 42 0 0 MFlops 
+                                                            [248] Proto_Viscous_Tensor::getFluxDotNormal 0.00246  0.0% 42 0 0 MFlops 
+                                                               [250] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00233  0.0% 42 0 0 MFlops 
+                                                         [266] Proto_Viscous_Tensor::computeCCGradientLevel 0.00179  0.0% 14 0 0 MFlops 
+                                                            [331] Proto_Viscous_Tensor::computeCCGradient 0.00017  0.0% 14 0 0 MFlops 
+                                                      [269] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00165  0.0% 14 0 0 MFlops 
+                                                      [295] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00081  0.0% 14 0 0 MFlops 
+                                                      [442] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 14 0 0 MFlops 
+                                                   [339] Base_Proto_AMRLevelOp::create 0.00012  0.0% 14 0 0 MFlops 
+                                                   [393] Proto_Viscous_Tensor::axby 0.00001  0.0% 14 0 0 MFlops 
+                                                [284] Base_Proto_AMRLevelOp::create 0.00094  0.0% 112 0 0 MFlops 
+                                                [290] Base_Proto_AMRLevelOp::assign 0.00087  0.0% 14 0 0 MFlops 
+                                                [313] Base_Proto_AMRLevelOp::norm 0.00032  0.0% 14 0 0 MFlops 
+                                             [388] BiCGStabSolver::solve::Cleanup 0.00002  0.0% 14 0 0 MFlops 
+                                                [396] Base_Simplified_AMRLevelOp::incr 0.00001  0.0% 14 0 0 MFlops 
+                                                   [397] Proto_Viscous_Tensor::axby 0.00001  0.0% 14 0 0 MFlops 
+                                          [105] Pr_Viscous_Tensor::relax 0.05719  0.8% 14 0 0 MFlops 
+                                             [107] Base_Simplified_AMRLevelOp::residual 0.05696  0.8% 112 0 0 MFlops 
+                                                [111] Base_Simplified_AMRLevelOp::applyOp 0.05540  0.7% 112 0 0 MFlops 
+                                                   [130] Proto_Viscous_Tensor_Op::applyOperator 0.03577  0.5% 112 0 0 MFlops 
+                                                      [149] Pr_Viscous_Tensor::getDivergenceIcrement 0.02120  0.3% 336 0 0 MFlops 
+                                                         [155] Proto_Viscous_Tensor::getFluxDotNormal 0.01961  0.3% 336 0 0 MFlops 
+                                                            [156] Proto_Viscous_Tensor::getFaceDivAndGrad 0.01860  0.2% 336 0 0 MFlops 
+                                                      [169] Proto_Viscous_Tensor::computeCCGradientLevel 0.01416  0.2% 112 0 0 MFlops 
+                                                         [274] Proto_Viscous_Tensor::computeCCGradient 0.00137  0.0% 112 0 0 MFlops 
+                                                   [171] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.01316  0.2% 112 0 0 MFlops 
+                                                   [209] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00644  0.1% 112 0 0 MFlops 
+                                                   [405] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 112 0 0 MFlops 
+                                                [281] Base_Proto_AMRLevelOp::create 0.00099  0.0% 112 0 0 MFlops 
+                                                [345] Proto_Viscous_Tensor::axby 0.00012  0.0% 112 0 0 MFlops 
+                                             [336] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                                    [62] Pr_Viscous_Tensor::relax 0.14857  2.0% 28 0 0 MFlops 
+                                       [63] Base_Simplified_AMRLevelOp::residual 0.14798  2.0% 224 0 0 MFlops 
+                                          [67] Base_Simplified_AMRLevelOp::applyOp 0.14442  1.9% 224 0 0 MFlops 
+                                             [91] Proto_Viscous_Tensor_Op::applyOperator 0.09005  1.2% 224 0 0 MFlops 
+                                                [109] Pr_Viscous_Tensor::getDivergenceIcrement 0.05556  0.7% 672 0 0 MFlops 
+                                                   [116] Proto_Viscous_Tensor::getFluxDotNormal 0.05029  0.7% 672 0 0 MFlops 
+                                                      [118] Proto_Viscous_Tensor::getFaceDivAndGrad 0.04718  0.6% 672 0 0 MFlops 
+                                                [133] Proto_Viscous_Tensor::computeCCGradientLevel 0.03318  0.4% 224 0 0 MFlops 
+                                                   [219] Proto_Viscous_Tensor::computeCCGradient 0.00444  0.1% 224 0 0 MFlops 
+                                             [132] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03420  0.5% 224 0 0 MFlops 
+                                             [152] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02010  0.3% 224 0 0 MFlops 
+                                             [390] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 224 0 0 MFlops 
+                                          [260] Base_Proto_AMRLevelOp::create 0.00199  0.0% 224 0 0 MFlops 
+                                          [311] Proto_Viscous_Tensor::axby 0.00035  0.0% 224 0 0 MFlops 
+                                       [317] Base_Proto_AMRLevelOp::create 0.00027  0.0% 28 0 0 MFlops 
+                                    [187] Base_Simplified_AMRLevelOp::restrictResidual 0.00952  0.1% 14 0 0 MFlops 
+                                       [189] Base_Simplified_AMRLevelOp::residual 0.00913  0.1% 14 0 0 MFlops 
+                                          [191] Base_Simplified_AMRLevelOp::applyOp 0.00892  0.1% 14 0 0 MFlops 
+                                             [213] Proto_Viscous_Tensor_Op::applyOperator 0.00561  0.1% 14 0 0 MFlops 
+                                                [227] Pr_Viscous_Tensor::getDivergenceIcrement 0.00347  0.0% 42 0 0 MFlops 
+                                                   [234] Proto_Viscous_Tensor::getFluxDotNormal 0.00314  0.0% 42 0 0 MFlops 
+                                                      [240] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00295  0.0% 42 0 0 MFlops 
+                                                [258] Proto_Viscous_Tensor::computeCCGradientLevel 0.00206  0.0% 14 0 0 MFlops 
+                                                   [316] Proto_Viscous_Tensor::computeCCGradient 0.00028  0.0% 14 0 0 MFlops 
+                                             [256] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00213  0.0% 14 0 0 MFlops 
+                                             [277] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00117  0.0% 14 0 0 MFlops 
+                                             [441] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 14 0 0 MFlops 
+                                          [344] Base_Proto_AMRLevelOp::create 0.00012  0.0% 14 0 0 MFlops 
+                                          [382] Proto_Viscous_Tensor::axby 0.00002  0.0% 14 0 0 MFlops 
+                                       [338] Base_Proto_AMRLevelOp::create 0.00012  0.0% 14 0 0 MFlops 
+                                 [49] Pr_Viscous_Tensor::relax 0.25384  3.4% 28 0 0 MFlops 
+                                    [50] Base_Simplified_AMRLevelOp::residual 0.25272  3.4% 224 0 0 MFlops 
+                                       [51] Base_Simplified_AMRLevelOp::applyOp 0.24732  3.3% 224 0 0 MFlops 
+                                          [57] Proto_Viscous_Tensor_Op::applyOperator 0.16451  2.2% 224 0 0 MFlops 
+                                             [76] Pr_Viscous_Tensor::getDivergenceIcrement 0.10830  1.4% 672 0 0 MFlops 
+                                                [87] Proto_Viscous_Tensor::getFluxDotNormal 0.09510  1.3% 672 0 0 MFlops 
+                                                   [92] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08757  1.2% 672 0 0 MFlops 
+                                             [115] Proto_Viscous_Tensor::computeCCGradientLevel 0.05325  0.7% 224 0 0 MFlops 
+                                                [174] Proto_Viscous_Tensor::computeCCGradient 0.01179  0.2% 224 0 0 MFlops 
+                                          [113] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.05340  0.7% 224 0 0 MFlops 
+                                          [136] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.02933  0.4% 224 0 0 MFlops 
+                                          [386] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 224 0 0 MFlops 
+                                       [259] Base_Proto_AMRLevelOp::create 0.00203  0.0% 224 0 0 MFlops 
+                                       [286] Proto_Viscous_Tensor::axby 0.00093  0.0% 224 0 0 MFlops 
+                                    [318] Base_Proto_AMRLevelOp::create 0.00026  0.0% 28 0 0 MFlops 
+                                 [161] Base_Simplified_AMRLevelOp::restrictResidual 0.01621  0.2% 14 0 0 MFlops 
+                                    [164] Base_Simplified_AMRLevelOp::residual 0.01572  0.2% 14 0 0 MFlops 
+                                       [165] Base_Simplified_AMRLevelOp::applyOp 0.01539  0.2% 14 0 0 MFlops 
+                                          [181] Proto_Viscous_Tensor_Op::applyOperator 0.01021  0.1% 14 0 0 MFlops 
+                                             [208] Pr_Viscous_Tensor::getDivergenceIcrement 0.00677  0.1% 42 0 0 MFlops 
+                                                [212] Proto_Viscous_Tensor::getFluxDotNormal 0.00594  0.1% 42 0 0 MFlops 
+                                                   [214] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00548  0.1% 42 0 0 MFlops 
+                                             [230] Proto_Viscous_Tensor::computeCCGradientLevel 0.00326  0.0% 14 0 0 MFlops 
+                                                [297] Proto_Viscous_Tensor::computeCCGradient 0.00073  0.0% 14 0 0 MFlops 
+                                          [228] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00333  0.0% 14 0 0 MFlops 
+                                          [265] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00184  0.0% 14 0 0 MFlops 
+                                          [436] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 14 0 0 MFlops 
+                                       [342] Base_Proto_AMRLevelOp::create 0.00012  0.0% 14 0 0 MFlops 
+                                       [363] Proto_Viscous_Tensor::axby 0.00006  0.0% 14 0 0 MFlops 
+                                    [335] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                              [24] Pr_Viscous_Tensor::relax 0.66207  8.8% 28 0 0 MFlops 
+                                 [25] Base_Simplified_AMRLevelOp::residual 0.65803  8.8% 224 0 0 MFlops 
+                                    [26] Base_Simplified_AMRLevelOp::applyOp 0.64596  8.6% 224 0 0 MFlops 
+                                       [33] Proto_Viscous_Tensor_Op::applyOperator 0.47767  6.4% 224 0 0 MFlops 
+                                          [44] Pr_Viscous_Tensor::getDivergenceIcrement 0.34932  4.7% 672 0 0 MFlops 
+                                             [46] Proto_Viscous_Tensor::getFluxDotNormal 0.29677  4.0% 672 0 0 MFlops 
+                                                [48] Proto_Viscous_Tensor::getFaceDivAndGrad 0.27068  3.6% 672 0 0 MFlops 
+                                          [73] Proto_Viscous_Tensor::computeCCGradientLevel 0.11517  1.5% 224 0 0 MFlops 
+                                             [119] Proto_Viscous_Tensor::computeCCGradient 0.04659  0.6% 224 0 0 MFlops 
+                                       [75] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.11108  1.5% 224 0 0 MFlops 
+                                       [106] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.05708  0.8% 224 0 0 MFlops 
+                                       [368] Base_Proto_AMRLevelOp::getDomainFromData 0.00003  0.0% 224 0 0 MFlops 
+                                    [222] Proto_Viscous_Tensor::axby 0.00406  0.1% 224 0 0 MFlops 
+                                    [257] Base_Proto_AMRLevelOp::create 0.00212  0.0% 224 0 0 MFlops 
+                                 [305] Base_Proto_AMRLevelOp::create 0.00046  0.0% 28 0 0 MFlops 
+                              [120] Base_Simplified_AMRLevelOp::restrictResidual 0.04128  0.5% 14 0 0 MFlops 
+                                 [123] Base_Simplified_AMRLevelOp::residual 0.04037  0.5% 14 0 0 MFlops 
+                                    [126] Base_Simplified_AMRLevelOp::applyOp 0.03963  0.5% 14 0 0 MFlops 
+                                       [135] Proto_Viscous_Tensor_Op::applyOperator 0.02964  0.4% 14 0 0 MFlops 
+                                          [147] Pr_Viscous_Tensor::getDivergenceIcrement 0.02176  0.3% 42 0 0 MFlops 
+                                             [158] Proto_Viscous_Tensor::getFluxDotNormal 0.01847  0.2% 42 0 0 MFlops 
+                                                [159] Proto_Viscous_Tensor::getFaceDivAndGrad 0.01685  0.2% 42 0 0 MFlops 
+                                          [205] Proto_Viscous_Tensor::computeCCGradientLevel 0.00706  0.1% 14 0 0 MFlops 
+                                             [242] Proto_Viscous_Tensor::computeCCGradient 0.00290  0.0% 14 0 0 MFlops 
+                                       [207] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00691  0.1% 14 0 0 MFlops 
+                                       [238] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00307  0.0% 14 0 0 MFlops 
+                                       [433] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 14 0 0 MFlops 
+                                    [320] Proto_Viscous_Tensor::axby 0.00025  0.0% 14 0 0 MFlops 
+                                    [340] Base_Proto_AMRLevelOp::create 0.00012  0.0% 14 0 0 MFlops 
+                                 [334] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                           [53] Base_Simplified_AMRLevelOp::restrictResidual 0.19698  2.6% 14 0 0 MFlops 
+                              [54] Base_Simplified_AMRLevelOp::residual 0.19365  2.6% 14 0 0 MFlops 
+                                 [55] Base_Simplified_AMRLevelOp::applyOp 0.18886  2.5% 14 0 0 MFlops 
+                                    [59] Proto_Viscous_Tensor_Op::applyOperator 0.16021  2.1% 14 0 0 MFlops 
+                                       [71] Pr_Viscous_Tensor::getDivergenceIcrement 0.11588  1.5% 42 0 0 MFlops 
+                                          [84] Proto_Viscous_Tensor::getFluxDotNormal 0.09866  1.3% 42 0 0 MFlops 
+                                             [93] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08757  1.2% 42 0 0 MFlops 
+                                       [140] Proto_Viscous_Tensor::computeCCGradientLevel 0.02706  0.4% 14 0 0 MFlops 
+                                          [167] Proto_Viscous_Tensor::computeCCGradient 0.01515  0.2% 14 0 0 MFlops 
+                                    [157] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.01855  0.2% 14 0 0 MFlops 
+                                    [182] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01005  0.1% 14 0 0 MFlops 
+                                    [399] Base_Proto_AMRLevelOp::getDomainFromData 0.00001  0.0% 14 0 0 MFlops 
+                                 [229] Proto_Viscous_Tensor::axby 0.00330  0.0% 14 0 0 MFlops 
+                                 [337] Base_Proto_AMRLevelOp::create 0.00013  0.0% 14 0 0 MFlops 
+                              [309] Base_Proto_AMRLevelOp::create 0.00036  0.0% 14 0 0 MFlops 
+                     [17] AMRMultiGrid::relax 1.03147 13.7% 56 0 0 MFlops 
+                        [18] Pr_Viscous_Tensor::relax 1.03144 13.7% 56 0 0 MFlops 
+                           [19] Base_Simplified_AMRLevelOp::residual 1.03132 13.7% 448 0 0 MFlops 
+                              [20] Base_Simplified_AMRLevelOp::applyOp 1.03053 13.7% 448 0 0 MFlops 
+                                 [22] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.93151 12.4% 448 0 0 MFlops 
+                                 [85] Proto_Viscous_Tensor_Op::applyOperator 0.09821  1.3% 448 0 0 MFlops 
+                                    [86] Proto_Viscous_Tensor::computeCCGradientLevel 0.09810  1.3% 448 0 0 MFlops 
+                                 [298] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00072  0.0% 448 0 0 MFlops 
+                                 [371] Base_Proto_AMRLevelOp::getDomainFromData 0.00003  0.0% 448 0 0 MFlops 
+                              [308] Base_Proto_AMRLevelOp::create 0.00041  0.0% 448 0 0 MFlops 
+                              [346] Proto_Viscous_Tensor::axby 0.00010  0.0% 448 0 0 MFlops 
+                           [365] Base_Proto_AMRLevelOp::create 0.00005  0.0% 56 0 0 MFlops 
+                     [30] AMRMultiGrid<T>::computeAMRResidualLevel 0.52617  7.0% 28 0 0 MFlops 
+                        [40] Base_Simplified_AMRLevelOp::AMRResidualNC 0.38118  5.1% 14 0 0 MFlops 
+                           [41] Base_Simplified_AMRLevelOp::AMROperatorNC 0.37829  5.0% 14 0 0 MFlops 
+                              [68] Proto_Viscous_Tensor_Op::applyOperator 0.14199  1.9% 14 0 0 MFlops 
+                                 [78] Pr_Viscous_Tensor::getDivergenceIcrement 0.10733  1.4% 42 0 0 MFlops 
+                                    [90] Proto_Viscous_Tensor::getFluxDotNormal 0.09008  1.2% 42 0 0 MFlops 
+                                       [97] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08154  1.1% 42 0 0 MFlops 
+                                 [138] Proto_Viscous_Tensor::computeCCGradientLevel 0.02735  0.4% 14 0 0 MFlops 
+                                    [168] Proto_Viscous_Tensor::computeCCGradient 0.01513  0.2% 14 0 0 MFlops 
+                              [82] Proto_Viscous_Tensor::getFlux 0.10021  1.3% 42 0 0 MFlops 
+                                 [83] Proto_Viscous_Tensor::getFluxDotNormal 0.10012  1.3% 42 0 0 MFlops 
+                                    [95] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08672  1.2% 42 0 0 MFlops 
+                              [127] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03734  0.5% 42 0 0 MFlops 
+                              [134] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.03079  0.4% 14 0 0 MFlops 
+                              [144] PrChFluxRegister::setFineFlux 0.02497  0.3% 14 0 0 MFlops 
+                              [146] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.02399  0.3% 14 0 0 MFlops 
+                              [223] PrChFluxRegister::setCoarFlux 0.00405  0.1% 14 0 0 MFlops 
+                              [315] PrChFluxRegister constructor 0.00031  0.0% 14 0 0 MFlops 
+                              [324] PrChFluxRegister::reflux 0.00022  0.0% 14 0 0 MFlops 
+                              [387] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 42 0 0 MFlops 
+                              [451] PrChFluxRegister destructor 0.00000  0.0% 14 0 0 MFlops 
+                           [243] Proto_Viscous_Tensor::axby 0.00288  0.0% 14 0 0 MFlops 
+                        [65] Base_Simplified_AMRLevelOp::AMRResidual 0.14498  1.9% 14 0 0 MFlops 
+                           [66] Base_Simplified_AMRLevelOp::AMROperator 0.14497  1.9% 14 0 0 MFlops 
+                              [88] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.09417  1.3% 28 0 0 MFlops 
+                              [125] PrChFluxRegister::setFineFlux 0.03998  0.5% 14 0 0 MFlops 
+                              [204] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00709  0.1% 14 0 0 MFlops 
+                              [235] Proto_Viscous_Tensor_Op::applyOperator 0.00314  0.0% 14 0 0 MFlops 
+                                 [236] Proto_Viscous_Tensor::computeCCGradientLevel 0.00313  0.0% 14 0 0 MFlops 
+                              [357] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00007  0.0% 42 0 0 MFlops 
+                              [366] PrChFluxRegister constructor 0.00005  0.0% 14 0 0 MFlops 
+                              [377] PrChFluxRegister::setCoarFlux 0.00002  0.0% 14 0 0 MFlops 
+                              [402] PrChFluxRegister::reflux 0.00001  0.0% 14 0 0 MFlops 
+                              [420] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 42 0 0 MFlops 
+                              [453] PrChFluxRegister destructor 0.00000  0.0% 14 0 0 MFlops 
+                           [418] Proto_Viscous_Tensor::axby 0.00000  0.0% 14 0 0 MFlops 
+                     [79] Base_Simplified_AMRLevelOp::AMRRestrict 0.10363  1.4% 28 0 0 MFlops 
+                        [108] Base_Simplified_AMRLevelOp::AMRResidualNF 0.05557  0.7% 28 0 0 MFlops 
+                           [110] Base_Simplified_AMRLevelOp::AMROperatorNF 0.05555  0.7% 28 0 0 MFlops 
+                              [131] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.03536  0.5% 28 0 0 MFlops 
+                              [153] Proto_Viscous_Tensor_Op::applyOperator 0.02007  0.3% 28 0 0 MFlops 
+                                 [154] Proto_Viscous_Tensor::computeCCGradientLevel 0.02005  0.3% 28 0 0 MFlops 
+                              [359] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00006  0.0% 28 0 0 MFlops 
+                              [378] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 28 0 0 MFlops 
+                           [408] Proto_Viscous_Tensor::axby 0.00001  0.0% 28 0 0 MFlops 
+                        [117] Base_Proto_AMRLevelOp::copyTo 0.04793  0.6% 28 0 0 MFlops 
+                        [364] Base_Proto_AMRLevelOp::create 0.00006  0.0% 28 0 0 MFlops 
+                        [374] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00003  0.0% 28 0 0 MFlops 
+                     [99] Base_Proto_AMRLevelOp::assign 0.06509  0.9% 98 0 0 MFlops 
+                     [103] Base_Simplified_AMRLevelOp::AMRUpdateResidual 0.05743  0.8% 28 0 0 MFlops 
+                        [104] Base_Simplified_AMRLevelOp::AMROperatorNF 0.05738  0.8% 28 0 0 MFlops 
+                           [129] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.03674  0.5% 28 0 0 MFlops 
+                           [150] Proto_Viscous_Tensor_Op::applyOperator 0.02053  0.3% 28 0 0 MFlops 
+                              [151] Proto_Viscous_Tensor::computeCCGradientLevel 0.02051  0.3% 28 0 0 MFlops 
+                           [360] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00006  0.0% 28 0 0 MFlops 
+                           [389] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 28 0 0 MFlops 
+                        [375] Base_Proto_AMRLevelOp::create 0.00003  0.0% 28 0 0 MFlops 
+                        [410] Proto_Viscous_Tensor::axby 0.00001  0.0% 28 0 0 MFlops 
+                     [224] Base_Simplified_AMRLevelOp::AMRProlong 0.00399  0.1% 28 0 0 MFlops 
+                        [226] Base_Proto_AMRLevelOp::copyTo 0.00369  0.0% 28 0 0 MFlops 
+                        [356] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00007  0.0% 28 0 0 MFlops 
+                     [252] Base_Simplified_AMRLevelOp::incr 0.00232  0.0% 70 0 0 MFlops 
+                        [253] Proto_Viscous_Tensor::axby 0.00231  0.0% 70 0 0 MFlops 
+                  [27] AMRMultiGrid::computeAMRResidual 0.54994  7.3% 14 0 0 MFlops 
+                     [31] AMRMultiGrid<T>::computeAMRResidualLevel 0.51945  6.9% 42 0 0 MFlops 
+                        [42] Base_Simplified_AMRLevelOp::AMRResidualNC 0.37019  4.9% 14 0 0 MFlops 
+                           [43] Base_Simplified_AMRLevelOp::AMROperatorNC 0.36706  4.9% 14 0 0 MFlops 
+                              [64] Proto_Viscous_Tensor_Op::applyOperator 0.14610  1.9% 14 0 0 MFlops 
+                                 [74] Pr_Viscous_Tensor::getDivergenceIcrement 0.11128  1.5% 42 0 0 MFlops 
+                                    [89] Proto_Viscous_Tensor::getFluxDotNormal 0.09385  1.3% 42 0 0 MFlops 
+                                       [96] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08532  1.1% 42 0 0 MFlops 
+                                 [139] Proto_Viscous_Tensor::computeCCGradientLevel 0.02723  0.4% 14 0 0 MFlops 
+                                    [166] Proto_Viscous_Tensor::computeCCGradient 0.01517  0.2% 14 0 0 MFlops 
+                              [80] Proto_Viscous_Tensor::getFlux 0.10063  1.3% 42 0 0 MFlops 
+                                 [81] Proto_Viscous_Tensor::getFluxDotNormal 0.10054  1.3% 42 0 0 MFlops 
+                                    [94] Proto_Viscous_Tensor::getFaceDivAndGrad 0.08700  1.2% 42 0 0 MFlops 
+                              [128] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.03697  0.5% 42 0 0 MFlops 
+                              [137] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.02791  0.4% 14 0 0 MFlops 
+                              [145] PrChFluxRegister::setFineFlux 0.02472  0.3% 14 0 0 MFlops 
+                              [178] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.01102  0.1% 14 0 0 MFlops 
+                              [225] PrChFluxRegister::setCoarFlux 0.00398  0.1% 14 0 0 MFlops 
+                              [314] PrChFluxRegister constructor 0.00031  0.0% 14 0 0 MFlops 
+                              [325] PrChFluxRegister::reflux 0.00022  0.0% 14 0 0 MFlops 
+                              [385] Base_Proto_AMRLevelOp::getDomainFromData 0.00002  0.0% 42 0 0 MFlops 
+                              [454] PrChFluxRegister destructor 0.00000  0.0% 14 0 0 MFlops 
+                           [237] Proto_Viscous_Tensor::axby 0.00311  0.0% 14 0 0 MFlops 
+                        [69] Base_Simplified_AMRLevelOp::AMRResidual 0.12251  1.6% 14 0 0 MFlops 
+                           [70] Base_Simplified_AMRLevelOp::AMROperator 0.12250  1.6% 14 0 0 MFlops 
+                              [98] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.07114  0.9% 28 0 0 MFlops 
+                              [124] PrChFluxRegister::setFineFlux 0.04026  0.5% 14 0 0 MFlops 
+                              [202] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00715  0.1% 14 0 0 MFlops 
+                              [231] Proto_Viscous_Tensor_Op::applyOperator 0.00323  0.0% 14 0 0 MFlops 
+                                 [232] Proto_Viscous_Tensor::computeCCGradientLevel 0.00322  0.0% 14 0 0 MFlops 
+                              [350] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00009  0.0% 42 0 0 MFlops 
+                              [361] PrChFluxRegister constructor 0.00006  0.0% 14 0 0 MFlops 
+                              [376] Base_Proto_AMRLevelOp::getDomainFromData 0.00003  0.0% 42 0 0 MFlops 
+                              [384] PrChFluxRegister::setCoarFlux 0.00002  0.0% 14 0 0 MFlops 
+                              [401] PrChFluxRegister::reflux 0.00001  0.0% 14 0 0 MFlops 
+                              [455] PrChFluxRegister destructor 0.00000  0.0% 14 0 0 MFlops 
+                           [419] Proto_Viscous_Tensor::axby 0.00000  0.0% 14 0 0 MFlops 
+                        [141] Base_Simplified_AMRLevelOp::AMRResidualNF 0.02671  0.4% 14 0 0 MFlops 
+                           [142] Base_Simplified_AMRLevelOp::AMROperatorNF 0.02671  0.4% 14 0 0 MFlops 
+                              [160] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.01665  0.2% 14 0 0 MFlops 
+                              [183] Proto_Viscous_Tensor_Op::applyOperator 0.01002  0.1% 14 0 0 MFlops 
+                                 [184] Proto_Viscous_Tensor::computeCCGradientLevel 0.01002  0.1% 14 0 0 MFlops 
+                              [380] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00002  0.0% 14 0 0 MFlops 
+                              [438] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 14 0 0 MFlops 
+                           [416] Proto_Viscous_Tensor::axby 0.00000  0.0% 14 0 0 MFlops 
+                     [143] Base_Proto_AMRLevelOp::norm 0.02625  0.3% 42 0 0 MFlops 
+                     [221] Base_Proto_AMRLevelOp::assign 0.00413  0.1% 28 0 0 MFlops 
+                     [362] MPI_Allreduce 0.00006  0.0% 14 0 0 MFlops 
+                  [100] Initial AMR Residual 0.06180  0.8% 1 0 0 MFlops 
+                     [101] AMRMultiGrid::computeAMRResidual 0.06180  0.8% 1 0 0 MFlops 
+                        [102] AMRMultiGrid<T>::computeAMRResidualLevel 0.05877  0.8% 3 0 0 MFlops 
+                           [121] Base_Simplified_AMRLevelOp::AMRResidualNC 0.04065  0.5% 1 0 0 MFlops 
+                              [122] Base_Simplified_AMRLevelOp::AMROperatorNC 0.04044  0.5% 1 0 0 MFlops 
+                                 [170] Proto_Viscous_Tensor_Op::applyOperator 0.01402  0.2% 1 0 0 MFlops 
+                                    [185] Pr_Viscous_Tensor::getDivergenceIcrement 0.00984  0.1% 3 0 0 MFlops 
+                                       [193] Proto_Viscous_Tensor::getFluxDotNormal 0.00851  0.1% 3 0 0 MFlops 
+                                          [201] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00721  0.1% 3 0 0 MFlops 
+                                    [244] Proto_Viscous_Tensor::computeCCGradientLevel 0.00282  0.0% 1 0 0 MFlops 
+                                       [267] Proto_Viscous_Tensor::computeCCGradient 0.00176  0.0% 1 0 0 MFlops 
+                                 [195] PrChFluxRegister::setFineFlux 0.00822  0.1% 1 0 0 MFlops 
+                                 [199] Proto_Viscous_Tensor::getFlux 0.00745  0.1% 3 0 0 MFlops 
+                                    [200] Proto_Viscous_Tensor::getFluxDotNormal 0.00744  0.1% 3 0 0 MFlops 
+                                       [211] Proto_Viscous_Tensor::getFaceDivAndGrad 0.00620  0.1% 3 0 0 MFlops 
+                                 [220] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00418  0.1% 1 0 0 MFlops 
+                                 [246] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00275  0.0% 3 0 0 MFlops 
+                                 [254] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.00226  0.0% 1 0 0 MFlops 
+                                 [304] PrChFluxRegister::setCoarFlux 0.00051  0.0% 1 0 0 MFlops 
+                                 [370] PrChFluxRegister constructor 0.00003  0.0% 1 0 0 MFlops 
+                                 [391] PrChFluxRegister::reflux 0.00002  0.0% 1 0 0 MFlops 
+                                 [423] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 3 0 0 MFlops 
+                                 [463] PrChFluxRegister destructor 0.00000  0.0% 1 0 0 MFlops 
+                              [326] Proto_Viscous_Tensor::axby 0.00021  0.0% 1 0 0 MFlops 
+                           [162] Base_Simplified_AMRLevelOp::AMRResidual 0.01615  0.2% 1 0 0 MFlops 
+                              [163] Base_Simplified_AMRLevelOp::AMROperator 0.01615  0.2% 1 0 0 MFlops 
+                                 [179] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.01097  0.1% 2 0 0 MFlops 
+                                 [241] PrChFluxRegister::setFineFlux 0.00292  0.0% 1 0 0 MFlops 
+                                 [275] Base_Proto_AMRLevelOp::fillGhostDataOverFineFineInterface 0.00136  0.0% 1 0 0 MFlops 
+                                 [291] Proto_Viscous_Tensor_Op::applyOperator 0.00085  0.0% 1 0 0 MFlops 
+                                    [292] Proto_Viscous_Tensor::computeCCGradientLevel 0.00085  0.0% 1 0 0 MFlops 
+                                 [412] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00001  0.0% 3 0 0 MFlops 
+                                 [415] PrChFluxRegister constructor 0.00000  0.0% 1 0 0 MFlops 
+                                 [430] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 3 0 0 MFlops 
+                                 [434] PrChFluxRegister::setCoarFlux 0.00000  0.0% 1 0 0 MFlops 
+                                 [445] PrChFluxRegister::reflux 0.00000  0.0% 1 0 0 MFlops 
+                                 [464] PrChFluxRegister destructor 0.00000  0.0% 1 0 0 MFlops 
+                              [449] Proto_Viscous_Tensor::axby 0.00000  0.0% 1 0 0 MFlops 
+                           [262] Base_Simplified_AMRLevelOp::AMRResidualNF 0.00197  0.0% 1 0 0 MFlops 
+                              [263] Base_Simplified_AMRLevelOp::AMROperatorNF 0.00197  0.0% 1 0 0 MFlops 
+                                 [278] Proto_Viscous_Tensor::fillDataOverCoarseFineInterface 0.00115  0.0% 1 0 0 MFlops 
+                                 [293] Proto_Viscous_Tensor_Op::applyOperator 0.00082  0.0% 1 0 0 MFlops 
+                                    [294] Proto_Viscous_Tensor::computeCCGradientLevel 0.00082  0.0% 1 0 0 MFlops 
+                                 [431] Pr_Viscous_Tensor::fillGhostdataOutsideDomain 0.00000  0.0% 1 0 0 MFlops 
+                                 [460] Base_Proto_AMRLevelOp::getDomainFromData 0.00000  0.0% 1 0 0 MFlops 
+                              [450] Proto_Viscous_Tensor::axby 0.00000  0.0% 1 0 0 MFlops 
+                        [264] Base_Proto_AMRLevelOp::norm 0.00193  0.0% 3 0 0 MFlops 
+                        [279] Base_Proto_AMRLevelOp::assign 0.00109  0.0% 2 0 0 MFlops 
+                        [417] MPI_Allreduce 0.00000  0.0% 1 0 0 MFlops 
+                  [249] Base_Simplified_AMRLevelOp::incr 0.00233  0.0% 42 0 0 MFlops 
+                     [251] Proto_Viscous_Tensor::axby 0.00233  0.0% 42 0 0 MFlops 
+                  [282] uberCorrection creation 0.00099  0.0% 3 0 0 MFlops 
+                     [372] Base_Proto_AMRLevelOp::create 0.00003  0.0% 6 0 0 MFlops 
+               [395] Base_Proto_AMRLevelOp::create 0.00001  0.0% 3 0 0 MFlops 
+            [341] AMRMultiGrid::init 0.00012  0.0% 1 0 0 MFlops 
+               [352] MutliGrid::init 0.00008  0.0% 3 0 0 MFlops 
+                  [354] Base_Proto_AMRLevelOp::createCoarser 0.00008  0.0% 8 0 0 MFlops 
+               [373] Base_Proto_AMRLevelOp::create 0.00003  0.0% 6 0 0 MFlops 
+               [427] Base_Proto_AMRLevelOp::createCoarsened (the AMR one) 0.00000  0.0% 2 0 0 MFlops 
+            [457] AMRMultiGrid::revert 0.00000  0.0% 1 0 0 MFlops 
+         [172] PrChUtilities::setupSolver 0.01293  0.2% 1 0 0 MFlops 
+            [173] AMRMultiGrid::define 0.01291  0.2% 1 0 0 MFlops 
+               [175] MultiGrid::define 0.01120  0.1% 3 0 0 MFlops 
+                  [177] Pr_Viscous_Tensor_Factory_MGnewOp 0.01119  0.1% 13 0 0 MFlops 
+                     [180] Pr_Viscous_Tensor_Factory_getCoefficients 0.01083  0.1% 10 0 0 MFlops 
+                     [312] Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op 0.00034  0.0% 10 0 0 MFlops 
+                        [321] Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient 0.00024  0.0% 10 0 0 MFlops 
+                        [347] Proto_Viscous_Tensor::defineAuxilliaries 0.00010  0.0% 10 0 0 MFlops 
+               [268] Pr_Viscous_Tensor_Factory_AMRnewOp 0.00165  0.0% 3 0 0 MFlops 
+                  [270] Proto_Viscous_Tensor_Op::Proto_Viscous_Tensor_Op 0.00165  0.0% 3 0 0 MFlops 
+                     [271] Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient 0.00156  0.0% 3 0 0 MFlops 
+                     [349] Proto_Viscous_Tensor::defineAuxilliaries 0.00009  0.0% 3 0 0 MFlops 
+               [448] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+         [272] PrChUtilities::getProtoViscousTensorOpFactory 0.00144  0.0% 1 0 0 MFlops 
+            [273] PrChUtilities::protoizeCoefficients 0.00143  0.0% 1 0 0 MFlops 
+               [280] PrChUtilities::copyToDevice-Flux 0.00105  0.0% 6 0 0 MFlops 
+               [330] PrChUtilities::copyToDevice-Cell 0.00018  0.0% 3 0 0 MFlops 
+                  [428] PrChUtilities::getRaHostData 0.00000  0.0% 3 0 0 MFlops 
+               [348] PrChUtilities::getProtoLayout 0.00010  0.0% 3 0 0 MFlops 
+                  [407] PrChUtilities::getRawLayout 0.00001  0.0% 3 0 0 MFlops 
+            [398] Pr_Viscous_Tensor_Factory_Constructor 0.00001  0.0% 1 0 0 MFlops 
+         [276] defineAndSetCoefficients 0.00127  0.0% 3 0 0 MFlops 
+         [299] ~AMRMultiGrid 0.00070  0.0% 1 0 0 MFlops 
+         [302] PrChUtilities::copyToDevice-Cell 0.00051  0.0% 3 0 0 MFlops 
+            [435] PrChUtilities::getRaHostData 0.00000  0.0% 3 0 0 MFlops 
+         [303] PrChUtilities::copyToHost 0.00051  0.0% 3 0 0 MFlops 
+            [406] PrChUtilities::getRaHostData 0.00001  0.0% 3 0 0 MFlops 
+         [333] ~LayoutData 0.00014  0.0% 9 0 0 MFlops 
+         [404] PrChUtilities::getProtoLayout 0.00001  0.0% 3 0 0 MFlops 
+            [422] PrChUtilities::getRawLayout 0.00000  0.0% 3 0 0 MFlops 
+         [439] ~Copier 0.00000  0.0% 15 0 0 MFlops 
+         [440] ~BoxLayoutData 0.00000  0.0% 9 0 0 MFlops 
+            [456] completePendingSends 0.00000  0.0% 9 0 0 MFlops 
+         [458] ~LevelData 0.00000  0.0% 9 0 0 MFlops 
+      [148] WriteAMRHierarchyHDF5 0.02143  0.3% 1 0 0 MFlops 
+         [186] WriteFile 0.00976  0.1% 1 0 0 MFlops 
+            [190] Write Level 0.00898  0.1% 3 0 0 MFlops 
+               [192] write_Level 0.00875  0.1% 3 0 0 MFlops 
+                  [196] linearize_H5Dwrite 0.00811  0.1% 3 0 0 MFlops 
+                     [198] H5Dwrite 0.00791  0.1% 1 0 0 MFlops 
+                     [328] linearize 0.00020  0.0% 1 0 0 MFlops 
+                  [310] WriteAttributes 0.00035  0.0% 3 0 0 MFlops 
+                  [343] H5S_H5D_offsets_create 0.00012  0.0% 3 0 0 MFlops 
+                  [353] H5Dcreate 0.00008  0.0% 3 0 0 MFlops 
+                  [392] getOffsets 0.00001  0.0% 3 0 0 MFlops 
+                     [413] offsets.resize 0.00001  0.0% 3 0 0 MFlops 
+                     [447] dataSize 0.00000  0.0% 10 0 0 MFlops 
+                     [452] offsets calc 0.00000  0.0% 10 0 0 MFlops 
+                  [400] H5S_H5D_offsets_close 0.00001  0.0% 3 0 0 MFlops 
+                  [409] H5Dclose 0.00001  0.0% 3 0 0 MFlops 
+                  [411] mallocMT_buffers 0.00001  0.0% 3 0 0 MFlops 
+                  [421] H5Screate 0.00000  0.0% 3 0 0 MFlops 
+                  [424] ComputeBufferCapacity 0.00000  0.0% 3 0 0 MFlops 
+                  [429] H5Sclose 0.00000  0.0% 3 0 0 MFlops 
+                  [432] freeMT 0.00000  0.0% 3 0 0 MFlops 
+               [355] writeToFile 0.00008  0.0% 3 0 0 MFlops 
+               [379] setGroup 0.00002  0.0% 3 0 0 MFlops 
+               [462] calc minimum in outputGhost 0.00000  0.0% 3 0 0 MFlops 
+         [210] CreateFile 0.00621  0.1% 1 0 0 MFlops 
+         [218] Barrier 0.00449  0.1% 2 0 0 MFlops 
+         [289] CloseFile 0.00092  0.0% 1 0 0 MFlops 
+      [287] setRHS 0.00093  0.0% 1 0 0 MFlops 
+      [288] PrChUtilities::setupGridsWithTagLocation 0.00093  0.0% 1 0 0 MFlops 
+         [300] setupGrids: meshRefine and all that 0.00063  0.0% 1 0 0 MFlops 
+            [301] MeshRefine::regrid 0.00058  0.0% 1 0 0 MFlops 
+               [394] BRMeshRefine::makeBoxes 0.00001  0.0% 3 0 0 MFlops 
+            [403] DisjointBoxLayout::computeNeighbors 0.00001  0.0% 3 0 0 MFlops 
+            [425] LoadBalance:VectorBoxEntry 0.00000  0.0% 3 0 0 MFlops 
+               [444] LoadBalance:VectorBoxSimple 0.00000  0.0% 3 0 0 MFlops 
+         [351] setupGrids: BaseGridCreation 0.00009  0.0% 1 0 0 MFlops 
+            [381] LoadBalance:VectorBoxEntry 0.00002  0.0% 1 0 0 MFlops 
+               [426] LoadBalance:VectorBoxSimple 0.00000  0.0% 1 0 0 MFlops 
+            [383] DisjointBoxLayout::computeNeighbors 0.00002  0.0% 1 0 0 MFlops 
+            [414] BRMeshRefine::domainSplit 0.00001  0.0% 1 0 0 MFlops 
+      [323] ~LayoutData 0.00022  0.0% 6 0 0 MFlops 
+      [443] ~BoxLayoutData 0.00000  0.0% 6 0 0 MFlops 
+         [461] completePendingSends 0.00000  0.0% 6 0 0 MFlops 
+      [446] ~Copier 0.00000  0.0% 6 0 0 MFlops 
+      [459] ~LevelData 0.00000  0.0% 6 0 0 MFlops 
+stack top 0x533034, stack bottom 0x532a19, stack size =    0.001 MB 
+[457] AMRMultiGrid::revert
