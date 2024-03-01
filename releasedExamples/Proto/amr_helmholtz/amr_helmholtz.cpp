@@ -84,53 +84,6 @@ namespace Chombo
     }
 
     static void
-    makeSmoothAndInteresting(Vector<pr_lbd*>                &  a_phi_pr,
-                             Vector< shared_ptr<pr_dbl> >   &  a_layouts_pr,
-                             Vector<int>                    &  a_ref_ratios,
-                             Vector<double>                 &  a_amrDx)
-    {
-      Chombo::pout() << "makeSmoothAndInteresting: " << endl;
-      for(int ilev = 0; ilev < a_phi_pr.size(); ilev++)
-      {
-        double dx = a_amrDx[ilev];
-        auto dit        =  a_phi_pr[ilev]->begin();
-        auto& phi_level = *a_phi_pr[ilev];
-        for( int ibox = 0; ibox < dit.localSize(); ibox++)
-        {
-          auto& phi_fab = phi_level[dit[ibox]];
-          Proto::forallInPlace_i(setToSineXSineYSineZ, phi_fab.box(), phi_fab, dx);
-        } //end loop over boxes
-
-        Chombo::pout() << " ilev:           " << ilev; 
-        Chombo::pout() << ", phi_level.max = " << phi_level.max() << " phi_level.min() = " << phi_level.min()  << endl;
-      }//end loop over levels
-    }//  end function makeSmoothAndInteresting
-    static void
-    testAMROperator(Vector<pr_lbd*>                         & a_rhs_pr,
-                    Vector<pr_lbd*>                         & a_phi_pr, 
-                    shared_ptr<AMRMultiGrid<pr_lbd > >      & a_amr_solver_ptr)
-    {
-      Chombo::pout() << " going into testAMROperator: " << endl;
-      for(int ilev = 0; ilev < a_phi_pr.size(); ilev++)
-      {
-        auto& phi_level = *a_phi_pr[ilev];
-        Chombo::pout() << " ilev = " << ilev;
-        Chombo::pout() << ", phi_level.max = " << phi_level.max() << ", phi_level.min() = " << phi_level.min()  << endl;
-      }//end loop over levels
-
-      int l_max  = a_rhs_pr.size() - 1;
-      int l_base = 0;
-      a_amr_solver_ptr->computeAMROperator(a_rhs_pr, a_phi_pr, l_max, l_base, false);
-      
-      Chombo::pout() << " coming out of  testAMROperator: " << endl;
-      for(int ilev = 0; ilev < a_phi_pr.size(); ilev++)
-      {
-        auto& rhs_level = *a_rhs_pr[ilev];
-        Chombo::pout() << " ilev:           " << ilev  << endl;
-        Chombo::pout() << " rhs_level.max = " << rhs_level.max() << " rhs_level.min() = " << rhs_level.min()  << endl;
-      }//end loop over levels
-    }
-    static void
     solveForPhi(Vector<ch_ldf* >   a_phi_ch,
                 Vector<ch_ldf* >   a_rhs_ch,
                 Vector<ch_dbl  >&  a_amr_grids,
@@ -176,10 +129,6 @@ namespace Chombo
         rhs_pr[ilev] = new pr_lbd(*layout_ptr, ghost_rhs);
       }
 
-      //because it is convenient, put in an operator test to compare with ye olde chombo
-      makeSmoothAndInteresting(phi_pr, layouts_pr, a_ref_ratios, a_amrDx);
-      testAMROperator(rhs_pr, phi_pr, amr_solver_ptr);
-      
       //get the rhs onto the device
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
       {
