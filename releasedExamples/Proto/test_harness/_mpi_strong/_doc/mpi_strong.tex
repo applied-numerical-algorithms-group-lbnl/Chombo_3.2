@@ -67,411 +67,186 @@ The cases used for this campaign are as follows.
 \section{Dataset from March 1, 2024}
  
 \subsection{Summary of this round of data}
-
-This test is mostly to see if I can get everything running.
-Everything ran.   This is very good news.   Not everything ran well.
-Some operators (old and new) did not converge well (or at all).   The old
-resistivity operator seems particularly problematic.   Then
-again, there was no effort to make these test problems reasonable.
-All the data is included.   Keep in mind that all times include very
-slow things like writing hdf5 files.   These are all serial runs meant
-to provide data for the first round of optimizations.   
-
-We plot the final residual and the  number of multigrid iterations and
-amount of time it took to get there. Note that not everything
-converged. All of these runs had debug false and optimation high.
-
+% helmholtz
 
 \begin{small}
 \begin{table}
 \begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Time to solution\\
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
 \hline
- {\tt Proto\_Helmholtz\_Op}       & 2   & 0    &   7.815970e-14 &         7  & 0.07463  \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 1    &   6.163958e-13 &         20 & 0.22929  \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 2    &   5.520029e-13 &         33 & 0.39347  \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 3    &   7.061018e-13 &         33 & 0.51900  \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 0    &   3.375078e-13 &         8  & 0.87163  \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 1    &   6.423750e-13 &         21 & 2.56059  \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 2    &   6.612488e-13 &         35 & 4.43480  \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 3    &   6.883383e-13 &         35 & 13.27707 \\
- \hline                                                                       
- {\tt AMRPoissonOp}               & 2   & 0    &   7.749357e-14 &         7  & 0.00847\\
- {\tt AMRPoissonOp}               & 2   & 1    &   9.574563e-13 &         7  & 0.00735\\
- {\tt AMRPoissonOp}               & 2   & 2    &   7.127632e-14 &         8  & 0.01246\\
- {\tt AMRPoissonOp}               & 2   & 3    &   3.499423e-13 &         8  & 0.01599\\
- {\tt AMRPoissonOp}               & 3   & 0    &   3.325118e-13 &         8  & 0.03919\\
- {\tt AMRPoissonOp}               & 3   & 1    &   6.488143e-13 &         8  & 0.04693\\
- {\tt AMRPoissonOp}               & 3   & 2    &   1.347811e-13 &         9  & 0.05338\\
- {\tt AMRPoissonOp}               & 3   & 3    &   6.195044e-13 &         9  & 0.24041\\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::helmholtz1}
-\caption
-    {
-      Final residual and number of iterations in solution of the  constant
-      coefficient Helmholtz equation.
-      The data set is dated February 5, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
- {\tt Proto\_Conductivity\_Op}    & 2   & 0    & 2.081668e-09   &         6  & 0.09689 \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 1    & 1.405955e-08   &         19 & 0.34604 \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 2    & 1.584777e-07   &         30 & 0.51393 \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 3    & 6.366663e-07   &         30 & 0.68123 \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 0    & 4.222235e-09   &         7  & 1.09163 \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 1    & 4.702191e-08   &         20 & 3.40754 \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 2    & 2.160337e-07   &         33 & 5.81398 \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 3    & 8.665997e-07   &         33 & 17.47371\\
-\hline                                                                        
- {\tt VCAMRPoissonOp2}            & 2   & 0    & 3.941292e-11   &         13 & 0.01050\\
- {\tt VCAMRPoissonOp2}            & 2   & 1    & 4.880329e-11   &         13 & 0.01244\\
- {\tt VCAMRPoissonOp2}            & 2   & 2    & 4.877754e-11   &         13 & 0.01793\\
- {\tt VCAMRPoissonOp2}            & 2   & 3    & 6.872614e-11   &         18 & 0.02939\\
- {\tt VCAMRPoissonOp2}            & 3   & 0    & 6.221268e-11   &         13 & 0.07810\\
- {\tt VCAMRPoissonOp2}            & 3   & 1    & 6.221268e-11   &         13 & 0.11968\\
- {\tt VCAMRPoissonOp2}            & 3   & 2    & 6.221268e-11   &         13 & 0.12976\\
- {\tt VCAMRPoissonOp2}            & 3   & 3    & 4.454703e-11   &         20 & 1.27999\\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::conductivity1}
-\caption
-    {
-      Final residual and number of iterations in solution of the variable
-      coefficient Helmholtz equation.
-      The data set is dated February 5, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 0    & 1.039169e-13   &         12 & 0.61612\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 1    & 5.695444e-13   &         23 & 1.22842\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 2    & 5.443423e-13   &         32 & 1.78032\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 3    & 8.972822e-13   &         32 & 2.28227\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 0    & 3.987921e-13   &         13 & 10.45855\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 1    & 4.504175e-13   &         25 & 21.21297\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 2    & 4.360956e-13   &         33 & 28.45970\\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 3    & 5.653440e-03   &         10 & 27.78179\\
-\hline                                                                        
- {\tt ViscousTensorOp}            & 2   & 0    & 1.759459e-11   &         11 & 0.11242 \\
- {\tt ViscousTensorOp}            & 2   & 1    & 9.671908e-11   &         22 & 0.11848 \\
- {\tt ViscousTensorOp}            & 2   & 2    & 9.324896e-11   &         20 & 0.12169 \\
- {\tt ViscousTensorOp}            & 2   & 3    & 4.322143e-11   &         21 & 0.22275 \\
- {\tt ViscousTensorOp}            & 3   & 0    & 6.480527e-11   &         63 & 8.08230 \\
- {\tt ViscousTensorOp}            & 3   & 1    & 7.077317e-11   &         70 & 8.75837 \\
- {\tt ViscousTensorOp}            & 3   & 2    & 9.199486e-11   &         62 & 7.71172 \\
- {\tt ViscousTensorOp}            & 3   & 3    & 9.661738e-11   &         68 & 67.7667\\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::viscous1}
-\caption
-    {
-      Final residual and number of iterations in solution of the
-      viscous tensor equation.
-      The data set is dated February 5, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
+ {\tt Proto\_Helmholtz\_Op} & 2 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt AMRPoissonOp}         & 2 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                     
+ {\tt Proto\_Helmholtz\_Op} & 2 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt AMRPoissonOp}         & 2 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 2 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Helmholtz\_Op} & 2 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt AMRPoissonOp        } & 2 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                               
+ {\tt Proto\_Helmholtz\_Op} & 2 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 2 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt AMRPoissonOp        } & 2 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 2 & 3   & 8    &  insert  &  insert    & insert   \\
  \hline
- {\tt Proto\_Resistivity\_Op}     & 2   & 0    & 1.514344e-13   &        7 & 0.44804\\
- {\tt Proto\_Resistivity\_Op}     & 2   & 1    & 4.618528e-13   &       24 & 1.64127\\
- {\tt Proto\_Resistivity\_Op}     & 2   & 2    & 4.672929e-13   &       35 & 2.51303\\
- {\tt Proto\_Resistivity\_Op}     & 2   & 3    & 6.417089e-13   &       35 & 3.28381\\
- {\tt Proto\_Resistivity\_Op}     & 3   & 0    & 3.852474e-14   &        9 & 7.14071\\
- {\tt Proto\_Resistivity\_Op}     & 3   & 1    & 6.714629e-13   &       27 & 22.9827\\
- {\tt Proto\_Resistivity\_Op}     & 3   & 2    & 5.753176e-13   &       45 & 39.2442\\
- {\tt Proto\_Resistivity\_Op}     & 3   & 3    & 6.127321e-13   &       45 & 126.269\\
+\end{tabular}
+\end{center}
+\label{tab::helmholtz_2d}
+\caption
+    {
+      Performance data for the solution of the Helmholtz
+      equation in two dimensions.
+      The data set is dated March 1, 2024.
+    }
+\end{table}
+\end{small}
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
+\hline
+ {\tt Proto\_Helmholtz\_Op} & 3 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                               
+ {\tt AMRPoissonOp}         & 3 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                     
+ {\tt Proto\_Helmholtz\_Op} & 3 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                               
+ {\tt AMRPoissonOp}         & 3 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt AMRPoissonOp}         & 3 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+                                                                                     
+ {\tt Proto\_Helmholtz\_Op} & 3 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt AMRPoissonOp        } & 3 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                               
+                                                                                      
+ {\tt Proto\_Helmholtz\_Op} & 3 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Helmholtz\_Op} & 3 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt AMRPoissonOp        } & 3 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt AMRPoissonOp        } & 3 & 3   & 8    &  insert  &  insert    & insert   \\
  \hline
- {\tt ResistivityOp}              & 2   & 0    & 1.075184e-11   &   12& 0.07357\\
- {\tt ResistivityOp}              & 2   & 1    & 5.151905e-01   &  100& 0.86896\\
- {\tt ResistivityOp}              & 2   & 2    & 7.756453e-01   &  100& 0.89232\\
- {\tt ResistivityOp}              & 2   & 3    & 1.046114e+00   &  100& 1.19475\\
- {\tt ResistivityOp}              & 3   & 0    & 7.031487e-12   &   10& 1.15735\\
- {\tt ResistivityOp}              & 3   & 1    & 5.094567e-01   &  100& 13.5964\\
- {\tt ResistivityOp}              & 3   & 2    & 6.155470e-01   &  100& 13.3735\\
- {\tt ResistivityOp}              & 3   & 3    & 6.747065e-01   &  100& 94.4081\\
-\hline
 \end{tabular}
 \end{center}
-\label{tab::resist1}
+\label{tab::helmholtz_3d}
 \caption
     {
-      Final residual and number of iterations in solution of the
-      magnetic resistivity equation.
-      The data set is dated February 5, 2024.
+      Performance data for the solution of Helmholtz
+      equation in three dimensions.
+      The data set is dated March 1, 2024.
     }
 \end{table}
 \end{small}
 
-\subsection{Bug?}
-Note: I just looked at all the solver tolerances and so on.  They seem
-to match.   At the very least, it appears we have  a bug in {\tt ResistivityOp}.
-I just put in a ton of timers and will try again.
+% conductivity
 
-\section{Dataset from February 7, 2024}
 
-After examining time.table files, I found that the fortran-based
-operators were doing a different form of relaxation than the
-proto-based ones.    To make the comparison more fair, for this round,
-all operators should be using ``slow'' Gauss-Seidel relaxation.
-This is probably not a great long-term solution but it will clarify
-where we are for this baseline measurement.
 
-\subsection{Summary of this round of data}
-
-Because of the very different cycle counts, the different operators
-remain difficult to compare.   This should be the focus before more
-data comparisons of this are made.    I also have to resolve the cases
-that are not converging.
-
-Here are my next steps.
-\begin{itemize}
-\item Take resistivity out of the test since the proto version already
-  works far better than the fortran version (which often does not converge).
-\item Investigate why our multigrid performance is so much worse in
-  the proto versions versus the fortran ones.   This is true even for
-  constant-coefficient Helmholtz.   This could indicate a problem with
-  refluxing or coarse-fine interpolation.   Ten gets you twenty the problem is
-  the flux register I ginned up.
-\end{itemize}
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Time to solution\\
-\hline
- {\tt Proto\_Helmholtz\_Op}       & 2   & 0    & 7.815970e-14   & 7   & 0.07802\\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 1    & 6.163958e-13   & 20  & 0.22959\\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 2    & 5.520029e-13   & 33  & 0.39283\\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 3    & 7.061018e-13   & 33  & 0.51628\\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 0    & 3.375078e-13   & 8   & 0.87581\\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 1    & 6.423750e-13   & 21  & 2.56837\\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 2    & 6.612488e-13   & 35  & 4.43307\\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 3    & 6.883383e-13   & 35  & 13.2446\\
- \hline                                                   
- {\tt AMRPoissonOp}               & 2   & 0    & 7.749357e-14   &  7  & 0.00866\\
- {\tt AMRPoissonOp}               & 2   & 1    & 8.455459e-13   &  12 & 0.01329\\
- {\tt AMRPoissonOp}               & 2   & 2    & 1.201261e-13   &  13 & 0.01791\\
- {\tt AMRPoissonOp}               & 2   & 3    & 3.961276e-13   &  13 & 0.02261\\
- {\tt AMRPoissonOp}               & 3   & 0    & 3.325118e-13   &  8  & 0.05562\\
- {\tt AMRPoissonOp}               & 3   & 1    & 7.107648e-13   &  13 & 0.09404\\
- {\tt AMRPoissonOp}               & 3   & 2    & 1.330047e-13   &  14 & 0.11897\\
- {\tt AMRPoissonOp}               & 3   & 3    & 6.328271e-13   &  14 & 0.64701\\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::helmholtz2}
-\caption
-    {
-      Final residual and number of iterations in solution of the  constant
-      coefficient Helmholtz equation.
-      The data set is dated February 7, 2024.
-    }
-\end{table}
-\end{small}
 
 \begin{small}
 \begin{table}
 \begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
 \hline
- {\tt Proto\_Conductivity\_Op}    & 2   & 0    & 2.081668e-09   & 6    & 0.09638\\
- {\tt Proto\_Conductivity\_Op}    & 2   & 1    & 1.405955e-08   & 19   & 0.31747\\
- {\tt Proto\_Conductivity\_Op}    & 2   & 2    & 1.584777e-07   & 30   & 0.52062\\
- {\tt Proto\_Conductivity\_Op}    & 2   & 3    & 6.366663e-07   & 30   & 0.67664\\
- {\tt Proto\_Conductivity\_Op}    & 3   & 0    & 4.222235e-09   & 7    & 1.08044\\
- {\tt Proto\_Conductivity\_Op}    & 3   & 1    & 4.702191e-08   & 20   & 3.40413\\
- {\tt Proto\_Conductivity\_Op}    & 3   & 2    & 2.160337e-07   & 33   & 5.83492\\
- {\tt Proto\_Conductivity\_Op}    & 3   & 3    & 8.665997e-07   & 33   & 17.5112\\
-\hline                                                     
- {\tt VCAMRPoissonOp2}            & 2   & 0    & 3.941292e-11   & 13   & 0.00963\\
- {\tt VCAMRPoissonOp2}            & 2   & 1    & 4.880329e-11   & 13   & 0.01524\\
- {\tt VCAMRPoissonOp2}            & 2   & 2    & 4.877754e-11   & 13   & 0.01581\\
- {\tt VCAMRPoissonOp2}            & 2   & 3    & 6.872614e-11   & 18   & 0.03154\\
- {\tt VCAMRPoissonOp2}            & 3   & 0    & 6.221268e-11   & 13   & 0.07995\\
- {\tt VCAMRPoissonOp2}            & 3   & 1    & 6.221268e-11   & 13   & 0.11737\\
- {\tt VCAMRPoissonOp2}            & 3   & 2    & 6.221268e-11   & 13   & 0.12495\\
- {\tt VCAMRPoissonOp2}            & 3   & 3    & 4.454703e-11   & 20   & 1.29137\\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::conductivity2}
-\caption
-    {
-      Final residual and number of iterations in solution of the variable
-      coefficient Helmholtz equation.
-      The data set is dated February 7, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 0    & 1.039169e-13   & 12  & 0.61725  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 1    & 5.695444e-13   & 23  & 1.23255  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 2    & 5.443423e-13   & 32  & 1.77953  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 3    & 8.972822e-13   & 32  & 2.29478  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 0    & 3.987921e-13   & 13  & 10.51760  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 1    & 4.504175e-13   & 25  & 21.16876  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 2    & 4.360956e-13   & 33  & 28.51970  \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 3    & 5.653440e-03   & 10  & 27.69634  \\
-\hline                                                      
- {\tt ViscousTensorOp}            & 2   & 0    & 1.759459e-11   & 11  & 0.11060  \\
- {\tt ViscousTensorOp}            & 2   & 1    & 9.671908e-11   & 22  & 0.11815  \\
- {\tt ViscousTensorOp}            & 2   & 2    & 9.324896e-11   & 20  & 0.12216  \\
- {\tt ViscousTensorOp}            & 2   & 3    & 4.322143e-11   & 21  & 0.21566  \\
- {\tt ViscousTensorOp}            & 3   & 0    & 6.480527e-11   & 63  & 8.13374  \\
- {\tt ViscousTensorOp}            & 3   & 1    & 7.077317e-11   & 70  & 8.70458  \\
- {\tt ViscousTensorOp}            & 3   & 2    & 9.199486e-11   & 62  & 7.89806  \\
- {\tt ViscousTensorOp}            & 3   & 3    & 9.661738e-11   & 68  & 66.9880  \\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::viscous2}
-\caption
-    {
-      Final residual and number of iterations in solution of the
-      viscous tensor equation.
-      The data set is dated February 7, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
+ {\tt Proto\_Conductivity\_Op} & 2 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt VCAMRPossonOp2 }         & 2 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Conductivity\_Op} & 2 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt VCAMRPossonOp2 }         & 2 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 2 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Conductivity\_Op} & 2 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt VCAMRPossonOp2         } & 2 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                               
+                                                                                      
+ {\tt Proto\_Conductivity\_Op} & 2 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 2 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt VCAMRPossonOp2         } & 2 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 2 & 3   & 8    &  insert  &  insert    & insert   \\
  \hline
- {\tt Proto\_Resistivity\_Op}     & 2   & 0    & 1.514344e-13   & 7  & 0.45358  \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 1    & 4.618528e-13   & 24 & 1.65240  \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 2    & 4.672929e-13   & 35 & 2.52877  \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 3    & 6.417089e-13   & 35 & 3.30563  \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 0    & 3.852474e-14   & 9  & 7.08352  \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 1    & 6.714629e-13   & 27 & 22.9359  \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 2    & 5.753176e-13   & 45 & 39.1402  \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 3    & 6.127321e-13   & 45 & 125.603  \\
- \hline                                                    
- {\tt ResistivityOp}              & 2   & 0    & 1.075184e-11   & 12 & 0.07385  \\
- {\tt ResistivityOp}              & 2   & 1    & 5.151905e-01   & 100& 0.86797  \\
- {\tt ResistivityOp}              & 2   & 2    & 7.756453e-01   & 100& 0.89139  \\
- {\tt ResistivityOp}              & 2   & 3    & 1.046114e+00   & 100& 1.18931  \\
- {\tt ResistivityOp}              & 3   & 0    & 7.031487e-12   & 10 & 1.12118  \\
- {\tt ResistivityOp}              & 3   & 1    & 5.094567e-01   & 100& 13.0433  \\
- {\tt ResistivityOp}              & 3   & 2    & 6.155470e-01   & 100& 12.6258  \\
- {\tt ResistivityOp}              & 3   & 3    & 6.747065e-01   & 100& 90.5228  \\
-\hline
 \end{tabular}
 \end{center}
-\label{tab::resist2}
+\label{tab::conductivity_2d}
 \caption
     {
-      Final residual and number of iterations in solution of the
-      magnetic resistivity equation.
-      The data set is dated February 7, 2024.
-    }
-\end{table}
-\end{small}
-
-\section{Log of early performance debugging}
-The  runs above flushed out a bug in in {\tt
-  Base\_Simplified\_AMRLevelOp} but preliminary runs do not show much
-difference multigrid performance.  The AMR case also have grids that
-are way too small.    The next data set, I tagged the lower left eighth
-of the domain (instead of a single point).   There was not enough
-difference to document.  The current culprit seems to be being called
-by BiCGStab.   The norms were different but fixing them did not do it.
-The preconditioner was way off but fixing this did not help either.
-\begin{itemize}
- \item 2-14-2024:  AMR examples are still showing far worse multigrid convergence
-   for the new operators than the old.   I just archived that data.
-\item: 2-15-2024: for case 2 Helmholtz, old and new agree pretty well coming
-out of the bottom solver but way off once back at amr levels.
-3pm update: the solution looks fine heading into second amr vcycle.   It
-is amr residual that is broken.   This means looking at fluxes and so on.
-\item 2-27/2024: Found the problem.   Setting ghost outside the domain
-has to happen after setting the coarse/fine ghost (side effects).    I
-am perversely glad that this turned out as tricky as it was.   Right
-now, both Helmholtz operators get the same multigrid convergence so I
-will run the set again.  Remember that the grids here are a bit chubbier.
-
-\section{Dataset labelled 2-27-2024}
-My early impression of this data is that I may be oversmoothing the
-Proto operators.    Multigrid convergence looks better but times look
-slower.    It also looks as if old and new are solving to different tolerances.
-The old resistivity operator does not converge with AMR.
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Time to solution\\
-\hline
- {\tt Proto\_Helmholtz\_Op}       & 2   & 0    & 7.815970e-14   & 7    & 0.04691   \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 1    & 9.476864e-13   & 7    & 0.05558   \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 2    & 1.705303e-13   & 8    & 0.07391   \\
- {\tt Proto\_Helmholtz\_Op}       & 2   & 3    & 3.126388e-13   & 8    & 0.09054   \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 0    & 3.375078e-13   & 8    & 0.35757   \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 1    & 1.563194e-13   & 9    & 0.54453   \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 2    & 2.273737e-13   & 9    & 0.55963   \\
- {\tt Proto\_Helmholtz\_Op}       & 3   & 3    & 5.115908e-13   & 9    & 1.62688   \\
- \hline                                                        
- {\tt AMRPoissonOp}               & 2   & 0    & 6.672440e-14   &  7    &  0.01191  \\
- {\tt AMRPoissonOp}               & 2   & 1    & 3.724798e-13   &  12   &  0.01787  \\
- {\tt AMRPoissonOp}               & 2   & 2    & 9.429124e-13   &  12   &  0.01825  \\
- {\tt AMRPoissonOp}               & 2   & 3    & 3.135270e-13   &  13   &  0.02464  \\
- {\tt AMRPoissonOp}               & 3   & 0    & 3.489431e-13   &  8    &  0.06093  \\
- {\tt AMRPoissonOp}               & 3   & 1    & 5.592193e-13   &  13   &  0.12106  \\
- {\tt AMRPoissonOp}               & 3   & 2    & 2.939871e-13   &  14   &  0.12952  \\
- {\tt AMRPoissonOp}               & 3   & 3    & 5.895284e-13   &  14   &  0.83605  \\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::helmholtz3}
-\caption
-    {
-      Final residual and number of iterations in solution of the  constant
-      coefficient Helmholtz equation.
-      The data set is dated February 27, 2024.
+      Performance data for the solution of the conductivity
+      equation in two dimensions.
+      The data set is dated March 1, 2024.
     }
 \end{table}
 \end{small}
@@ -479,114 +254,304 @@ The old resistivity operator does not converge with AMR.
 \begin{small}
 \begin{table}
 \begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
 \hline
- {\tt Proto\_Conductivity\_Op}    & 2   & 0    & 2.081668e-09   &  6     & 0.09480   \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 1    & 9.007191e-09   &  6     & 0.10860   \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 2    & 3.270379e-08   &  6     & 0.11943   \\
- {\tt Proto\_Conductivity\_Op}    & 2   & 3    & 1.399536e-07   &  6     & 0.14835   \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 0    & 4.222235e-09   &  7     & 1.02356   \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 1    & 2.413319e-08   &  7     & 1.18508   \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 2    & 1.152679e-07   &  7     & 1.28507   \\
- {\tt Proto\_Conductivity\_Op}    & 3   & 3    & 4.670957e-07   &  7     & 3.55426   \\
-\hline                                                           
- {\tt VCAMRPoissonOp2}            & 2   & 0    & 3.941292e-11   &  13    & 0.00989   \\
- {\tt VCAMRPoissonOp2}            & 2   & 1    & 9.582835e-11   &  13    & 0.01444   \\
- {\tt VCAMRPoissonOp2}            & 2   & 2    & 1.578537e-11   &  14    & 0.02121   \\
- {\tt VCAMRPoissonOp2}            & 2   & 3    & 6.872614e-11   &  18    & 0.03027   \\
- {\tt VCAMRPoissonOp2}            & 3   & 0    & 6.221268e-11   &  13    & 0.08053   \\
- {\tt VCAMRPoissonOp2}            & 3   & 1    & 1.838352e-11   &  14    & 0.14128   \\
- {\tt VCAMRPoissonOp2}            & 3   & 2    & 1.841904e-11   &  14    & 0.17096   \\
- {\tt VCAMRPoissonOp2}            & 3   & 3    & 4.454703e-11   &  20    & 1.38377   \\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::conductivity3}
-\caption
-    {
-      Final residual and number of iterations in solution of the variable
-      coefficient Helmholtz equation.
-      The data set is dated February 27, 2024.
-    }
-\end{table}
-\end{small}
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 0    & 1.039169e-13   &  12    & 0.61551     \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 1    & 1.348921e-13   &  12    & 0.67349     \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 2    & 6.046275e-13   &  12    & 0.71314     \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 2   & 3    & 4.942713e-13   &  13    & 0.96939     \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 0    & 3.987921e-13   &  13    & 10.24858    \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 1    & 5.000445e-13   &  13    & 11.52722    \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 2    & 9.388046e-13   &  13    & 12.38466    \\
- {\tt Proto\_Viscous\_Tensor\_Op} & 3   & 3    & 4.052314e-13   &  14    & 38.32874    \\
-\hline                                                          
- {\tt ViscousTensorOp}            & 2   & 0    & 1.759459e-11   &  11    & 0.10782     \\
- {\tt ViscousTensorOp}            & 2   & 1    & 9.670575e-11   &  22    & 0.12033     \\
- {\tt ViscousTensorOp}            & 2   & 2    & 9.472689e-11   &  20    & 0.12633     \\
- {\tt ViscousTensorOp}            & 2   & 3    & 4.363443e-11   &  21    & 0.22487     \\
- {\tt ViscousTensorOp}            & 3   & 0    & 6.480527e-11   &  63    & 8.04359     \\
- {\tt ViscousTensorOp}            & 3   & 1    & 9.083534e-11   &  69    & 9.32905     \\
- {\tt ViscousTensorOp}            & 3   & 2    & 8.982792e-11   &  62    & 9.27616     \\
- {\tt ViscousTensorOp}            & 3   & 3    & 9.661805e-11   &  68    & 66.7762     \\
-\hline
-\end{tabular}
-\end{center}
-\label{tab::viscous3}
-\caption
-    {
-      Final residual and number of iterations in solution of the
-      viscous tensor equation.
-      The data set is dated February 27, 2024.
-    }
-\end{table}
-\end{small}
-
-
-\begin{small}
-\begin{table}
-\begin{center}
-\begin{tabular}{|c|c|c|c|c||c|} \hline
- Operator                   & $D$ & Case & Final Residual &
- Num. Iteration & Solution Time\\
-\hline
+ {\tt Proto\_Conductivity\_Op} & 3 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                               
+ {\tt VCAMRPossonOp2 }         & 3 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                     
+ {\tt Proto\_Conductivity\_Op} & 3 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                           3                                                    
+ {\tt VCAMRPossonOp2 }         & 3 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt VCAMRPossonOp2 }         & 3 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt Proto\_Conductivity\_Op} & 3 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                           3                                                    
+ {\tt VCAMRPossonOp2         } & 3 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                              
+ {\tt Proto\_Conductivity\_Op} & 3 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Conductivity\_Op} & 3 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt VCAMRPossonOp2         } & 3 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt VCAMRPossonOp2         } & 3 & 3   & 8    &  insert  &  insert    & insert   \\
  \hline
- {\tt Proto\_Resistivity\_Op}     & 2   & 0    & 1.514344e-13   & 7    &  0.45422    \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 1    & 7.747136e-13   & 9    &  0.63848    \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 2    & 1.486589e-13   & 10   &  0.75847    \\
- {\tt Proto\_Resistivity\_Op}     & 2   & 3    & 2.629008e-13   & 10   &  0.96361    \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 0    & 3.852474e-14   & 9    &  6.96852    \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 1    & 5.141443e-13   & 10   &  8.81750    \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 2    & 1.372236e-13   & 11   &  10.4100    \\
- {\tt Proto\_Resistivity\_Op}     & 3   & 3    & 1.747491e-13   & 11   &  31.0512    \\
- \hline                                                       
- {\tt ResistivityOp}              & 2   & 0    & 1.075184e-11   & 12    &  0.07743    \\
- {\tt ResistivityOp}              & 2   & 1    & 5.579218e-01   & 100   &  0.90034    \\
- {\tt ResistivityOp}              & 2   & 2    & 1.072290e+00   & 100   &  0.89708    \\
- {\tt ResistivityOp}              & 2   & 3    & 1.634815e+00   & 100   &  1.34867    \\
- {\tt ResistivityOp}              & 3   & 0    & 7.031487e-12   & 10   &  1.09571    \\
- {\tt ResistivityOp}              & 3   & 1    & 6.849711e-01   & 84   &  11.2639    \\
- {\tt ResistivityOp}              & 3   & 2    & 1.060858e+00   & 88   &  12.8748    \\
- {\tt ResistivityOp}              & 3   & 3    & 1.285510e+00   & 89   &  81.6278    \\
-\hline
 \end{tabular}
 \end{center}
-\label{tab::resist3}
+\label{tab::conductivity_2d}
 \caption
     {
-      Final residual and number of iterations in solution of the
-      magnetic resistivity equation.
-      The data set is dated February 27, 2024.
+      Performance data for the solution of the conductivity
+      equation in three dimensions.
+      The data set is dated March 1, 2024.
     }
 \end{table}
 \end{small}
 
+
+
+
+
+
+
+% viscous tensor
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
+\hline
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt ViscousTensorOp}            & 2 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                      
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt ViscousTensorOp}            & 2 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt ViscousTensorOp}            & 2 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                               
+ {\tt ViscousTensorOp}            & 2 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt ViscousTensorOp}            & 2 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 2 & 3   & 8    &  insert  &  insert    & insert   \\
+ \hline
+\end{tabular}
+\end{center}
+\label{tab::viscous_2d}
+\caption
+    {
+      Performance data for the solution of the viscous tensor
+      equation in two dimensions.
+      The data set is dated March 1, 2024.
+    }
+\end{table}
+\end{small}
+
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
+\hline 
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 0   & 1    &  insert  &  insert    & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 0   & 2    &  insert  &  insert    & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 0   & 4    &  insert  &  insert    & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 0   & 8    &  insert  &  insert    & insert\\
+\hline 
+ {\tt ViscousTensorOp}            & 3 & 0   & 1    &  insert  &  insert    & insert \\
+ {\tt ViscousTensorOp}            & 3 & 0   & 2    &  insert  &  insert    & insert \\
+ {\tt ViscousTensorOp}            & 3 & 0   & 4    &  insert  &  insert    & insert \\
+ {\tt ViscousTensorOp}            & 3 & 0   & 8    &  insert  &  insert    & insert \\
+\hline 
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 1    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 2    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 4    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 8    &  insert  &  insert        & insert\\
+\hline 
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 1    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 2    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 4    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 1   & 8    &  insert  &  insert        & insert\\
+\hline 
+ {\tt ViscousTensorOp}            & 3 & 2   & 1    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 2   & 2    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 2   & 4    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 2   & 8    &  insert  &  insert        & insert \\
+\hline 
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 2   & 1    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 2   & 2    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 2   & 4    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 2   & 8    &  insert  &  insert        & insert\\
+ \hline
+\hline
+ {\tt ViscousTensorOp}            & 3 & 3   & 1    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 3   & 2    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 3   & 4    &  insert  &  insert        & insert \\
+ {\tt ViscousTensorOp}            & 3 & 3   & 8    &  insert  &  insert        & insert \\
+\hline
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 3   & 1    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 3   & 2    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 3   & 4    &  insert  &  insert        & insert\\
+ {\tt Proto\_Viscous\_Tensor\_Op} & 3 & 3   & 8    &  insert  &  insert        & insert\\
+\hline
+\end{tabular}
+\end{center}
+\label{tab::viscous_3d}
+\caption
+    {
+      Performance data for the solution of the viscous tensor equation
+      in three dimensions.
+      The data set is dated March 1, 2024.
+    }
+\end{table}
+\end{small}
+
+% resistivity
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\
+\hline
+ {\tt Proto\_Resistivity\_Op} & 2 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt ResistivityOp }         & 2 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Resistivity\_Op} & 2 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                                
+ {\tt ResistivityOp }         & 2 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 2 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt Proto\_Resistivity\_Op} & 2 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt ResistivityOp         } & 2 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                               
+                                                                                      
+ {\tt Proto\_Resistivity\_Op} & 2 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 2 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                                
+ {\tt ResistivityOp         } & 2 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 2 & 3   & 8    &  insert  &  insert    & insert   \\
+ \hline
+\end{tabular}
+\end{center}
+\label{tab::resist_2d}
+\caption
+    {
+      Performance data for the solution of the resistivity
+      equation in two dimensions.
+      The data set is dated March 1, 2024.
+    }
+\end{table}
+\end{small}
+
+\begin{small}
+\begin{table}
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c||c|} \hline
+ Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time    \\
+\hline
+ {\tt Proto\_Resistivity\_Op} & 3 & 0 &   1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 0 &   2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 0 &   4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 0 &   8    &  insert  &  insert    & insert   \\
+\hline                                                                               
+ {\tt ResistivityOp }         & 3 & 0   & 1    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 0   & 2    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 0   & 4    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 0   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt Proto\_Resistivity\_Op} & 3 & 1   & 1    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 1   & 2    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 1   & 4    &  insert  &  insert    & insert   \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 1   & 8    &  insert  &  insert    & insert   \\
+\hline                                                                               
+ {\tt ResistivityOp }         & 3 & 1   & 1    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 1   & 2    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 1   & 4    &  insert  &  insert    & insert    \\
+ {\tt ResistivityOp }         & 3 & 1   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt Proto\_Resistivity\_Op} & 3 & 2   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 2   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 2   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 2   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt ResistivityOp         } & 3 & 2   & 1    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 2   & 2    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 2   & 4    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 2   & 8    &  insert  &  insert    & insert   \\
+ \hline                                                                              
+ {\tt Proto\_Resistivity\_Op} & 3 & 3   & 1    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 3   & 2    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 3   & 4    &  insert  &  insert    & insert    \\
+ {\tt Proto\_Resistivity\_Op} & 3 & 3   & 8    &  insert  &  insert    & insert    \\
+\hline                                                                               
+ {\tt ResistivityOp         } & 3 & 3   & 1    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 3   & 2    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 3   & 4    &  insert  &  insert    & insert   \\
+ {\tt ResistivityOp         } & 3 & 3   & 8    &  insert  &  insert    & insert   \\
+ \hline
+\end{tabular}
+\end{center}
+\label{tab::resist_3d}
+\caption
+    {
+      Performance data for the solution of the resistivity
+      equation in three dimensions.
+      The data set is dated March 1, 2024.
+    }
+\end{table}
+\end{small}
+
+
+%%end of road, bub
 \end{document}
