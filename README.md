@@ -1,5 +1,10 @@
 # Chombo_3.2
 
+##  Branches
+####  master -> current relase
+####  dev    -> community working branch
+####  anything else    -> something someone is working on
+
 ## What is Chombo?
 
 #### Chombo provides a set of tools for implementing finite difference and finite volume methods for the solution of partial differential equations on block-structured adaptively refined rectangular grids. Both elliptic and time-dependent modules are included. Chombo supports calculations in complex geometries with both embedded boundaries and mapped grids, and Chombo also supports particle methods. Most parallel platforms are supported, and cross-platform self-describing file formats are included.
