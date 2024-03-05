@@ -232,6 +232,9 @@ int main(int argc, char* argv[])
   int status = Chombo::local_test_harness();
 
 #ifdef CH_MPI
+  Chombo::pout() << "outputting timers " << endl;
+  Chombo::dumpmemoryatexit();
+  CH_TIMER_REPORT();
   MPI_Finalize();
 #endif
   return status;
