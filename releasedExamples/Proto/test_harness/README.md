@@ -11,4 +11,3 @@
 * _batch_templates are batch scripts to run on the platforms I use.
 * _compare runs the comparable examples and puts the results in manageable places.   It includes a document.
 * _mpi_strong runs the examples for various processor counts.   Document coming soon (as of 3-1-2024).
-* documents holds some pdfs of reports of specific test results.

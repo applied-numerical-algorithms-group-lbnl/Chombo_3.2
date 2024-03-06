@@ -104,6 +104,7 @@ namespace Chombo
       ppSolver.get("beta" , beta) ;
       string domain_bc;
       ppSolver.get("domain_bc", domain_bc);
+      pout() << "getting factory" << endl;
       shared_ptr<ch_op_fact_pr> solver_factory_ptr =
         HelmholtzUtilities::getProtoHelmholtzOpFactory(a_amr_domains[0],
                                                        a_ref_ratios,
@@ -111,6 +112,7 @@ namespace Chombo
                                                        a_amrDx[0],
                                                        domain_bc, alpha, beta);
 
+      pout() << "setupsolver" << endl;
       PrChUtilities<1>::setupSolver(amr_solver_ptr, bott_solve_ptr, a_amr_grids, a_amr_domains,
                                     a_ref_ratios, a_amrDx, solver_factory_ptr);
 
@@ -134,6 +136,7 @@ namespace Chombo
       {
         PrChUtilities<1>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
       }
+      pout() << "solve" << endl;
 
       //solve for phi on the device
       bool zeroInitialGuess = true;
