@@ -6,11 +6,11 @@ import platform
 from datetime import date
 import signal
 import subprocess
+import re
 
 def signal_handler(signum, frame):
     raise Exception("Timed out!")
-
-
+#./_archive_no_mains_no_hdf/_prch_strong_3_5_2024/old_helmholtz_op.case_3.dim_2.opt_high.debug_false/4_procs/pout.0: RMultiGrid::solveNoInitResid:   Final residual norm  = 3.135270e-13, Multigrid iterations = 13
 today = date.today()
 
 print("Today's date:", today)
@@ -40,10 +40,10 @@ top_dir  = args.data_directory
 case_label     = "case_label"
 case_caption   = "case_caption"
 i_dim = 2
-while i_dim <= 3:
+while i_dim < 3:
     i_opera = 0
-    #make this <= to turn on resistivity
-    while i_opera < 3:
+    #make this <= 3 to turn on resistivity
+    while i_opera < 1:
         op_str = "4586"
         if(i_opera == 0):
             op_str = "helmholtz"
@@ -58,14 +58,17 @@ while i_dim <= 3:
         i_min_case = 0
         i_max_case = 3
         #  set to max_case to make a short test
-        i_case = i_min_case
+        #i_case = i_min_case
+        i_case = i_max_case
         while i_case <= i_max_case:
             i_old_amr = 0
             while i_old_amr <= 1:
                 operator_name = "amr_" + op_str
+                op_entry = "op_str + (Proto)"
 
                 if(i_old_amr == 1):
                     operator_name = "old_" + op_str
+                    op_entry = op_str +  "(ChF)"
 
                     i_max_proc = args.max_num_proc
                     if(i_dim == 2):
@@ -74,12 +77,31 @@ while i_dim <= 3:
                     while i_num_proc <= i_max_proc:
                         main_str  = "main_time"
                         resid_str = "norm_res"
-                        comm_str = "grep Final " + top_dir + "*/*/pout.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
-                        #print( comm_str )
+                        comm_str_resid = "grep Final " + top_dir + "*/*/pout.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
+                        comm_str_time = "grep \"\[0\]main\" " + top_dir + "*/*/time.table.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
+                        comm_str = comm_str_time
+                        comm_str_bash = "set -o  pipefail;" + comm_str
                         output = subprocess.check_output(comm_str, shell=True)
-                        #print("output = " + output)
-                        file_entry = operator_name + " & " + str(i_dim) + " & " + str(i_case) + " & " + str(i_num_proc) + "& " + resid_str + " & " + "max_iter"  + " & " + main_str + "\\\\";
-                        f_summary.write(file_entry + "\n");
+#                        if ("Final" not in output):
+                        if ("main" not in output):
+                            print_str("grep found nothing here")
+                            print(print_str)
+                        else:
+                            print_str = "Op=" + op_str +  ", case = " + str(i_case) +  ", Np = " + str(i_num_proc)
+                            print(print_str )
+                            print_str = "full command = " + comm_str
+                            print(print_str)
+                            print_str = "output       = " + output
+                            print(print_str)
+                            res = [int(i) for i in output.split() if i.isdigit()]
+ 
+                            # print result
+                            print("The numbers list is :" + str(res))
+
+
+#                        #print("output = " + output)
+#                        file_entry = op_entry + " & " + str(i_dim) + " & " + str(i_case) + " & " + str(i_num_proc) + "& " + resid_str + " & " + "max_iter"  + " & " + main_str + "\\\\";
+#                        f_summary.write(file_entry + "\n");
                         i_num_proc = 2*i_num_proc
                        
                 print_str = "end loop over procs"
