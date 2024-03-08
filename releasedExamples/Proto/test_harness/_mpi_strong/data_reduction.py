@@ -77,8 +77,10 @@ while i_dim < 3:
                     while i_num_proc <= i_max_proc:
                         main_str  = "main_time"
                         resid_str = "norm_res"
-                        comm_str_resid = "grep Final " + top_dir + "*/*/pout.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
-                        comm_str_time = "grep \"\[0\]main\" " + top_dir + "*/*/time.table.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
+
+                        comm_str_resid = "grep Final_residual  " + top_dir + "*/*/pout.0        | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
+                        comm_str_iter  = "grep Final_iteration " + top_dir + "*/*/pout.0        | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
+                        comm_str_time  = "grep Total_Time "      + top_dir + "*/*/time.table.0  | grep "  + operator_name + " | grep dim_" + str(i_dim) + " | grep case_" + str(i_case) + " | grep " + str(i_num_proc) + "_procs"
                         comm_str = comm_str_time
                         comm_str_bash = "set -o  pipefail;" + comm_str
                         output = subprocess.check_output(comm_str, shell=True)
@@ -93,10 +95,7 @@ while i_dim < 3:
                             print(print_str)
                             print_str = "output       = " + output
                             print(print_str)
-                            res = [int(i) for i in output.split() if i.isdigit()]
- 
-                            # print result
-                            print("The numbers list is :" + str(res))
+
 
 
 #                        #print("output = " + output)
