@@ -349,6 +349,7 @@ namespace Chombo
       }
 
 #ifdef CH_USE_HDF5
+#if 0      
       //write the answer to file
       string fname("phi.hdf5");
       Vector<string> varNames(1, string("phi"));
@@ -366,6 +367,7 @@ namespace Chombo
                             refRatios,
                             numLevels);
 
+#endif // end if
 #endif // end if HDF5
 
       // clean up

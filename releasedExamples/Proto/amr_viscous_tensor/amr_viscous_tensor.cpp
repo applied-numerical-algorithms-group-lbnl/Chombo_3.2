@@ -217,7 +217,7 @@ namespace Chombo
       solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx);
 
 #ifdef CH_USE_HDF5
-
+#if 0
       string fname("phi.hdf5");
       Vector<string> varNames(DIM);
       for(int idir = 0; idir < DIM; idir++)
@@ -236,7 +236,7 @@ namespace Chombo
                             bogusVal,
                             refRatios,
                             numLevels);
-
+#endif
 #endif // end if HDF5
 
       // clean up

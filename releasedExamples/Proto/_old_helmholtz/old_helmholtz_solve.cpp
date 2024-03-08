@@ -302,6 +302,7 @@ int runSolver()
   amrSolver->solve(phi, rhs, finestLevel, 0, true); //bool zeroInitialGuess = true;
 
 #ifdef CH_USE_HDF5
+#if 0  
   string fname("phi.hdf5");
   Vector<string> varNames(1, string("phi"));
 
@@ -318,7 +319,7 @@ int runSolver()
                         refRatios,
                         numLevels);
 
-
+#endif
 #endif // end if HDF5
 
   // clean up

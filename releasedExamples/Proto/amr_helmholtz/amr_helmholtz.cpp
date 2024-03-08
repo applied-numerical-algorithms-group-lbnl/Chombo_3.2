@@ -197,6 +197,7 @@ namespace Chombo
       solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx, finestLevel );
 
 #ifdef CH_USE_HDF5
+#if 0      
       //write the answer to file
       string fname("phi.hdf5");
       Vector<string> varNames(1, string("phi"));
@@ -213,7 +214,7 @@ namespace Chombo
                             bogusVal,
                             refRatios,
                             numLevels);
-
+#endif
 #endif // end if HDF5
 
       // clean up

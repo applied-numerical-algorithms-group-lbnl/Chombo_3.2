@@ -143,6 +143,7 @@ namespace Chombo
                const VCPoissonParameters                  &   a_params)
     {
 #ifdef CH_USE_HDF5
+#if 0      
       /// a good UI is a joy forever
       Vector<ch_ldf_cell*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
       Vector<ch_ldf_cell*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
@@ -174,6 +175,7 @@ namespace Chombo
                             a_params.m_refRatio,
                             a_params.m_numLevels);
 
+#endif
 #endif
     } //end function ouputData
 

@@ -209,7 +209,7 @@ namespace Chombo
       solveForPhi(phi_ch, rhs_ch, amrGrids, amrDomains, refRatios, amrDx);
 
 #ifdef CH_USE_HDF5
-
+#if 0
       string fname("mag.hdf5");
       Vector<string> varNames(3);
       for(int idir = 0; idir < 3; idir++)
@@ -229,6 +229,7 @@ namespace Chombo
                             refRatios,
                             numLevels);
 
+#endif
 #endif // end if HDF5
 
       // clean up
