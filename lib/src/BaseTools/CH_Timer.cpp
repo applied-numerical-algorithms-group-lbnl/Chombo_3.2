@@ -492,8 +492,13 @@ void TraceTimer::report(bool a_closeAfter)
 #endif
       static FILE* out = fopen(buf, "w");
       static int reportCount = 0;
+      unsigned long long int time = root.m_accumulated_WCtime;
+      double floatTime = time*secondspertick;
+
       fprintf(out, "-----------\nTimer report %d (%d timers)\n--------------\n",
               reportCount, numCounters);
+      fprintf(out, "Total_Time = %7.4e\n", floatTime);
+      
       reportCount++;
       if (s_memorySampling) updateMemory(root);
       ListIterator<elem> it(tracerlist);
@@ -657,7 +662,6 @@ void TraceTimer::reportFullTree(FILE* out, const TraceTimer& timer,
   if (timer.m_pruned) return;
   unsigned long long int time = timer.m_accumulated_WCtime;
 
-
   for (int i=0; i<depth; ++i) fprintf(out,"   ");
   double percent = ((double)time)/totalTime * 100.0;
 
@@ -692,6 +696,7 @@ void TraceTimer::reportOneTree(FILE* out, const TraceTimer& timer)
   unsigned long long int f=timer.m_flops;
   double floatTime = time*secondspertick;
   double MFLOP = f/(floatTime*1000000);
+
   fprintf(out,"---------------------------------------------------------\n");
 
   fprintf(out,"[%d]%s %.5f %lld", timer.m_rank, timer.m_name, floatTime, timer.m_count);

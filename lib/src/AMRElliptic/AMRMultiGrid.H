@@ -981,9 +981,8 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
     goMin = iter < m_iterMin ; // keep iterating if iter < min
   }
 
-  pout() << " RMultiGrid::solveNoInitResid: ";
-  pout() << "  Final residual norm  = " << rnorm;
-  pout() << ", Multigrid iterations = " << iter  <<   std::endl;
+  pout() << "AMRMultiGrid: Final_residual  = " << rnorm <<   std::endl;;
+  pout() << "AMRMultiGrid: Final_iteration = " << iter  <<   std::endl;
   if (!goIter && goRedu && goNorm) // goRedu=T, goIter=F, goHang=?, goNorm=T
   { 
     pout() << "    AMRMultiGrid:: WARNING: Exit because max iteration count exceeded" << std::endl;

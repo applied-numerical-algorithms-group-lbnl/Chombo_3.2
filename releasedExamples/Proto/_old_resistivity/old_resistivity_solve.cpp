@@ -131,7 +131,7 @@ namespace Chombo
                           a_params.m_refRatio,
                           a_params.m_numLevels);
 
-#endi
+#endif
 #endif
   } //end function ouputData
 
