@@ -116,7 +116,7 @@ while i_dim < 3:
                         print(print_str)
                         output_str_time  = subprocess.check_output(comm_str_time , shell=True)
                         output_str_resid = subprocess.check_output(comm_str_resid, shell=True)
-                        output_str_iter  = subprocess.check_output(comm_str_resid, shell=True)
+                        output_str_iter  = subprocess.check_output(comm_str_iter , shell=True)
                         print_str_time  = "time_output  = " + output_str_time
                         print(print_str_time)
                         print_str_resid = "resid_output = "  + output_str_resid
