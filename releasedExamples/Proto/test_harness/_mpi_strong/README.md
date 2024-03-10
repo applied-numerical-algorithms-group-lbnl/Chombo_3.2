@@ -10,10 +10,8 @@
 * A single script to run them all is also created.
 
 
-# Contents:
-* _doc: documentation source files
-* configure_strong_scaling.py: Python script that:
-** makes many directories
-** compiles everything
-** puts batch scripts and input files in the  right places.
-** makes one script to rule them all and in darkness bind them (dirname/runall.sh).
+# Script configure_strong_scaling.py: 
+* makes many directories
+* compiles everything
+* puts batch scripts and input files in the  right places.
+* makes one script to rule them all and in darkness bind them (dirname/runall.sh).
