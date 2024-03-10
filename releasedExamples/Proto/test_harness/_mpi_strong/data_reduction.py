@@ -17,21 +17,21 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="./_prch_strong_3_8_2024")
-parser.add_argument('--output_prefix', type=str, help='Prefix for output file',default="summary")
+parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="_prch_strong_3_8_2024")
+parser.add_argument('--output_prefix', type=str, help='Prefix for output file[summary_of_]',default="summary_of")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
-parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_strong")
+
 
 args = parser.parse_args()
 print(args)
 home_str = os.getcwd();
 print ("homedir = " + home_str)
 today_str =str(today.month) + "_" + str(today.day) + "_" + str(today.year)
-summary_file_name  = args.output_prefix + "_" + today_str + ".tex"
+summary_file_name  = args.output_prefix + "_" + args.data_directory + ".tex"
 print ("summary_file_name = " + summary_file_name)
-neartop_directory = home_str + "/_" +args.prefix
-top_directory = args.data_directory
+
+top_directory = home_str + "/" + args.data_directory
 
 label_str = "tab::data_reduction_table_" + today_str
 caption_str = "Performance data for " + args.data_directory
@@ -41,46 +41,53 @@ f_summary.write("\\begin{table} \n ")
 f_summary.write("\\begin{center}\n ")
 f_summary.write("\\begin{tabular}{|c|c|c|c|c|c||c|} \\hline \n")
 f_summary.write("Op & D & Case & $N_p$ & Final $|R|$  &  Iter & Main Time \\\\  \n")
-top_dir  = args.data_directory 
 
 i_dim = 2
-while i_dim < 3:
+print("begin loop through dimensions")
+while i_dim <= 3:
     dim_status = "dim_"  + str(i_dim)
     i_opera = 0
-    #make this <= 3 to turn on resistivity
-    while i_opera < 1:
+    print("begin loop through operators")
+    while i_opera <= 3:
         op_str = "4586"
+        op_lab = "4586"
         if(i_opera == 0):
             op_str = "helmholtz"
+            op_lab = "Helmholtz     "
         if(i_opera == 1):
             op_str = "conductivity"
+            op_lab = "Conductivity  "
         if(i_opera == 2):
             op_str = "viscous_tensor"
+            op_lab = "Viscous Tensor"
         if(i_opera == 3):
            op_str = "resistivity"
+           op_lab = "Resistivity    "
 
-        #loop through old/amr
+        #loop through cases
         i_min_case = 0
         i_max_case = 3
-        #  set to max_case to make a short test
-        #i_case = i_min_case
-        i_case = i_max_case
+        i_case = i_min_case
+        print("begin loop through cases")
         while i_case <= i_max_case:
             case_status= "case_"  + str(i_case)
             i_old_amr = 0
+            print("begin loop through iold/amr")
             while i_old_amr <= 1:
                 operator_name = "old_" + op_str
-                op_entry = op_str +  "(ChF)"
+                op_entry = op_lab +  "  (ChF)"
                 exec_prefix = "old"
                 if(i_old_amr == 1):
                     exec_prefix = "amr"
                     operator_name = "amr_" + op_str
-                op_entry = op_str + "(Proto)"
+                    op_entry = op_lab + "(Proto)"
 
                 i_max_proc = args.max_num_proc
                 if(i_dim == 2):
                     i_max_proc = args.max_num_proc_2d
                 i_num_proc = 1
+
+                print("begin loop through num_proc")
                 while i_num_proc <= i_max_proc:
                     proc_status = str(i_num_proc) + "_procs"
                     main_str  = "main_time"
@@ -114,28 +121,32 @@ while i_dim < 3:
                     if (has_time and has_pout):
                         print_str = "YES both files found in "  + config_directory
                         print(print_str)
+                        
                         output_str_resi = subprocess.check_output(comm_str_resi, shell=True)
                         output_str_iter  = subprocess.check_output(comm_str_iter , shell=True)
                         output_str_time  = subprocess.check_output(comm_str_time , shell=True)
-                        print(output_str_resi)
-                        print(output_str_iter)
-                        print(output_str_time)
+                        #print(output_str_resi)
+                        #print(output_str_iter)
+                        #print(output_str_time)
                         resi_list =  output_str_resi.split()
                         iter_list =  output_str_iter.split()
                         time_list =  output_str_time.split()
                         resi_len  = len(resi_list)
                         iter_len  = len(iter_list)
                         time_len  = len(time_list)
-                        print( resi_list[resi_len-1] )
-                        print( iter_list[iter_len-1] )
-                        print( time_list[time_len-1] ) 
+                        #print( resi_list[resi_len-1] )
+                        #print( iter_list[iter_len-1] )
+                        #print( time_list[time_len-1] )
+                        resi_field = resi_list[resi_len-1]
+                        iter_field = iter_list[iter_len-1]
+                        time_field = time_list[time_len-1]
+                        file_entry = op_entry + " & " + str(i_dim) + " & " + str(i_case) + " & " + str(i_num_proc) + "& " + resi_field + " & " + iter_field  + " & " + time_field + "\\\\";
+                        f_summary.write(file_entry + "\n");
 
-                        exit()
                     else:
                         print_str = "skipping this case for lack of data"
                         print( print_str)
                     i_num_proc = 2*i_num_proc
-                    exit()
                     #end of inner loop
                        
                 print_str = "end loop over procs"
