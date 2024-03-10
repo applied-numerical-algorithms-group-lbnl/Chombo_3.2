@@ -84,7 +84,7 @@ while i_dim < 3:
                 while i_num_proc <= i_max_proc:
                     proc_status = str(i_num_proc) + "_procs"
                     main_str  = "main_time"
-                    resid_str = "norm_res"
+                    resi_str = "norm_res"
                     opt_status = "opt_high"
                     deb_status = "debug_false"
 
@@ -94,7 +94,7 @@ while i_dim < 3:
                     rundir_name = config_directory + "/" + proc_status
                     pout_name = rundir_name + "/pout.0"
                     time_name = rundir_name + "/time.table.0"
-                    comm_str_resid = "grep Final_residual  " + pout_name
+                    comm_str_resi = "grep Final_residual  " + pout_name
                     comm_str_iter  = "grep Final_iteration " + pout_name
                     comm_str_time  = "grep Total_Time "      + time_name
                     has_pout =  os.path.exists(pout_name) 
@@ -114,15 +114,22 @@ while i_dim < 3:
                     if (has_time and has_pout):
                         print_str = "YES both files found in "  + config_directory
                         print(print_str)
-                        output_str_time  = subprocess.check_output(comm_str_time , shell=True)
-                        output_str_resid = subprocess.check_output(comm_str_resid, shell=True)
+                        output_str_resi = subprocess.check_output(comm_str_resi, shell=True)
                         output_str_iter  = subprocess.check_output(comm_str_iter , shell=True)
-                        print_str_time  = "time_output  = " + output_str_time
-                        print(print_str_time)
-                        print_str_resid = "resid_output = "  + output_str_resid
-                        print_str_iter  = "iter_output  = "  + output_str_iter
-                        print(print_str_resid)
-                        print(print_str_iter)
+                        output_str_time  = subprocess.check_output(comm_str_time , shell=True)
+                        print(output_str_resi)
+                        print(output_str_iter)
+                        print(output_str_time)
+                        resi_list =  output_str_resi.split()
+                        iter_list =  output_str_iter.split()
+                        time_list =  output_str_time.split()
+                        resi_len  = len(resi_list)
+                        iter_len  = len(iter_list)
+                        time_len  = len(time_list)
+                        print( resi_list[resi_len-1] )
+                        print( iter_list[iter_len-1] )
+                        print( time_list[time_len-1] ) 
+
                         exit()
                     else:
                         print_str = "skipping this case for lack of data"
