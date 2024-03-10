@@ -9,5 +9,5 @@
 # Directories
 * _input_templates holds templated versions of the input files for the Proto/Chombo examples.
 * _batch_templates are batch scripts to run on the platforms I use.
-* _compare runs the comparable examples and puts the results in manageable places.   It includes a document.
-* _mpi_strong runs the examples for various processor counts.   Document coming soon (as of 3-1-2024).
+* _compare runs the examples in serial and puts the results in manageable places.   See ../documents/compare.pdf.
+* _mpi_strong tests the strong scaling  behavior of each example and puts the results in managable place.  It includes a script for data retrieval.  See ../documents/mpi_strong.pdf.
