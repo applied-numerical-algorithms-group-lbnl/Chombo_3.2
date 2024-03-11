@@ -11,3 +11,4 @@
 * AMRINS solves the incompressible Navier Stokes  equations with adaptive mesh refinement using the Martin Colella algorithm.
 * AMRPoisson has several elliptic solvers with adaptive meshes.
 * TimeParallel shows how to use Chombo with split MPI communicators (used for parallel-in-time schemes).
+* Proto holds ports of Chombo examples to GPUs using the proto DSL.
