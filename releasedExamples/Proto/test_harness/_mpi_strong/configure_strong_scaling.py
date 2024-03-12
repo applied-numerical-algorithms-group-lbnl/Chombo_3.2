@@ -98,6 +98,7 @@ while i_dim <= 3:
             os.system(command_str)
             print_str  = "compiled/archived " + full_exec_name
             print(print_str)
+            #exit()
             #i_max_iter = i_max_iter + 1
             #if(i_max_iter > 1000):
             #    exit()
