@@ -5,8 +5,9 @@ DEPXX=g++
 CXX=nvcc
 MPICXX=nvcc
 FC=gfortran
-
-
+DEBUG=FALSE
+OPT=HIGH
+CXXOPTFLAGS = -O3
 XTRACPPFLAGS+= -std=c++11
 XTRALIBFLAGS:= -lgfortran -lm -llapack -lblas
 
@@ -24,14 +25,14 @@ HDFMPIINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
 HDFMPILIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
 
 PROTO_HOME = $(SCRATCH)/proto
-ifeq ($(USE_PROTO),TRUE)
- XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1
- XTRACPPFLAGS += -I$(PROTO_HOME)/include/base
- XTRACPPFLAGS += -I$(PROTO_HOME)/include/amr
- XTRACPPFLAGS += -DPROTO_ACCEL -DPROTO_CUDA -DPR_STACK_ALLOC=4294967296 -DPR_VERBOSE=0 
- ifeq ($(MPI),TRUE)
- XTRACPPFLAGS += -DPR_MPI=1
- endif
-XTRACXXFLAGS += -forward-unknown-to-host-compiler -ccbin=/opt/cray/pe/craype/2.7.30/bin/CC -DPROTO_ACCEL -DPROTO_CUDA --extended-lambda -x cu -DDIM=$(DIM) -diag-suppress 611 -diag-suppress 550 -diag-suppress 484 -diag-suppress 997 -diag-suppress 668 -diag-suppress 177 -diag-suppress 771 -diag-suppress 20012
 
-endif
+XTRACXXFLAGS += -I$(PROTO_HOME)/include 
+XTRACXXFLAGS += -I$(PROTO_HOME)/include/base
+XTRACXXFLAGS += -I$(PROTO_HOME)/include/amr
+XTRACXXFLAGS += -DDIM=$(DIM) -DUSE_PROTO=1
+XTRACXXFLAGS += -DPR_MPI=1 -DPROTO_ACCEL -DPROTO_CUDA -DPR_STACK_ALLOC=4294967296 -DPR_VERBOSE=0 
+XTRACXXFLAGS += -diag-suppress=611 -diag-suppress=550 -diag-suppress=484 -diag-suppress=997 -diag-suppress=668 -diag-suppress=177 -diag-suppress=771 -diag-suppress=20012
+XTRACXXFLAGS += -forward-unknown-to-host-compiler -ccbin=/opt/cray/pe/craype/2.7.30/bin/CC  --extended-lambda -x cu 
+
+
+
