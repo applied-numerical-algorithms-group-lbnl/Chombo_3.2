@@ -1,3 +1,4 @@
+PROTO_HOME= $(SCRATCH)/proto
 USE_HDF=FALSE
 MPI=TRUE
 USE_PROTO=TRUE
@@ -10,7 +11,7 @@ OPT=HIGH
 CXXOPTFLAGS = -O3
 XTRACPPFLAGS+= -std=c++11
 XTRALIBFLAGS:= -lgfortran -lm -llapack -lblas
-
+ECHO = echo
 XTRACPPFLAGS +=-I$(MPICH_DIR)/include
 XTRALIBFLAGS +=-L$(MPICH_DIR)/lib -lmpi
 XTRALIBFLAGS +=-L/opt/nvidia/hpc_sdk/Linux_x86_64/21.11/math_libs/11.5/lib64
@@ -24,15 +25,17 @@ HDFLIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
 HDFMPIINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
 HDFMPILIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
 
-PROTO_HOME = $(SCRATCH)/proto
 
 XTRACXXFLAGS += -I$(PROTO_HOME)/include 
 XTRACXXFLAGS += -I$(PROTO_HOME)/include/base
 XTRACXXFLAGS += -I$(PROTO_HOME)/include/amr
 XTRACXXFLAGS += -DDIM=$(DIM) -DUSE_PROTO=1
-XTRACXXFLAGS += -DPR_MPI=1 -DPROTO_ACCEL -DPROTO_CUDA -DPR_STACK_ALLOC=4294967296 -DPR_VERBOSE=0 
+XTRACXXFLAGS += -DPROTO_ACCEL -DPROTO_CUDA -DPR_STACK_ALLOC=4294967296 -DPR_VERBOSE=1
+ifeq ($(MPI), TRUE)
+ XTRACXXFLAGS += -DPR_MPI=1
+endif
 XTRACXXFLAGS += -diag-suppress=611 -diag-suppress=550 -diag-suppress=484 -diag-suppress=997 -diag-suppress=668 -diag-suppress=177 -diag-suppress=771 -diag-suppress=20012
 XTRACXXFLAGS += -forward-unknown-to-host-compiler -ccbin=/opt/cray/pe/craype/2.7.30/bin/CC  --extended-lambda -x cu 
-
+XTRACXXFLAGS += -isystem=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/include -G --expt-relaxed-constexpr --expt-extended-lambda -g --generate-code=arch=compute_52,code=[compute_52,sm_52] -Xcompiler=-fPIE -w -std=c++17 -MD
 
 
