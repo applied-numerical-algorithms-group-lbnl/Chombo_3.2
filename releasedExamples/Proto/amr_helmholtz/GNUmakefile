@@ -1,6 +1,7 @@
 USE_PROTO=TRUE
 NAMESPACE=TRUE
-PROTO_HOME= $(HOME)/_proto/proto
+PROTO_HOME = $(SCRATCH)/proto
+
 ebase = amr_helmholtz
 CHOMBO_HOME = ../../../lib
 LibNames = AMRElliptic AMRTools BoxTools

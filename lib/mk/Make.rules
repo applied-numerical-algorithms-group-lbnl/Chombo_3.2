@@ -416,7 +416,9 @@ endif
 # also make executable dependent on check, just in case...
 %$(config).ex: .check.$(config)
 %$(config).ex:  o/$(config)/%.o $(shell $(CHOMBO_HOME)/mk/reverse $(_libs)) $(_other_app_objects)
-	$(QUIET)$(CSHELLCMD) "$(LD) $(CXXFLAGS) $(XTRACXXFLAGS) $(LDFLAGS) $(XTRALDFLAGS) $< $(_other_app_objects) $(XTRALIBFLAGS) $(LIBFLAGS) $(cxxexeflag)$@ |&  awk -f $(CHOMBO_HOME)/mk/tempnam.awk"
+	$(LD) $(CXXFLAGS) $(XTRACXXFLAGS) $(LDFLAGS) $(XTRALDFLAGS) $< $(_other_app_objects) $(XTRALIBFLAGS) $(LIBFLAGS) $(cxxexeflag)$@ 
+
+#	$(QUIET)$(CSHELLCMD) "$(LD) $(CXXFLAGS) $(XTRACXXFLAGS) $(LDFLAGS) $(XTRALDFLAGS) $< $(_other_app_objects) $(XTRALIBFLAGS) $(LIBFLAGS) $(cxxexeflag)$@ "
 
 ##
 ## Rules to build libraries
@@ -631,7 +633,7 @@ endif
 #       modified after .dummy is created.  But since there are no
 #       dependencies, this rule only runs when the file doesn't exist.
 %/$(config)/.dummy:
-	$(ECHO)mkdir -p o/$(config) f/$(config) d/$(config) p/$(config) $(subst FALSE,,$(subst TRUE,rose/$(config),$(ROSE))) $(subst FALSE,,$(subst TRUE,cubin/$(config),$(GPU)))
+	$(ECHO) mkdir -p o/$(config) f/$(config) d/$(config) p/$(config) $(subst FALSE,,$(subst TRUE,rose/$(config),$(ROSE))) $(subst FALSE,,$(subst TRUE,cubin/$(config),$(GPU)))
 	$(ECHO)touch $@
 
 # Rule to build subdirectories.
