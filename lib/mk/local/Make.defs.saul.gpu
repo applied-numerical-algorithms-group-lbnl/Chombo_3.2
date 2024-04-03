@@ -9,9 +9,6 @@ FC=gfortran
 DEBUG=FALSE
 OPT=HIGH
 ECHO = 
-CXXOPTFLAGS = -O3
-XTRACPPFLAGS+= -std=c++11
-XTRALIBFLAGS:= -lgfortran -lm -llapack -lblas
 CSHELLCMD = /usr/bin/csh
 
  HDFINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
@@ -23,14 +20,16 @@ CSHELLCMD = /usr/bin/csh
 XTRACPPFLAGS += -I$(PROTO_HOME)/include 
 XTRACPPFLAGS += -I$(PROTO_HOME)/include/base
 XTRACPPFLAGS += -I$(PROTO_HOME)/include/amr
-XTRACPPFLAGS += -DDIM=$(DIM) -DUSE_PROTO=1
+XTRACPPFLAGS += -DDIM=$(DIM) -DUSE_PROTO=1 -DPR_TURN_OFF_TIMERS=1
 XTRACPPFLAGS += -DPROTO_ACCEL -DPROTO_CUDA -DPR_STACK_ALLOC=4294967296 -DPR_VERBOSE=1
 
 ifeq ($(MPI), TRUE)
  XTRACXXFLAGS += -DPR_MPI=1
 endif
-XTRACXXFLAGS += -diag-suppress=611 -diag-suppress=550 -diag-suppress=484 -diag-suppress=997 -diag-suppress=668 -diag-suppress=177 -diag-suppress=771 -diag-suppress=20012
+XTRACXXFLAGS += -diag-suppress=611 -diag-suppress=550 -diag-suppress=484 -diag-suppress=997 -diag-suppress=668 -diag-suppress=177 -diag-suppress=771 -diag-suppress=20012 -diag-suppress=20014
 XTRACXXFLAGS += -forward-unknown-to-host-compiler -ccbin=/opt/cray/pe/craype/2.7.30/bin/CC  --extended-lambda -x cu 
 XTRACXXFLAGS += -isystem=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/include -G --expt-relaxed-constexpr --expt-extended-lambda -g --generate-code=arch=compute_52,code=[compute_52,sm_52] -Wno-deprecated-declarations -Wno-deprecated-gpu-targets 
-XTRALDFLAGS += -Xlinker=-rpath -Xlinker=/global/common/software/nersc/pe/gpu/gnu/openmpi/5.0.0/lib -Xlinker=--enable-new-dtags -Xcompiler=-L/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/lib64 -Xcompiler=-fPIC -shared -dlink
 
+LD = nvcc
+XTRALDFLAGS = -Wl,-rpath -Wl,/global/common/software/nersc/pe/gpu/gnu/openmpi/5.0.0/lib -Wl,--enable-new-dtags -L/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/lib64 
+XTRALDFLAGS += -lnvToolsExt -lnvToolsExt /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/lib64/libcudart_static.a -ldl /usr/lib64/librt.so -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/targets/x86_64-linux/lib/stubs" -L"/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/targets/x86_64-linux/lib"

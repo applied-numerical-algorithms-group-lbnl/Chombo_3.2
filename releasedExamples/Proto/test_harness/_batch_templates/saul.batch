@@ -1,10 +1,16 @@
 #!/bin/bash
-#SBATCH -A m1411
+#SBATCH -A m1411_g
 #SBATCH -C gpu
 #SBATCH -q shared
-#SBATCH -t 1:00:00
+#SBATCH -t 0:05:00
 #SBATCH -N NUM_NODE
 
 
+module load cudatoolkit
+module load cray-hdf5-parallel
+module load craype-accel-nvidia80
+
+export MPICH_GPU_SUPPORT_ENABLED=1
+
 export SLURM_CPU_BIND="cores"
-srun -N NUM_NODE EXECUTABLE_FILE INPUT_FILE 
+srun -N 1 -n NUM_NODE EXECUTABLE_FILE INPUT_FILE 

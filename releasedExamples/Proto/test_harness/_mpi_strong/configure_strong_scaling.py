@@ -17,15 +17,17 @@ print("Today's date:", today)
 parser = ArgumentParser()
 
 parser.add_argument('--input_template_dir', type=str, help='Directory of input file templates [../_input_templates].' ,default="../_input_templates")
+parser.add_argument('--sbatch_instead_of_source', type=bool, help='Whether run.sh calls sbatch instead of source for each case[True].' ,default=True)
 parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/saul.batch")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
-parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_strong")
+parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_4586")
 
 args = parser.parse_args()
 print(args)
 homestr = os.getcwd();
 print ("homedir = " + homestr)
+use_sbatch = args.sbatch_instead_of_source
 neartop_directory = homestr + "/_" +args.prefix
 strtoday =str(today.month) + "_" + str(today.day) + "_" + str(today.year)
 top_directory = neartop_directory + "_" + strtoday
@@ -160,8 +162,11 @@ while i_dim <= 3:
                         t4str = t3str.replace("INPUT_FILE", input_name)
                         f_batch.write(t4str)
 
-#                    batch_command = "\n pushd " +  rundir_name + "; source " + batch_root + "; popd \n"
-                    batch_command = "\n pushd " +  rundir_name + "; sbatch " + batch_root + "; popd \n"
+# srun directly. can only be done interactively
+                    batch_command = "\n pushd " +  rundir_name + "; source " + batch_root + "; popd \n"
+                    if(use_sbatch):
+                        batch_command = "\n pushd " +  rundir_name + "; sbatch " + batch_root + "; popd \n"
+                        
                     f_run_all.write( batch_command)
                     printstr  = "closing batch file"
                     print(printstr)
