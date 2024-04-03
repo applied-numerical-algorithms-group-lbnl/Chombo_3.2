@@ -21,7 +21,7 @@ parser.add_argument('--sbatch_instead_of_source', type=bool, help='Whether run.s
 parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/saul.batch.single_node")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
-parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_single_node_part_deux")
+parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_with_timers")
 
 args = parser.parse_args()
 print(args)
