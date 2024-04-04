@@ -17,7 +17,7 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="_prch_strong_3_8_2024")
+parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="_prch_with_timers_4_3_2024")
 parser.add_argument('--output_prefix', type=str, help='Prefix for output file[summary_of_]',default="summary_of")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
@@ -32,7 +32,7 @@ summary_file_name  = args.output_prefix + "_" + args.data_directory + ".tex"
 print ("summary_file_name = " + summary_file_name)
 
 top_directory = home_str + "/" + args.data_directory
-
+print("top_directory=" + top_directory)
 label_str = "tab::data_reduction_table_" + today_str
 caption_str = "Performance data for " + args.data_directory
 f_summary       = open( summary_file_name,'w')
@@ -93,12 +93,14 @@ while i_dim <= 3:
                     main_str  = "main_time"
                     resi_str = "norm_res"
                     opt_status = "opt_high"
-                    deb_status = "debug_false"
+                    deb_status = "debug_true"
 
                     opera_status =  exec_prefix + "_" + op_str + "_op" 
                     config_str = opera_status + "." + case_status + "." + dim_status+ "."  + opt_status+ "."  +  deb_status 
                     config_directory = top_directory + "/" + config_str
+                    print("config_directory = " + config_directory)
                     rundir_name = config_directory + "/" + proc_status
+                    print("rundir_name = " + rundir_name)
                     pout_name = rundir_name + "/pout.0"
                     time_name = rundir_name + "/time.table.0"
                     comm_str_resi = "grep Final_residual  " + pout_name
@@ -109,9 +111,11 @@ while i_dim <= 3:
                     if( has_pout ):
                         print_str = "YES pout file  found in "  + config_directory
                         print(print_str)            
+                        #exit()
                     else:                           
                         print_str = "NO  pout file  found in "  + config_directory
                         print(print_str)            
+                        #exit()
                     if( has_time ):                 
                         print_str = "YES time file  found in "  + config_directory
                         print(print_str)            
@@ -121,28 +125,48 @@ while i_dim <= 3:
                     if (has_time and has_pout):
                         print_str = "YES both files found in "  + config_directory
                         print(print_str)
-                        
-                        output_str_resi = subprocess.check_output(comm_str_resi, shell=True)
-                        output_str_iter  = subprocess.check_output(comm_str_iter , shell=True)
-                        output_str_time  = subprocess.check_output(comm_str_time , shell=True)
-                        #print(output_str_resi)
-                        #print(output_str_iter)
-                        #print(output_str_time)
-                        resi_list =  output_str_resi.split()
-                        iter_list =  output_str_iter.split()
-                        time_list =  output_str_time.split()
-                        resi_len  = len(resi_list)
-                        iter_len  = len(iter_list)
-                        time_len  = len(time_list)
-                        #print( resi_list[resi_len-1] )
-                        #print( iter_list[iter_len-1] )
-                        #print( time_list[time_len-1] )
-                        resi_field = resi_list[resi_len-1]
-                        iter_field = iter_list[iter_len-1]
-                        time_field = time_list[time_len-1]
-                        file_entry = op_entry + " & " + str(i_dim) + " & " + str(i_case) + " & " + str(i_num_proc) + "& " + resi_field + " & " + iter_field  + " & " + time_field + "\\\\";
-                        f_summary.write(file_entry + "\n");
 
+                        
+                        output_str_resi  = "4586"
+                        output_str_iter  = "4586"
+                        output_str_time  = "4586"
+                        bork_flag = 0
+                        try:
+                            output_str_resi  = subprocess.check_output(comm_str_resi , shell=True)
+                        except subprocess.CalledProcessError as err_resi:
+                            bork_flag = 1
+                            print(err_resi.output)
+                            
+                        try:
+                            output_str_iter  = subprocess.check_output(comm_str_iter , shell=True)
+                        except subprocess.CalledProcessError as err_iter:
+                            bork_flag = 1
+                            print (err_iter.output)
+
+                        try:
+                            output_str_time  = subprocess.check_output(comm_str_time , shell=True)
+                        except subprocess.CalledProcessError as err_time:
+                            bork_flag = 1
+                            print (err_time.output)
+
+                        if(bork_flag == 0):
+                            resi_list =  output_str_resi.split()
+                            iter_list =  output_str_iter.split()
+                            time_list =  output_str_time.split()
+                            resi_len  = len(resi_list)
+                            iter_len  = len(iter_list)
+                            time_len  = len(time_list)
+                            #print( resi_list[resi_len-1] )
+                            #print( iter_list[iter_len-1] )
+                            #print( time_list[time_len-1] )
+                            resi_field = resi_list[resi_len-1]
+                            iter_field = iter_list[iter_len-1]
+                            time_field = time_list[time_len-1]
+                            file_entry = op_entry + " & " + str(i_dim) + " & " + str(i_case) + " & " + str(i_num_proc) + "& " + resi_field + " & " + iter_field  + " & " + time_field + "\\\\";
+                            f_summary.write(file_entry + "\n");
+                        else:
+                            print_str = "borkflag causes this case to be skipped "
+                            
                     else:
                         print_str = "skipping this case for lack of data"
                         print( print_str)
