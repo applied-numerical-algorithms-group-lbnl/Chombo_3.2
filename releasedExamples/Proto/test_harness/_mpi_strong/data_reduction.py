@@ -17,7 +17,7 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="_prch_with_timers_4_3_2024")
+parser.add_argument('--data_directory', type=str, help='Location of prch_strong directory' ,default="_prch_saul_on_host_4_8_2024")
 parser.add_argument('--output_prefix', type=str, help='Prefix for output file[summary_of_]',default="summary_of")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')

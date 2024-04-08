@@ -18,10 +18,10 @@ parser = ArgumentParser()
 
 parser.add_argument('--input_template_dir', type=str, help='Directory of input file templates [../_input_templates].' ,default="../_input_templates")
 parser.add_argument('--sbatch_instead_of_source', type=bool, help='Whether run.sh calls sbatch instead of source for each case[True].' ,default=True)
-parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/saul.batch.single_node")
+parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/saul.host.batch")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
-parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_with_timers")
+parser.add_argument('--prefix', type=str, help='name of test["prch_compare"]',default="prch_saul_on_host")
 
 args = parser.parse_args()
 print(args)
