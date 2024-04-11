@@ -17,6 +17,7 @@
 #include "Proto_Helmholtz_Op.H"
 #include "Proto_Conductivity_Op.H"
 #include "Proto_Viscous_Tensor_Op.H"
+#include "Proto_FastVTO.H"
 #include "Proto_Resistivity_Op.H"
 #include "memusage.H"
 #include "Vector.H"
@@ -758,6 +759,68 @@ namespace Chombo
       CH_TIME("PrChUtilities::getProtoViscousTensorOpFactory");
 
       typedef PrCh_AMR_Elliptic::Proto_Viscous_Tensor_Op_Factory  prch_visc_fact;
+      vector<pr_dbl>                        grids_pr;
+      vector<pr_lbd_cell_sca_ptr>           acoef_pr;
+      vector<pr_lbd_xfac_ptr>               eta_x_pr;
+      vector<pr_lbd_yfac_ptr>               eta_y_pr;
+      vector<pr_lbd_zfac_ptr>               eta_z_pr;
+      vector<pr_lbd_xfac_ptr>               lam_x_pr;
+      vector<pr_lbd_yfac_ptr>               lam_y_pr;
+      vector<pr_lbd_zfac_ptr>               lam_z_pr;
+      vector<int>                           refrat_pr;
+
+      protoizeCoefficientsVTO(grids_pr,
+                              acoef_pr,
+                              eta_x_pr,
+                              eta_y_pr,
+                              eta_z_pr,
+                              lam_x_pr,
+                              lam_y_pr,
+                              lam_z_pr,
+                              refrat_pr,
+                              a_grids,
+                              a_aco,
+                              a_eta,
+                              a_lam,
+                              a_ref_ratios);
+
+      prch_visc_fact * derived_ptr =
+        new prch_visc_fact(a_coarsest_dom,
+                           grids_pr,
+                           refrat_pr,
+                           a_coarsest_dx,
+                           a_domBC,
+                           a_alpha,
+                           a_beta,
+                           acoef_pr,
+                           eta_x_pr,
+                           eta_y_pr,
+                           eta_z_pr,
+                           lam_x_pr,
+                           lam_y_pr,
+                           lam_z_pr);           
+
+      ch_factory_vec* base_ptr = static_cast<ch_factory_vec*>(derived_ptr);
+      shared_ptr<ch_factory_vec> retval(base_ptr);
+      return retval;
+    } //end function get viscous factory
+
+    ///
+    static shared_ptr<ch_factory_vec>
+    getProtoFastVTOFactory(const ch_dom                             & a_coarsest_dom,
+                           const Vector<int>                        & a_ref_ratios,
+                           const Vector<ch_dbl>                     & a_grids,
+                           const double                             & a_coarsest_dx,
+                           const Vector< ch_ldf_cell_ptr >          & a_aco,
+                           const Vector< ch_ldf_flux_ptr >          & a_eta,
+                           const Vector< ch_ldf_flux_ptr >          & a_lam,
+                           const string                             & a_domBC,
+                           const double                             & a_alpha,
+                           const double                             & a_beta)
+    {
+      CH_TIME("PrChUtilities::getProtoViscousTensorOpFactory");
+
+      typedef PrCh_AMR_Elliptic::Proto_FastVTO_Factory  prch_visc_fact;
       vector<pr_dbl>                        grids_pr;
       vector<pr_lbd_cell_sca_ptr>           acoef_pr;
       vector<pr_lbd_xfac_ptr>               eta_x_pr;
