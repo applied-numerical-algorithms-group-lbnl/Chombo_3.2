@@ -451,7 +451,7 @@ namespace PrCh_AMR_Elliptic
        This is a centered difference of velocity  only and relies upon 
        the velocity  having correct ghost cell values.
     **/
-    int getNormalFaceGradStencil(lo_hi_center_t &  a_div_velo_lhc, 
+    int getNormalFaceGradStencil(lo_hi_center_t &  a_diff_velo_lhc, 
                                  const pr_box   &  a_lo_box,
                                  const pr_box   &  a_hi_box,
                                  const pr_box   &  a_ce_box,
@@ -464,9 +464,9 @@ namespace PrCh_AMR_Elliptic
       ///this is just to make sure I am keeping this stuff straight.
       if(a_face_dir != a_diff_dir)
       {
-        ch_mayday::Error("This one only should be when facedir==diffdir. Calling wrong stencil, maybe?");
+        ch_mayday::Error("getNormStencil only for facedir==diffdir");
       }
-      a_div_velo_lhc.setBoxes(a_has_lo,
+      a_diff_velo_lhc.setBoxes(a_has_lo,
                               a_has_hi,
                               a_lo_box,
                               a_hi_box,
@@ -482,15 +482,15 @@ namespace PrCh_AMR_Elliptic
       pr_sten home_sten(    home_s    , 1.);
       //pr_sten righ_one_sten(righ_one_s, 1.);
       pr_sten   left_one_sten(left_one_s, 1.);
-      a_div_velo_lhc.m_ce_sten = (1.0/m_dx)*(home_sten - left_one_sten);
+      a_diff_velo_lhc.m_ce_sten = (1.0/m_dx)*(home_sten - left_one_sten);
       /**
          This stencil gets applied to velocity
          and relies upon velo having correct ghost cells 
          so only centered diff.   
       **/
-      a_div_velo_lhc.m_ce_box = a_flux_box;
-      a_div_velo_lhc.m_has_lo = 0;
-      a_div_velo_lhc.m_has_hi = 0;
+      a_diff_velo_lhc.m_ce_box = a_flux_box;
+      a_diff_velo_lhc.m_has_lo = 0;
+      a_diff_velo_lhc.m_has_hi = 0;
       return 0;
     } ///end function getNormalFaceGradStencil
 
@@ -501,19 +501,57 @@ namespace PrCh_AMR_Elliptic
        We average the nearby centered differences.   This means 4
        nearby phis in the interior, 2 at domain boundaries.
     **/
-    int getTangentialFaceGradStencil(lo_hi_center_t &  a_div_velo_lhc, 
-                                 const pr_box   &  a_lo_box,
-                                 const pr_box   &  a_hi_box,
-                                 const pr_box   &  a_ce_box,
-                                 const int      &  a_has_lo,
-                                 const int      &  a_has_hi,
-                                 const int      &  a_face_dir,
-                                 const int      &  a_diff_dir,
-                                 const pr_box   &  a_flux_box)
+    int getTangentialFaceGradStencil(lo_hi_center_t &  a_diff_velo_lhc, 
+                                     const pr_box   &  a_lo_box,
+                                     const pr_box   &  a_hi_box,
+                                     const pr_box   &  a_ce_box,
+                                     const int      &  a_has_lo,
+                                     const int      &  a_has_hi,
+                                     const int      &  a_face_dir,
+                                     const int      &  a_diff_dir,
+                                     const pr_box   &  a_flux_box)
     {
-      ch_mayday::Error("not implemented");
+      ///this is just to make sure I am keeping this stuff straight.
+      if(a_face_dir == a_diff_dir)
+      {
+        ch_mayday::Error("getTanStencil one only for facedir!=diffdir.");
+      }
+      a_diff_velo_lhc.setBoxes(a_has_lo,
+                               a_has_hi,
+                               a_lo_box,
+                               a_hi_box,
+                               a_ce_box);
+      pr_sten  home_minu_ef_sten        (pr_shift(-pr_pt::Basis(a_face_dir)                            ), 1.);
+      pr_sten  home_plus_ef_sten        (pr_shift(                                                     ), 1.);
+      pr_sten  home_minu_ef_plus_ed_sten(pr_shift(-pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  home_plus_ef_plus_ed_sten(pr_shift(                             pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  home_minu_ef_minu_ed_sten(pr_shift(-pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  home_plus_ef_minu_ed_sten(pr_shift(                             pr_pt::Basis(a_diff_dir)), 1.);
+
+      a_diff_velo_lhc.m_ce_sten = (1.0/(4*m_dx))*(  home_minu_ef_plus_ed_sten 
+                                                  + home_plus_ef_plus_ed_sten
+                                                  - home_minu_ef_minu_ed_sten
+                                                  - home_plus_ef_minu_ed_sten);
+
+      if(a_has_lo == 1)
+      {
+        a_diff_velo_lhc.m_lo_sten = (1.0/(2*m_dx))*(    home_minu_ef_plus_ed_sten 
+                                                      + home_plus_ef_plus_ed_sten
+                                                      - home_minu_ef_sten
+                                                      - home_plus_ef_sten);
+      }
+      if(a_has_hi == 1)
+      {
+        a_diff_velo_lhc.m_hi_sten = (1.0/(2*m_dx))*(   home_minu_ef_sten 
+                                                     + home_plus_ef_sten
+                                                     - home_minu_ef_minu_ed_sten
+                                                     - home_plus_ef_minu_ed_sten);
+      }
+
       return 0;
-    } ///end function getNormalFaceGradStencil
+      
+      
+    } ///end function getTangentialFaceGradStencil
 
     
     ///
