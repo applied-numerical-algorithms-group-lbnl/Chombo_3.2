@@ -498,8 +498,12 @@ namespace PrCh_AMR_Elliptic
     /**
        Stencil for partial(u_veldir)/partial(x_diffdir) | facedir
        where facedir != diffdir.
-       We average the nearby centered differences.   This means 4
-       nearby phis in the interior, 2 at domain boundaries.
+       We average the nearby centered differences in the interior.
+       We follow previous operators (VTO and Proto_VTO) which 
+       extrapolate the cell centered gradient to ghost cells outside
+       the domain.    Since we are not using m_grad anymore, I had
+       to make the stencils just from phi.  Hence the wackiness at domain boundaries here.
+       Normal gradients just use the ghost cell value of phi.
     **/
     int getTangentialFaceGradStencil(lo_hi_center_t &  a_diff_velo_lhc, 
                                      const pr_box   &  a_lo_box,
@@ -516,36 +520,45 @@ namespace PrCh_AMR_Elliptic
       {
         ch_mayday::Error("getTanStencil one only for facedir!=diffdir.");
       }
+
       a_diff_velo_lhc.setBoxes(a_has_lo,
                                a_has_hi,
                                a_lo_box,
                                a_hi_box,
                                a_ce_box);
-      pr_sten  home_minu_ef_sten        (pr_shift(-pr_pt::Basis(a_face_dir)                            ), 1.);
-      pr_sten  home_plus_ef_sten        (pr_shift(                                                     ), 1.);
-      pr_sten  home_minu_ef_plus_ed_sten(pr_shift(-pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  home_plus_ef_plus_ed_sten(pr_shift(                             pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  home_minu_ef_minu_ed_sten(pr_shift(-pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  home_plus_ef_minu_ed_sten(pr_shift(                             pr_pt::Basis(a_diff_dir)), 1.);
 
-      a_diff_velo_lhc.m_ce_sten = (1.0/(4*m_dx))*(  home_minu_ef_plus_ed_sten 
-                                                  + home_plus_ef_plus_ed_sten
-                                                  - home_minu_ef_minu_ed_sten
-                                                  - home_plus_ef_minu_ed_sten);
+      //for tangential stencils
+      pr_sten  plus_thr_eftwo_plus_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_thr_eftwo_minu_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_one_eftwo_plus_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_one_eftwo_minu_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+
+      pr_sten  minu_one_eftwo_plus_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_one_eftwo_minu_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_thr_eftwo_plus_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_thr_eftwo_minu_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+
+      a_diff_velo_lhc.m_ce_sten = (1.0/(4.*m_dx))*( minu_one_eftwo_plus_one_ed_sten 
+                                                  + plus_one_eftwo_plus_one_ed_sten
+                                                  - minu_one_eftwo_minu_one_ed_sten
+                                                  - plus_one_eftwo_minu_one_ed_sten);
 
       if(a_has_lo == 1)
       {
-        a_diff_velo_lhc.m_lo_sten = (1.0/(2*m_dx))*(    home_minu_ef_plus_ed_sten 
-                                                      + home_plus_ef_plus_ed_sten
-                                                      - home_minu_ef_sten
-                                                      - home_plus_ef_sten);
+        a_diff_velo_lhc.m_lo_sten =
+          ( 5.0/(8.*m_dx))*(   plus_one_eftwo_plus_one_ed_sten -
+                               plus_one_eftwo_minu_one_ed_sten) 
+          -(1.0/(8.*m_dx))*(   plus_thr_eftwo_plus_one_ed_sten -
+                               plus_thr_eftwo_minu_one_ed_sten);
+
       }
       if(a_has_hi == 1)
       {
-        a_diff_velo_lhc.m_hi_sten = (1.0/(2*m_dx))*(   home_minu_ef_sten 
-                                                     + home_plus_ef_sten
-                                                     - home_minu_ef_minu_ed_sten
-                                                     - home_plus_ef_minu_ed_sten);
+        a_diff_velo_lhc.m_hi_sten =
+          ( 5.0/(8.*m_dx))*(   minu_one_eftwo_plus_one_ed_sten -
+                               minu_one_eftwo_minu_one_ed_sten) 
+          -(1.0/(8.*m_dx))*(   minu_thr_eftwo_plus_one_ed_sten -
+                               minu_thr_eftwo_minu_one_ed_sten);
       }
 
       return 0;
@@ -569,7 +582,6 @@ namespace PrCh_AMR_Elliptic
     {
       CH_TIME("Proto_Viscous_Tensor::getFaceDivAndGrad");
 
-      ch_mayday::Error("not implemented");
       pr_dom domain = m_grids.domain();
       ///first divergence 
       a_face_div.setVal(0.);
@@ -607,7 +619,7 @@ namespace PrCh_AMR_Elliptic
                                        a_face_dir, diff_dir, a_flux_box);
         }
         /**
-           Compoent matches diff_dir because this is divergence
+           Component matches diff_dir because this is divergence
         **/
         pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
         /**
