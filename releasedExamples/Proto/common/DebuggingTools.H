@@ -1,12 +1,12 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX -1
-#define DBG_HIX  7
-#define DBG_LOY -1
-#define DBG_HIY  7
+#define DBG_LOX 28
+#define DBG_HIX 31
+#define DBG_LOY 28
+#define DBG_HIY 31
 #define DBG_LOZ  0
 #define DBG_HIZ  0
-#define VALID_ONLY false
+#define VALID_ONLY true
 
 /**
 //   for dumpFracPr and dumpFracCh
@@ -21,7 +21,7 @@
 //   of the domain area.  (so near the lower left corner)
 //  This may go down in history as the worst API ever but it is helpful when you
 //  need to keep an eye on a particular region of the domain when AMR is involved.
- **/
+**/
 #define DBG_NUMER_LO_X 1
 #define DBG_DENOM_LO_X 16
 #define DBG_NUMER_HI_X 1
@@ -46,30 +46,30 @@
 
 /// Old school Debugging utilities 
 /**
-  // If you want to print areas of data to screen during a debug session,
-  // his is the way you do it.  All of these functions can be called from gdb.
-  // TLDR:
-  // This is a set  of crude but effective tools to  print out stuff from gdb.   
-  // Send pointers to the data to these functions and the data gets printed out neatly.    
-  // The user is meant to hack the the bounds according to her needs.   
-  // The macros above are the primary buttons to modify.    
-  // 
-  // Set the bounds (DBG_LOX and so on) to customize which area gets printed.
-  // Set VALID_ONLY to TRUE if you only want valid data printed when a 
-  //     level gets printed out (sometimes it is help ful to see ghost data, other times not so much).
-  // 
-  // This command:
-  // (gdb) p PrChDebug::dumpLDAreaPr(&a_cor)  
-  // yeilds:
-  // ibox = 0:
-  // data_box = [(-2,-2),( 3, 3)], area_box = [( 0, 0),( 3, 3)]
-  // data for variable 0:
-  // ( 0, 3): 4.86993301e-05  ( 1, 3): 3.13317884e-04  ( 2, 3): 1.72362925e-04  ( 3, 3): 6.44824962e-05  
-  // ( 0, 2): 3.13287135e-04  ( 1, 2): 5.52541534e-04  ( 2, 2): 8.82170603e-04  ( 3, 2): 1.72362925e-04  
-  // ( 0, 1): 1.72411307e-04  ( 1, 1): 8.82090868e-04  ( 2, 1): 5.52541534e-04  ( 3, 1): 3.13317884e-04  
-  // ( 0, 0): 6.46298245e-05  ( 1, 0): 1.72411307e-04  ( 2, 0): 3.13287135e-04  ( 3, 0): 4.86993301e-05  
-  // and so on.
-**/
+ // If you want to print areas of data to screen during a debug session,
+ // his is the way you do it.  All of these functions can be called from gdb.
+ // TLDR:
+ // This is a set  of crude but effective tools to  print out stuff from gdb.   
+ // Send pointers to the data to these functions and the data gets printed out neatly.    
+ // The user is meant to hack the the bounds according to her needs.   
+ // The macros above are the primary buttons to modify.    
+ // 
+ // Set the bounds (DBG_LOX and so on) to customize which area gets printed.
+ // Set VALID_ONLY to TRUE if you only want valid data printed when a 
+ //     level gets printed out (sometimes it is help ful to see ghost data, other times not so much).
+ // 
+ // This command:
+ // (gdb) p PrChDebug::dumpLDAreaPr(&a_cor)  
+ // yeilds:
+ // ibox = 0:
+ // data_box = [(-2,-2),( 3, 3)], area_box = [( 0, 0),( 3, 3)]
+ // data for variable 0:
+ // ( 0, 3): 4.86993301e-05  ( 1, 3): 3.13317884e-04  ( 2, 3): 1.72362925e-04  ( 3, 3): 6.44824962e-05  
+ // ( 0, 2): 3.13287135e-04  ( 1, 2): 5.52541534e-04  ( 2, 2): 8.82170603e-04  ( 3, 2): 1.72362925e-04  
+ // ( 0, 1): 1.72411307e-04  ( 1, 1): 8.82090868e-04  ( 2, 1): 5.52541534e-04  ( 3, 1): 3.13317884e-04  
+ // ( 0, 0): 6.46298245e-05  ( 1, 0): 1.72411307e-04  ( 2, 0): 3.13287135e-04  ( 3, 0): 4.86993301e-05  
+ // and so on.
+ **/
 namespace PrChDebug
 {
   typedef   Chombo::IntVect                      ch_iv;
@@ -130,29 +130,28 @@ namespace PrChDebug
       
       for(int ivar = 0; ivar < data.nComp(); ivar++)
       {
-        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
+        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
         {
 #endif          
-        for(int j = hideb[1]; j >= lodeb[1]; j--)
-        {
-          for(int i = lodeb[0]; i <= hideb[0]; i++)
+          for(int j = hideb[1]; j >= lodeb[1]; j--)
           {
-            ch_iv pt(D_DECL(i,j,k));
-            cout << pt << ":";
-            double data_value = data(pt, ivar);
-            //keeps positive and negative numbers lined up
-            if(    data_value >= 0)
+            for(int i = lodeb[0]; i <= hideb[0]; i++)
             {
-              cout << " "; 
-            }
-            // 
-            cout  << data_value << "  ";
-          } //end loop in x dir
-          cout << endl;
-        } //end loop in  y dir
+              ch_iv pt(D_DECL(i,j,k));
+              cout << pt << ":";
+              double data_value = data(pt, ivar);
+              //keeps positive and negative numbers lined up
+              if(    data_value >= 0)
+              {
+                cout << " "; 
+              }
+              // 
+              cout  << data_value << "  ";
+            } //end loop in x dir
+            cout << endl;
+          } //end loop in  y dir
 #if DIM==3
         } //end loop in z direction
 #endif
@@ -193,29 +192,28 @@ namespace PrChDebug
       
       int ivar = 0;
       {
-        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
+        cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
 #if DIM==3        
         for(int k = hideb[2]; k >= lodeb[2]; k--)
         {
 #endif          
-        for(int j = hideb[1]; j >= lodeb[1]; j--)
-        {
-          for(int i = lodeb[0]; i <= hideb[0]; i++)
+          for(int j = hideb[1]; j >= lodeb[1]; j--)
           {
-            pr_pt pt(D_DECL(i,j,k));
-            cout << pt << ":";
-            double data_value = data(pt, ivar);
-            //keeps positive and negative numbers lined up
-            if(    data_value >= 0)
+            for(int i = lodeb[0]; i <= hideb[0]; i++)
             {
-              cout << " "; 
-            }
-            // 
-            cout  << data_value << "  ";
-          } //end loop in x dir
-          cout << endl;
-        } //end loop in  y dir
+              pr_pt pt(D_DECL(i,j,k));
+              cout << pt << ":";
+              double data_value = data(pt, ivar);
+              //keeps positive and negative numbers lined up
+              if(    data_value >= 0)
+              {
+                cout << " "; 
+              }
+              // 
+              cout  << data_value << "  ";
+            } //end loop in x dir
+            cout << endl;
+          } //end loop in  y dir
 #if DIM==3
         } //end loop in z direction
 #endif
@@ -223,6 +221,222 @@ namespace PrChDebug
     } //end if not null
   } //end function dumpPr
 
+  ///
+  void 
+  dumpVecPr(pr_fab_vec* dataPtr, pr_box a_areaBox)
+  {
+    if(dataPtr != NULL)
+    {
+      using std::cout;
+      using std::end;
+
+      cout    << setprecision(8)
+              << setiosflags(ios::showpoint)
+              << setiosflags(ios::scientific);
+
+      pr_box area = a_areaBox;
+
+      auto & data   = *dataPtr;
+      pr_box databox  = dataPtr->box();
+      pr_box printBox = databox & a_areaBox;
+      pr_pt  hideb    = printBox.high();
+      pr_pt  lodeb    = printBox.low();
+      if(!printBox.empty())
+      {
+        for(int ivar = 0; ivar < DIM; ivar++)
+        {
+          cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
+
+#if DIM==3        
+          for(int k = hideb[2]; k >= lodeb[2]; k--)
+          {
+#endif          
+            for(int j = hideb[1]; j >= lodeb[1]; j--)
+            {
+              for(int i = lodeb[0]; i <= hideb[0]; i++)
+              {
+                pr_pt pt(D_DECL(i,j,k));
+                cout << pt << ":";
+                double data_value = data(pt, ivar);
+                //keeps positive and negative numbers lined up
+                if(    data_value >= 0)
+                {
+                  cout << " "; 
+                }
+                // 
+                cout  << data_value << "  ";
+              } //end loop in x dir
+              cout << endl;
+            } //end loop in  y dir
+#if DIM==3
+          } //end loop in z direction
+#endif
+        }// end loop over components
+      } //end if not null
+    }
+  } //end function dumpPr
+
+  ///
+  void 
+  dumpTenPr(pr_fab_ten* dataPtr, pr_box a_areaBox)
+  {
+    if(dataPtr != NULL)
+    {
+      using std::cout;
+      using std::end;
+
+      cout    << setprecision(8)
+              << setiosflags(ios::showpoint)
+              << setiosflags(ios::scientific);
+
+      pr_box area = a_areaBox;
+
+      auto & data   = *dataPtr;
+      pr_box databox  = dataPtr->box();
+      pr_box printBox = databox & a_areaBox;
+      pr_pt  hideb    = printBox.high();
+      pr_pt  lodeb    = printBox.low();
+      if(!printBox.empty())
+      {
+        for(int ivar = 0; ivar < DIM*DIM; ivar++)
+        {
+          cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
+#if DIM==3        
+          for(int k = hideb[2]; k >= lodeb[2]; k--)
+          {
+#endif          
+            for(int j = hideb[1]; j >= lodeb[1]; j--)
+            {
+              for(int i = lodeb[0]; i <= hideb[0]; i++)
+              {
+                pr_pt pt(D_DECL(i,j,k));
+                cout << pt << ":";
+                double data_value = data(pt, ivar);
+                //keeps positive and negative numbers lined up
+                if(    data_value >= 0)
+                {
+                  cout << " "; 
+                }
+                // 
+                cout  << data_value << "  ";
+              } //end loop in x dir
+              cout << endl;
+            } //end loop in  y dir
+#if DIM==3
+          } //end loop in z direction
+#endif
+        }// end loop over components
+      }
+    } //end if not null
+  } //end function dumpPr
+  ///
+  void 
+  dumpThreePr(pr_fab_three* dataPtr, pr_box a_areaBox)
+  {
+    if(dataPtr != NULL)
+    {
+      using std::cout;
+      using std::end;
+
+      cout    << setprecision(8)
+              << setiosflags(ios::showpoint)
+              << setiosflags(ios::scientific);
+
+      pr_box area = a_areaBox;
+
+      auto & data   = *dataPtr;
+      pr_box databox  = dataPtr->box();
+      pr_box printBox = databox & a_areaBox;
+      pr_pt  hideb    = printBox.high();
+      pr_pt  lodeb    = printBox.low();
+      
+      if(!printBox.empty())
+      {
+        for(int ivar = 0; ivar < DIM*DIM; ivar++)
+        {
+          cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
+#if DIM==3        
+          for(int k = hideb[2]; k >= lodeb[2]; k--)
+          {
+#endif          
+            for(int j = hideb[1]; j >= lodeb[1]; j--)
+            {
+              for(int i = lodeb[0]; i <= hideb[0]; i++)
+              {
+                pr_pt pt(D_DECL(i,j,k));
+                cout << pt << ":";
+                double data_value = data(pt, ivar);
+                //keeps positive and negative numbers lined up
+                if(    data_value >= 0)
+                {
+                  cout << " "; 
+                }
+                // 
+                cout  << data_value << "  ";
+              } //end loop in x dir
+              cout << endl;
+            } //end loop in  y dir
+#if DIM==3
+          } //end loop in z direction
+#endif
+        }// end loop over components
+      }
+    } //end if not null
+  } //end function dumpPr
+
+  void 
+  dumpThreeDIMPr(pr_fab_threedim* dataPtr, pr_box a_areaBox)
+  {
+    if(dataPtr != NULL)
+    {
+      using std::cout;
+      using std::end;
+
+      cout    << setprecision(8)
+              << setiosflags(ios::showpoint)
+              << setiosflags(ios::scientific);
+
+      pr_box area = a_areaBox;
+
+      auto & data   = *dataPtr;
+      pr_box databox  = dataPtr->box();
+      pr_box printBox = databox & a_areaBox;
+      pr_pt  hideb    = printBox.high();
+      pr_pt  lodeb    = printBox.low();
+      if(!printBox.empty())
+      {
+        for(int ivar = 0; ivar < DIM*DIM; ivar++)
+        {
+          cout << "data_box = " << databox << ", area_box = " << a_areaBox <<  ", ivar = " << ivar << endl;
+#if DIM==3        
+          for(int k = hideb[2]; k >= lodeb[2]; k--)
+          {
+#endif          
+            for(int j = hideb[1]; j >= lodeb[1]; j--)
+            {
+              for(int i = lodeb[0]; i <= hideb[0]; i++)
+              {
+                pr_pt pt(D_DECL(i,j,k));
+                cout << pt << ":";
+                double data_value = data(pt, ivar);
+                //keeps positive and negative numbers lined up
+                if(    data_value >= 0)
+                {
+                  cout << " "; 
+                }
+                // 
+                cout  << data_value << "  ";
+              } //end loop in x dir
+              cout << endl;
+            } //end loop in  y dir
+#if DIM==3
+          } //end loop in z direction
+#endif
+        }// end loop over components
+      }
+    } //end if not null
+  } //end function dumpPr
+  
   void 
   dumpAreaPr(pr_fab_1* dataPtr)
   {
@@ -238,170 +452,24 @@ namespace PrChDebug
     static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
     static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
     static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-
-    if(dataPtr != NULL)
-    {
-      using std::cout;
-      using std::end;
-
-      cout    << setprecision(8)
-              << setiosflags(ios::showpoint)
-              << setiosflags(ios::scientific);
-
-      pr_box area = s_areaBox;
-
-      auto & data   = *dataPtr;
-      pr_box databox  = dataPtr->box();
-      pr_box printBox = databox & s_areaBox;
-      pr_pt  hideb    = printBox.high();
-      pr_pt  lodeb    = printBox.low();
-      
-      for(int ivar = 0; ivar < DIM; ivar++)
-      {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
-#if DIM==3        
-        for(int k = hideb[2]; k >= lodeb[2]; k--)
-        {
-#endif          
-          for(int j = hideb[1]; j >= lodeb[1]; j--)
-          {
-            for(int i = lodeb[0]; i <= hideb[0]; i++)
-            {
-              pr_pt pt(D_DECL(i,j,k));
-              cout << pt << ":";
-              double data_value = data(pt, ivar);
-              //keeps positive and negative numbers lined up
-              if(    data_value >= 0)
-              {
-                cout << " "; 
-              }
-              // 
-              cout  << data_value << "  ";
-            } //end loop in x dir
-            cout << endl;
-          } //end loop in  y dir
-#if DIM==3
-        } //end loop in z direction
-#endif
-      }// end loop over components
-      
-    } //end if not null
-  } //end function dumpAreaVecPr
-
+    dumpVecPr(dataPtr, s_areaBox);
+  }
   void 
   dumpAreaThreePr(pr_fab_three* dataPtr)
   {
     static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
     static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
     static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-
-    if(dataPtr != NULL)
-    {
-      using std::cout;
-      using std::end;
-
-      cout    << setprecision(8)
-              << setiosflags(ios::showpoint)
-              << setiosflags(ios::scientific);
-
-      pr_box area = s_areaBox;
-
-      auto & data   = *dataPtr;
-      pr_box databox  = dataPtr->box();
-      pr_box printBox = databox & s_areaBox;
-      pr_pt  hideb    = printBox.high();
-      pr_pt  lodeb    = printBox.low();
-      
-      for(int ivar = 0; ivar < 3; ivar++)
-      {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
-#if DIM==3        
-        for(int k = hideb[2]; k >= lodeb[2]; k--)
-        {
-#endif          
-          for(int j = hideb[1]; j >= lodeb[1]; j--)
-          {
-            for(int i = lodeb[0]; i <= hideb[0]; i++)
-            {
-              pr_pt pt(D_DECL(i,j,k));
-              cout << pt << ":";
-              double data_value = data(pt, ivar);
-              //keeps positive and negative numbers lined up
-              if(    data_value >= 0)
-              {
-                cout << " "; 
-              }
-              // 
-              cout  << data_value << "  ";
-            } //end loop in x dir
-            cout << endl;
-          } //end loop in  y dir
-#if DIM==3
-        } //end loop in z direction
-#endif
-      }// end loop over components
-      
-    } //end if not null
-  } //end function dumpAreaThreePr
-
+    dumpThreePr(dataPtr, s_areaBox);
+  }
   void 
   dumpAreaThreeDimPr(pr_fab_threedim* dataPtr)
   {
     static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
     static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
     static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-
-    if(dataPtr != NULL)
-    {
-      using std::cout;
-      using std::end;
-
-      cout    << setprecision(8)
-              << setiosflags(ios::showpoint)
-              << setiosflags(ios::scientific);
-
-      pr_box area = s_areaBox;
-
-      auto & data   = *dataPtr;
-      pr_box databox  = dataPtr->box();
-      pr_box printBox = databox & s_areaBox;
-      pr_pt  hideb    = printBox.high();
-      pr_pt  lodeb    = printBox.low();
-      
-      for(int ivar = 0; ivar < 3*DIM; ivar++)
-      {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
-#if DIM==3        
-        for(int k = hideb[2]; k >= lodeb[2]; k--)
-        {
-#endif          
-          for(int j = hideb[1]; j >= lodeb[1]; j--)
-          {
-            for(int i = lodeb[0]; i <= hideb[0]; i++)
-            {
-              pr_pt pt(D_DECL(i,j,k));
-              cout << pt << ":";
-              double data_value = data(pt, ivar);
-              //keeps positive and negative numbers lined up
-              if(    data_value >= 0)
-              {
-                cout << " "; 
-              }
-              // 
-              cout  << data_value << "  ";
-            } //end loop in x dir
-            cout << endl;
-          } //end loop in  y dir
-#if DIM==3
-        } //end loop in z direction
-#endif
-      }// end loop over components
-      
-    } //end if not null
-  } //end function dumpAreaThreeDimPr
+    dumpThreeDIMPr(dataPtr, s_areaBox);
+  }
   
   void 
   dumpAreaTenPr(pr_fab_ten* dataPtr)
@@ -409,55 +477,7 @@ namespace PrChDebug
     static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
     static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
     static const pr_box     s_areaBox(s_areaLo, s_areaHi);
-
-    if(dataPtr != NULL)
-    {
-      using std::cout;
-      using std::end;
-
-      cout    << setprecision(8)
-              << setiosflags(ios::showpoint)
-              << setiosflags(ios::scientific);
-
-      pr_box area = s_areaBox;
-
-      auto & data   = *dataPtr;
-      pr_box databox  = dataPtr->box();
-      pr_box printBox = databox & s_areaBox;
-      pr_pt  hideb    = printBox.high();
-      pr_pt  lodeb    = printBox.low();
-      
-      for(int ivar = 0; ivar < DIM*DIM; ivar++)
-      {
-        cout << "data_box = " << databox << ", area_box = " << s_areaBox <<  endl;
-        cout << "data for variable "<< ivar << ":" << endl;
-#if DIM==3        
-        for(int k = hideb[2]; k >= lodeb[2]; k--)
-        {
-#endif          
-          for(int j = hideb[1]; j >= lodeb[1]; j--)
-          {
-            for(int i = lodeb[0]; i <= hideb[0]; i++)
-            {
-              pr_pt pt(D_DECL(i,j,k));
-              cout << pt << ":";
-              double data_value = data(pt, ivar);
-              //keeps positive and negative numbers lined up
-              if(    data_value >= 0)
-              {
-                cout << " "; 
-              }
-              // 
-              cout  << data_value << "  ";
-            } //end loop in x dir
-            cout << endl;
-          } //end loop in  y dir
-#if DIM==3
-        } //end loop in z direction
-#endif
-      }// end loop over components
-      
-    } //end if not null
+    dumpTenPr(dataPtr, s_areaBox);
   } //end function dumpAreaTenPr
   
   /// print to screen (very neatly) data from the area whereever it is found in chombo data
@@ -626,10 +646,23 @@ namespace PrChDebug
       auto  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaTenPr(&data[dit[ibox]]);
-      }
-    }
+        static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+        static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+        static const pr_box     s_areaBox(s_areaLo, s_areaHi);
+        pr_box valid = dataPtr->layout()[dit[ibox]];
+        pr_box valid_area  = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpTenPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpTenPr(&data[dit[ibox]], s_areaBox);
+        }
+      } //ibox
+    } //!null
   }
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
@@ -641,10 +674,24 @@ namespace PrChDebug
       auto  dit = data.dataIterator();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaVecPr(&data[dit[ibox]]);
-      }
-    }
+        static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+        static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+        static const pr_box     s_areaBox(s_areaLo, s_areaHi);
+
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpVecPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpVecPr(&data[dit[ibox]], s_areaBox);
+        }
+      } //dit
+    } //!null
   }
   void 
   dumpLDAreaThreePr(pr_lbd_three* dataPtr)
@@ -653,11 +700,24 @@ namespace PrChDebug
     {
       pr_lbd_three & data = *dataPtr;
       auto  dit = data.dataIterator();
+      static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+      static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+      static const pr_box     s_areaBox(s_areaLo, s_areaHi);
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaThreePr(&data[dit[ibox]]);
-      }
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpThreePr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpThreePr(&data[dit[ibox]], s_areaBox);
+        }
+      }// ibox
     }
   }
   void 
@@ -667,10 +727,23 @@ namespace PrChDebug
     {
       pr_lbd_threedim & data = *dataPtr;
       auto  dit = data.dataIterator();
+      static const pr_pt       s_areaLo(D_DECL( DBG_LOX, DBG_LOY, DBG_LOZ));
+      static const pr_pt       s_areaHi(D_DECL( DBG_HIX, DBG_HIY, DBG_HIZ));
+      static const pr_box     s_areaBox(s_areaLo, s_areaHi);
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
-        cout << "ibox = " << ibox << ":" << endl;
-        dumpAreaThreeDimPr(&data[dit[ibox]]);
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & s_areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpThreeDIMPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpThreeDIMPr(&data[dit[ibox]], s_areaBox);
+        }
       }
     }
   }

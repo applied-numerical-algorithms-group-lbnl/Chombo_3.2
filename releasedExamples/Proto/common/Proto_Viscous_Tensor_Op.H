@@ -742,6 +742,7 @@ namespace PrCh_AMR_Elliptic
             //this is standard chombo dest, src so face_grad_comp is the output
             PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp, NULL, NULL, 
                                                div_velo_lhc);
+            ibreak = 0; //sometimes scoping is confusing in gdb
           }
           else
           {
@@ -906,6 +907,9 @@ namespace PrCh_AMR_Elliptic
       {
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
+          //begin debug
+          Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
+          //end debug
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.localSize(); ibox++)
           {

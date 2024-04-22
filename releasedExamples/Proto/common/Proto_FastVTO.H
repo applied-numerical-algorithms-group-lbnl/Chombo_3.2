@@ -631,6 +631,7 @@ namespace PrCh_AMR_Elliptic
       }
 
       //now for the gradient
+      int ibreak = 4586;
       for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
         for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
@@ -653,6 +654,7 @@ namespace PrCh_AMR_Elliptic
           //this is standard chombo dest, src so face_grad_comp is the output
           PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp, &velo_comp, &velo_comp,
                                              diff_velo_lhc);
+          ibreak = 0;
 
         }   // end velo_dir loop
       }     // end diff_dir loop         
@@ -802,6 +804,9 @@ namespace PrCh_AMR_Elliptic
       {
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
+          //begin debug
+          Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
+          //end debug
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.localSize(); ibox++)
           {
