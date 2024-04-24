@@ -782,6 +782,7 @@ namespace PrCh_AMR_Elliptic
       getFaceDivAndGrad(face_divu, face_grad, a_phi, a_grad, flux_box, a_valid,a_face_dir);
       
       ///F(u) = eta*(grad(u) + grad(u)^T) + lambda*I div(u)
+      int ibreak = 4586;
       for(int icomp = 0; icomp < DIM; icomp++)
       {
         pr_box_data_sca flux_comp = Proto::slice(a_flux, icomp);
@@ -795,6 +796,7 @@ namespace PrCh_AMR_Elliptic
         Proto::forallInPlace_i(fluxFuncVisco, flux_box, flux_comp,
                                grad_u, grad_u_t, face_divu,
                                a_eta, a_lam, a_face_dir, icomp);
+        ibreak = 0; 
       }
       return 0;
     }///end function getFluxDotNormal
@@ -831,7 +833,7 @@ namespace PrCh_AMR_Elliptic
       
       bool initToZero = true; double applyScale = 1;
       a_incr.setVal(-4586.);
-
+      int ibreak = 0;
       for(int icomp = 0; icomp < DIM; icomp++)
       {
         pr_box_data_sca flux_comp = Proto::slice(flux_dot_normal, icomp);
@@ -839,6 +841,7 @@ namespace PrCh_AMR_Elliptic
         ///this arg list is src, dst so  incr_comp is the output
         righ_minus_home.apply(flux_comp, incr_comp,
                               a_valid , initToZero, applyScale);
+        ibreak = 4586;
       }
       
       return 0;

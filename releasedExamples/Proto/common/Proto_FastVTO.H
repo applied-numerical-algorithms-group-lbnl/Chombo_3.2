@@ -546,19 +546,26 @@ namespace PrCh_AMR_Elliptic
       if(a_has_lo == 1)
       {
         a_diff_velo_lhc.m_lo_sten =
-          ( 5.0/(8.*m_dx))*(   plus_one_eftwo_plus_one_ed_sten -
-                               plus_one_eftwo_minu_one_ed_sten) 
-          -(1.0/(8.*m_dx))*(   plus_thr_eftwo_plus_one_ed_sten -
-                               plus_thr_eftwo_minu_one_ed_sten);
+          ( 1/(2.*m_dx))*(plus_one_eftwo_plus_one_ed_sten -
+                          plus_one_eftwo_minu_one_ed_sten) ;
+
+//        a_diff_velo_lhc.m_lo_sten =
+//          ( 5.0/(8.*m_dx))*(   plus_one_eftwo_plus_one_ed_sten -
+//                               plus_one_eftwo_minu_one_ed_sten) 
+//          -(1.0/(8.*m_dx))*(   plus_thr_eftwo_plus_one_ed_sten -
+//                               plus_thr_eftwo_minu_one_ed_sten);
 
       }
       if(a_has_hi == 1)
       {
-        a_diff_velo_lhc.m_hi_sten =
-          ( 5.0/(8.*m_dx))*(   minu_one_eftwo_plus_one_ed_sten -
-                               minu_one_eftwo_minu_one_ed_sten) 
-          -(1.0/(8.*m_dx))*(   minu_thr_eftwo_plus_one_ed_sten -
-                               minu_thr_eftwo_minu_one_ed_sten);
+        a_diff_velo_lhc.m_lo_sten =
+          ( 1/(2.*m_dx))*(minu_one_eftwo_plus_one_ed_sten -
+                          minu_one_eftwo_minu_one_ed_sten) ;
+//        a_diff_velo_lhc.m_hi_sten =
+//          ( 5.0/(8.*m_dx))*(   minu_one_eftwo_plus_one_ed_sten -
+//                               minu_one_eftwo_minu_one_ed_sten) 
+//          -(1.0/(8.*m_dx))*(   minu_thr_eftwo_plus_one_ed_sten -
+//                               minu_thr_eftwo_minu_one_ed_sten);
       }
 
       return 0;
@@ -681,6 +688,7 @@ namespace PrCh_AMR_Elliptic
       getFaceDivAndGrad(face_divu, face_grad, a_phi, flux_box, a_valid,a_face_dir);
       
       ///F(u) = eta*(grad(u) + grad(u)^T) + lambda*I div(u)
+      int ibreak = 4586;
       for(int icomp = 0; icomp < DIM; icomp++)
       {
         pr_box_data_sca flux_comp = Proto::slice(a_flux, icomp);
@@ -694,6 +702,7 @@ namespace PrCh_AMR_Elliptic
         Proto::forallInPlace_i(fluxFuncFastVTO, flux_box, flux_comp,
                                grad_u, grad_u_t, face_divu,
                                a_eta, a_lam, a_face_dir, icomp);
+        ibreak = 0;
       }
       return 0;
     }///end function getFluxDotNormal
@@ -729,7 +738,7 @@ namespace PrCh_AMR_Elliptic
       
       bool initToZero = true; double applyScale = 1;
       a_incr.setVal(-4586.);
-
+      int ibreak = 0;
       for(int icomp = 0; icomp < DIM; icomp++)
       {
         pr_box_data_sca flux_comp = Proto::slice(flux_dot_normal, icomp);
@@ -737,6 +746,7 @@ namespace PrCh_AMR_Elliptic
         ///this arg list is src, dst so  incr_comp is the output
         righ_minus_home.apply(flux_comp, incr_comp,
                               a_valid , initToZero, applyScale);
+        ibreak = 4586;
       }
       
       return 0;
@@ -805,7 +815,7 @@ namespace PrCh_AMR_Elliptic
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
           //begin debug
-          Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
+          //Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
           //end debug
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.localSize(); ibox++)

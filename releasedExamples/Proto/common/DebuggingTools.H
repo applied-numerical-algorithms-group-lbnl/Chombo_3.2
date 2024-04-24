@@ -1,12 +1,12 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX 28
-#define DBG_HIX 31
-#define DBG_LOY 28
-#define DBG_HIY 31
+#define DBG_LOX 29
+#define DBG_HIX 32
+#define DBG_LOY 29
+#define DBG_HIY 32
 #define DBG_LOZ  0
 #define DBG_HIZ  0
-#define VALID_ONLY true
+#define VALID_ONLY false
 
 /**
 //   for dumpFracPr and dumpFracCh
