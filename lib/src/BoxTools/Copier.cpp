@@ -1610,6 +1610,7 @@ int Copier::numToCellsToCopy() const
 
 ostream& operator<< (ostream& os, const Copier& copier)
 {
+#ifdef CH_MPI  
   os << "local(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::LOCAL); it.ok(); ++it)
     {
@@ -1629,6 +1630,7 @@ ostream& operator<< (ostream& os, const Copier& copier)
          << "       ";
     }
   os << "\n";
+#endif  
   return os;
 }
 

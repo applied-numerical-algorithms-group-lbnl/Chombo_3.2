@@ -176,7 +176,12 @@ public:
 #endif
     )
   {
-    define(a_boxes, a_procIDs,  a_physDomain, a_comm);
+    define(a_boxes, a_procIDs,  a_physDomain
+           
+#ifdef CH_MPI            
+           , a_comm
+#endif           
+      );
   }
 
   /*@}*/
