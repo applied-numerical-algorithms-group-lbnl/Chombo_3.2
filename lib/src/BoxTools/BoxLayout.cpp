@@ -320,7 +320,7 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
 #endif                  
   )
 {
-#ifdef CH_MPI
+#ifdef CH_MPI  
   m_comm = a_comm;
 #endif  
   const BoxLayout& baseLayout = a_newLayout.boxLayout();

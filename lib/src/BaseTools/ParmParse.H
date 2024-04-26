@@ -3958,6 +3958,7 @@ ParmParse::queryarr (const char* name,
           ptr[i] = c_array[i];
         }
     }
+  delete [] c_array;  
   return status;
 }
 

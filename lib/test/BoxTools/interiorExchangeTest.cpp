@@ -91,6 +91,7 @@ int testExchange(void)
   DisjointBoxLayout grids(baseLevelBoxes, ranks);
   int nghost = 4;
   LevelData< BaseFab<int> > data(grids, SpaceDim, nghost*IntVect::Unit);
+  LevelData< BaseFab<int> > data2(grids, SpaceDim, nghost*IntVect::Unit);  
 
   //set the data on the boxes according to which quadrant it is in
   int midpt = domsize/2;
@@ -110,11 +111,24 @@ int testExchange(void)
                   val = 1;
                 }
               data[dit()](bit(), idir) = val;
+              data2[dit()](bit(), idir) = val;              
             }
         }
     }
   //exchange the data to fill the ghost cells
   data.exchange();
+  
+
+  // build an exchangeCopier to check
+  Copier exchangeCopier;
+  exchangeCopier.exchangeDefine(data2.getBoxes(), data2.ghostVect());
+
+  if (exchangeCopier.isDefined())
+    {
+      data2.exchange(exchangeCopier);
+    }
+
+  
   //check the answer
   for (DataIterator dit = grids.dataIterator(); dit.ok(); ++dit)
     {
@@ -138,6 +152,12 @@ int testExchange(void)
                   pout() << "value at " << bit() << "looks wrong" << endl;
                   return -42;
                 }
+
+              if (data2[dit()](bit(), idir) != val)
+                {
+                  pout() << "exchangeCopier: value at " << bit() << "looks wrong" << endl;
+                  return -21;
+                }              
             }
         }
     }
