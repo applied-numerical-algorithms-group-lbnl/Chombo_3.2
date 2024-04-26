@@ -410,6 +410,7 @@ ReadAMRHierarchyHDF5(const string& filename,
   {
     CH_TIME("open handle");
     int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global");
+
     if ( err < 0)
     {
       return -4586;
