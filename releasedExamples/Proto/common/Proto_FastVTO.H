@@ -558,10 +558,11 @@ namespace PrCh_AMR_Elliptic
       //                  +(home+ Basisv(graddir)  -  Basisv(face_dir))  
       //                  -(home+ Basisv(graddir)  -  Basisv(face_dir)))/4dx
       **/
-      a_diff_velo_lhc.m_ce_sten = (1.0/(4.*m_dx))*( minu_one_ef_plus_one_ed_sten 
-                                                  + plus_zer_ef_plus_one_ed_sten
-                                                  - minu_one_ef_minu_one_ed_sten
-                                                  - plus_zer_ef_minu_one_ed_sten);
+      a_diff_velo_lhc.m_ce_sten = (1.0/(4.*m_dx))*( plus_zer_ef_plus_one_ed_sten
+                                                   -plus_zer_ef_minu_one_ed_sten
+                                                  + minu_one_ef_plus_one_ed_sten 
+                                                  - minu_one_ef_minu_one_ed_sten);
+                                                    
 
       if(a_has_lo == 1)
       {
@@ -582,6 +583,7 @@ namespace PrCh_AMR_Elliptic
         ///
         ///
         **/
+        
         a_diff_velo_lhc.m_lo_sten =
            (3.0/(4.*m_dx))*( plus_zer_ef_plus_one_ed_sten )
           -(3.0/(4.*m_dx))*( plus_zer_ef_minu_one_ed_sten )
@@ -603,6 +605,7 @@ namespace PrCh_AMR_Elliptic
                     -(1/(4dx))*((home+ Basisv(graddir)  - 2*Basisv(face_dir)))          
                     +(1/(4dx))*((home+ Basisv(graddir)  - 2*Basisv(face_dir)))          
         **/
+        
         a_diff_velo_lhc.m_hi_sten =
            (3.0/(4.*m_dx))*( minu_one_ef_plus_one_ed_sten )
           -(3.0/(4.*m_dx))*( minu_one_ef_minu_one_ed_sten )
