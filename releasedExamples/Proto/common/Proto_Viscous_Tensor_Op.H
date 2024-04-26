@@ -911,7 +911,7 @@ namespace PrCh_AMR_Elliptic
         for(int iredblack = 0; iredblack < 2; iredblack++)
         {
           //begin debug
-          Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
+          //Chombo::pout() << "iiter = " << iiter << ", iredblack = " << iredblack << endl;
           //end debug
           residual(resid, a_phi, a_rhs);
           for(int ibox = 0; ibox < dit.localSize(); ibox++)

@@ -1,12 +1,12 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX 29
-#define DBG_HIX 32
-#define DBG_LOY 29
-#define DBG_HIY 32
+#define DBG_LOX  0
+#define DBG_HIX  4
+#define DBG_LOY  0
+#define DBG_HIY  4
 #define DBG_LOZ  0
 #define DBG_HIZ  0
-#define VALID_ONLY false
+#define VALID_ONLY true
 
 /**
 //   for dumpFracPr and dumpFracCh
@@ -22,10 +22,10 @@
 //  This may go down in history as the worst API ever but it is helpful when you
 //  need to keep an eye on a particular region of the domain when AMR is involved.
 **/
-#define DBG_NUMER_LO_X 1
+#define DBG_NUMER_LO_X 7
 #define DBG_DENOM_LO_X 16
-#define DBG_NUMER_HI_X 1
-#define DBG_DENOM_HI_X 2
+#define DBG_NUMER_HI_X 5
+#define DBG_DENOM_HI_X 8
 
 #define DBG_NUMER_LO_Y 0
 #define DBG_DENOM_LO_Y 1
@@ -606,6 +606,53 @@ namespace PrChDebug
       }
     }
   }
+
+  /// print to screen (very neatly) data from the area whereever it is found in proto data
+  void 
+  dumpFracVecPr(pr_lbd_vec* dataPtr)
+  {
+    if(dataPtr != NULL)
+    {
+      pr_lbd_vec & data = *dataPtr;
+      auto  dit = data.dataIterator();
+      pr_pt      areaLo, areaHi;
+      pr_pt dom_hi = data.layout().domain().box().high();
+      pr_pt size_pt = dom_hi + pr_pt::Ones(1);
+      
+      int lo_dir_x =     (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X) - 1;
+      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
+      areaLo[0] = lo_dir_x;
+      areaHi[0] = hi_dir_x;
+      
+      int lo_dir_y =     (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y) - 1;
+      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
+      areaLo[1] = lo_dir_y;
+      areaHi[1] = hi_dir_y;
+#if DIM==3
+      int lo_dir_z =     (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z) - 1;
+      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
+      areaLo[2] = lo_dir_z;
+      areaHi[2] = hi_dir_z;
+#endif      
+      pr_box     areaBox(areaLo, areaHi);
+      for(int ibox = 0; ibox < dit.localSize(); ibox++)
+      {
+        pr_box valid = data.layout()[dit[ibox]];
+        pr_box valid_area  = valid & areaBox;
+        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = " << valid_area << ":" << endl;
+        bool valid_only = VALID_ONLY;
+        if(valid_only)
+        {
+          dumpVecPr(&data[dit[ibox]], valid_area);
+        }
+        else if(!valid_area.empty())
+        {
+          dumpVecPr(&data[dit[ibox]], areaBox);
+        }
+
+      }
+    }
+  }
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
   dumpLDAreaPr(pr_lbd_sca* dataPtr)
@@ -813,6 +860,7 @@ inline void dummy_function_to_get_functions_into_symbol_table()
   PrChDebug::dumpSten(NULL);
   PrChDebug::dumpFracCh(NULL);
   PrChDebug::dumpFracPr(NULL);
+  PrChDebug::dumpFracVecPr(NULL);
 }
 
 #undef DBG_LOX 
