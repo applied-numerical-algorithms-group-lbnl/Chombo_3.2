@@ -60,7 +60,7 @@ relax(LevelData<FArrayBox>&       a_phi,
         FArrayBox& resFab = resid[dit[ibox]];
         FArrayBox& lamFab = m_lambda[dit[ibox]];
         Box valid         = grids[dit[ibox]];
-        FORT_GSRBSANELY(CHF_FRA1(phiFab, 0),
+        FORT_GSRBSANELYVC(CHF_FRA1(phiFab, 0),
                         CHF_FRA1(resFab, 0),
                         CHF_FRA1(lamFab, 0),
                         CHF_BOX(valid),

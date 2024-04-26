@@ -527,45 +527,87 @@ namespace PrCh_AMR_Elliptic
                                a_hi_box,
                                a_ce_box);
 
-      //for tangential stencils
-      pr_sten  plus_thr_eftwo_plus_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  plus_thr_eftwo_minu_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  plus_one_eftwo_plus_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  plus_one_eftwo_minu_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_two_ef_plus_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_two_ef_minu_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_one_ef_plus_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  minu_one_ef_minu_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_zer_ef_plus_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_zer_ef_minu_one_ed_sten(pr_shift( 0*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_one_ef_plus_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
+      pr_sten  plus_one_ef_minu_one_ed_sten(pr_shift( 1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
 
-      pr_sten  minu_one_eftwo_plus_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  minu_one_eftwo_minu_one_ed_sten(pr_shift(-1*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  minu_thr_eftwo_plus_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) +  pr_pt::Basis(a_diff_dir)), 1.);
-      pr_sten  minu_thr_eftwo_minu_one_ed_sten(pr_shift(-2*pr_pt::Basis(a_face_dir) -  pr_pt::Basis(a_diff_dir)), 1.);
 
-      a_diff_velo_lhc.m_ce_sten = (1.0/(4.*m_dx))*( minu_one_eftwo_plus_one_ed_sten 
-                                                  + plus_one_eftwo_plus_one_ed_sten
-                                                  - minu_one_eftwo_minu_one_ed_sten
-                                                  - plus_one_eftwo_minu_one_ed_sten);
+      /**
+      ///For gradient based stuff:
+      pr_sten     home_sten(pr_shift(        pr_pt::Zeros()         ), 1.0);
+      pr_sten righ_one_sten(pr_shift( = ( 1)*pr_pt::Basis(a_face_dir), 1.0);
+      pr_sten left_one_sten(pr_shift( = (-1)*pr_pt::Basis(a_face_dir), 1.0);
+      pr_sten left_two_sten(pr_shift( = (-2)*pr_pt::Basis(a_face_dir), 1.0);
+
+      ///Differences here are always in graddir direction
+     
+      //    ce_sten = (1./2.)*(home_sten + left_one_sten);
+      //
+      //  home_sten     = ((home+ Basisv(graddir) )                
+      //                  -(home- Basisv(graddir) )                    )/2dx
+      //  left_one_sten = ((home+ Basisv(graddir)  -  Basisv(face_dir))  
+      //                  -(home+ Basisv(graddir)  -  Basisv(face_dir)))/2dx
+      //
+      //  ce_sten       = ((home+ Basisv(graddir)                     )                
+      //                  -(home- Basisv(graddir)                     )
+      //                  +(home+ Basisv(graddir)  -  Basisv(face_dir))  
+      //                  -(home+ Basisv(graddir)  -  Basisv(face_dir)))/4dx
+      **/
+      a_diff_velo_lhc.m_ce_sten = (1.0/(4.*m_dx))*( minu_one_ef_plus_one_ed_sten 
+                                                  + plus_zer_ef_plus_one_ed_sten
+                                                  - minu_one_ef_minu_one_ed_sten
+                                                  - plus_zer_ef_minu_one_ed_sten);
 
       if(a_has_lo == 1)
       {
+        /**
+        /// in terms of gradient:
+        /// lo_sten = (1./2.)*(3.*home_sten - righ_one_sten);
+        //  home_sten     = ((home+ Basisv(graddir) )                
+        //                  -(home- Basisv(graddir) )                   )/2dx
+        //  righ_onesten = ((home+ Basisv(graddir)  + Basisv(face_dir))          
+        //                 -(home- Basisv(graddir)  + Basisv(face_dir)) )/2dx
+        /// lo_sten = (3/2)*home_sten - (1/2)righ_one_sten
+        ///
+        /// lo_sten = (3/(4dx))*(home+ Basisv(graddir)                   )
+        ///          -(3/(4dx)) (home- Basisv(graddir)                   )
+        ///          -(1/(4dx))*(home+ Basisv(graddir) + Basisv(face_dir))  
+        ///          +(1/(4dx)) (home- Basisv(graddir) + Basisv(face_dir))
+        ///
+        ///
+        ///
+        **/
         a_diff_velo_lhc.m_lo_sten =
-          ( 1/(2.*m_dx))*(plus_one_eftwo_plus_one_ed_sten -
-                          plus_one_eftwo_minu_one_ed_sten) ;
-
-//        a_diff_velo_lhc.m_lo_sten =
-//          ( 5.0/(8.*m_dx))*(   plus_one_eftwo_plus_one_ed_sten -
-//                               plus_one_eftwo_minu_one_ed_sten) 
-//          -(1.0/(8.*m_dx))*(   plus_thr_eftwo_plus_one_ed_sten -
-//                               plus_thr_eftwo_minu_one_ed_sten);
+           (3.0/(4.*m_dx))*( plus_zer_ef_plus_one_ed_sten )
+          -(3.0/(4.*m_dx))*( plus_zer_ef_minu_one_ed_sten )
+          -(1.0/(4.*m_dx))*( plus_one_ef_plus_one_ed_sten )
+          +(1.0/(4.*m_dx))*( plus_one_ef_minu_one_ed_sten );
 
       }
       if(a_has_hi == 1)
       {
-        a_diff_velo_lhc.m_lo_sten =
-          ( 1/(2.*m_dx))*(minu_one_eftwo_plus_one_ed_sten -
-                          minu_one_eftwo_minu_one_ed_sten) ;
-//        a_diff_velo_lhc.m_hi_sten =
-//          ( 5.0/(8.*m_dx))*(   minu_one_eftwo_plus_one_ed_sten -
-//                               minu_one_eftwo_minu_one_ed_sten) 
-//          -(1.0/(8.*m_dx))*(   minu_thr_eftwo_plus_one_ed_sten -
-//                               minu_thr_eftwo_minu_one_ed_sten);
+        /**
+        /// in terms of gradient:
+           left_one_sten = ((home+ Basisv(graddir)  -   Basisv(face_dir))          
+                           -(home- Basisv(graddir)  -   Basisv(face_dir)) )/2dx
+           left_two_sten = ((home+ Basisv(graddir)  - 2*Basisv(face_dir))          
+                           -(home- Basisv(graddir)  - 2*Basisv(face_dir)) )/2dx
+           hi_sten = (1./2.)*(3.*left_one_sten - left_two_sten);
+           hi_sten = (3/(4dx))*((home+ Basisv(graddir)  -   Basisv(face_dir)))          
+                    -(3/(4dx))*((home- Basisv(graddir)  -   Basisv(face_dir)))          
+                    -(1/(4dx))*((home+ Basisv(graddir)  - 2*Basisv(face_dir)))          
+                    +(1/(4dx))*((home+ Basisv(graddir)  - 2*Basisv(face_dir)))          
+        **/
+        a_diff_velo_lhc.m_hi_sten =
+           (3.0/(4.*m_dx))*( minu_one_ef_plus_one_ed_sten )
+          -(3.0/(4.*m_dx))*( minu_one_ef_minu_one_ed_sten )
+          -(1.0/(4.*m_dx))*( minu_two_ef_plus_one_ed_sten )
+          +(1.0/(4.*m_dx))*( minu_two_ef_minu_one_ed_sten );
       }
 
       return 0;
