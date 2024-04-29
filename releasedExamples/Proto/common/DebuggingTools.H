@@ -1,12 +1,12 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX  0
-#define DBG_HIX  4
-#define DBG_LOY  0
-#define DBG_HIY  4
+#define DBG_LOX  -1
+#define DBG_HIX  3
+#define DBG_LOY  12
+#define DBG_HIY  16
 #define DBG_LOZ  0
 #define DBG_HIZ  0
-#define VALID_ONLY true
+#define VALID_ONLY false
 
 /**
 //   for dumpFracPr and dumpFracCh
@@ -22,15 +22,15 @@
 //  This may go down in history as the worst API ever but it is helpful when you
 //  need to keep an eye on a particular region of the domain when AMR is involved.
 **/
-#define DBG_NUMER_LO_X 7
-#define DBG_DENOM_LO_X 16
-#define DBG_NUMER_HI_X 5
+#define DBG_NUMER_LO_X 0
+#define DBG_DENOM_LO_X 1
+#define DBG_NUMER_HI_X 1
 #define DBG_DENOM_HI_X 8
 
-#define DBG_NUMER_LO_Y 0
-#define DBG_DENOM_LO_Y 1
+#define DBG_NUMER_LO_Y 3
+#define DBG_DENOM_LO_Y 16
 #define DBG_NUMER_HI_Y 1
-#define DBG_DENOM_HI_Y 8
+#define DBG_DENOM_HI_Y 2
 
 #define DBG_NUMER_LO_Z 0
 #define DBG_DENOM_LO_Z 1
@@ -512,54 +512,37 @@ namespace PrChDebug
     }
   }
 
-  void 
-  dumpFracCh(ch_ldf* dataPtr)
+
+  ///
+  void
+  getFracAreaPoints(pr_pt& a_areaLo, pr_pt& a_areaHi,
+                    const pr_pt& a_size_pt)
   {
-    if(dataPtr != NULL)
-    {
 
-      ch_ldf & data = *dataPtr;
-      ch_dbl   grid = data.disjointBoxLayout();
-      ch_box dom_box = grid.physDomain().domainBox();
-      ch_iv areaLo, areaHi;
-      ch_iv size_iv = dom_box.bigEnd() + ch_iv::Unit;
+    //there has to be a slick integer way to do this  --dtg 
+    float  flo_x = float(DBG_NUMER_LO_X)/float(DBG_DENOM_LO_X);
+    float  fhi_x = float(DBG_NUMER_HI_X)/float(DBG_DENOM_HI_X);
+    float  flo_y = float(DBG_NUMER_LO_Y)/float(DBG_DENOM_LO_Y);
+    float  fhi_y = float(DBG_NUMER_HI_Y)/float(DBG_DENOM_HI_Y);
 
-      int lo_dir_x =     (DBG_NUMER_LO_X*size_iv[0])/(DBG_DENOM_LO_X) - 1;
-      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_iv[0])/(DBG_DENOM_HI_X);
-      areaLo[0] = lo_dir_x;
-      areaHi[0] = hi_dir_x;
-      
-      int lo_dir_y =     (DBG_NUMER_LO_Y*size_iv[1])/(DBG_DENOM_LO_Y) - 1;
-      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_iv[1])/(DBG_DENOM_HI_Y);
-      areaLo[1] = lo_dir_y;
-      areaHi[1] = hi_dir_y;
+
+    int lo_dir_x =     int(flo_x*float(a_size_pt[0]));
+    int hi_dir_x =     int(fhi_x*float(a_size_pt[0]));
+    int lo_dir_y =     int(flo_y*float(a_size_pt[1]));
+    int hi_dir_y =     int(fhi_y*float(a_size_pt[1]));
+    a_areaLo[0] = lo_dir_x;
+    a_areaHi[0] = hi_dir_x;
+    a_areaLo[1] = lo_dir_y;
+    a_areaHi[1] = hi_dir_y;
 #if DIM==3
-      int lo_dir_z =     (DBG_NUMER_LO_Z*size_iv[2])/(DBG_DENOM_LO_Z) - 1;
-      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_iv[2])/(DBG_DENOM_HI_Z);
-      areaLo[2] = lo_dir_z;
-      areaHi[2] = hi_dir_z;
-#endif      
-      ch_box     areaBox(areaLo, areaHi);
-      ch_dit  dit = data.dataIterator();
-      for(int ibox = 0; ibox < dit.size(); ibox++)
-      {
-        ch_box valid = grid[dit[ibox]];
-        ch_box valid_area = valid & areaBox;
-        cout << "ibox = " << ibox << ", valid = " << valid << ", valid_area = :" << valid_area << endl;
-        bool valid_only = VALID_ONLY;
-
-        if(valid_only)
-        {
-          dumpCh(&data[dit[ibox]], valid_area);
-        }
-        else if(!valid_area.isEmpty())
-        {
-          dumpCh(&data[dit[ibox]], areaBox);
-        }
-      }
-    }
+    float flo_z  = float(DBG_NUMER_LO_Z)/float(DBG_DENOM_LO_Z);
+    float fhi_z  = float(DBG_NUMER_HI_Z)/float(DBG_DENOM_HI_Z);
+    int lo_dir_z =     int(flo_z*float(a_size_pt[2]));
+    int hi_dir_z =     int(fhi_z*float(a_size_pt[2]));
+    a_areaLo[2] = hi_dir_z;
+    a_areaHi[2] = hi_dir_z;
+#endif    
   }
-  
   /// print to screen (very neatly) data from the area whereever it is found in proto data
   void 
   dumpFracPr(pr_lbd_sca* dataPtr)
@@ -571,22 +554,7 @@ namespace PrChDebug
       pr_pt      areaLo, areaHi;
       pr_pt dom_hi = data.layout().domain().box().high();
       pr_pt size_pt = dom_hi + pr_pt::Ones(1);
-      
-      int lo_dir_x =     (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X) - 1;
-      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
-      areaLo[0] = lo_dir_x;
-      areaHi[0] = hi_dir_x;
-      
-      int lo_dir_y =     (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y) - 1;
-      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
-      areaLo[1] = lo_dir_y;
-      areaHi[1] = hi_dir_y;
-#if DIM==3
-      int lo_dir_z =     (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z) - 1;
-      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
-      areaLo[2] = lo_dir_z;
-      areaHi[2] = hi_dir_z;
-#endif      
+      getFracAreaPoints(areaLo, areaHi, size_pt);
       pr_box     areaBox(areaLo, areaHi);
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
@@ -618,22 +586,7 @@ namespace PrChDebug
       pr_pt      areaLo, areaHi;
       pr_pt dom_hi = data.layout().domain().box().high();
       pr_pt size_pt = dom_hi + pr_pt::Ones(1);
-      
-      int lo_dir_x =     (DBG_NUMER_LO_X*size_pt[0])/(DBG_DENOM_LO_X) - 1;
-      int hi_dir_x = 1 + (DBG_NUMER_HI_X*size_pt[0])/(DBG_DENOM_HI_X);
-      areaLo[0] = lo_dir_x;
-      areaHi[0] = hi_dir_x;
-      
-      int lo_dir_y =     (DBG_NUMER_LO_Y*size_pt[1])/(DBG_DENOM_LO_Y) - 1;
-      int hi_dir_y = 1 + (DBG_NUMER_HI_Y*size_pt[1])/(DBG_DENOM_HI_Y);
-      areaLo[1] = lo_dir_y;
-      areaHi[1] = hi_dir_y;
-#if DIM==3
-      int lo_dir_z =     (DBG_NUMER_LO_Z*size_pt[2])/(DBG_DENOM_LO_Z) - 1;
-      int hi_dir_z = 1 + (DBG_NUMER_HI_Z*size_pt[2])/(DBG_DENOM_HI_Z);
-      areaLo[2] = lo_dir_z;
-      areaHi[2] = hi_dir_z;
-#endif      
+      getFracAreaPoints(areaLo, areaHi, size_pt);
       pr_box     areaBox(areaLo, areaHi);
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
       {
@@ -858,7 +811,6 @@ inline void dummy_function_to_get_functions_into_symbol_table()
   PrChDebug::dumpLDAreaThreeDimPr(NULL);
   PrChDebug::dumpLDAreaTenPr(NULL);
   PrChDebug::dumpSten(NULL);
-  PrChDebug::dumpFracCh(NULL);
   PrChDebug::dumpFracPr(NULL);
   PrChDebug::dumpFracVecPr(NULL);
 }
