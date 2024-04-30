@@ -11,3 +11,5 @@
 * _batch_templates are batch scripts to run on the platforms I use.
 * _compare runs the examples in serial and puts the results in manageable places.   See ../documents/compare.pdf.
 * _mpi_strong tests the strong scaling  behavior of each example and puts the results in managable place.  It includes a script for data retrieval.  See ../documents/mpi_strong.pdf.
+* _viscous_compare compares the three diffeent viscous operators (fortran-based and two proto discretizations).
+
