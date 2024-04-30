@@ -18,7 +18,7 @@ parser = ArgumentParser()
 
 parser.add_argument('--input_template_dir', type=str, help='Directory of input file templates [../_input_templates].' ,default="../_input_templates")
 parser.add_argument('--sbatch_instead_of_source', type=bool, help='Whether run.sh calls sbatch instead of source for each case[False].' ,default=False)
-parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/saul.host.batch")
+parser.add_argument('--batch', type=str, help='batch file template'   ,default="../_batch_templates/spencer.batch")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
 parser.add_argument('--prefix', type=str, help='name of test["visc_compare"]',default="visc_compare")
@@ -97,7 +97,7 @@ while i_dim <= 3:
         #    exit()
 
         i_min_case = 0
-        i_max_case = 3
+        i_max_case = 4
         i_case = i_min_case
         while i_case <= i_max_case:
             case_status= "case_"  + str(i_case)
