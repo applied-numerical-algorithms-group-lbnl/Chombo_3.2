@@ -1,9 +1,9 @@
 #ifndef ____Debugging_Tools____
 #define ____Debugging_Tools____
-#define DBG_LOX  -1
+#define DBG_LOX  -2
 #define DBG_HIX  3
 #define DBG_LOY  12
-#define DBG_HIY  16
+#define DBG_HIY  17
 #define DBG_LOZ  0
 #define DBG_HIZ  0
 #define VALID_ONLY false

@@ -109,8 +109,9 @@ public:
     CH_TIME("Base_Simplified_AMRLevelOp::applyOp");
     ch_dom domain = this->getDomainFromData(a_phi);
     level_data_type& castphi = (level_data_type&)(a_phi);
-    fillGhostDataOutsideDomain(castphi, domain);
+    
     fillGhostDataOverFineFineInterface(castphi);
+    fillGhostDataOutsideDomain(castphi, domain);
     this->applyOperator(a_lhs, a_phi);
   }
 
