@@ -52,15 +52,11 @@ if not os.path.exists(all_exec_dir_name):
 print_str = "Creating and caching executables into " +  all_exec_dir_name
 print( print_str )
 i_dim = 2
-# loop through dimensions
-#should be <=
-#  set to < for short test
-#while i_dim <= 2:
 while i_dim <= 3:
     opt_status = "opt_high"
     opt_gmake  = " OPT=HIGH "
-    deb_status = "debug_true"
-    deb_gmake  = " DEBUG=TRUE "
+    deb_status = "debug_false"
+    deb_gmake  = " DEBUG=FALSE "
     dim_status = "dim_"  + str(i_dim)
     dim_gmake  = " DIM=" + str(i_dim) + " "
     mpi_gmake  = " MPI=TRUE "
