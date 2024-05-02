@@ -73,25 +73,13 @@ namespace Chombo
 
 
       shared_ptr<ch_base_solver> bottom_solver;
-      if(bottom_flag == string("relax"))
-      {
-        int num_bottom;
-        ppSolver.get("num_bottom", num_bottom);
-        RelaxSolver<ch_ldf_cell >* relax_raw_ptr = new RelaxSolver<ch_ldf_cell >();
-        relax_raw_ptr->m_imax = num_bottom;
-        ch_base_solver* base_raw_ptr =  static_cast<ch_base_solver*>(relax_raw_ptr);
-        bottom_solver = shared_ptr<ch_base_solver>(base_raw_ptr);
-      }
-      else if(bottom_flag == string("bicgstab"))
-      {
-        BiCGStabSolver<ch_ldf_cell >* bicgstab_raw_ptr = new BiCGStabSolver<ch_ldf_cell >();
-        ch_base_solver * base_raw_ptr = static_cast<ch_base_solver*>(bicgstab_raw_ptr);
-        bottom_solver = shared_ptr<ch_base_solver>(base_raw_ptr);
-      }
-      else
-      {
-        MayDay::Error("poissonSolve: bogus bottom_flag");
-      }
+
+      int num_bottom;
+      ppSolver.get("num_bottom", num_bottom);
+      RelaxSolver<ch_ldf_cell >* relax_raw_ptr = new RelaxSolver<ch_ldf_cell >();
+      relax_raw_ptr->m_imax = num_bottom;
+      ch_base_solver* base_raw_ptr =  static_cast<ch_base_solver*>(relax_raw_ptr);
+      bottom_solver = shared_ptr<ch_base_solver>(base_raw_ptr);
     
       AMRMultiGrid<  ch_ldf_cell > amr_mg_solver;
       amr_mg_solver.define(a_params.m_coarsestDomain,

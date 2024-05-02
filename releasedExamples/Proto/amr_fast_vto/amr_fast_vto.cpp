@@ -13,6 +13,7 @@
 
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
 #include "Proto_FastVTO.H"
+#include "RelaxSolver.H"
 #include "DebuggingTools.H"
 
 namespace Chombo
@@ -97,6 +98,8 @@ namespace Chombo
                 Vector<Real    >&  a_amrDx)
     {
       CH_TIME("solveForPhi");
+      ParmParse ppSolver("solver");
+      ParmParse ppUtil("PrChUtil_setupSolver");
       int numLevels = a_amr_grids.size();
       
       Chombo::ParmParse pp("viscous_op");
@@ -104,9 +107,13 @@ namespace Chombo
       pp.get("acoef_value" , aco_val);
       pp.get("eta_value"   , eta_val);
       pp.get("lambda_value", lam_val);
+      int num_bottom = 4586;
+      ppUtil.get("num_bottom", num_bottom);
       ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
-      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd_vec > ());
+      RelaxSolver<pr_lbd_vec>* raw_bottom_ptr = new RelaxSolver< pr_lbd_vec > ();
+      raw_bottom_ptr->m_imax = num_bottom;
+      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(raw_bottom_ptr);
       Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > eta(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > lam(numLevels);
@@ -118,7 +125,7 @@ namespace Chombo
                                  a_amr_grids[ilev], aco_val, eta_val, lam_val);
       }
       
-      ParmParse ppSolver("solver");
+
       Real alpha = 4586.;
       Real beta  = 4586.;
       ppSolver.get("alpha", alpha);

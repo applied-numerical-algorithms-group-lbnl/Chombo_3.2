@@ -268,6 +268,7 @@ namespace PrCh_AMR_Elliptic
     shared_ptr<pr_yfac_data_sca>  m_lam_y;
     shared_ptr<pr_zfac_data_sca>  m_lam_z;
     shared_ptr<pr_cell_data_vec>  m_relcoef;
+    shared_ptr<pr_cell_data_vec>  m_resid;
 
     double    m_alpha;
     double    m_beta;
@@ -321,7 +322,7 @@ namespace PrCh_AMR_Elliptic
     virtual void
     homogeneousCFInterp(pr_lbd & a_phi)
     {
-      CH_TIME("Proto_Viscous_Tensor::homogeneousCFInterp");
+      CH_TIME("Proto_FastVTO::homogeneousCFInterp");
       Proto_Transition::DataUtilities<DIM>::homogeneousCFInterp<2>(a_phi, pr_pt::Ones(m_refToCoar));
     }
     
@@ -330,7 +331,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOverCoarseFineInterface(pr_lbd       &  a_data_fine, 
                                          const pr_lbd &  a_data_coar)
     {
-      CH_TIME("Proto_Viscous_Tensor::fillDataOverCoarseFineInterface");
+      CH_TIME("Proto_FastVTO::fillDataOverCoarseFineInterface");
       int   reflect_sign_lo[DIM];
       int   reflect_sign_hi[DIM];  
       for(int idir = 0; idir < DIM; idir++)
@@ -375,7 +376,7 @@ namespace PrCh_AMR_Elliptic
          double    a_aco,
          double    a_bco) 
     {
-      CH_TIME("Proto_Viscous_Tensor::axby");
+      CH_TIME("Proto_Fast_VTO::axby");
       auto grids =  a_lphi.layout();
       auto dit   =  a_lphi.begin();
       int iprint = 0; //debugging hook
@@ -393,15 +394,16 @@ namespace PrCh_AMR_Elliptic
     ///
     void defineAuxilliaries()
     {
-      CH_TIME("Proto_Viscous_Tensor::defineAuxilliaries");
+      CH_TIME("Proto_FastVTO::defineAuxilliaries");
       m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
+      m_resid   = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
 
     }
     
     ///
     void setRelaxationCoefficient()
     {
-      CH_TIME("Pr_Viscous_Tensor::defineAndSetRelaxationCoefficient");
+      CH_TIME("Pr_FastVTO::defineAndSetRelaxationCoefficient");
       auto dit   = m_relcoef->begin();
 
       auto& relco_lbd = *m_relcoef;
@@ -632,7 +634,7 @@ namespace PrCh_AMR_Elliptic
                       const pr_box             & a_valid,
                       const int                & a_face_dir)
     {
-      CH_TIME("Proto_Viscous_Tensor::getFaceDivAndGrad");
+      CH_TIME("Proto_FastVTO::getFaceDivAndGrad");
 
       pr_dom domain = m_grids.domain();
       ///first divergence 
@@ -722,7 +724,7 @@ namespace PrCh_AMR_Elliptic
                      const pr_box              & a_valid,
                      const int                 & a_face_dir)
     {
-      CH_TIME("Proto_Viscous_Tensor::getFluxDotNormal");
+      CH_TIME("Proto_Fast_VTO::getFluxDotNormal");
 
       //get face centered velocity divergence
       pr_box flux_box = a_valid;
@@ -760,7 +762,7 @@ namespace PrCh_AMR_Elliptic
                            const pr_box              & a_valid,
                            const int                 & a_face_dir)
     {
-      CH_TIME("Pr_Viscous_Tensor::getDivergenceIcrement");
+      CH_TIME("Pr_FastVTO::getDivergenceIcrement");
       pr_box face_box = a_valid;
       face_box.m_high[a_face_dir] += 1;
       face_box.recomputeSize();  // required to keep box data consistent after above shenanigans.
@@ -847,10 +849,10 @@ namespace PrCh_AMR_Elliptic
           const pr_cell_data_vec & a_rhs,
           int a_iterations)
     {
-      CH_TIME("Pr_Viscous_Tensor::relax");
+      CH_TIME("Pr_FastVTO::relax");
       
-      pr_cell_data_vec resid;
-      create(resid, a_rhs);
+      pr_cell_data_vec& resid = *m_resid;
+
       auto  dit       =  a_rhs.begin();
       auto& relco_lbd = (*m_relcoef);
       // gdb debugging hook.  semantically does nothing.
@@ -891,7 +893,7 @@ namespace PrCh_AMR_Elliptic
     fillGhostDataOutsideDomain(pr_cell_data_vec          & a_phi,
                                const ch_dom              & a_domain)
     {
-      CH_TIME("Pr_Viscous_Tensor::fillGhostdataOutsideDomain");
+      CH_TIME("Pr_FastVTO::fillGhostdataOutsideDomain");
       typedef Proto_Transition::DataUtilities<DIM> pr_trans_data_vec;
       pr_dom domain = ProtoCh::getProtoDomain(a_domain);
       pr_box dombox = domain.box();
@@ -934,7 +936,7 @@ namespace PrCh_AMR_Elliptic
                          const pr_box      & a_face_box,
                          int a_face_dir,  int a_ibox)
     {
-      CH_TIME("Proto_Viscous_Tensor::getFlux");
+      CH_TIME("Proto_FastVTO::getFlux");
       auto dit   = m_acoef->begin();
       pr_box            valid =   m_grids[dit[a_ibox]];
       pr_box_data_sca * eta_ptr = NULL;
@@ -1017,7 +1019,7 @@ namespace PrCh_AMR_Elliptic
       const vector< shared_ptr<pr_zfac_data_sca> > &  a_lam_z)
     : ch_amrlevelop_fact_vec()
     {
-      CH_TIME("Pr_Viscous_Tensor_Factory_Constructor");
+      CH_TIME("Pr_FastVTO_Factory_Constructor");
       m_max_coarse = 2;
       m_ref_ratios    =  a_ref_ratios  ;
       m_grids         =  a_grids;
@@ -1130,7 +1132,7 @@ namespace PrCh_AMR_Elliptic
       int                         a_iref_index,
       int                         a_mg_ref_rat)
     {
-      CH_TIME("Pr_Viscous_Tensor_Factory_getCoefficients");
+      CH_TIME("Pr_FastVTO_Factory_getCoefficients");
       if(a_mg_ref_rat == 1)
       {
         a_acoef = m_acoef[a_iref_index];
@@ -1183,7 +1185,7 @@ namespace PrCh_AMR_Elliptic
             int                    a_depth,
             bool                   a_homo_only = true)
     {
-      CH_TIME("Pr_Viscous_Tensor_Factory_MGnewOp");
+      CH_TIME("Pr_FastVTO_Factory_MGnewOp");
       int iref = get_ref_index(a_dom_fine);
 
       int loc_ref_fine, loc_ref_coar;
@@ -1242,7 +1244,7 @@ namespace PrCh_AMR_Elliptic
     ///
     virtual inline ch_amrlevelop_vec* AMRnewOp(const ch_dom & a_indexSpace)
     {
-      CH_TIME("Pr_Viscous_Tensor_Factory_AMRnewOp");
+      CH_TIME("Pr_FastVTO_Factory_AMRnewOp");
       int iref = get_ref_index(a_indexSpace);
       int loc_ref_fine, loc_ref_coar;
       get_local_ref_ratios(loc_ref_fine, loc_ref_coar, iref);
