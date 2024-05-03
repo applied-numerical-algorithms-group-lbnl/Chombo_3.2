@@ -72,14 +72,10 @@ public:
            bool a_homogeneous = false)
   {
     CH_TIME("Base_Simplified_AMRLevelOp::residual");
-    ///here lhs = lphi
-    a_lhs.setVal(0.);
-    level_data_type lphi;
-    this->create(lphi, a_rhs);
       
-    applyOp(lphi, a_phi, a_homogeneous);
+    applyOp(a_lhs, a_phi, a_homogeneous);
     ///lhs = rhs - lphi
-    this->axby(a_lhs, a_rhs, lphi, 1.0, -1.0);
+    this->axby(a_lhs, a_rhs, a_lhs, 1.0, -1.0);
   }
 
 

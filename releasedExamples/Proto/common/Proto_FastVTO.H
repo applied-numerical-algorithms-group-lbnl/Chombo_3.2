@@ -269,6 +269,7 @@ namespace PrCh_AMR_Elliptic
     shared_ptr<pr_zfac_data_sca>  m_lam_z;
     shared_ptr<pr_cell_data_vec>  m_relcoef;
     shared_ptr<pr_cell_data_vec>  m_resid;
+    shared_ptr<pr_cell_data_vec>  m_lphi;
 
     double    m_alpha;
     double    m_beta;
@@ -397,6 +398,7 @@ namespace PrCh_AMR_Elliptic
       CH_TIME("Proto_FastVTO::defineAuxilliaries");
       m_relcoef = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
       m_resid   = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
+      m_lphi    = shared_ptr<pr_cell_data_vec>(new pr_cell_data_vec(m_grids, pr_pt::Zero()  ));
 
     }
     
@@ -884,6 +886,19 @@ namespace PrCh_AMR_Elliptic
     } //end functtion relax
 
     
+    /// precond is just relax here.   
+    virtual void
+    preCond(pr_cell_data_vec        & a_cor,
+            const pr_cell_data_vec  & a_res)
+    {
+      CH_TIME("Base_Simplified_AMRLevelOp::preCond");
+      /**
+         ViscousTensorOp only relaxes once.
+      **/
+      int num_relax = 1;
+
+      this->relax(a_cor, a_res, num_relax);
+    }
     /// domain boundary conditions.
     /** 
         Anything can be hidden in a string, so the interface is general enough.

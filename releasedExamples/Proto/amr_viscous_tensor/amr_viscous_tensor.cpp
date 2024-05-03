@@ -14,6 +14,7 @@
 #include "PrChUtilities.H"  //lives in releasedExamples/Proto/common
 #include "Proto_Viscous_Tensor_Op.H"
 #include "DebuggingTools.H"
+#include "RelaxSolver.H"
 
 namespace Chombo
 {
@@ -98,15 +99,21 @@ namespace Chombo
     {
       CH_TIME("solveForPhi");
       int numLevels = a_amr_grids.size();
-      
-      Chombo::ParmParse pp("viscous_op");
+      ParmParse ppUtil("PrChUtil_setupSolver");
+      ParmParse pp("viscous_op");
       double aco_val = 1; double eta_val = 1; double lam_val = 1.;
       pp.get("acoef_value" , aco_val);
       pp.get("eta_value"   , eta_val);
       pp.get("lambda_value", lam_val);
       ///the solver declaration has to change because amrmultigrid is templated on data type
+      int num_bottom = 4586;
+      ppUtil.get("num_bottom", num_bottom);
+      ///the solver declaration has to change because amrmultigrid is templated on data type
+      RelaxSolver<pr_lbd_vec>* raw_bottom_ptr = new RelaxSolver< pr_lbd_vec > ();
+      raw_bottom_ptr->m_imax = num_bottom;
+      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(raw_bottom_ptr);
       shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
-      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(new BiCGStabSolver< pr_lbd_vec > ());
+
       Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > eta(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > lam(numLevels);
