@@ -20,7 +20,6 @@ using std::string;
 #ifndef __IBMCPP__
 using std::sprintf;
 #endif
-using std::tmpnam;
 
 #include <cstdlib>
 using std::system;
@@ -857,9 +856,9 @@ viewFAB(const FArrayBox* a_dataPtr)
     return;
   }
 
-  const char* fname = tmpnam(NULL);
-  writeFABname(a_dataPtr, fname);
-  VisualizeFile(fname);
+  string file_name("temporary_data_file_4586.hdf5");
+  writeFABname(a_dataPtr, file_name.c_str());
+  VisualizeFile(file_name.c_str());
 }
 
 void
@@ -881,9 +880,9 @@ viewBFI(const BaseFab<int>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
-  writeFABname(&fab, fname);
-  VisualizeFile(fname);
+  string file_name("temporary_data_file_4586.hdf5");
+  writeFABname(&fab, file_name.c_str());
+  VisualizeFile(file_name.c_str());
 }
 
 void
@@ -932,7 +931,8 @@ viewBFIV(const BaseFab<IntVect>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -960,7 +960,9 @@ viewBFRV(const BaseFab<RealVect>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
