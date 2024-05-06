@@ -856,7 +856,7 @@ viewFAB(const FArrayBox* a_dataPtr)
     return;
   }
 
-  string file_name("temporary_data_file_4586.hdf5");
+  string file_name("temporary_file_4586.hdf5");
   writeFABname(a_dataPtr, file_name.c_str());
   VisualizeFile(file_name.c_str());
 }
@@ -880,7 +880,7 @@ viewBFI(const BaseFab<int>* a_dataPtr)
     }
   }
 
-  string file_name("temporary_data_file_4586.hdf5");
+  string file_name("temporary_file_4586.hdf5");
   writeFABname(&fab, file_name.c_str());
   VisualizeFile(file_name.c_str());
 }
@@ -989,7 +989,9 @@ viewIVSFAB(const IVSFAB<Real>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -1016,7 +1018,9 @@ viewIVSFABI(const IVSFAB<int>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -1047,7 +1051,9 @@ viewIVSFABIV(const IVSFAB<IntVect>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -1078,7 +1084,9 @@ viewIVSFABRV(const IVSFAB<RealVect>* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -1091,7 +1099,9 @@ browseFAB(const FArrayBox* a_dataPtr)
     return;
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(a_dataPtr, fname);
   BrowseFile(fname);
 
@@ -1148,7 +1158,9 @@ viewBFR(const BaseFab<Real>* a_dataPtr)
   FArrayBox fab(fabBox,ncomp);
   fab.copy(*a_dataPtr);
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 
@@ -1180,7 +1192,9 @@ viewCFAB(const CFArrayBox* a_dataPtr)
     }
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeFABname(&fab, fname);
   VisualizeFile(fname);
 }
@@ -1344,7 +1358,9 @@ viewLevel(const LevelData<FArrayBox>* a_dataPtr)
     return;
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeLevelname(a_dataPtr, fname);
   VisualizeFile(fname);
 
@@ -1358,7 +1374,9 @@ browseLevel(const LevelData<FArrayBox>* a_dataPtr)
     return;
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeLevelname(a_dataPtr, fname);
   BrowseFile(fname);
 
@@ -1378,7 +1396,9 @@ viewLevelNoGhost(const LevelData<FArrayBox>* a_dataPtr)
   LevelData<FArrayBox> temp(grids, nVar);
   a_dataPtr->copyTo(a_dataPtr->interval(), temp, temp.interval());
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeLevelname(&temp, fname);
 
   VisualizeFile(fname);
@@ -1389,7 +1409,9 @@ void
 viewVectorLevel(const Vector<LevelData<FArrayBox>*>* a_dataPtr,
                 const Vector<int>*                   a_refRatios)
 {
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeVectorLevelName(a_dataPtr, a_refRatios, fname);
 
   VisualizeFile(fname);
@@ -1541,7 +1563,9 @@ viewDBL(const DisjointBoxLayout* a_dataPtr)
     return;
   }
 
-  const char* fname = tmpnam(NULL);
+  string file_name("temporary_file_4586.hdf5");
+  const char* fname = file_name.c_str();
+
   writeDBLname(a_dataPtr, fname);
 
   VisualizeFile(fname);
