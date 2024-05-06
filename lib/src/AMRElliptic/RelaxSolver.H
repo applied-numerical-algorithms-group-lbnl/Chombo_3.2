@@ -14,6 +14,7 @@
 #define _RELAXSOLVER_H_
 
 #include "LinearSolver.H"
+#include "MultiGrid.H"
 #include "parstream.H"
 #include "CH_Timer.H"
 #include "NamespaceHeader.H"
@@ -61,7 +62,7 @@ public:
   /**
      public member data:  linear operator.
    */
-  LinearOp<T>* m_op;
+  MGLevelOp<T>* m_op;
 
   ///
   /**
@@ -92,7 +93,13 @@ public:
      public member data:  hang when min(previous residual norms) < m_hang * current residual norm  (default is zero -- don't check for hanging)
   */
   Real m_hang;
-  private:
+
+  /// For the way relaxsolver was supposed to work
+  /**
+     if(m_useFixedNumberRelax is true), this solver will just relax a fixed number of times.
+   **/
+  bool m_useFixedNumberRelax;
+  int  m_fixedNumber;
   Real m_minNorm;
 };
 
@@ -108,7 +115,10 @@ RelaxSolver<T>::RelaxSolver()
    m_normType(2),
    m_verbosity(0),
    m_eps(1.0E-6),
-   m_hang(0.0)
+   m_hang(0.0),
+   m_useFixedNumberRelax(true),
+   m_fixedNumber(27),
+   m_minNorm(1.0e-16)
 {
 }
 
@@ -121,7 +131,10 @@ template <class T>
 void RelaxSolver<T>::define(LinearOp<T>* a_operator, bool a_homogeneous)
 {
   m_homogeneous = a_homogeneous;
-  m_op = a_operator;
+  MGLevelOp<T> *cast_op = dynamic_cast<MGLevelOp<T> *>(a_operator);
+  CH_assert(cast_op != NULL);
+
+  m_op = cast_op;
 }
 
 template <class T>
@@ -129,63 +142,69 @@ void RelaxSolver<T>::solve(T& a_phi, const T& a_rhs)
 {
   CH_assert(m_op != NULL);
   CH_TIME("RelaxSolver::solve");
-  T r, e;
+  if(m_useFixedNumberRelax)
+  {
+    m_op->relax(a_phi, a_rhs, m_fixedNumber);
+  }
+  else
+  {  
+    T r, e;
 
-  m_op->create(r, a_rhs);
-  m_op->create(e, a_phi);
+    m_op->create(r, a_rhs);
+    m_op->create(e, a_phi);
 
-  m_op->setToZero(r); // added by petermc, 27 Nov 2013, to zero out ghosts
-  m_op->residual(r, a_phi, a_rhs, m_homogeneous);
+    m_op->setToZero(r); // added by petermc, 27 Nov 2013, to zero out ghosts
+    m_op->residual(r, a_phi, a_rhs, m_homogeneous);
 
-  Real norm = m_op->norm(r, m_normType);
-  m_minNorm = norm;
+    Real norm = m_op->norm(r, m_normType);
+    m_minNorm = norm;
 
-  if (m_verbosity >= 3)
+    if (m_verbosity >= 3)
     {
       pout() << "      RelaxSolver:: initial Residual norm = "
              << norm << "\n";
     }
 
-  if (norm > 0.) // Do not iterate if norm == 0.
+    if (norm > 0.) // Do not iterate if norm == 0.
     {
       Real initialNorm = norm;
       int iter =0;
       while (iter <  m_imax)
+      {
+        m_op->setToZero(e);
+        m_op->preCond(e, r);
+        m_op->incr(a_phi, e, 1.0);
+        m_op->residual(r, a_phi, a_rhs, m_homogeneous);
+        Real oldNorm = norm;
+        norm = m_op->norm(r, m_normType);
+        iter++;
+
+        if (m_verbosity > 3)
         {
-          m_op->setToZero(e);
-          m_op->preCond(e, r);
-          m_op->incr(a_phi, e, 1.0);
-          m_op->residual(r, a_phi, a_rhs, m_homogeneous);
-          Real oldNorm = norm;
-          norm = m_op->norm(r, m_normType);
-          iter++;
-
-          if (m_verbosity > 3)
-            {
-              pout() << "      RelaxSolver:: iteration = " << iter
-                     << " residual norm = " << norm
-                     << ", rate = " << oldNorm/norm << endl;
-            }
-          if (norm <  m_eps*initialNorm) break;
-
-          if (norm < m_minNorm)
-            {
-              m_minNorm = norm;
-            }
-          else if (norm * m_hang > m_minNorm)
-            {
-              if (m_verbosity > 3)
-                {
-                  pout() << "      RelaxSolver:: exit due to solver hang " << endl;
-                }
-              break;
-            }
+          pout() << "      RelaxSolver:: iteration = " << iter
+                 << " residual norm = " << norm
+                 << ", rate = " << oldNorm/norm << endl;
         }
+        if (norm <  m_eps*initialNorm) break;
+
+        if (norm < m_minNorm)
+        {
+          m_minNorm = norm;
+        }
+        else if (norm * m_hang > m_minNorm)
+        {
+          if (m_verbosity > 3)
+          {
+            pout() << "      RelaxSolver:: exit due to solver hang " << endl;
+          }
+          break;
+        }
+      }
     }
 
-  m_op->clear(r);
-  m_op->clear(e);
+    m_op->clear(r);
+    m_op->clear(e);
+  }
 }
-
 #include "NamespaceFooter.H"
 #endif /*_RELAXSOLVER_H_*/
