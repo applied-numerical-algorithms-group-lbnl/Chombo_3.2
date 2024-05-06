@@ -69,21 +69,22 @@ coarsenStuff(LevelData<FluxBox> &          a_etaCoar,
              const int &                   a_refToDepth,
              const int &                   a_coefficientAverageType)
 {
+  CH_TIME("oldVTO::coarsenStuff");
   CH_assert(a_etaCoar.nComp() == 1);
   CH_assert(a_etaFine.nComp() == 1);
   CoarseAverageFace averageOpFace(a_etaFine.disjointBoxLayout(), 1, a_refToDepth);
   CoarseAverage         averageOp(a_etaFine.disjointBoxLayout(), 1, a_refToDepth);
 
   if (a_coefficientAverageType == CoarseAverageFace::harmonic)
-    {
-      averageOpFace.averageToCoarseHarmonic(a_etaCoar,    a_etaFine);
-      averageOpFace.averageToCoarseHarmonic(a_lambdaCoar, a_lambdaFine);
-    }
+  {
+    averageOpFace.averageToCoarseHarmonic(a_etaCoar,    a_etaFine);
+    averageOpFace.averageToCoarseHarmonic(a_lambdaCoar, a_lambdaFine);
+  }
   else
-    {
-      averageOpFace.averageToCoarse(a_etaCoar,    a_etaFine);
-      averageOpFace.averageToCoarse(a_lambdaCoar, a_lambdaFine);
-    }
+  {
+    averageOpFace.averageToCoarse(a_etaCoar,    a_etaFine);
+    averageOpFace.averageToCoarse(a_lambdaCoar, a_lambdaFine);
+  }
 
   averageOp.averageToCoarse(a_acoefCoar, a_acoefFine);
 }
@@ -94,6 +95,7 @@ createCoarser(LevelData<FArrayBox>&       a_coarse,
               const LevelData<FArrayBox>& a_fine,
               bool ghosted)
 {
+  CH_TIME("oldVTO::createCoarser");
   // CH_assert(!ghosted);
   IntVect ghost = a_fine.ghostVect();
   DisjointBoxLayout dbl;
@@ -117,34 +119,34 @@ computeOperatorNoBCs(LevelData<FArrayBox>& a_lhs,
   m_levelOps.setToZero(a_lhs);
   incr(a_lhs, a_phi, m_alpha);
   for (dit.begin(); dit.ok(); ++dit)
+  {
+    for (int ivar = 0; ivar < SpaceDim; ivar++)
     {
-      for (int ivar = 0; ivar < SpaceDim; ivar++)
-        {
-          int src = 0; int dst = ivar; int ncomp = 1;
-          a_lhs[dit()].mult((*m_acoef)[dit()],src,dst,ncomp);
-        }
-      Box gridBox = dbl.get(dit());
-      FluxBox flux(gridBox, m_ncomp);
-      FluxBox& eta    = (*m_eta   )[dit];
-      FluxBox& lambda = (*m_lambda)[dit];
+      int src = 0; int dst = ivar; int ncomp = 1;
+      a_lhs[dit()].mult((*m_acoef)[dit()],src,dst,ncomp);
+    }
+    Box gridBox = dbl.get(dit());
+    FluxBox flux(gridBox, m_ncomp);
+    FluxBox& eta    = (*m_eta   )[dit];
+    FluxBox& lambda = (*m_lambda)[dit];
 
-      //operator is alpha I + (divF) = alpha I + beta div(eta(grad B + grad B^T) + lambda I div B )
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          Box faceBox = surroundingNodes(gridBox, idir);
-          getFlux(flux[idir], a_phi[dit()], m_grad[dit()], eta[idir], lambda[idir],faceBox, idir);
-          FArrayBox& lhsFAB = a_lhs[dit()];
-          const FArrayBox& fluxFAB = flux[idir];
+    //operator is alpha I + (divF) = alpha I + beta div(eta(grad B + grad B^T) + lambda I div B )
+    for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      Box faceBox = surroundingNodes(gridBox, idir);
+      getFlux(flux[idir], a_phi[dit()], m_grad[dit()], eta[idir], lambda[idir],faceBox, idir);
+      FArrayBox& lhsFAB = a_lhs[dit()];
+      const FArrayBox& fluxFAB = flux[idir];
 
-          //beta and eta are part of the flux.
-          FORT_ADDDIVFLUXDIRVTOP(CHF_FRA(lhsFAB),
-                                 CHF_CONST_FRA(fluxFAB),
-                                 CHF_BOX(gridBox),
-                                 CHF_REAL(m_dx),
-                                 CHF_CONST_INT(m_ncomp),
-                                 CHF_CONST_INT(idir));
-        }
-    } // end loop over boxes
+      //beta and eta are part of the flux.
+      FORT_ADDDIVFLUXDIRVTOP(CHF_FRA(lhsFAB),
+                             CHF_CONST_FRA(fluxFAB),
+                             CHF_BOX(gridBox),
+                             CHF_REAL(m_dx),
+                             CHF_CONST_INT(m_ncomp),
+                             CHF_CONST_INT(idir));
+    }
+  } // end loop over boxes
 }
 /***/
 void
@@ -164,14 +166,14 @@ restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
   int ncomp = SpaceDim;
   const DisjointBoxLayout dblFine = a_phiFine.disjointBoxLayout();
   for (DataIterator dit = dblFine.dataIterator(); dit.ok(); ++dit)
-    {
-      Box region = dblFine.get(dit());
-      a_resCoarse[dit()].setVal(0.0);
-      FORT_RESTRICTRESVTOP(CHF_FRA(a_resCoarse[dit()]),
-                           CHF_CONST_FRA(resFine[dit()]),
-                           CHF_BOX(region),
-                           CHF_CONST_INT(ncomp));
-    }
+  {
+    Box region = dblFine.get(dit());
+    a_resCoarse[dit()].setVal(0.0);
+    FORT_RESTRICTRESVTOP(CHF_FRA(a_resCoarse[dit()]),
+                         CHF_CONST_FRA(resFine[dit()]),
+                         CHF_BOX(region),
+                         CHF_CONST_INT(ncomp));
+  }
 }
 /***/
 void
@@ -186,128 +188,128 @@ prolongIncrement(LevelData<FArrayBox>&       a_phiThisLevel,
   int mgref = 2; //this is a multigrid func
 
   if (s_prolongType > piecewiseConstant)
+  {
+    // need to set ghost cells for interpolation
+    // note that all BC's are homogeneous, since we're
+    // working with the correction.
+
+    // as a first cut, do linear extrapolation everywhere,
+    // followed by an exchange
+    const DisjointBoxLayout& crseGrids = a_correctCoarse.getBoxes();
+
+    // need to cast away const-ness in order to make this happen
+    LevelData<FArrayBox>& crseCorr = *(const_cast<LevelData<FArrayBox>*>(&a_correctCoarse));
+
+    DataIterator crseDit = a_correctCoarse.dataIterator();
+    for (crseDit.begin(); crseDit.ok(); ++crseDit)
     {
-      // need to set ghost cells for interpolation
-      // note that all BC's are homogeneous, since we're
-      // working with the correction.
 
-      // as a first cut, do linear extrapolation everywhere,
-      // followed by an exchange
-      const DisjointBoxLayout& crseGrids = a_correctCoarse.getBoxes();
-
-      // need to cast away const-ness in order to make this happen
-      LevelData<FArrayBox>& crseCorr = *(const_cast<LevelData<FArrayBox>*>(&a_correctCoarse));
-
-      DataIterator crseDit = a_correctCoarse.dataIterator();
-      for (crseDit.begin(); crseDit.ok(); ++crseDit)
+      const Box crseBox = crseGrids[crseDit];
+      for (int dir=0; dir<SpaceDim; dir++)
+      {
+        // don't bother if we're only one cell wide
+        if (crseBox.size(dir) > 1)
         {
+          Box loBox = adjCellLo(crseBox, dir, 1);
+          int hiLo = -1;
+          FORT_LINEAREXTRAPVTOP(CHF_FRA(crseCorr[crseDit]),
+                                CHF_BOX(loBox),
+                                CHF_INT(dir),
+                                CHF_INT(hiLo));
 
-          const Box crseBox = crseGrids[crseDit];
-          for (int dir=0; dir<SpaceDim; dir++)
-            {
-              // don't bother if we're only one cell wide
-              if (crseBox.size(dir) > 1)
-                {
-                  Box loBox = adjCellLo(crseBox, dir, 1);
-                  int hiLo = -1;
-                  FORT_LINEAREXTRAPVTOP(CHF_FRA(crseCorr[crseDit]),
-                                        CHF_BOX(loBox),
-                                        CHF_INT(dir),
-                                        CHF_INT(hiLo));
-
-                  Box hiBox = adjCellHi(crseBox,dir,1);
-                  hiLo = 1;
-                  FORT_LINEAREXTRAPVTOP(CHF_FRA(crseCorr[crseDit]),
-                                        CHF_BOX(hiBox),
-                                        CHF_INT(dir),
-                                        CHF_INT(hiLo));
-                }
-            }
+          Box hiBox = adjCellHi(crseBox,dir,1);
+          hiLo = 1;
+          FORT_LINEAREXTRAPVTOP(CHF_FRA(crseCorr[crseDit]),
+                                CHF_BOX(hiBox),
+                                CHF_INT(dir),
+                                CHF_INT(hiLo));
         }
-      crseCorr.exchange();
+      }
     }
+    crseCorr.exchange();
+  }
 
   for (DataIterator dit = a_phiThisLevel.dataIterator(); dit.ok(); ++dit)
+  {
+    FArrayBox& phi =  a_phiThisLevel[dit];
+    const FArrayBox& coarse = a_correctCoarse[dit];
+    Box region = dbl.get(dit());
+    Box cBox = coarsen(region, mgref);
+
+    if (s_prolongType == piecewiseConstant)
     {
-      FArrayBox& phi =  a_phiThisLevel[dit];
-      const FArrayBox& coarse = a_correctCoarse[dit];
-      Box region = dbl.get(dit());
-      Box cBox = coarsen(region, mgref);
+      FORT_PROLONGVTOP(CHF_FRA(phi),
+                       CHF_CONST_FRA(coarse),
+                       CHF_BOX(region),
+                       CHF_CONST_INT(mgref));
+    }
+    else if (s_prolongType == linearInterp)
+    {
+      // first do piecewise-constant
+      FORT_PROLONGVTOP(CHF_FRA(phi),
+                       CHF_CONST_FRA(coarse),
+                       CHF_BOX(region),
+                       CHF_CONST_INT(mgref));
 
-      if (s_prolongType == piecewiseConstant)
+      // now compute slopes and increment
+      // do we need to add limiting?
+
+      int ncomp = coarse.nComp();
+      FArrayBox dirSlopes(cBox, ncomp);
+      for (int dir=0; dir<SpaceDim; dir++)
+      {
+
+        // don't bother if crse grid is only one cell wide
+        if (cBox.size(dir) > 1)
         {
-          FORT_PROLONGVTOP(CHF_FRA(phi),
-                           CHF_CONST_FRA(coarse),
-                           CHF_BOX(region),
-                           CHF_CONST_INT(mgref));
-        }
-      else if (s_prolongType == linearInterp)
-        {
-          // first do piecewise-constant
-          FORT_PROLONGVTOP(CHF_FRA(phi),
-                           CHF_CONST_FRA(coarse),
-                           CHF_BOX(region),
-                           CHF_CONST_INT(mgref));
 
-          // now compute slopes and increment
-          // do we need to add limiting?
+          FORT_SLOPESVTOP(CHF_FRA(dirSlopes),
+                          CHF_CONST_FRA(coarse),
+                          CHF_BOX(cBox),
+                          CHF_INT(dir));
 
-          int ncomp = coarse.nComp();
-          FArrayBox dirSlopes(cBox, ncomp);
-          for (int dir=0; dir<SpaceDim; dir++)
+          // copy code from PiecewiseLinearFillPatch for now
+
+          BoxIterator bit(region);
+          for (bit.begin(); bit.ok(); ++bit)
+          {
+            const IntVect& fine_iv = bit();
+            const IntVect crse_iv = coarsen(fine_iv,mgref);
+            const int offset = fine_iv[dir] - mgref*crse_iv[dir];
+            Real interp_coef = -.5 + (offset +.5) / mgref;
+            for (int comp=0; comp < ncomp; ++comp)
             {
-
-              // don't bother if crse grid is only one cell wide
-              if (cBox.size(dir) > 1)
-                {
-
-                  FORT_SLOPESVTOP(CHF_FRA(dirSlopes),
-                                  CHF_CONST_FRA(coarse),
-                                  CHF_BOX(cBox),
-                                  CHF_INT(dir));
-
-                  // copy code from PiecewiseLinearFillPatch for now
-
-                  BoxIterator bit(region);
-                  for (bit.begin(); bit.ok(); ++bit)
-                    {
-                      const IntVect& fine_iv = bit();
-                      const IntVect crse_iv = coarsen(fine_iv,mgref);
-                      const int offset = fine_iv[dir] - mgref*crse_iv[dir];
-                      Real interp_coef = -.5 + (offset +.5) / mgref;
-                      for (int comp=0; comp < ncomp; ++comp)
-                        {
-                          phi(fine_iv,comp) +=interp_coef*dirSlopes(crse_iv,comp);
-                        }
-                    }
+              phi(fine_iv,comp) +=interp_coef*dirSlopes(crse_iv,comp);
+            }
+          }
 
 #if 0
-                  // fortran implementation, using fortran in AMRTools
-                  // (DFM 8/26/11) -- in my timing tests, the BoxIterator
-                  // version was actually faster; leaving the fortran here
-                  // (but commented out) in case somebody later finds that
-                  // not to be the case
-                  Box refBox(IntVect::Zero,
-                             (mgref-1)*IntVect::Unit);
+          // fortran implementation, using fortran in AMRTools
+          // (DFM 8/26/11) -- in my timing tests, the BoxIterator
+          // version was actually faster; leaving the fortran here
+          // (but commented out) in case somebody later finds that
+          // not to be the case
+          Box refBox(IntVect::Zero,
+                     (mgref-1)*IntVect::Unit);
 
-                  // call fortran from AMRTools...
-                  FORT_INTERPLINEAR(CHF_FRA(phi),
-                                    CHF_CONST_FRA(dirSlopes),
-                                    CHF_BOX(cBox),
-                                    CHF_CONST_INT(dir),
-                                    CHF_CONST_INT(mgref),
-                                    CHF_BOX(refBox));
+          // call fortran from AMRTools...
+          FORT_INTERPLINEAR(CHF_FRA(phi),
+                            CHF_CONST_FRA(dirSlopes),
+                            CHF_BOX(cBox),
+                            CHF_CONST_INT(dir),
+                            CHF_CONST_INT(mgref),
+                            CHF_BOX(refBox));
 #endif
-                } // end if crse box is more than one cell wide
+        } // end if crse box is more than one cell wide
 
-            } // end loop over directions
+      } // end loop over directions
 
-        }
-      else
-        {
-          MayDay::Error("ViscousTensorOp -- bad prolongation type");
-        }
     }
+    else
+    {
+      MayDay::Error("ViscousTensorOp -- bad prolongation type");
+    }
+  }
 }
 /***/
 void
@@ -346,20 +348,20 @@ AMRResidual(LevelData<FArrayBox>&       a_residual,
   applyOpNoExchange(a_residual, a_phi, a_homogeneousPhysBC);
 
   if (a_finerOp != NULL)
+  {
+    // set BCs for fillGrad
+    LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phiFine;
+    ViscousTensorOp *fineOp = (ViscousTensorOp*)a_finerOp;
+    const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
+    DataIterator dit = phi.dataIterator();
+    for (dit.begin(); dit.ok(); ++dit)
     {
-      // set BCs for fillGrad
-      LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phiFine;
-      ViscousTensorOp *fineOp = (ViscousTensorOp*)a_finerOp;
-      const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
-      DataIterator dit = phi.dataIterator();
-      for (dit.begin(); dit.ok(); ++dit)
-        {
-          m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
-        }
-      
-      // fillGrad called on a_phiFine
-      reflux(a_phiFine, a_phi,  a_residual, a_finerOp);
+      m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
     }
+      
+    // fillGrad called on a_phiFine
+    reflux(a_phiFine, a_phi,  a_residual, a_finerOp);
+  }
   incr(a_residual, a_rhs, -1.0);
   // residual is rhs - L(phi)
   scale (a_residual, -1.0);
@@ -386,9 +388,9 @@ AMRResidualNC(LevelData<FArrayBox>&       a_residual,
   const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
-    }
+  {
+    m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
+  }
   // fillGrad called on a_phiFine
   reflux(a_phiFine, a_phi,  a_residual, a_finerOp);
   axby(a_residual, a_residual, a_rhs, -1.0, 1.0);
@@ -411,19 +413,19 @@ AMRRestrict(LevelData<FArrayBox>&       a_resCoarse,
   DisjointBoxLayout dblCoar = a_resCoarse.disjointBoxLayout();
   DataIterator dit = a_residual.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      FArrayBox& coarse = a_resCoarse[dit];
-      const FArrayBox& fine = r[dit];
-      const Box& b = dblCoar.get(dit());
-      Box refbox(IntVect::Zero,
-                 (m_refToCoar-1)*IntVect::Unit);
-      FORT_AVERAGE( CHF_FRA(coarse),
-                    CHF_CONST_FRA(fine),
-                    CHF_BOX(b),
-                    CHF_CONST_INT(m_refToCoar),
-                    CHF_BOX(refbox)
-                    );
-    }
+  {
+    FArrayBox& coarse = a_resCoarse[dit];
+    const FArrayBox& fine = r[dit];
+    const Box& b = dblCoar.get(dit());
+    Box refbox(IntVect::Zero,
+               (m_refToCoar-1)*IntVect::Unit);
+    FORT_AVERAGE( CHF_FRA(coarse),
+                  CHF_CONST_FRA(fine),
+                  CHF_BOX(b),
+                  CHF_CONST_INT(m_refToCoar),
+                  CHF_BOX(refbox)
+      );
+  }
 }
 /***/
 void
@@ -441,97 +443,80 @@ AMRProlong(LevelData<FArrayBox>& a_correction,
   Real dxCrse = m_dx*m_refToCoar;
   DisjointBoxLayout dbl = a_correction.disjointBoxLayout();
   for (DataIterator dit = a_correction.dataIterator(); dit.ok(); ++dit)
+  {
+    FArrayBox& phi =  a_correction[dit];
+    FArrayBox& coarse = eCoar[dit];
+    Box region = dbl.get(dit());
+
+    // need this if we need to set physical BC's
+    // on coarse-level correction.
+    ProblemDomain crseDomain(m_domain);
+    crseDomain.coarsen(m_refToCoar);
+
+    if (s_prolongType == piecewiseConstant)
     {
-      FArrayBox& phi =  a_correction[dit];
-      FArrayBox& coarse = eCoar[dit];
-      Box region = dbl.get(dit());
+      FORT_PROLONGVTOP(CHF_FRA(phi),
+                       CHF_CONST_FRA(coarse),
+                       CHF_BOX(region),
+                       CHF_CONST_INT(m_refToCoar));
+    }
+    else if (s_prolongType == linearInterp)
+    {
+      // set homogeneous Physical BC's
+      // (all other types are handled by coarse-level copyTo)
+      Box cBox = coarsen(region, m_refToCoar);
+      bool homogeneousBC=true;
+      m_bc(coarse, cBox, crseDomain, dxCrse, homogeneousBC, dit());
 
-      // need this if we need to set physical BC's
-      // on coarse-level correction.
-      ProblemDomain crseDomain(m_domain);
-      crseDomain.coarsen(m_refToCoar);
+      // first do piecewise-constant
+      FORT_PROLONGVTOP(CHF_FRA(phi),
+                       CHF_CONST_FRA(coarse),
+                       CHF_BOX(region),
+                       CHF_CONST_INT(m_refToCoar));
 
-      if (s_prolongType == piecewiseConstant)
+      // now compute slopes and increment
+      // do we need to add limiting?
+
+      int ncomp = coarse.nComp();
+      FArrayBox dirSlopes(cBox, ncomp);
+      for (int dir=0; dir<SpaceDim; dir++)
+      {
+
+        // don't bother if crse grid is only one cell wide
+        if (cBox.size(dir) > 1)
         {
-          FORT_PROLONGVTOP(CHF_FRA(phi),
-                           CHF_CONST_FRA(coarse),
-                           CHF_BOX(region),
-                           CHF_CONST_INT(m_refToCoar));
-        }
-      else if (s_prolongType == linearInterp)
-        {
-          // set homogeneous Physical BC's
-          // (all other types are handled by coarse-level copyTo)
-          Box cBox = coarsen(region, m_refToCoar);
-          bool homogeneousBC=true;
-          m_bc(coarse, cBox, crseDomain, dxCrse, homogeneousBC, dit());
 
-          // first do piecewise-constant
-          FORT_PROLONGVTOP(CHF_FRA(phi),
-                           CHF_CONST_FRA(coarse),
-                           CHF_BOX(region),
-                           CHF_CONST_INT(m_refToCoar));
+          FORT_SLOPESVTOP(CHF_FRA(dirSlopes),
+                          CHF_CONST_FRA(coarse),
+                          CHF_BOX(cBox),
+                          CHF_INT(dir));
 
-          // now compute slopes and increment
-          // do we need to add limiting?
+          // copy code from PiecewiseLinearFillPatch for now
 
-          int ncomp = coarse.nComp();
-          FArrayBox dirSlopes(cBox, ncomp);
-          for (int dir=0; dir<SpaceDim; dir++)
+          BoxIterator bit(region);
+          for (bit.begin(); bit.ok(); ++bit)
+          {
+            const IntVect& fine_iv = bit();
+            const IntVect crse_iv = coarsen(fine_iv,m_refToCoar);
+            const int offset = fine_iv[dir] - m_refToCoar*crse_iv[dir];
+            Real interp_coef = -.5 + (offset +.5) / m_refToCoar;
+            for (int comp=0; comp < ncomp; ++comp)
             {
+              phi(fine_iv,comp) +=interp_coef*dirSlopes(crse_iv,comp);
+            }
+          }
 
-              // don't bother if crse grid is only one cell wide
-              if (cBox.size(dir) > 1)
-                {
+        } // end if crse box is more than one cell wide
 
-                  FORT_SLOPESVTOP(CHF_FRA(dirSlopes),
-                                  CHF_CONST_FRA(coarse),
-                                  CHF_BOX(cBox),
-                                  CHF_INT(dir));
-
-                  // copy code from PiecewiseLinearFillPatch for now
-
-                  BoxIterator bit(region);
-                  for (bit.begin(); bit.ok(); ++bit)
-                    {
-                      const IntVect& fine_iv = bit();
-                      const IntVect crse_iv = coarsen(fine_iv,m_refToCoar);
-                      const int offset = fine_iv[dir] - m_refToCoar*crse_iv[dir];
-                      Real interp_coef = -.5 + (offset +.5) / m_refToCoar;
-                      for (int comp=0; comp < ncomp; ++comp)
-                        {
-                          phi(fine_iv,comp) +=interp_coef*dirSlopes(crse_iv,comp);
-                        }
-                    }
-
-#if 0
-                  // fortran implementation, using fortran in AMRTools
-                  // (DFM 8/26/11) -- in my timing tests, the BoxIterator
-                  // version was actually faster; leaving the fortran here
-                  // (but commented out) in case somebody later finds that
-                  // not to be the case
-                  Box refBox(IntVect::Zero,
-                             (m_refToCoar-1)*IntVect::Unit);
-
-                  // call fortran from AMRTools...
-                  FORT_INTERPLINEAR(CHF_FRA(phi),
-                                    CHF_CONST_FRA(dirSlopes),
-                                    CHF_BOX(cBox),
-                                    CHF_CONST_INT(dir),
-                                    CHF_CONST_INT(m_refToCoar),
-                                    CHF_BOX(refBox));
-#endif
-                } // end if crse box is more than one cell wide
-
-            } // end loop over directions
-
-        }
-      else
-        {
-          MayDay::Error("ViscousTensorOp -- bad prolongation type");
-        }
+      } // end loop over directions
 
     }
+    else
+    {
+      MayDay::Error("ViscousTensorOp -- bad prolongation type");
+    }
+
+  }
 }
 
 /***/
@@ -591,10 +576,12 @@ applyOp(LevelData<FArrayBox>&       a_lhs,
   Real dx = m_dx;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
+  
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous, dit());
-    }
+  {
+    CH_TIME("enforcing domain bcs");
+    m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous, dit());
+  }
 
   //contains an exchange
   this->fillGrad(a_phi);
@@ -616,9 +603,9 @@ applyOpNoExchange(LevelData<FArrayBox>&       a_lhs,
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous, dit());
-    }
+  {
+    m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous, dit());
+  }
   
   //contains an exchange
   this->fillGradNoExchange(a_phi);
@@ -639,31 +626,31 @@ divergenceCC(LevelData<FArrayBox>&       a_div,
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   //if necessary, apply coarse-fine boundary conditions
   if (a_phiC != NULL)
-    {
-      cfinterp(a_phi, *a_phiC);
-    }
+  {
+    cfinterp(a_phi, *a_phiC);
+  }
   //then apply boundary conditions at the domain
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      m_bc(phi[dit], dbl[dit()],m_domain, m_dx, false, dit());
-    }
+  {
+    m_bc(phi[dit], dbl[dit()],m_domain, m_dx, false, dit());
+  }
   //exchange with neighboring boxes
   phi.exchange(phi.interval(), m_exchangeCopier);
   for (dit.begin(); dit.ok(); ++dit)
+  {
+    Box  grid = dbl.get(dit());
+    a_div[dit()].setVal(0.);
+    for (int idir = 0; idir < SpaceDim; idir++)
     {
-      Box  grid = dbl.get(dit());
-      a_div[dit()].setVal(0.);
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          FORT_CELLDIVINCRVTOP(CHF_FRA1     (a_div[dit()], 0),
-                               CHF_CONST_FRA(phi  [dit()]   ),
-                               CHF_CONST_REAL(m_dx),
-                               CHF_CONST_INT(idir),
-                               CHF_BOX(grid));
-        }
+      FORT_CELLDIVINCRVTOP(CHF_FRA1     (a_div[dit()], 0),
+                           CHF_CONST_FRA(phi  [dit()]   ),
+                           CHF_CONST_REAL(m_dx),
+                           CHF_CONST_INT(idir),
+                           CHF_BOX(grid));
     }
+  }
 }
 void ViscousTensorOp::reflux(const LevelData<FArrayBox>& a_phiFine,
                              const LevelData<FArrayBox>& a_phi,
@@ -684,24 +671,24 @@ void ViscousTensorOp::reflux(const LevelData<FArrayBox>& a_phiFine,
 
   DataIterator dit = a_phi.dataIterator();
   for (dit.reset(); dit.ok(); ++dit)
+  {
+    const FArrayBox& coarfab    =   a_phi    [dit];
+    const FluxBox&   coareta    = (*m_eta)   [dit];
+    const FluxBox&   coarlambda = (*m_lambda)[dit];
+    const Box&       gridBox    =   a_phi.getBoxes()[dit];
+
+    for (int idir = 0; idir < SpaceDim; idir++)
     {
-      const FArrayBox& coarfab    =   a_phi    [dit];
-      const FluxBox&   coareta    = (*m_eta)   [dit];
-      const FluxBox&   coarlambda = (*m_lambda)[dit];
-      const Box&       gridBox    =   a_phi.getBoxes()[dit];
+      FArrayBox coarflux;
+      Box faceBox = surroundingNodes(gridBox, idir);
+      //fillgrad was called before this when applyOp was called
+      getFlux(coarflux, coarfab, m_grad[dit()], coareta[idir], coarlambda[idir], faceBox, idir);
 
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          FArrayBox coarflux;
-          Box faceBox = surroundingNodes(gridBox, idir);
-          //fillgrad was called before this when applyOp was called
-          getFlux(coarflux, coarfab, m_grad[dit()], coareta[idir], coarlambda[idir], faceBox, idir);
-
-          Real scale = 1.0;
-          levfluxreg.incrementCoarse(coarflux, scale,dit(),
-                                     interv,interv,idir);
-        }
+      Real scale = 1.0;
+      levfluxreg.incrementCoarse(coarflux, scale,dit(),
+                                 interv,interv,idir);
     }
+  }
   LevelData<FArrayBox>& p = ( LevelData<FArrayBox>&)a_phiFine;
 
   //interpolate finer phi and compute gradients.
@@ -715,67 +702,67 @@ void ViscousTensorOp::reflux(const LevelData<FArrayBox>& a_phiFine,
   DataIterator ditf = a_phiFine.dataIterator();
   const  DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   for (ditf.reset(); ditf.ok(); ++ditf)
+  {
+    const FArrayBox& phifFab = a_phiFine[ditf];
+    const FArrayBox& fineTanGrad = finerAMRPOp->m_grad[ditf];
+    const FluxBox& fineeta    = (*(finerAMRPOp->m_eta))   [ditf];
+    const FluxBox& finelambda = (*(finerAMRPOp->m_lambda))[ditf];
+    const Box& gridbox = dblFine.get(ditf());
+    for (int idir = 0; idir < SpaceDim; idir++)
     {
-      const FArrayBox& phifFab = a_phiFine[ditf];
-      const FArrayBox& fineTanGrad = finerAMRPOp->m_grad[ditf];
-      const FluxBox& fineeta    = (*(finerAMRPOp->m_eta))   [ditf];
-      const FluxBox& finelambda = (*(finerAMRPOp->m_lambda))[ditf];
-      const Box& gridbox = dblFine.get(ditf());
-      for (int idir = 0; idir < SpaceDim; idir++)
+      int normalGhost = phiGhost[idir];
+      SideIterator sit;
+      for (sit.begin(); sit.ok(); sit.next())
+      {
+        Side::LoHiSide hiorlo = sit();
+        Box fabbox;
+        Box facebox;
+
+        // assumption here that the stencil required
+        // to compute the flux in the normal direction
+        // is 2* the number of ghost cells for phi
+        // (which is a reasonable assumption, and probably
+        // better than just assuming you need one cell on
+        // either side of the interface
+        // (dfm 8-4-06)
+        if (sit() == Side::Lo)
         {
-          int normalGhost = phiGhost[idir];
-          SideIterator sit;
-          for (sit.begin(); sit.ok(); sit.next())
-            {
-              Side::LoHiSide hiorlo = sit();
-              Box fabbox;
-              Box facebox;
-
-              // assumption here that the stencil required
-              // to compute the flux in the normal direction
-              // is 2* the number of ghost cells for phi
-              // (which is a reasonable assumption, and probably
-              // better than just assuming you need one cell on
-              // either side of the interface
-              // (dfm 8-4-06)
-              if (sit() == Side::Lo)
-                {
-                  fabbox = adjCellLo(gridbox,idir, 2*normalGhost);
-                  fabbox.shift(idir, 1);
-                  facebox = bdryLo(gridbox, idir,1);
-                }
-              else
-                {
-                  fabbox = adjCellHi(gridbox,idir, 2*normalGhost);
-                  fabbox.shift(idir, -1);
-                  facebox = bdryHi(gridbox, idir, 1);
-                }
-
-              // just in case we need ghost cells in the transverse direction
-              // (dfm 8-4-06)
-              for (int otherDir=0; otherDir<SpaceDim; ++otherDir)
-                {
-                  if (otherDir != idir)
-                    {
-                      fabbox.grow(otherDir, phiGhost[otherDir]);
-                    }
-                }
-              CH_assert(!fabbox.isEmpty());
-
-              FArrayBox phifab(fabbox, a_phi.nComp());
-              phifab.copy(phifFab);
-
-              FArrayBox fineflux;
-              getFlux(fineflux, phifab, fineTanGrad,
-                      fineeta[idir], finelambda[idir],
-                      facebox, idir, m_refToFine);
-
-              Real scale = 1.0;
-              levfluxreg.incrementFine(fineflux, scale, ditf(),
-                                       interv, interv, idir, hiorlo);
-            }
+          fabbox = adjCellLo(gridbox,idir, 2*normalGhost);
+          fabbox.shift(idir, 1);
+          facebox = bdryLo(gridbox, idir,1);
         }
+        else
+        {
+          fabbox = adjCellHi(gridbox,idir, 2*normalGhost);
+          fabbox.shift(idir, -1);
+          facebox = bdryHi(gridbox, idir, 1);
+        }
+
+        // just in case we need ghost cells in the transverse direction
+        // (dfm 8-4-06)
+        for (int otherDir=0; otherDir<SpaceDim; ++otherDir)
+        {
+          if (otherDir != idir)
+          {
+            fabbox.grow(otherDir, phiGhost[otherDir]);
+          }
+        }
+        CH_assert(!fabbox.isEmpty());
+
+        FArrayBox phifab(fabbox, a_phi.nComp());
+        phifab.copy(phifFab);
+
+        FArrayBox fineflux;
+        getFlux(fineflux, phifab, fineTanGrad,
+                fineeta[idir], finelambda[idir],
+                facebox, idir, m_refToFine);
+
+        Real scale = 1.0;
+        levfluxreg.incrementFine(fineflux, scale, ditf(),
+                                 interv, interv, idir, hiorlo);
+      }
     }
+  }
 
   Real scale =  m_beta/m_dx;
   levfluxreg.reflux(residual, scale);
@@ -798,60 +785,60 @@ loHiCenterFace(Box&                 a_loBox,
   // if we're periodic in a_dir, then all boxes are
   // contained in the domain (DFM 2/5/10)
   if (a_eblg.isPeriodic(a_dir) )
-    {
-      a_centerBox = a_inBox;
-      a_hasLo = 0;
-      a_hasHi = 0;
-    } // end if periodic in a_dir
+  {
+    a_centerBox = a_inBox;
+    a_hasLo = 0;
+    a_hasHi = 0;
+  } // end if periodic in a_dir
   else
+  {
+    Box domainFaceBox = a_eblg.domainBox();
+    domainFaceBox.surroundingNodes(a_dir);
+
+    // Make a copy of the input box which can be modified
+    Box inBox = a_inBox;
+
+    inBox &= domainFaceBox;
+
+    a_centerBox = inBox;
+    a_centerBox.grow(a_dir, 1);
+    a_centerBox &= domainFaceBox;
+    a_centerBox.grow(a_dir,-1);
+
+    // See if this chops off the high side of the input box
+    Box tmp = inBox;
+    tmp.shift(a_dir,1);
+    tmp &= domainFaceBox;
+    tmp.shift(a_dir,-1);
+
+    // If so, set up the high, one-sided difference box, a_hiBox
+    if (tmp != inBox)
     {
-      Box domainFaceBox = a_eblg.domainBox();
-      domainFaceBox.surroundingNodes(a_dir);
+      a_hasHi = 1;
+      a_hiBox = bdryHi(inBox,a_dir,1);
+    }
+    else
+    {
+      a_hasHi = 0;
+    }
 
-      // Make a copy of the input box which can be modified
-      Box inBox = a_inBox;
+    // See if this chops off the low side of the input box
+    tmp = inBox;
+    tmp.shift(a_dir,-1);
+    tmp &= domainFaceBox;
+    tmp.shift(a_dir,1);
 
-      inBox &= domainFaceBox;
-
-      a_centerBox = inBox;
-      a_centerBox.grow(a_dir, 1);
-      a_centerBox &= domainFaceBox;
-      a_centerBox.grow(a_dir,-1);
-
-      // See if this chops off the high side of the input box
-      Box tmp = inBox;
-      tmp.shift(a_dir,1);
-      tmp &= domainFaceBox;
-      tmp.shift(a_dir,-1);
-
-      // If so, set up the high, one-sided difference box, a_hiBox
-      if (tmp != inBox)
-        {
-          a_hasHi = 1;
-          a_hiBox = bdryHi(inBox,a_dir,1);
-        }
-      else
-        {
-          a_hasHi = 0;
-        }
-
-      // See if this chops off the low side of the input box
-      tmp = inBox;
-      tmp.shift(a_dir,-1);
-      tmp &= domainFaceBox;
-      tmp.shift(a_dir,1);
-
-      // If so, set up the low, one-sided difference box, a_loBox
-      if (tmp != inBox)
-        {
-          a_hasLo = 1;
-          a_loBox = bdryLo(inBox,a_dir,1);
-        }
-      else
-        {
-          a_hasLo = 0;
-        }
-    } // end if not periodic in a_dir
+    // If so, set up the low, one-sided difference box, a_loBox
+    if (tmp != inBox)
+    {
+      a_hasLo = 1;
+      a_loBox = bdryLo(inBox,a_dir,1);
+    }
+    else
+    {
+      a_hasLo = 0;
+    }
+  } // end if not periodic in a_dir
 }
 
 /***/
@@ -866,6 +853,7 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                   const int&             a_faceDir,
                   const Real             a_dx)
 {
+  CH_TIME("oldVTO::getFaceDivAndGrad");
   //set divergence to zero everywhere
   a_faceDiv.setVal(0.);
 
@@ -881,11 +869,34 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                  a_faceDir);
 
   for (int divDir = 0; divDir < SpaceDim; divDir++)
+  {
+    int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
+    FORT_FACEDIVINCRVTOP(CHF_FRA1(a_faceDiv, 0),
+                         CHF_FRA(a_data),
+                         CHF_FRA(a_gradData),
+                         CHF_BOX(a_faceBox),
+                         CHF_BOX(interiorFaceBox),
+                         CHF_BOX(loBoxFace),
+                         CHF_INT(hasLo),
+                         CHF_BOX(hiBoxFace),
+                         CHF_INT(hasHi),
+                         CHF_REAL(a_dx),
+                         CHF_INT(a_faceDir),
+                         CHF_INT(divDir),
+                         CHF_INT(gradComp));
+
+    //now average cell-centered gradients to the face centers
+    //use diffs in data if divDir == faceDir
+  }
+
+  for (int divDir = 0; divDir < SpaceDim; divDir++)
+  {
+    for (int velDir = 0; velDir < SpaceDim; velDir++)
     {
-      int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
-      FORT_FACEDIVINCRVTOP(CHF_FRA1(a_faceDiv, 0),
-                           CHF_FRA(a_data),
-                           CHF_FRA(a_gradData),
+      int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
+      FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
+                           CHF_FRA1(a_gradData, gradcomp),
+                           CHF_FRA1(a_data, velDir),
                            CHF_BOX(a_faceBox),
                            CHF_BOX(interiorFaceBox),
                            CHF_BOX(loBoxFace),
@@ -894,34 +905,11 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
                            CHF_INT(hasHi),
                            CHF_REAL(a_dx),
                            CHF_INT(a_faceDir),
-                           CHF_INT(divDir),
-                           CHF_INT(gradComp));
-
-      //now average cell-centered gradients to the face centers
-      //use diffs in data if divDir == faceDir
-    }
-
-  for (int divDir = 0; divDir < SpaceDim; divDir++)
-    {
-      for (int velDir = 0; velDir < SpaceDim; velDir++)
-        {
-          int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
-          FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
-                               CHF_FRA1(a_gradData, gradcomp),
-                               CHF_FRA1(a_data, velDir),
-                               CHF_BOX(a_faceBox),
-                               CHF_BOX(interiorFaceBox),
-                               CHF_BOX(loBoxFace),
-                               CHF_INT(hasLo),
-                               CHF_BOX(hiBoxFace),
-                               CHF_INT(hasHi),
-                               CHF_REAL(a_dx),
-                               CHF_INT(a_faceDir),
-                               CHF_INT(divDir));
-
-        }
+                           CHF_INT(divDir));
 
     }
+
+  }
 }
 /***/
 void ViscousTensorOp::getFlux(FArrayBox&       a_flux,
@@ -977,18 +965,18 @@ void ViscousTensorOp::getFluxFromDivAndGrad(FArrayBox&       a_flux,
   //the flux now contains div v * lambda * I
   //now add in eta*(grad v + (grad v)^T)
   for (int idir = 0; idir < SpaceDim; idir++)
-    {
-      int fluxComp = idir;
-      int gradComp = TensorCFInterp::gradIndex(idir,a_dir);
-      int tranComp = TensorCFInterp::gradIndex(a_dir, idir);
-      FORT_ADDGRADTOFLUXVTOP(CHF_FRA(a_flux),
-                             CHF_CONST_FRA1(a_etaFace,0),
-                             CHF_CONST_INT(fluxComp),
-                             CHF_CONST_FRA(a_faceGrad),
-                             CHF_CONST_INT(gradComp),
-                             CHF_CONST_INT(tranComp),
-                             CHF_BOX(a_faceBox));
-    }
+  {
+    int fluxComp = idir;
+    int gradComp = TensorCFInterp::gradIndex(idir,a_dir);
+    int tranComp = TensorCFInterp::gradIndex(a_dir, idir);
+    FORT_ADDGRADTOFLUXVTOP(CHF_FRA(a_flux),
+                           CHF_CONST_FRA1(a_etaFace,0),
+                           CHF_CONST_INT(fluxComp),
+                           CHF_CONST_FRA(a_faceGrad),
+                           CHF_CONST_INT(gradComp),
+                           CHF_CONST_INT(tranComp),
+                           CHF_BOX(a_faceBox));
+  }
 }
 /***/
 void
@@ -1037,22 +1025,22 @@ AMRNorm(const LevelData<FArrayBox>& a_coarResid,
   m_levelOps.assign(coarTemp, a_coarResid);
   int ncomp = coarTemp.nComp();
   for (DataIterator dit = coarGrids.dataIterator(); dit.ok(); ++dit)
+  {
+    FArrayBox& coarTempFAB = coarTemp[dit()];
+    LayoutIterator litFine = fineGrids.layoutIterator();
+    for (litFine.reset(); litFine.ok(); ++litFine)
     {
-      FArrayBox& coarTempFAB = coarTemp[dit()];
-      LayoutIterator litFine = fineGrids.layoutIterator();
-      for (litFine.reset(); litFine.ok(); ++litFine)
-        {
-          Box overlayBox = coarTempFAB.box();
-          Box coarsenedGrid = coarsen(fineGrids[litFine()], a_refRat);
+      Box overlayBox = coarTempFAB.box();
+      Box coarsenedGrid = coarsen(fineGrids[litFine()], a_refRat);
 
-          overlayBox &= coarsenedGrid;
+      overlayBox &= coarsenedGrid;
 
-          if (!overlayBox.isEmpty())
-            {
-              coarTempFAB.setVal(0.0,overlayBox,0, ncomp);
-            }
-        }
+      if (!overlayBox.isEmpty())
+      {
+        coarTempFAB.setVal(0.0,overlayBox,0, ncomp);
+      }
     }
+  }
   //return norm of temp
   return norm(coarTemp, a_ord);
 }
@@ -1062,6 +1050,7 @@ ViscousTensorOp::
 create(LevelData<FArrayBox>&       a_lhs,
        const LevelData<FArrayBox>& a_rhs)
 {
+  CH_TIME("oldVTO::create");
   m_levelOps.create(a_lhs, a_rhs);
 }
 /***/
@@ -1070,6 +1059,7 @@ ViscousTensorOp::
 assign(LevelData<FArrayBox>&       a_lhs,
        const LevelData<FArrayBox>& a_rhs)
 {
+  CH_TIME("oldVTO::assign");
   m_levelOps.assign(a_lhs, a_rhs);
 }
 /***/
@@ -1087,6 +1077,7 @@ incr( LevelData<FArrayBox>&       a_lhs,
       const LevelData<FArrayBox>& a_x,
       Real a_scale)
 {
+  CH_TIME("oldVTO::incr");
   m_levelOps.incr(a_lhs, a_x, a_scale);
 }
 /***/
@@ -1097,6 +1088,7 @@ axby( LevelData<FArrayBox>&       a_lhs,
       const LevelData<FArrayBox>& a_y,
       Real a_a, Real a_b)
 {
+  CH_TIME("oldVTO::axby");
   m_levelOps.axby(a_lhs, a_x, a_y, a_a, a_b);
 }
 /***/
@@ -1105,6 +1097,7 @@ ViscousTensorOp::
 scale(LevelData<FArrayBox>& a_lhs,
       const Real& a_scale)
 {
+  CH_TIME("oldVTO::scale");
   m_levelOps.scale(a_lhs, a_scale);
 }
 /***/
@@ -1112,6 +1105,7 @@ void
 ViscousTensorOp::
 setToZero(LevelData<FArrayBox>& a_lhs)
 {
+  CH_TIME("oldVTO::setToZero");
   m_levelOps.setToZero(a_lhs);
 }
 
@@ -1146,82 +1140,83 @@ relax(LevelData<FArrayBox>&       a_phi,
 
   
   while (whichIter < a_iterations && !done)
+  {
+    if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
+      assignLocal(prevPhi,a_phi); // no point doing this if we aren't testing
+
+    // "lazy" = call once/iteration. "not lazy" = call every color
+    if (s_lazy_gsrb)
     {
-      if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
-        assignLocal(prevPhi,a_phi); // no point doing this if we aren't testing
+      // this calls exchange whether or not there is a coarse level
+      homogeneousCFInterp(a_phi);
+    }
+      
+    // Loop over all possibilities (in all dimensions)
+    for (int icolor = 0; icolor < m_colors.size(); icolor++)
+    {
+      const IntVect& color= m_colors[icolor];
 
       // "lazy" = call once/iteration. "not lazy" = call every color
-      if (s_lazy_gsrb)
-        {
-          // this calls exchange whether or not there is a coarse level
-          homogeneousCFInterp(a_phi);
-        }
-      
-      // Loop over all possibilities (in all dimensions)
-      for (int icolor = 0; icolor < m_colors.size(); icolor++)
-        {
-          const IntVect& color= m_colors[icolor];
-
-          // "lazy" = call once/iteration. "not lazy" = call every color
-          if (!s_lazy_gsrb)
-            {
-              // this calls exchange whether or not there is a coarse level
-              homogeneousCFInterp(a_phi);
-            }
+      if (!s_lazy_gsrb)
+      {
+        // this calls exchange whether or not there is a coarse level
+        homogeneousCFInterp(a_phi);
+      }
           
-          //after this lphi = L(phi)
-          //this call contains bcs but no exchange
-          applyOpNoExchange(lphi, a_phi, true);
+      //after this lphi = L(phi)
+      //this call contains bcs but no exchange
+      applyOpNoExchange(lphi, a_phi, true);
 
-          for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
-            {
-              Box dblBox  = dbl.get(dit());
+      for (DataIterator dit = dbl.dataIterator(); dit.ok(); ++dit)
+      {
+        Box dblBox  = dbl.get(dit());
 
-              IntVect loIV = dblBox.smallEnd();
-              IntVect hiIV = dblBox.bigEnd();
+        IntVect loIV = dblBox.smallEnd();
+        IntVect hiIV = dblBox.bigEnd();
 
-              for (int idir = 0; idir < SpaceDim; idir++)
-                {
-                  if (abs(loIV[idir]) % 2 != color[idir])
-                    {
-                      loIV[idir]++;
-                    }
-                }
+        for (int idir = 0; idir < SpaceDim; idir++)
+        {
+          if (abs(loIV[idir]) % 2 != color[idir])
+          {
+            loIV[idir]++;
+          }
+        }
 
-              if (loIV <= hiIV)
-                {
-                  Box coloredBox(loIV, hiIV);
-                  FORT_GSRBVTOP(CHF_FRA(a_phi[dit]),
-                                CHF_CONST_FRA( lphi[dit]),
-                                CHF_CONST_FRA(a_rhs[dit]),
-                                CHF_CONST_FRA(m_relaxCoef[dit]),
-                                CHF_BOX(coloredBox),
-                                CHF_CONST_INT(m_ncomp));
-                }
-            }
-        } // end loop through red-black
+        if (loIV <= hiIV)
+        {
+          Box coloredBox(loIV, hiIV);
+          FORT_GSRBVTOP(CHF_FRA(a_phi[dit]),
+                        CHF_CONST_FRA( lphi[dit]),
+                        CHF_CONST_FRA(a_rhs[dit]),
+                        CHF_CONST_FRA(m_relaxCoef[dit]),
+                        CHF_BOX(coloredBox),
+                        CHF_CONST_INT(m_ncomp));
+        }
+      }
+    } // end loop through red-black
 
       //slc : if we have done at least some smooths, give up if they
       //      are no longer changing the solution much. This is not
       //      fatal : it usually leads to multigrid happiness.
 
-      if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
-      {
-        Real maxPhi =  norm(a_phi,0);
-        CH_assert(maxPhi < HUGE_NORM);
-        incr(prevPhi,a_phi,-1.0);
-        Real maxDPhi = norm(prevPhi, 0);
-        CH_assert(maxDPhi < HUGE_NORM);
-        done = maxDPhi < m_relaxTolerance * (maxPhi + TINY_NORM);
-      }
-      whichIter++;
+    if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
+    {
+      Real maxPhi =  norm(a_phi,0);
+      CH_assert(maxPhi < HUGE_NORM);
+      incr(prevPhi,a_phi,-1.0);
+      Real maxDPhi = norm(prevPhi, 0);
+      CH_assert(maxDPhi < HUGE_NORM);
+      done = maxDPhi < m_relaxTolerance * (maxPhi + TINY_NORM);
     }
+    whichIter++;
+  }
 }
 /***/
 Real
 ViscousTensorOp::
 norm(const LevelData<FArrayBox>& a_x, int a_ord)
 {
+  CH_TIME("oldVTO::norm");
   return CH_XD::norm(a_x, a_x.interval(), a_ord);
 }
 
@@ -1245,6 +1240,7 @@ ViscousTensorOp(const DisjointBoxLayout&                    a_grids,
                 Real                                        a_relaxTolerance,
                 int                                         a_relaxMinIter)
 {
+  CH_TIME("oldVTO::constructor10");
   BCHolder bc(a_bc);
   define(a_grids, a_gridsFine, a_gridsCoar, a_eta, a_lambda,
          a_acoef, a_alpha, a_beta, a_refToFine, a_refToCoar,
@@ -1272,6 +1268,7 @@ ViscousTensorOp(const DisjointBoxLayout&                    a_grids,
                 Real                                        a_relaxTolerance,
                 int                                         a_relaxMinIter)
 {
+  CH_TIME("oldVTO::constructor11");
   define(a_grids, a_gridsFine, a_gridsCoar, a_eta, a_lambda,
          a_acoef, a_alpha, a_beta, a_refToFine, a_refToCoar,
          a_domain, a_dx, a_dxCrse, a_bc, a_safety, a_relaxTolerance,a_relaxMinIter);
@@ -1298,6 +1295,7 @@ define(const DisjointBoxLayout&                    a_grids,
        int                                         a_relaxMinIter)
 
 {
+  CH_TIME("oldVTO::define11");
   vtogetMultiColors(m_colors);
   m_acoef         =  a_acoef;
   m_lambda        =  a_lambda;
@@ -1317,52 +1315,52 @@ define(const DisjointBoxLayout&                    a_grids,
 
   m_exchangeCopier.define(a_grids, a_grids, IntVect::Unit, true);
   if (a_gridsCoar.isClosed())
-    {
-      m_interpWithCoarser.define(a_grids, &a_gridsCoar, a_dx,
-                                 m_refToCoar, SpaceDim, m_domain);
-    }
+  {
+    m_interpWithCoarser.define(a_grids, &a_gridsCoar, a_dx,
+                               m_refToCoar, SpaceDim, m_domain);
+  }
 
   for (int i=0; i<CH_SPACEDIM; ++i)
+  {
+    LayoutData<CFIVS>& lo =  m_loCFIVS[i];
+    LayoutData<CFIVS>& hi =  m_hiCFIVS[i];
+    lo.define(a_grids);
+    hi.define(a_grids);
+    for (DataIterator dit(a_grids); dit.ok(); ++dit)
     {
-      LayoutData<CFIVS>& lo =  m_loCFIVS[i];
-      LayoutData<CFIVS>& hi =  m_hiCFIVS[i];
-      lo.define(a_grids);
-      hi.define(a_grids);
-      for (DataIterator dit(a_grids); dit.ok(); ++dit)
-        {
-          lo[dit].define(a_domain, a_grids.get(dit),a_grids, i, Side::Lo);
-          hi[dit].define(a_domain, a_grids.get(dit),a_grids, i, Side::Hi);
-        }
+      lo[dit].define(a_domain, a_grids.get(dit),a_grids, i, Side::Lo);
+      hi[dit].define(a_domain, a_grids.get(dit),a_grids, i, Side::Hi);
     }
+  }
 
   //define lambda, the relaxation coef
   m_relaxCoef.define(a_grids, SpaceDim,          IntVect::Zero);
   m_grad.define(     a_grids, SpaceDim*SpaceDim, IntVect::Unit);
   DataIterator lit = a_grids.dataIterator();
   for (int idir = 0; idir < SpaceDim; idir++)
+  {
+    m_loCFIVS[idir].define(a_grids);
+    m_hiCFIVS[idir].define(a_grids);
+    m_loTanStencilSets[idir].define(a_grids);
+    m_hiTanStencilSets[idir].define(a_grids);
+
+    for (lit.begin(); lit.ok(); ++lit)
     {
-      m_loCFIVS[idir].define(a_grids);
-      m_hiCFIVS[idir].define(a_grids);
-      m_loTanStencilSets[idir].define(a_grids);
-      m_hiTanStencilSets[idir].define(a_grids);
+      m_loCFIVS[idir][lit()].define(m_domain, a_grids.get(lit()),
+                                    a_grids, idir,Side::Lo);
+      m_hiCFIVS[idir][lit()].define(m_domain, a_grids.get(lit()),
+                                    a_grids, idir,Side::Hi);
 
-      for (lit.begin(); lit.ok(); ++lit)
-        {
-          m_loCFIVS[idir][lit()].define(m_domain, a_grids.get(lit()),
-                                        a_grids, idir,Side::Lo);
-          m_hiCFIVS[idir][lit()].define(m_domain, a_grids.get(lit()),
-                                        a_grids, idir,Side::Hi);
+      const IntVectSet& fineIVSlo = m_loCFIVS[idir][lit()].getFineIVS();
+      m_loTanStencilSets[idir][lit()].define(fineIVSlo,
+                                             m_domain, idir);
 
-          const IntVectSet& fineIVSlo = m_loCFIVS[idir][lit()].getFineIVS();
-          m_loTanStencilSets[idir][lit()].define(fineIVSlo,
-                                                 m_domain, idir);
+      const IntVectSet& fineIVShi = m_hiCFIVS[idir][lit()].getFineIVS();
+      m_hiTanStencilSets[idir][lit()].define(fineIVShi,
+                                             m_domain, idir);
 
-          const IntVectSet& fineIVShi = m_hiCFIVS[idir][lit()].getFineIVS();
-          m_hiTanStencilSets[idir][lit()].define(fineIVShi,
-                                                 m_domain, idir);
-
-        }
     }
+  }
   defineRelCoef();
   m_levelOps.setToZero(m_grad);
 }
@@ -1370,45 +1368,42 @@ void
 ViscousTensorOp::
 defineRelCoef()
 {
+  CH_TIME("oldVTO::defineRelCoef11");
 
   DisjointBoxLayout grids = m_relaxCoef.disjointBoxLayout();
   for (DataIterator dit(grids); dit.ok(); ++dit)
+  {
+    const Box& grid = grids.get(dit());
+    for (int ivar = 0; ivar < SpaceDim; ivar++)
     {
-      const Box& grid = grids.get(dit());
-      for (int ivar = 0; ivar < SpaceDim; ivar++)
-        {
-          int src = 0; int dst = ivar; int ncomp = 1;
-          m_relaxCoef[dit()].copy((*m_acoef)[dit()], src,dst,ncomp);
-        }
-      m_relaxCoef[dit()] *= m_alpha;
-      for (int idir = 0; idir < SpaceDim; idir++)
-        {
-          FORT_DECRINVRELCOEFVTOP(CHF_FRA(m_relaxCoef[dit()]),
-                                  CHF_FRA((*m_eta)[dit()][idir]),
-                                  CHF_FRA((*m_lambda)[dit()][idir]),
-                                  CHF_CONST_REAL(m_beta),
-                                  CHF_BOX(grid),
-                                  CHF_REAL(m_dx),
-                                  CHF_INT(idir),
-                                  CHF_INT(m_ncomp));
-#if 0
-          CH_assert(abs(m_relaxCoef[dit()].min(0)) > 1.0e-15
-                    && abs(m_relaxCoef[dit()].max(0)) > 1.0e-15);
-#endif
-
-        }
-
-      //now invert so lambda = stable lambda for variable coef lapl
-      //(according to phil, this is the correct lambda)
-
-      FORT_INVERTLAMBDAVTOP(CHF_FRA(m_relaxCoef[dit()]),
-                            CHF_REAL(m_safety),
-                            CHF_BOX(grid),
-                            CHF_INT(m_ncomp));
-
-      CH_assert(m_relaxCoef[dit()].norm(0) < 1.0e+15);
+      int src = 0; int dst = ivar; int ncomp = 1;
+      m_relaxCoef[dit()].copy((*m_acoef)[dit()], src,dst,ncomp);
+    }
+    m_relaxCoef[dit()] *= m_alpha;
+    for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      FORT_DECRINVRELCOEFVTOP(CHF_FRA(m_relaxCoef[dit()]),
+                              CHF_FRA((*m_eta)[dit()][idir]),
+                              CHF_FRA((*m_lambda)[dit()][idir]),
+                              CHF_CONST_REAL(m_beta),
+                              CHF_BOX(grid),
+                              CHF_REAL(m_dx),
+                              CHF_INT(idir),
+                              CHF_INT(m_ncomp));
 
     }
+
+    //now invert so lambda = stable lambda for variable coef lapl
+    //(according to phil, this is the correct lambda)
+
+    FORT_INVERTLAMBDAVTOP(CHF_FRA(m_relaxCoef[dit()]),
+                          CHF_REAL(m_safety),
+                          CHF_BOX(grid),
+                          CHF_INT(m_ncomp));
+
+    CH_assert(m_relaxCoef[dit()].norm(0) < 1.0e+15);
+
+  }
 }
 
 /***/
@@ -1502,18 +1497,18 @@ MGnewOp(const ProblemDomain& a_indexSpace,
   int ref = 0;
   bool found = false;
   for (int ivec = 0; ivec < m_domains.size(); ivec++)
+  {
+    if (a_indexSpace.domainBox() == m_domains[ivec].domainBox())
     {
-      if (a_indexSpace.domainBox() == m_domains[ivec].domainBox())
-        {
-          found = true;
-          ref = ivec;
-          break;
-        }
+      found = true;
+      ref = ivec;
+      break;
     }
+  }
   if (!found)
-    {
-      MayDay::Error("Domain not found in AMR hierarchy");
-    }
+  {
+    MayDay::Error("Domain not found in AMR hierarchy");
+  }
 
   DisjointBoxLayout layout(m_boxes[ref]);
   ProblemDomain domain(m_domains[ref]);
@@ -1521,47 +1516,47 @@ MGnewOp(const ProblemDomain& a_indexSpace,
 
   int refToDepth = 1;
   for (int i=0; i< a_depth; i++)
-    {
-      if (!layout.coarsenable(4)) return NULL;
-      DisjointBoxLayout dbl;
-      coarsen_dbl(dbl, layout, 2);
-      layout = dbl;
-      dx*=2;
-      refToDepth *= 2;
-      domain.coarsen(2);
-    }
+  {
+    if (!layout.coarsenable(4)) return NULL;
+    DisjointBoxLayout dbl;
+    coarsen_dbl(dbl, layout, 2);
+    layout = dbl;
+    dx*=2;
+    refToDepth *= 2;
+    domain.coarsen(2);
+  }
   
   RefCountedPtr<LevelData<FluxBox> >     eta;
   RefCountedPtr<LevelData<FluxBox> >  lambda;
   RefCountedPtr<LevelData<FArrayBox> > acoef;
 
   if (a_depth == 0)
-    {      
-      // (DFM 5/11/12) copy refCountedPtr to existing storage 
-      // instead of allocating new storage
-      eta = m_eta[ref];
-      lambda = m_lambda[ref];
-      acoef = m_acoef[ref];
-    }
+  {      
+    // (DFM 5/11/12) copy refCountedPtr to existing storage 
+    // instead of allocating new storage
+    eta = m_eta[ref];
+    lambda = m_lambda[ref];
+    acoef = m_acoef[ref];
+  }
   else
-    {
-      // allocated (coarsened) storage and do coarsening
-      RefCountedPtr<LevelData<FluxBox> >     etaNew( new LevelData<FluxBox>  (layout, 1, IntVect::Zero) );
-      RefCountedPtr<LevelData<FluxBox> >  lambdaNew( new LevelData<FluxBox>  (layout, 1, IntVect::Zero) );
-      RefCountedPtr<LevelData<FArrayBox> > acoefNew( new LevelData<FArrayBox>(layout, 1, IntVect::Zero) );
-      coarsenStuff(*etaNew, *lambdaNew,  *acoefNew, *m_eta[ref], *m_lambda[ref],  *m_acoef[ref], refToDepth, s_coefficientAverageType);
+  {
+    // allocated (coarsened) storage and do coarsening
+    RefCountedPtr<LevelData<FluxBox> >     etaNew( new LevelData<FluxBox>  (layout, 1, IntVect::Zero) );
+    RefCountedPtr<LevelData<FluxBox> >  lambdaNew( new LevelData<FluxBox>  (layout, 1, IntVect::Zero) );
+    RefCountedPtr<LevelData<FArrayBox> > acoefNew( new LevelData<FArrayBox>(layout, 1, IntVect::Zero) );
+    coarsenStuff(*etaNew, *lambdaNew,  *acoefNew, *m_eta[ref], *m_lambda[ref],  *m_acoef[ref], refToDepth, s_coefficientAverageType);
 
-      eta = etaNew;
-      lambda = lambdaNew;
-      acoef = acoefNew;
-    }
-      //no coarser or finer grids
-      //no reftocoar, reftofine
+    eta = etaNew;
+    lambda = lambdaNew;
+    acoef = acoefNew;
+  }
+  //no coarser or finer grids
+  //no reftocoar, reftofine
   Real dxCrse = 2*m_dx[ref];
   if (ref > 0)
-    {
-      dxCrse = m_dx[ref-1];
-    }
+  {
+    dxCrse = m_dx[ref-1];
+  }
   ViscousTensorOp* newOp = new ViscousTensorOp(layout, DisjointBoxLayout(), DisjointBoxLayout(),
                                                eta, lambda, acoef, m_alpha, m_beta, -1, -1,
                                                domain,  dx, dxCrse, m_bc, m_safety, m_relaxTolerance, m_relaxMinIter);
@@ -1586,9 +1581,9 @@ AMROperatorNC(LevelData<FArrayBox>&       a_LofPhi,
   const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
-    }
+  {
+    m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
+  }
   
   // fillGrad called on a_phiFine
   reflux(a_phiFine, a_phi,  a_LofPhi, a_finerOp);
@@ -1607,10 +1602,10 @@ AMROperatorNF(LevelData<FArrayBox>& a_LofPhi,
 
   // if no exchange done in cfinterp, do it explicity now
   if (!a_phiCoarse.isDefined())
-    {
-      LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-      phi.exchange();
-    }
+  {
+    LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
+    phi.exchange();
+  }
   
   
   //apply boundary conditions in applyOp
@@ -1632,20 +1627,20 @@ AMROperator(      LevelData<FArrayBox>& a_LofPhi,
 
   applyOp(a_LofPhi, a_phi, a_homogeneousPhysBC);
   if (a_finerOp != NULL)
+  {
+    // set BCs for fillGrad
+    LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phiFine;
+    ViscousTensorOp *fineOp = (ViscousTensorOp*)a_finerOp;
+    const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
+    DataIterator dit = phi.dataIterator();
+    for (dit.begin(); dit.ok(); ++dit)
     {
-      // set BCs for fillGrad
-      LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phiFine;
-      ViscousTensorOp *fineOp = (ViscousTensorOp*)a_finerOp;
-      const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
-      DataIterator dit = phi.dataIterator();
-      for (dit.begin(); dit.ok(); ++dit)
-        {
-          m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
-        }
-      
-      // fillGrad called on a_phiFine
-      reflux(a_phiFine, a_phi,  a_LofPhi, a_finerOp);
+      m_bc(phi[dit], dbl[dit()], fineOp->m_domain, fineOp->m_dx, a_homogeneousPhysBC, dit());
     }
+      
+    // fillGrad called on a_phiFine
+    reflux(a_phiFine, a_phi,  a_LofPhi, a_finerOp);
+  }
 }
 /***/
 ViscousTensorOp*
@@ -1655,18 +1650,18 @@ AMRnewOp(const ProblemDomain& a_indexSpace)
   int ref = 0;
   bool found = false;
   for (int ivec = 0; ivec < m_domains.size(); ivec++)
+  {
+    if (a_indexSpace.domainBox() == m_domains[ivec].domainBox())
     {
-      if (a_indexSpace.domainBox() == m_domains[ivec].domainBox())
-        {
-          found = true;
-          ref = ivec;
-          break;
-        }
+      found = true;
+      ref = ivec;
+      break;
     }
+  }
   if (!found)
-    {
-      MayDay::Error("Domain not found in AMR hierarchy");
-    }
+  {
+    MayDay::Error("Domain not found in AMR hierarchy");
+  }
 
   int refToCoar = 2;
   // (DFM 3/22/10) -- set this to a bogus value to make sure it isn't
@@ -1676,17 +1671,17 @@ AMRnewOp(const ProblemDomain& a_indexSpace)
   DisjointBoxLayout dblFine, dblCoar;
   Real dxCrse = 2*m_dx[ref];
   if (ref > 0) //not at coarsest level
-    {
-      dblCoar   = m_boxes[ref-1];
-      refToCoar = m_refRatios[ref-1];
-      dxCrse    = m_dx[ref-1];
-    }
+  {
+    dblCoar   = m_boxes[ref-1];
+    refToCoar = m_refRatios[ref-1];
+    dxCrse    = m_dx[ref-1];
+  }
 
   if (ref < (m_domains.size()-1)) //not at finest level
-    {
-      dblFine = m_boxes[ref+1];
-      refToFine = m_refRatios[ref];
-    }
+  {
+    dblFine = m_boxes[ref+1];
+    refToFine = m_refRatios[ref];
+  }
 
   ViscousTensorOp* newOp = new ViscousTensorOp(m_boxes[ref], dblFine, dblCoar,
                                                m_eta[ref],   m_lambda[ref], m_acoef[ref],
@@ -1705,17 +1700,17 @@ refToFiner(const ProblemDomain& a_domain) const
   int retval = -1;
   bool found = false;
   for (int ilev = 0; ilev < m_domains.size(); ilev++)
+  {
+    if (m_domains[ilev].domainBox() == a_domain.domainBox())
     {
-      if (m_domains[ilev].domainBox() == a_domain.domainBox())
-        {
-          retval = m_refRatios[ilev];
-          found = true;
-        }
+      retval = m_refRatios[ilev];
+      found = true;
     }
+  }
   if (!found)
-    {
-      MayDay::Error("Domain not found in AMR hierarchy");
-    }
+  {
+    MayDay::Error("Domain not found in AMR hierarchy");
+  }
   return retval;
 }
 
@@ -1737,18 +1732,18 @@ cellGrad(FArrayBox&             a_gradPhi,
   CH_assert(a_phi.nComp() == SpaceDim);
 
   for (int derivDir = 0; derivDir < SpaceDim; derivDir++)
+  {
+    for (int phiDir = 0; phiDir < SpaceDim; phiDir++)
     {
-      for (int phiDir = 0; phiDir < SpaceDim; phiDir++)
-        {
-          int gradcomp = TensorCFInterp::gradIndex(phiDir,derivDir);
-          FORT_CELLGRADVTOP(CHF_FRA1(a_gradPhi, gradcomp),
-                            CHF_CONST_FRA1(a_phi, phiDir),
-                            CHF_BOX(a_grid),
-                            CHF_CONST_REAL(m_dx),
-                            CHF_CONST_INT(derivDir));
+      int gradcomp = TensorCFInterp::gradIndex(phiDir,derivDir);
+      FORT_CELLGRADVTOP(CHF_FRA1(a_gradPhi, gradcomp),
+                        CHF_CONST_FRA1(a_phi, phiDir),
+                        CHF_BOX(a_grid),
+                        CHF_CONST_REAL(m_dx),
+                        CHF_CONST_INT(derivDir));
 
-        }
     }
+  }
 }
 /**/
 void
@@ -1759,9 +1754,9 @@ cfinterp(const LevelData<FArrayBox>&       a_phi,
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   m_levelOps.setToZero(m_grad);
   if (a_phiCoarse.isDefined())
-    {
-      m_interpWithCoarser.coarseFineInterp(phi, m_grad, a_phiCoarse);
-    }
+  {
+    m_interpWithCoarser.coarseFineInterp(phi, m_grad, a_phiCoarse);
+  }
 }
 /**/
 
@@ -1774,11 +1769,11 @@ fillGradNoExchange(const LevelData<FArrayBox>&       a_phi)
   const DisjointBoxLayout& grids = a_phi.disjointBoxLayout();
   //compute gradient of phi for parts NOT in ghost cells
   for (DataIterator dit = grids.dataIterator(); dit.ok(); ++dit)
-    {
-      cellGrad(m_grad[dit()],
-               a_phi [dit()],
-               grids.get(dit()));
-    }
+  {
+    cellGrad(m_grad[dit()],
+             a_phi [dit()],
+             grids.get(dit()));
+  }
   m_grad.exchange();
 }
 
@@ -1793,11 +1788,11 @@ fillGrad(const LevelData<FArrayBox>&       a_phi)
   const DisjointBoxLayout& grids = a_phi.disjointBoxLayout();
   //compute gradient of phi for parts NOT in ghost cells
   for (DataIterator dit = grids.dataIterator(); dit.ok(); ++dit)
-    {
-      cellGrad(m_grad[dit()],
-               a_phi [dit()],
-               grids.get(dit()));
-    }
+  {
+    cellGrad(m_grad[dit()],
+             a_phi [dit()],
+             grids.get(dit()));
+  }
   m_grad.exchange();
 }
 

@@ -912,17 +912,18 @@ namespace PrCh_AMR_Elliptic
       typedef Proto_Transition::DataUtilities<DIM> pr_trans_data_vec;
       pr_dom domain = ProtoCh::getProtoDomain(a_domain);
       pr_box dombox = domain.box();
+      int force_num_ghost = 1;
       for(int idir = 0; idir < DIM; idir++)
       {
         for(int hilo = 0; hilo < 2; hilo++)
         {
           if(m_domBC == string("Dirichlet"))
           {
-            pr_trans_data_vec::domainGhostReflectOdd( a_phi, dombox, idir, hilo);
+            pr_trans_data_vec::domainGhostReflectOdd( a_phi, dombox, idir, hilo, force_num_ghost);
           }
           else if(m_domBC == string("Neumann"))
           {
-            pr_trans_data_vec::domainGhostReflectEven(a_phi, dombox, idir, hilo);
+            pr_trans_data_vec::domainGhostReflectEven(a_phi, dombox, idir, hilo, force_num_ghost);
           }
           else
           {
