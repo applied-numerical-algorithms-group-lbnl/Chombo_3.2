@@ -869,6 +869,7 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
     int gradComp = TensorCFInterp::gradIndex(divDir,divDir);
     if(slow_relax_mode)
     {
+      CH_TIME("div_u_incr_separate");
       ///for debugging other codes
       FArrayBox div_u_incr(a_faceDiv.box(), 1);
       div_u_incr.setVal(0.);
@@ -889,6 +890,7 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
     }
     else
     {
+      CH_TIME("div_u_incr_in_place");
       ///this standard version should be a bit faster
       FORT_FACEDIVINCRVTOP(CHF_FRA1(a_faceDiv, 0),
                            CHF_FRA(a_data),
@@ -909,31 +911,34 @@ getFaceDivAndGrad(FArrayBox&             a_faceDiv,
     //use diffs in data if divDir == faceDir
   }
 
-  int ibreak = 4586; //for debugging other codes
-  a_faceGrad.setVal(0.);
-  for (int divDir = 0; divDir < SpaceDim; divDir++)
   {
-    for (int velDir = 0; velDir < SpaceDim; velDir++)
+    CH_TIME("face_grad_calculation");
+    int ibreak = 4586; //for debugging other codes
+    a_faceGrad.setVal(0.);
+    for (int divDir = 0; divDir < SpaceDim; divDir++)
     {
-      int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
-      FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
-                           CHF_FRA1(a_gradData, gradcomp),
-                           CHF_FRA1(a_data, velDir),
-                           CHF_BOX(a_faceBox),
-                           CHF_BOX(interiorFaceBox),
-                           CHF_BOX(loBoxFace),
-                           CHF_INT(hasLo),
-                           CHF_BOX(hiBoxFace),
-                           CHF_INT(hasHi),
-                           CHF_REAL(a_dx),
-                           CHF_INT(a_faceDir),
-                           CHF_INT(divDir));
-      ibreak = 0; //stop here for after grad_comp computation
+      for (int velDir = 0; velDir < SpaceDim; velDir++)
+      {
+        CH_TIME("fortran call");
+        int gradcomp = TensorCFInterp::gradIndex(velDir,divDir);
+        FORT_GETFACEGRADVTOP(CHF_FRA1(a_faceGrad, gradcomp),
+                             CHF_FRA1(a_gradData, gradcomp),
+                             CHF_FRA1(a_data, velDir),
+                             CHF_BOX(a_faceBox),
+                             CHF_BOX(interiorFaceBox),
+                             CHF_BOX(loBoxFace),
+                             CHF_INT(hasLo),
+                             CHF_BOX(hiBoxFace),
+                             CHF_INT(hasHi),
+                             CHF_REAL(a_dx),
+                             CHF_INT(a_faceDir),
+                             CHF_INT(divDir));
+        ibreak = 0; //stop here for after grad_comp computation
+      }
+      ibreak = 0;   //stop here for the end of velDir loop
     }
-    ibreak = 0;   //stop here for the end of velDir loop
-
+    ibreak = 0;     //stop here for the end of divDir loop
   }
-  ibreak = 0;     //stop here for the end of divDir loop
 }
 /***/
 void ViscousTensorOp::getFlux(FArrayBox&       a_flux,
@@ -1663,7 +1668,10 @@ MGnewOp(const ProblemDomain& a_indexSpace,
   int refToDepth = 1;
   for (int i=0; i< a_depth; i++)
   {
-    if (!layout.coarsenable(4)) return NULL;
+    if (!layout.coarsenable(4))
+    {
+      return NULL;
+    }
     DisjointBoxLayout dbl;
     coarsen_dbl(dbl, layout, 2);
     layout = dbl;

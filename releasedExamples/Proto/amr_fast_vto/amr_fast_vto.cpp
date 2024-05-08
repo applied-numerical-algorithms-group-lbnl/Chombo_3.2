@@ -107,13 +107,19 @@ namespace Chombo
       pp.get("acoef_value" , aco_val);
       pp.get("eta_value"   , eta_val);
       pp.get("lambda_value", lam_val);
-      int num_bottom = 4586;
-      ppUtil.get("num_bottom", num_bottom);
       ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
-      RelaxSolver<pr_lbd_vec>* raw_bottom_ptr = new RelaxSolver< pr_lbd_vec > ();
-      raw_bottom_ptr->m_imax = num_bottom;
-      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(raw_bottom_ptr);
+#if 0
+      //relax solver was not converging well in 3d
+      int num_bottom = 4586;
+      ppUtil.get("num_bottom", num_bottom);
+      RelaxSolver<pr_lbd_vec>* derived_raw_ptr = new RelaxSolver< pr_lbd_vec > ();
+      derived_raw_ptr->m_fixedNumber = num_bottom;
+#else
+      BiCGStabSolver<pr_lbd_vec>* derived_raw_ptr = new BiCGStabSolver< pr_lbd_vec > ();
+#endif      
+      
+      shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(derived_raw_ptr);
       Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > eta(numLevels);
       Vector<RefCountedPtr< ch_ldf_flux > > lam(numLevels);
@@ -161,16 +167,26 @@ namespace Chombo
       //get the rhs onto the device
       for(int ilev = 0; ilev < numLevels; ilev++)
       {
+        CH_TIME("main::copyToDevice");
         PrChUtilities<DIM>::copyToDevice(*rhs_pr[ilev], *a_rhs_ch[ilev]);
       }
 
       //solve for phi on the device
       bool zeroInitialGuess = true;  int lbase = 0; int lmax = numLevels-1; bool print = true;
-      amr_solver_ptr->solve(phi_pr, rhs_pr, lmax, lbase, zeroInitialGuess, print); 
+      int num_solves=1;
+      Chombo::ParmParse ppmain("main");
+      ppmain.query("num_solves", num_solves);
+      for(int isolve = 0; isolve < num_solves; isolve++)
+      {
+        CH_TIME("main::actualSolve");
+        pout() << "Solve number " << isolve << ":" << endl;
+        amr_solver_ptr->solve(phi_pr, rhs_pr, lmax, lbase, zeroInitialGuess, print);
+      }
 
       //get phi back onto the host
       for(int ilev = 0; ilev < a_amr_grids.size(); ilev++)
       {
+        CH_TIME("main::copyToHost");
         PrChUtilities<DIM>::copyToHost(*a_phi_ch[ilev], *phi_pr[ilev]);
       }
 
@@ -272,6 +288,7 @@ int main(int argc, char* argv[])
   }
   char* in_file = argv[1];
   Chombo::ParmParse  pp(argc-2,argv+2,NULL,in_file);
+  CH_XD::setPoutBaseName(string("pout_fastvto"));
   Chombo::pout() << "Running amr_viscous_tensor for DIM= " <<  Chombo::SpaceDim << endl;
   int status = Chombo::local_test_harness::runSolver();
   

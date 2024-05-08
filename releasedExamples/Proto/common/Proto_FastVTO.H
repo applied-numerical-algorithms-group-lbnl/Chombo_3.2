@@ -647,73 +647,78 @@ namespace PrCh_AMR_Elliptic
       PrCh_Lo_Hi_Center::loHiCenterFace(lo_box, hi_box, ce_box,
                                         has_lo, has_hi, a_flux_box,
                                         a_valid, a_face_dir, domain);
-      
-      for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
-      {
-        div_u_incr.setVal(0.);  //this is important.
-        lo_hi_center_t diff_velo_lhc;
-        if(diff_dir == a_face_dir)
-        {
-          /**
-             Stencil for partial(u_facedir)/partial(x_facedir)
-             This is a centered difference of velocity  only and relies upon 
-             the velocity  having correct ghost cell values.
-          **/
-          getNormalFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
-                                   a_face_dir, diff_dir, a_flux_box);
-          
-        }
-        else
-        {
-          /**
-             Stencil for partial(u_veldir)/partial(x_diffdir) | facedir
-             where facedir != diffdir.
-             We average the nearby centered differences.   This means 4
-             nearby phis in the interior, 2 at domain boundaries.
-          **/
-          getTangentialFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
-                                       a_face_dir, diff_dir, a_flux_box);
-        }
-        /**
-           Component matches diff_dir because this is divergence
-        **/
-        pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
-        /**
-           This is standard chombo dst, src so div_u_incr is  the output.
-        **/
-        PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, velo_comp, &velo_comp, &velo_comp,
-                                           diff_velo_lhc);
-        a_face_div += div_u_incr;
-      }
 
-      //now for the gradient
-      int ibreak = 4586;
-      for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
       {
-        for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
+        CH_TIME("div_u_calculation");
+        for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
         {
-          int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
-          pr_box_data_sca velo_comp      = Proto::slice(a_phi      , velo_dir);
-          pr_box_data_sca face_grad_comp = Proto::slice(a_face_grad, grad_ind);
+          div_u_incr.setVal(0.);  //this is important.
           lo_hi_center_t diff_velo_lhc;
-          if( (a_face_dir == diff_dir) )
+          if(diff_dir == a_face_dir)
           {
-            getNormalFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi, // 
+            /**
+               Stencil for partial(u_facedir)/partial(x_facedir)
+               This is a centered difference of velocity  only and relies upon 
+               the velocity  having correct ghost cell values.
+            **/
+            getNormalFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                      a_face_dir, diff_dir, a_flux_box);
+          
           }
           else
           {
-            getTangentialFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi, // 
+            /**
+               Stencil for partial(u_veldir)/partial(x_diffdir) | facedir
+               where facedir != diffdir.
+               We average the nearby centered differences.   This means 4
+               nearby phis in the interior, 2 at domain boundaries.
+            **/
+            getTangentialFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi,
                                          a_face_dir, diff_dir, a_flux_box);
           }
-
-          //this is standard chombo dest, src so face_grad_comp is the output
-          PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp, &velo_comp, &velo_comp,
+          /**
+             Component matches diff_dir because this is divergence
+          **/
+          pr_box_data_sca velo_comp = Proto::slice(a_phi, diff_dir);
+          /**
+             This is standard chombo dst, src so div_u_incr is  the output.
+          **/
+          PrCh_Lo_Hi_Center::loHiCenterApply(div_u_incr, velo_comp, &velo_comp, &velo_comp,
                                              diff_velo_lhc);
-          ibreak = 0;
+          a_face_div += div_u_incr;
+        }
+      }
+      {
+        CH_TIME("gradient calculation");
+        //now for the gradient
+        int ibreak = 4586;
+        for(int diff_dir = 0; diff_dir < DIM; diff_dir++)
+        {
+          for(int velo_dir = 0; velo_dir < DIM; velo_dir++)
+          {
+            int grad_ind = gradIndex(velo_dir, diff_dir); // indicies match because this is divergence
+            pr_box_data_sca velo_comp      = Proto::slice(a_phi      , velo_dir);
+            pr_box_data_sca face_grad_comp = Proto::slice(a_face_grad, grad_ind);
+            lo_hi_center_t diff_velo_lhc;
+            if( (a_face_dir == diff_dir) )
+            {
+              getNormalFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi, // 
+                                       a_face_dir, diff_dir, a_flux_box);
+            }
+            else
+            {
+              getTangentialFaceGradStencil(diff_velo_lhc, lo_box, hi_box, ce_box, has_lo, has_hi, // 
+                                           a_face_dir, diff_dir, a_flux_box);
+            }
 
-        }   // end velo_dir loop
-      }     // end diff_dir loop         
+            //this is standard chombo dest, src so face_grad_comp is the output
+            PrCh_Lo_Hi_Center::loHiCenterApply(face_grad_comp, velo_comp, &velo_comp, &velo_comp,
+                                               diff_velo_lhc);
+            ibreak = 0;
+
+          }   // end velo_dir loop
+        }     // end diff_dir loop         
+      }     // timer boundary
       return 0;
     }///end function getFaceDivAndGrad
        

@@ -1517,7 +1517,10 @@ MGnewOp(const ProblemDomain& a_indexSpace,
   int refToDepth = 1;
   for (int i=0; i< a_depth; i++)
   {
-    if (!layout.coarsenable(4)) return NULL;
+    if (!layout.coarsenable(4))
+    {
+      return NULL;
+    }
     DisjointBoxLayout dbl;
     coarsen_dbl(dbl, layout, 2);
     layout = dbl;

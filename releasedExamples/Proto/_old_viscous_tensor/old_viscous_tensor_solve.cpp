@@ -74,13 +74,19 @@ namespace Chombo
 
       shared_ptr<ch_base_solver> bottom_solver;
 
+#if 0
+      //relax solver on bottom was not converging well in 3d
       int num_bottom;
       ppSolver.get("num_bottom", num_bottom);
-      RelaxSolver<ch_ldf_cell >* relax_raw_ptr = new RelaxSolver<ch_ldf_cell >();
-      relax_raw_ptr->m_imax = num_bottom;
-      ch_base_solver* base_raw_ptr =  static_cast<ch_base_solver*>(relax_raw_ptr);
+      RelaxSolver<ch_ldf_cell >* derived_raw_ptr = new RelaxSolver<ch_ldf_cell >();
+      derived_raw_ptr->m_fixedNumber = num_bottom;
+#else
+      //bicgstab
+      BiCGStabSolver<ch_ldf_cell >* derived_raw_ptr = new BiCGStabSolver<ch_ldf_cell >();
+#endif      
+      ch_base_solver* base_raw_ptr =  static_cast<ch_base_solver*>(derived_raw_ptr);
+
       bottom_solver = shared_ptr<ch_base_solver>(base_raw_ptr);
-    
       AMRMultiGrid<  ch_ldf_cell > amr_mg_solver;
       amr_mg_solver.define(a_params.m_coarsestDomain,
                            (*a_opFactory),
@@ -93,8 +99,15 @@ namespace Chombo
       amr_mg_solver.m_verbosity = 3;
       Vector<ch_ldf_cell*> raw_phi = PrChUtilities<1>::getRawVectorCh(a_phi);
       Vector<ch_ldf_cell*> raw_rhs = PrChUtilities<1>::getRawVectorCh(a_rhs);
-      
-      amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_maxLevel, 0, true);
+      int num_solves=1;
+      ParmParse ppmain("main");
+      ppmain.query("num_solves", num_solves);
+      for(int isolve = 0; isolve < num_solves; isolve++)
+      {
+        CH_TIME("main::actualSolve");
+        pout() << "Solve number " << isolve << ":" << endl;
+        amr_mg_solver.solve(raw_phi, raw_rhs, a_params.m_maxLevel, 0, true);
+      }
 
     }//end function poissonSolve
   
@@ -300,6 +313,7 @@ int main(int argc, char* argv[])
   char* inFile = argv[1];
   Chombo::ParmParse pp(argc-2,argv+2,NULL,inFile);
 
+  CH_XD::setPoutBaseName(string("pout_old_vto"));
   Chombo::pout() << "Running old_viscous_tensor for DIM= " <<  Chombo::SpaceDim << endl;
   int status = Chombo::viscous_utils::local_test_harness();
 

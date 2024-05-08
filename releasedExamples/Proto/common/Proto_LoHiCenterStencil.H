@@ -63,6 +63,7 @@ namespace PrCh_Lo_Hi_Center
                  const int     &  a_face_dir,
                  const pr_dom  &  a_domain)
   {
+    CH_TIME("loHiCenterFace");
     /**
        This is writteen following ViscousTensorOp::loHiCenterFace.
        The box calculus here is a bit fussy so I am trying
@@ -159,13 +160,18 @@ namespace PrCh_Lo_Hi_Center
                        const pr_box_data_sca   * a_src_hi_ptr,
                        const LHC_MetaData      & a_sten) 
   {
+    CH_TIME("loHiCenterApply");
     ///always.   
     bool initToZero = true; double applyScale = 1;
     //this is src, dest so a_dst is the output
-    a_sten.m_ce_sten.apply(  a_src_ce, a_dst, a_sten.m_ce_box, initToZero, applyScale);
+    {
+      CH_TIME("actual_cen_apply");
+      a_sten.m_ce_sten.apply(  a_src_ce, a_dst, a_sten.m_ce_box, initToZero, applyScale);
+    }
 
     if(a_sten.m_has_lo == 1)
     {
+      CH_TIME("actual_lo_apply");
       if(a_src_lo_ptr == NULL)
       {
         ch_mayday::Error("loHiCenterApply: Error: has_lo == 1 and src_lo_ptr == NULL");
@@ -175,6 +181,7 @@ namespace PrCh_Lo_Hi_Center
     }
     if(a_sten.m_has_hi == 1)
     {
+      CH_TIME("actual_hi_apply");
       if(a_src_hi_ptr == NULL)
       {
         ch_mayday::Error("loHiCenterApply: Error: has_hi == 1 and src_hi_ptr == NULL");

@@ -246,6 +246,7 @@ namespace PrCh_AMR_Elliptic
     prolongIncrement(pr_lbd              & a_phi_fine,
                      const pr_lbd        & a_cor_coar)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::prolongIncrement");
       int ref_rat = 2;
       vector<pr_sten> zeroth_interp =
         PrChTools::InterpolationUtilities::getZerothInterpStencils(ref_rat);
@@ -334,6 +335,7 @@ namespace PrCh_AMR_Elliptic
                 pr_lbd & a_resFine,
                 int a_ref_rat)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::restriction");
       auto grids =  a_resCoar.layout();
       auto dit   =  a_resCoar.begin();
       for(int ibox = 0; ibox < dit.localSize(); ibox++)
@@ -363,6 +365,7 @@ namespace PrCh_AMR_Elliptic
                          const pr_lbd &  a_phiCoar,
                          ch_amrlevelop*  a_finerOp)
     {
+      CH_TIME("Base_Proto_AMRLevelOp::refluxFineCorrection");
       Base_Proto_AMRLevelOp* cast_finer_op = dynamic_cast<Base_Proto_AMRLevelOp*>(a_finerOp) ;
       double  dxCoar = getDx();
 
