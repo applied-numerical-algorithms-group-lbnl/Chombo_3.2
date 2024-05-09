@@ -17,7 +17,7 @@ print("Today's date:", today)
 
 parser = ArgumentParser()
 
-parser.add_argument('--data_directory', type=str, help='directory where data lives' ,default="_visc_compare_5_3_2024")
+parser.add_argument('--data_directory', type=str, help='directory where data lives' ,default="_visc_compare_5_9_2024")
 parser.add_argument('--output_prefix', type=str, help='Prefix for output file[summary_of_]',default="summary_of")
 parser.add_argument('--max_num_proc', type=int, help='max number of processors for each run'   ,default='8')
 parser.add_argument('--max_num_proc_2d', type=int, help='max number of processors for 2d runs'   ,default='4')
@@ -57,18 +57,22 @@ while i_dim <= 3:
         opera_str      = "4586"
         subdir_name    = "4586"
         operator_entry = "4586"
+        pout_base_name      = "4586"
         if(i_opera == 0):
             opera_str   = "chf_viscous_tensor_op"
             subdir_name = "_old_viscous_tensor"
             operator_entry = "ChF Viscous Op"
+            pout_base_name      = "pout_old_vto.0"
         if(i_opera == 1):
-            opera_str   = "proto_viscous_tensor_op"
-            subdir_name =   "amr_viscous_tensor"
-            operator_entry = "Proto Slow VTO"
+            opera_str       = "proto_viscous_tensor_op"
+            subdir_name     =   "amr_viscous_tensor"
+            operator_entry  = "Proto Slow VTO"
+            pout_base_name  = "pout.0"
         if(i_opera == 2):
-            opera_str   = "proto_fast_vto"
-            subdir_name =   "amr_fast_vto"
-            operator_entry = "Proto Fast VTO"
+            opera_str       = "proto_fast_vto"
+            subdir_name     =   "amr_fast_vto"
+            operator_entry  = "Proto Fast VTO"
+            pout_base_name  = "pout_fastvto.0"
 
         operator_name = opera_str
         #exit()
@@ -104,7 +108,7 @@ while i_dim <= 3:
                     print_str = "directory " + rundir_name + " not found"
                     print (print_str)
                     exit()
-                pout_name = rundir_name + "/pout.0"
+                pout_name = rundir_name + "/" + pout_base_name
                 time_name = rundir_name + "/time.table.0"
                 comm_str_resi = "grep Final_residual  " + pout_name
                 comm_str_iter  = "grep Final_iteration " + pout_name
@@ -115,6 +119,7 @@ while i_dim <= 3:
                     print_str = "YES pout file  found in "  + config_directory
                     print(print_str)            
                 else:                           
+                    printstr = pout_name
                     print_str = "NO  pout file  found in "  + config_directory
                     print(print_str)            
                 if( has_time ):                 
