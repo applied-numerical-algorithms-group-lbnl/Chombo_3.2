@@ -109,15 +109,8 @@ namespace Chombo
       pp.get("lambda_value", lam_val);
       ///the solver declaration has to change because amrmultigrid is templated on data type
       shared_ptr<AMRMultiGrid<pr_lbd_vec > > amr_solver_ptr(new AMRMultiGrid<   pr_lbd_vec > ());
-#if 0
-      //relax solver was not converging well in 3d
-      int num_bottom = 4586;
-      ppUtil.get("num_bottom", num_bottom);
-      RelaxSolver<pr_lbd_vec>* derived_raw_ptr = new RelaxSolver< pr_lbd_vec > ();
-      derived_raw_ptr->m_fixedNumber = num_bottom;
-#else
       BiCGStabSolver<pr_lbd_vec>* derived_raw_ptr = new BiCGStabSolver< pr_lbd_vec > ();
-#endif      
+
       
       shared_ptr<LinearSolver<pr_lbd_vec>  > bott_solve_ptr(derived_raw_ptr);
       Vector<RefCountedPtr< ch_ldf_cell > > aco(numLevels);

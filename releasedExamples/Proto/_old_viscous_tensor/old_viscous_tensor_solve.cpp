@@ -74,16 +74,8 @@ namespace Chombo
 
       shared_ptr<ch_base_solver> bottom_solver;
 
-#if 0
-      //relax solver on bottom was not converging well in 3d
-      int num_bottom;
-      ppSolver.get("num_bottom", num_bottom);
-      RelaxSolver<ch_ldf_cell >* derived_raw_ptr = new RelaxSolver<ch_ldf_cell >();
-      derived_raw_ptr->m_fixedNumber = num_bottom;
-#else
       //bicgstab
       BiCGStabSolver<ch_ldf_cell >* derived_raw_ptr = new BiCGStabSolver<ch_ldf_cell >();
-#endif      
       ch_base_solver* base_raw_ptr =  static_cast<ch_base_solver*>(derived_raw_ptr);
 
       bottom_solver = shared_ptr<ch_base_solver>(base_raw_ptr);
