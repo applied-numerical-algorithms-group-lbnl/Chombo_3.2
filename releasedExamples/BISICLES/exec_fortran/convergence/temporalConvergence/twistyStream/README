@@ -1,0 +1,37 @@
+This directory contains an implementation of both temporal and spatial convergence tests for the "twistyStream" example, which is described in Cornford et al (JCP, 2013).
+
+If you go to the "setup" directory and invoke the "init_twistystream.sh",
+you'll generate a set of inputs files for doing various convergence studies
+essentially, it loops over 32x32, 64x64, 128x128 up to 2048x2048 to do
+spatial convergence (you might want to edit the shell script to reduce down
+to a single resolution)
+
+Then the doRuns-* scripts orchestrate various convergence studies: At the
+moment, I've turned off AMR, since it's not really an issue right now.
+doRuns.single manages a spatial convergence study, running a set of
+different-resolution runs at the same CFL number.  For our situation,
+doRuns-<N>.single orchestrates a simple temporal convergence study for
+the NxN case, with dt, dt/2, dt/4, and dt/8. (edited) 
+
+Finally, evaluating convergence will be a lot easier using our ChomboCompare
+utility, which reads in two Chombo hdf5 plotfiles , subtracts them, and
+reports L1, L2, and maxNorm of the difference.
+
+1. Go to Chombo/lib/util/ChomboCompare and build ChomboCompare.
+
+2. Then go to the ChomboCompare/chdiff/ directory and follow the directions
+for setting up the "chdiff" utility.
+
+3. Since we're looking at same-resolution plotfiles, the chdiff utility
+will make it easy  to simply "diff" two plotfiles to get the norm of the
+difference for evaluating convergence -- if you've got "chdiff" in your
+path, then just typing
+
+chdiff <file1> <file2>
+
+will subtract file2 from file1 (assuming they're defined on the same
+grids/domains) and write out the norms of the difference (if you've
+built with MPI, then the norms will appear in the pout file  (pout.0). It will also write a plotfile showing the difference in diff.hdf5.
+
+For spatial convergence, you need to put together appropriate inputs files
+to tell ChomboCompare how to do the comparisons.

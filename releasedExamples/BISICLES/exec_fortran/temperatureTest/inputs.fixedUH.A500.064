@@ -1,0 +1,59 @@
+#inputs file for Amr ice-sheet solver
+main.maxTime = 1000  # maximum time to run to
+main.maxStep = 1000  # maximum number of steps to run
+main.constitutiveRelation = GlensLaw #L1L2 would give us the SIA plus fixed sliding speed here
+main.rateFactor = constRate
+constRate.A = 1.0e-16
+
+main.domain_size = 160000.0 160000.0 160000.0 
+
+main.surface_flux_type = constantFlux
+constFlux.flux_value = 0.0
+
+geometry.problem_type = basic
+geometry.basal_type = pattynAZb
+geometry.thickness_type = pattynAH
+geometry.thickness_scale= 500.0
+geometry.basalSlope = -0.0087488664 0.0 # 0.5 degree slope
+geometry.beta_type = constantBeta
+geometry.betaValue = 3.0e+2
+geometry.betaEps = 0.001
+
+amr.evolve_thickness=0
+
+amr.maxLevel = 0   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2
+amr.num_cells = 64 64 8  #number of cells in base grid
+amr.is_periodic = 1 1 1    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# physical BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 0 0 0  
+bc.hi_bc = 0 0 0  
+
+amr.cfl = 0.5  # "cfl" number 
+amr.initial_cfl = 0.5  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+
+
+amr.plot_interval = 1  
+amr.plot_prefix = plot.fixedUH.A500.064
+amr.check_interval = -1
+amr.check_prefix = plot.fixedUH.A500.064
+amr.verbosity = 5
+amr.check_overwrite = 0
+amr.write_temperature = 1
+amr.write_layer_velocities = 1
+
+amr.ref_ratio = 2 2 2   # refinement ratios
+amr.regrid_interval = 1   # number of timesteps between regridding
+amr.blockFactor = 4           # block factor used in grid generation
+amr.fill_ratio = 0.8          # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = 1             # amount to buffer tags
+
+amr.max_box_size = 128         # largest box length allowed
+amr.diffusion_treatment = none
+amr.velocity_solver_type = 2 #Known velocity
+
+knownVelocity.velocity = 500.0 0.0

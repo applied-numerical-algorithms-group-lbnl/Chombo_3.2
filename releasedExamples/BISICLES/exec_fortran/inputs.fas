@@ -1,0 +1,129 @@
+#inputs file for Amr ice-sheet solver
+# template for twisty-stream convergence test runs
+main.maxTime = 10000000  # maximum time to run to
+main.maxStep = 0   # maximum number of steps to run
+main.constitutiveRelation = L1L2
+#main.constitutiveRelation = constMu
+constMu.mu = 1.0e+6
+
+main.domain_size = 160000.0 160000.0 160000.0 
+
+geometry.problem_type = basic
+#geometry.basal_type = xInclineZb
+geometry.basal_type = constantZb
+geometry.thickness_type = constantThickness1km
+
+geometry.beta_type = twistyStreamx
+geometry.betaValue = 1000
+geometry.betaEps = 0.0001
+# slope should correspond to a .5 degree x-slope
+geometry.basalSlope = -0.087488664 0.0  # 0.5 degree slope
+#geometry.basalSlope = -0.001745331 0.0 # 0.1 degree slope
+
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+#constFlux.flux_value = 0.0
+
+CalvingModel.type = NoCalvingModel
+
+amr.maxLevel = 6   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2 2
+amr.num_cells = 0008 0008 16   #number of cells in base grid
+#amr.num_cells = 0016 0016 16   #number of cells in base grid
+#amr.num_cells = 0032 0032 16   #number of cells in base grid
+#amr.num_cells = 0064 0064 16   #number of cells in base grid
+#amr.num_cells = 0128 0128 16   #number of cells in base grid
+#amr.num_cells = 0256 0256 16   #number of cells in base grid
+#amr.num_cells = 0512 0512 16   #number of cells in base grid
+#amr.num_cells =  1024 1024 16   #number of cells in base grid
+#amr.num_cells =  2048 2048 16   #number of cells in base grid
+#amr.num_cells =  4096 4096 16   #number of cells in base grid
+amr.is_periodic = 1 1 1    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# physical BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 0 0 0  
+bc.hi_bc = 0 0 0  
+
+amr.cfl = 0.1  # "cfl" number
+amr.initial_cfl = 0.1  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+
+amr.plot_interval = -1  
+amr.plot_prefix = stream.fas.
+amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+amr.check_interval = -1
+amr.check_prefix = chk
+amr.verbosity = 2
+
+amr.regrid_interval = 10000   # number of timesteps between regridding
+amr.blockFactor = 4           # block factor used in grid generation
+amr.fill_ratio = 0.8          # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = 1             # amount to buffer tags
+amr.max_box_size = 32        # largest box length allowed
+#amr.tagging_val = 0.001      # min undivided grad(vel) resulting in tagging
+
+amr.tag_on_laplacian_velocity = 1
+amr.lap_vel_tagging_val = 10
+
+#velocity solve type -- 0=Picard, 1=JFNK, 2=knownVel, 3=petsc, 4=FAS-MG
+amr.velocity_solver_type = 4
+
+#initial guess 
+amr.do_initial_velocity_guess = 0
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+#amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+# FAS Multigrid solver parameters
+FASSolver.max_iterations = 500
+FASSolver.min_iterations = 1
+FASSolver.num_smooth = 2
+FASSolver.num_cycles = 1
+#FASSolver.num_pre = 2
+#FASSolver.num_post = 2
+FASSolver.cycle_type = 0  # FULL=0,VCYCLE=1,FCYCLE=2,SMOOTHER=3
+FASSolver.smoother =   1  # FAS_GSRB=0,FAS_RICH=1
+FASSolver.smoothing_damping_factor = .9
+FASSolver.avoid_norms = 0
+FASSolver.verbosity = 2
+FASSolver.num_v_cycles = 15
+#FASSolver.tolerance  = 1.0e-3
+amr.velocity_solver_tolerance = 1.0e-8 # this overrides FAS's tol
+FASSolver.stagnate = 1.0e-30
+
+FASSolver.plot_residual = false
+#JFNKSolver.writeResiduals = true
+picardSolver.numMGSmooth = 4
+picardSolver.max_iterations = 100
+
+JFNKSolver.vtopSafety = 0.999
+JFNKSolver.minPicardIterations = 1
+JFNKSolver.switchRate = 5.0
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.maxIter = 15
+JFNKSolver.BiCGStabRelTol = 1.0e-5
+JFNKSolver.maxBiCGStabIter = 10
+JFNKSolver.maxBiCGStabIter = 40
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.hAdaptive = true 
+JFNKSolver.mgProlongType = 1
+JFNKSolver.minStepFactor = 0.125
+#FNKSolver.solverType = 0
+#FNKSolver.maxBiCGStabIter = 50
+#FNKSolver.MGtol = 1.0e-5
+#FNKSolver.RelaxTol = 1.0e-5
+#FNKSolver.maxRelaxIter = 50
+#FNKSolver.vtopRelaxTol = 0
+
+
+#input file for solver benchmark
+main.filename = stream.fas.preSolve.000000.2d.hdf5

@@ -1,0 +1,158 @@
+#domain details
+main.domain_size = 6400e+3 6400e+3 1.0e+3
+amr.num_cells = 1280 1280 10
+#amr.num_cells = 640 640 10
+#amr.num_cells = 320 320 10
+amr.is_periodic = 0 0 0
+#amr.is_periodic = 1 1 1 
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+#main.rateFactor = constRate
+#constRate.epsSqr0 = 1.0e-12
+#constRate.A =  4.0e-17
+main.rateFactor = arrheniusRate
+ArrheniusRate.epsSqr0 = 1.0e-12
+
+#geometry & basal friction input data
+geometry.problem_type = LevelData
+geometry.beta_type = LevelData
+inputLevelData.geometryFile = Antarctica-bisicles-5km-relaxed-88-topography-20-glsteady-shelfsteady-pritchard.2d.hdf5
+inputLevelData.thicknessName = thickness
+
+#inputLevelData.clearThicknessRegionsFile = thickClear.txt
+inputLevelData.topographyName = Z_base
+
+inputLevelData.frictionFile = Antarctica-bisicles-control1-5km.2d.hdf5
+inputLevelData.frictionName = beta
+
+muCoefficient.type = LevelData
+inputLevelData.muCoefFile = Antarctica-bisicles-control1-5km.2d.hdf5
+inputLevelData.muCoefName = muCoef
+
+temperature.type = LevelData
+inputLevelData.temperatureFile = Antarctica-bisicles-5km.2d.hdf5
+amr.sigma = 0.0 0.1663 0.3179 0.4547 0.5768 0.6842 0.7768 0.8547 0.9179 0.9663 1.0000
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+
+#physical constants
+constants.ice_density=918
+
+#surface fluxes
+surfaceFlux.type = zeroFlux  # zero flux for solver testing
+#surfaceFlux.type = LevelData
+#surfaceFlux.n = 1
+#surfaceFlux.timeStep = 1.0
+#surfaceFlux.startTime = 0.0
+#surfaceFlux.fileFormat = Antarctica-bisicles-mb-5km-new.%d.2d.hdf5
+#surfaceFlux.name = dThickness/dt
+
+basalFlux.type = maskedFlux
+basalFlux.grounded.type = zeroFlux
+basalFlux.floating.type = piecewiseLinearFlux
+basalFlux.floating.n = 4
+basalFlux.floating.abscissae = 0.0 2.0 20.0 200.0
+basalFlux.floating.ordinates = 0.0 0.0 0.0 0.0
+
+#calving model
+CalvingModel.type = DeglaciationCalvingModelA
+CalvingModel.min_thickness = 1.0
+CalvingModel.calving_thickness = 100.0
+CalvingModel.calving_depth = 10800.0
+
+#velocity solve type -- 0=Picard, 1=JFNK, 2=knownVel, 3=petsc, 4=FAS-MG
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 9.9e+6
+amr.initial_velocity_guess_solver_type = 1 # JFNK
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 20
+JFNKSolver.absTol = 1.0e-5
+JFNKSolver.relTol = 1.0e-8
+JFNKSolver.solverType = 4 #petsc solver
+JFNKSolver.RelaxRelTol = 1.0e-4
+JFNKSolver.RelaxHang = 0.8
+JFNKSolver.maxRelaxIter = 30
+JFNKSolver.normType = 2
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 1.85
+JFNKSolver.minStepFactor = 0.25
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+
+#time stepping
+main.maxTime = 200  # maximum time to run to
+main.maxStep = 0  # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+amr.plot_interval = 1
+#amr.plot_time_interval = 1.0
+amr.plot_prefix = plot.ant.petsc.jfnk.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+
+#check points
+amr.check_interval = 100
+amr.check_prefix = chk.ant.5km.l1l2.searise.steady.2lev.
+amr.check_overwrite = 0
+#amr.restart_file = chk.ant.5km.l1l2.searise.steady.2lev.000000.2d.hdf5 
+
+#AMR mesh options
+#amr.maxLevel = 10 # finest level allowed in simulation
+amr.maxLevel = 0 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 10  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+
+
+#amr.tagSubsetBoxesFile = tag_subset.ant.all
+
+amr.tagCap = 1
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 64        # largest box length allowed
+#amr.max_box_size = 128        # largest box length allowed
+#amr.max_box_size = 256        # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 1
+amr.lap_vel_tagging_val = 10
+
+amr.tag_grounding_line = 0
+amr.grounding_line_tagging_min_vel = 0
+
+
+
+#misc options
+amr.verbosity = 5
+
+
+
+#amr.restart_file=chk.ant.5km.l1l2.searise.steady.2lev.000000.2d.hdf5
+#amr.restart_file = chk.ant.5km.l1l2.searise.steady.2lev.000000.2d.hdf5
