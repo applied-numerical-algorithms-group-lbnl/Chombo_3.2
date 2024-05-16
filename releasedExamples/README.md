@@ -12,3 +12,4 @@
 * AMRPoisson has several elliptic solvers with adaptive meshes.
 * TimeParallel shows how to use Chombo with split MPI communicators (used for parallel-in-time schemes).
 * Proto holds ports of Chombo examples to GPUs using the proto DSL.
+* Bisicles is a testbed for  porting parts of the bisicles code to Proto.
