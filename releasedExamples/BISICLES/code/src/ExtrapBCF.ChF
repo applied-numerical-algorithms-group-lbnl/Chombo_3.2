@@ -1,0 +1,131 @@
+#include "CONSTANTS.H"
+
+c ----------------------------------------------------
+c  do simple linear extrapolation of data into ghost cells
+c  *only works for a box one cell wide on the low side*
+c ----------------------------------------------------
+      subroutine SIMPLEEXTRAPBC(CHF_FRA[phi],
+     &                          CHF_BOX[bcbox],
+     &                          CHF_INT[dir],
+     &                          CHF_INT[hiLo])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer n
+      integer offset
+
+      offset = 1
+      if (hiLo.eq.0) offset = -1
+
+      CHF_DTERM[ii0 = offset*CHF_ID(0,dir);
+                ii1 = offset*CHF_ID(1,dir);
+                ii2 = offset*CHF_ID(2,dir)]
+
+      do n  = 0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[bcbox; i]
+            phi(CHF_AUTOIX[i],n) = two*phi(CHF_OFFSETIX[i;-ii],n)
+     &        - phi(CHF_OFFSETIX[i;-2*ii],n)  
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+
+c ----------------------------------------------------
+c  do simple reflection of data into ghost cells
+c  *assuming that cell 0 lies on the boundary*
+c  *only works for one layer of cells*
+c ----------------------------------------------------
+
+      subroutine OLDSIMPLEREFLECTBC(CHF_FRA[phi],
+     &				 CHF_BOX[bcbox],
+     &                           CHF_INT[dir],
+     &                           CHF_INT[hiLo])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer n
+      integer offset
+
+      offset = 1
+      if (hiLo.eq.0) offset = -1
+
+      CHF_DTERM[ii0 = offset*CHF_ID(0,dir);
+                ii1 = offset*CHF_ID(1,dir);
+                ii2 = offset*CHF_ID(2,dir)]
+
+      do n  = 0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[bcbox; i]
+            phi(CHF_AUTOIX[i],n) =  phi(CHF_OFFSETIX[i;-2*ii],n)  
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+
+c ----------------------------------------------------
+c  do simple reflection of data into ghost cells
+c  *assuming that face 0 lies on the boundary*
+c  *only works for one layer of cells*
+c ----------------------------------------------------
+
+      subroutine SIMPLEREFLECTBC(CHF_FRA[phi],
+     &				 CHF_BOX[bcbox],
+     &                           CHF_INT[dir],
+     &                           CHF_INT[hiLo])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer n
+      integer offset
+
+      offset = 1
+      if (hiLo.eq.0) offset = -1
+
+      CHF_DTERM[ii0 = offset*CHF_ID(0,dir);
+                ii1 = offset*CHF_ID(1,dir);
+                ii2 = offset*CHF_ID(2,dir)]
+
+      do n  = 0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[bcbox; i]
+            phi(CHF_AUTOIX[i],n) =  phi(CHF_OFFSETIX[i;-1*ii],n)  
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+c-----------------------------------------------------
+c set corner cell according to its neighbours (2D only)
+c-----------------------------------------------------
+
+      subroutine EXTRAPCORNER2D(CHF_FRA[phi],
+     &     CHF_BOX[box])
+
+
+      integer n
+
+      do n = 0, CHF_NCOMP[phi] -1
+#if CH_SPACEDIM == 2
+         phi(iboxhi0+1,iboxhi1+1, n) = - phi(iboxhi0,iboxhi1, n)
+     &        + phi(iboxhi0,iboxhi1+1,n) + phi(iboxhi0+1,iboxhi1,n)  
+
+         phi(iboxhi0+1,iboxlo1-1, n) = - phi(iboxhi0,iboxlo1, n)
+     &        + phi(iboxhi0,iboxlo1-1,n) + phi(iboxhi0+1,iboxlo1,n)  
+               
+         phi(iboxlo0-1,iboxlo1-1, n) = - phi(iboxlo0,iboxlo1, n)
+     &        + phi(iboxlo0-1,iboxlo1,n) + phi(iboxlo0,iboxlo1-1,n)  
+
+         phi(iboxlo0-1,iboxhi1+1, n) = - phi(iboxlo0,iboxhi1, n)
+     &        + phi(iboxlo0,iboxhi1+1,n) + phi(iboxlo0-1,iboxhi1,n)  
+
+#else
+         call MAYDAY_ERROR();
+#endif
+      end do
+
+      return
+      end 

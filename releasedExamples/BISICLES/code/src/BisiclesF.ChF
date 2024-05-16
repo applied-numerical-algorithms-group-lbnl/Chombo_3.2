@@ -1,0 +1,461 @@
+c---------------------------------------------------
+c set C = C0 in cells with mu(sum over faces) < mu0 
+c and C < C0
+c--------------------------------------------------
+
+      subroutine enforcewellposedcell(CHF_FRA1[C],
+     &     CHF_CONST_FRA1[mux], CHF_CONST_FRA1[muy],
+     &     CHF_CONST_REAL[mu0], CHF_CONST_REAL[C0],
+     &     CHF_BOX[box])
+
+
+       integer CHF_AUTODECL[i]
+       integer CHF_AUTODECL[ix]
+       integer CHF_AUTODECL[iy]
+     
+       Real_T musum
+
+       CHF_DTERM[ix0 = CHF_ID(0,0);
+                 ix1 = CHF_ID(0,1);
+                 ix2 = CHF_ID(0,2)]
+
+      CHF_DTERM[iy0 = CHF_ID(1,0);
+                iy1 = CHF_ID(1,1);
+                iy2 = CHF_ID(1,2)]          
+                
+      CHF_AUTOMULTIDO[box; i]
+      if (C(CHF_AUTOIX[i]).lt.C0) then
+         musum = mux(CHF_AUTOIX[i]) +  mux(CHF_OFFSETIX[i;+ix]) 
+     &        +  muy(CHF_AUTOIX[i]) +  muy(CHF_OFFSETIX[i;+iy])
+         
+         if (musum.lt.mu0) then
+            C(CHF_AUTOIX[i]) = C0
+         end if
+      end if
+      CHF_ENDDO
+      return
+      end
+
+
+c---------------------------------------------------
+c a <- (cond mask == m, b, a)
+c ------------------------------------------------
+
+      subroutine maskedreplace(CHF_FRA1[a],
+     &     CHF_CONST_FRA1[b],
+     &     CHF_CONST_FIA1[mask],
+     &     CHF_CONST_INT[m],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box; i]
+         if (mask(CHF_AUTOIX[i]).eq.m) then
+            a(CHF_AUTOIX[i]) =  b(CHF_AUTOIX[i])
+         end if
+      CHF_ENDDO
+      
+      return
+      end
+
+c--------------------------------------------------
+c a <- h**m * (p**n a + (1-p**n) * b)
+c--------------------------------------------------
+      subroutine proximityfill(
+     &    CHF_FRA1[a],
+     &    CHF_CONST_FRA1[b],
+     &    CHF_CONST_FRA1[p],
+     &    CHF_CONST_REAL[n],
+     &    CHF_CONST_FRA1[h],
+     &    CHF_CONST_REAL[m], 
+     &    CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      Real_T pn
+
+      CHF_AUTOMULTIDO[box; i]
+      pn = min(one,p(CHF_AUTOIX[i]))**n
+
+      a(CHF_AUTOIX[i]) = (pn * a(CHF_AUTOIX[i])
+     &     + (one - pn) *  b(CHF_AUTOIX[i]))
+     &     * h(CHF_AUTOIX[i])**m
+      CHF_ENDDO
+      return
+      end
+
+c--------------------------------------------------
+c     depth = max(0.0, ursf - thck - topg)
+c--------------------------------------------------
+      subroutine waterdepth(CHF_FRA1[depth],
+     &     CHF_CONST_FRA1[thk],
+     &     CHF_CONST_FRA1[usrf],
+     &     CHF_CONST_FRA1[topg],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box; i]
+
+      depth(CHF_AUTOIX[i]) = (max(zero,
+     &     usrf(CHF_AUTOIX[i])
+     &     -thk(CHF_AUTOIX[i])
+     &     -topg(CHF_AUTOIX[i])))
+      
+      CHF_ENDDO
+      return
+      end
+      
+c--------------------------------------------------
+c     fab = 0.0 if infab < tol
+c--------------------------------------------------
+      subroutine zeroifless(CHF_FRA1[fab],
+     &     CHF_CONST_FRA1[infab],
+     &     CHF_CONST_REAL[tol],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box; i]
+
+      if (infab(CHF_AUTOIX[i]).lt.tol) then
+         fab(CHF_AUTOIX[i]) = zero
+      end if
+
+      CHF_ENDDO
+      return
+      end
+
+c--------------------------------------------------
+c piecewise linear interpolation of a(x) with
+c abscissae xn and ordinates bn. dx and db are
+c workspaces 
+c--------------------------------------------------
+      subroutine pwlfill(CHF_FRA1[a],
+     &     CHF_CONST_FRA1[x],
+     &     CHF_CONST_VR[xn],
+     &     CHF_CONST_VR[bn],
+     &     CHF_VR[dx],
+     &     CHF_VR[db],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i], m, n
+      Real_T xi
+
+      do m = 0, ixnhi0 - 1
+         dx(m) = xn(m+1) - xn(m)
+         db(m) = bn(m+1) - bn(m)
+      end do
+
+      CHF_AUTOMULTIDO[box; i]
+      xi = x(CHF_AUTOIX[i])
+      if (xi .lt. xn(0)) then
+         a(CHF_AUTOIX[i]) = bn(0)
+      else if (xi .ge. xn(ixnhi0)) then
+         a(CHF_AUTOIX[i]) = bn(ixnhi0)
+      else
+         do m = 0, ixnhi0-1
+            if ( xi.lt.xn(m+1) ) then
+               a(CHF_AUTOIX[i]) = bn(m) + db(m)* (xi - xn(m))/dx(m)
+               exit
+            end if
+         end do
+      end if
+      CHF_ENDDO
+
+
+      return
+      end
+
+      subroutine abslimitfab(CHF_FRA[u], 
+     &     CHF_CONST_REAL[limit], 	
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i], n
+      REAL_T abslim
+
+      abslim = limit
+      do n  = 0, CHF_NCOMP[u]-1
+         CHF_AUTOMULTIDO[box; i]
+         if (u(CHF_AUTOIX[i],n).lt.zero) then
+            u(CHF_AUTOIX[i],n) = max(u(CHF_AUTOIX[i],n),-abslim)
+         else
+            u(CHF_AUTOIX[i],n) = min(u(CHF_AUTOIX[i],n),abslim)
+         end if
+         CHF_ENDDO
+      end do
+      return
+      end
+
+c----------------------------------------------------------
+c impose u.u <= limit^2, count the number of cells affected
+c----------------------------------------------------------
+      subroutine modlimitfab(CHF_FRA[u],
+     &     CHF_INT[nlimit],
+     &     CHF_REAL[umax],
+     &     CHF_CONST_REAL[limit],
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i], n
+      REAL_T umod
+      
+      umax = zero
+      nlimit = 0
+      CHF_AUTOMULTIDO[box; i]
+      umod = zero
+      do n = 0, CHF_NCOMP[u]-1
+         umod = umod + u(CHF_AUTOIX[i],n)*u(CHF_AUTOIX[i],n)
+      end do
+      umod = sqrt(max(zero,umod))
+      umax = max(umax,umod)
+      if (umod .gt. limit) then
+         nlimit = nlimit + 1
+         do n = 0, CHF_NCOMP[u]-1
+            u(CHF_AUTOIX[i],n) = limit * u(CHF_AUTOIX[i],n)/umod
+         end do
+      end if
+      CHF_ENDDO
+      return
+      end
+
+	
+      subroutine minfab1(CHF_FRA[u], 
+     &     CHF_CONST_REAL[limit], 	
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i],n
+      do n  = 0, CHF_NCOMP[u]-1
+         CHF_AUTOMULTIDO[box; i]
+         u(CHF_AUTOIX[i],n) = min(u(CHF_AUTOIX[i],n),limit)
+         CHF_ENDDO
+      end do
+      return
+      end      
+      
+      subroutine maxfab1(CHF_FRA[u], 
+     &     CHF_CONST_REAL[limit], CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i],n
+      do n  = 0, CHF_NCOMP[u]-1
+         CHF_AUTOMULTIDO[box; i]
+         u(CHF_AUTOIX[i],n) = max(u(CHF_AUTOIX[i],n),limit)
+         CHF_ENDDO
+      end do
+      return
+      end 
+
+c------------------------------------------------------------
+c flag cells ok == 1 where alpha > tol or either face mu > tol
+c-----------------------------------------------------------
+      subroutine checkcoef(CHF_FIA1[ok],
+     &     CHF_CONST_INT[dir],
+     &     CHF_CONST_FRA1[mu],
+     &     CHF_CONST_FRA1[alpha],
+     &     CHF_CONST_REAL[mumin],
+     &     CHF_CONST_REAL[alphamin],
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      CHF_DTERM[ii0 = CHF_ID(dir,0);
+                ii1 = CHF_ID(dir,1);
+                ii2 = CHF_ID(dir,2)]
+
+      CHF_AUTOMULTIDO[box; i]
+      if (alpha(CHF_AUTOIX[i]).gt.alphamin) then
+         ok(CHF_AUTOIX[i]) = 1
+      else if (mu(CHF_AUTOIX[i]).gt.mumin) then
+         ok(CHF_AUTOIX[i]) = 1
+      else if (mu(CHF_OFFSETIX[i;+ii]).gt.mumin) then
+         ok(CHF_AUTOIX[i]) = 1
+      end if
+
+      CHF_ENDDO
+      
+      return
+      end 
+
+      subroutine applyminviscosity(CHF_FRA1[mu],
+     &     CHF_CONST_INT[dir],
+     &     CHF_CONST_FRA1[faceH],
+     &     CHF_CONST_FIA1[ok],
+     &     CHF_CONST_REAL[mumin],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+
+      CHF_DTERM[ii0 = CHF_ID(dir,0);
+                ii1 = CHF_ID(dir,1);
+                ii2 = CHF_ID(dir,2)]
+
+       CHF_AUTOMULTIDO[box; i]
+      if (ok(CHF_AUTOIX[i]).ne.1) then
+         if (faceH(CHF_AUTOIX[i]).gt.1.0d-10) then
+            mu(CHF_AUTOIX[i]) = 
+     &           max(mu(CHF_AUTOIX[i]), mumin);
+         end if
+         if (faceH(CHF_OFFSETIX[i;+ii]).gt.1.0d-10) then
+            mu(CHF_OFFSETIX[i;+ii]) = 
+     &           max(mu(CHF_OFFSETIX[i;+ii]), mumin);
+         end if
+      end if
+
+      CHF_ENDDO
+
+      return
+      end
+
+c---------------------------------------------------
+c compute first order upwind face-centered flux us 
+c from face-centered u and cell-centered s
+
+      subroutine upwindfluxb(CHF_FRA1[flux],
+     &     CHF_CONST_FRA1[u],
+     &     CHF_CONST_FRA1[s],
+     &     CHF_CONST_INT[dir],
+     &     CHF_BOX[fbox])
+
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      REAL_T upws
+
+      CHF_DTERM[ii0 = CHF_ID(dir,0);
+                ii1 = CHF_ID(dir,1);
+                ii2 = CHF_ID(dir,2)]
+      
+      CHF_AUTOMULTIDO[fbox; i]
+      if ( u(CHF_AUTOIX[i]) .gt. zero) then
+         upws = s(CHF_OFFSETIX[i;-ii])
+      else
+         upws = s(CHF_AUTOIX[i])
+      end if
+
+      flux(CHF_AUTOIX[i]) = upws * u(CHF_AUTOIX[i])
+      CHF_ENDDO
+
+      return
+      end
+
+c------------------------------------------------------------
+c compute thickness over or under flotation (< 0 in shelf)
+c returns the max and min values too
+c------------------------------------------------------------
+      
+      subroutine hoverunderflotation(CHF_FRA1[hab], 
+     &     CHF_REAL[hmin],CHF_REAL[hmax],
+     &     CHF_CONST_FRA1[thck],
+     &     CHF_CONST_FRA1[topg],
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhoo],
+     &     CHF_CONST_REAL[sealevel], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T ratio
+
+      ratio = rhoo / rhoi
+      hmax = -1.0e+12
+      hmin = +1.0e+12
+
+      CHF_AUTOMULTIDO[box; i]
+      hab(CHF_AUTOIX[i]) = thck(CHF_AUTOIX[i]) - 
+     &     ratio*max(zero, seaLevel - topg(CHF_AUTOIX[i]))
+
+      hmax = max( hab(CHF_AUTOIX[i]), hmax)
+      hmin = min( hab(CHF_AUTOIX[i]), hmin)
+
+      CHF_ENDDO
+
+      return
+      end
+
+c------------------------------------------------------------
+c integrate (h>0)?1:0 over each cell, using the midpoint rule
+c with n > 0 subdivisions and bilinear interpolation to compute
+c h. Result normalized to cell area. 
+c Requires ghost radius = 1, and sensible corner ghost data
+c------------------------------------------------------------
+      
+      subroutine integrateheaviside2D(CHF_FRA1[r], 
+     &     CHF_CONST_FRA1[h], CHF_CONST_INT[n],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ix]
+      integer CHF_AUTODECL[iy]
+      integer CHF_AUTODECL[ixy]
+      integer kx,ky,nk,sx,sy
+      REAL_T h00,h01,h10,h11,hh,rr,xx,yy,subdx,subdx2
+      REAL_T w00(0:n-1,0:n-1),w01(0:n-1,0:n-1)
+      REAL_T w10(0:n-1,0:n-1),w11(0:n-1,0:n-1)
+
+      CHF_DTERM[ix0 = CHF_ID(0,0);
+                ix1 = CHF_ID(0,1);
+                ix2 = CHF_ID(0,2)]
+
+      CHF_DTERM[iy0 = CHF_ID(1,0);
+                iy1 = CHF_ID(1,1);
+                iy2 = CHF_ID(1,2)]   
+     
+      CHF_DTERM[ixy0 = CHF_ID(1,0);
+                ixy1 = CHF_ID(1,1);
+                ixy2 = CHF_ID(1,2)]   
+    
+
+#if (CH_SPACEDIM == 1)
+c this doesn't make sense in 1D, so abort. Still need it to compile, however
+      write(*,*) 'integrateheaviside2D called in 1D!'
+      call MAYDAYERROR()
+
+#elif (CH_SPACEDIM == 2)
+c     width of sub cells
+      subdx = one / (n*two)
+      subdx2 = subdx**2
+
+c     weights for the bilinear formula
+      do ky = 0,n-1
+         do kx = 0,n-1
+           xx = (kx + half)*subdx
+           yy = (ky + half)*subdx
+           w00(kx,ky) = (one-xx)*(one-yy)
+           w01(kx,ky) = (one-xx)*yy
+           w10(kx,ky) = xx*(one-yy)
+           w11(kx,ky) = xx*yy
+ !          write(*,*) kx,ky,xx,yy,w00(kx,ky),w01(kx,ky),
+ !    &          w10(kx,ky),w11(kx,ky),
+ !    &          w00(kx,ky)+ w01(kx,ky) + w10(kx,ky)+ w11(kx,ky)
+        end do
+      end do
+      CHF_AUTOMULTIDO[box; i]
+
+      rr = zero
+
+c     loop over quadrants
+      do sx = -1,1,2
+         do sy = -1,1,2
+c     interpolation corners
+            h00 = h(i0,i1)
+            h10 = h(i0+sx,i1)
+            h01 = h(i0,i1+sy)
+            !how to get the i+1,j+1 cell using offsetix?
+            h11 = h(i0+sx,i1+sy)
+            do ky = 0,n-1  
+               do kx = 0,n-1
+                  hh = h00*w01(kx,ky) 
+     &                 + h01*w01(kx,ky) 
+     &                 + h10*w10(kx,ky)
+     &                 + h11*w11(kx,ky)
+                  
+                  if (hh .gt. zero) then
+                     rr = rr + subdx2
+                  end if
+               end do
+            end do
+         end do
+      end do
+      r(CHF_AUTOIX[i]) = rr
+      CHF_ENDDO
+
+c   end if 2d
+#endif
+
+      return
+      end

@@ -1,0 +1,531 @@
+\documentclass[12pt]{article}
+
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epsfig}
+
+\title{BISICLES Input parameters}
+
+\author{Dan Martin and Stephen Cornford}
+
+%\date{November 14, 2006}
+
+\begin{document}
+
+\maketitle
+
+This is an attempt to catalog the various input parameters which can
+be used to control the various forms of the BISICLES code (which can
+be run either as a standalone ice sheet code, or as an alternate
+dycore coupled with CISM). Input parameters are generally passed in
+from inputs files through the Chombo ParmParse utility. In general,
+input parameters in inputs files will be of the form {\it
+  group.variable}, where {\it group} is the subgroup to which the
+variable belongs. This is used to improve the organization of the
+inputs.
+
+\section{Driver inputs}
+These inputs are read by the driver (for example {\tt
+  exec2D/driver.cpp} and are used to set up the various classes used
+in a BISICLES run.
+
+\begin{itemize}
+
+\item{ {\tt main} group}
+\begin{itemize}
+  \item{ { \tt domain\_size} }
+    \item{ { \tt constitutiveRelation } }
+    \item{ { \tt rateFactor} }
+        \item{ { \tt surface\_flux\_type} }
+        \item{ { \tt basal\_flux\_type} }
+    \item{ { \tt basalFrictionRelation} }
+    \item{ { \tt maxTime} }
+    \item{ { \tt maxStep} }
+\end{itemize}
+
+\item{ { \tt  constMu } group  }        
+  \begin{itemize}
+    \item { { \tt mu } }
+  \end{itemize}
+\item{ { \tt  l1l2 } group  }
+  \begin{itemize}
+    \item { { \tt solverTolerance } }
+  \end{itemize}
+\item{ { \tt  constRate } group  }
+  \begin{itemize}
+    \item { \tt A } 
+    \item { \tt epsSqr0 }
+  \end{itemize}
+
+\item{ { \tt  ArrheniusRate } group  }
+  \begin{itemize}
+    \item { \tt epsSqr0 }
+  \end{itemize}
+
+\item{ { \tt  constFlux } group  }
+  \begin{itemize}
+    \item { \tt fluxValue }
+  \end{itemize}
+\item{ { \tt  basalConstFlux } group  }
+  \begin{itemize}
+    \item { \tt fluxValue }
+  \end{itemize}
+
+\item{ { \tt  basalMaskedFlux } group  }
+\begin{itemize} 
+  \item { {\tt grounded\_flux\_type } }
+  \item { {\tt floating\_flux\_type} }
+\end{itemize}
+
+\item{ { \tt  groundedBasalConstFlux } group  }
+  \begin{itemize}
+    \item { \tt fluxValue }
+  \end{itemize}
+
+\item{ { \tt  floatingBasalConstFlux } group  }
+  \begin{itemize}
+    \item { \tt fluxValue }
+  \end{itemize}
+
+\item{ { \tt  floatingBasalPWLFlux } group }
+  \begin{itemize}
+    \item{\tt n}
+    \item {\tt abscissae}
+    \item {\tt ordinates}
+  \end{itemize}
+ 
+\item{ { \tt  muCoefficient } group  }
+  \begin{itemize}
+    \item {\tt type}
+  \end{itemize}
+
+\item{ { \tt  inputLevelData } group  }
+  \begin{itemize}
+    \item  {\tt muCoefFile} 
+    \item {\tt muCoefName }
+   
+    \item {\tt frictionFile}
+    \item {\tt frictionName}
+      
+    \item {\tt geometryFile }
+    \item {\tt thicknessName }
+    \item {\tt topographyName }
+      
+    \item {\tt temperatureFile }
+    \item {\tt temperatureName} 
+
+  \end{itemize}
+
+\item{ { \tt  geometry } group  }
+\begin{itemize}
+   \item {\tt beta\_type }
+   \item {\tt betaValue }
+   \item {\tt betaValue }  
+
+   \item {\tt omega }  ( omegaVect, 0, SpaceDim)
+   \item {\tt betaEps } 
+   \item {\tt betaValue }
+   \item {\tt omega}
+   \item {\tt betaEps}
+   \item {\tt betaValue}
+
+   \item {\tt magOffset }
+   \item {\tt betaEps }
+   \item {\tt gaussianBump\_nt}
+   \item {\tt gaussianBump\_t}
+   \item {\tt gaussianBump\_C}
+   \item {\tt gaussianBump\_a}
+   \item {\tt gaussianBump\_xb}
+   \item {\tt gaussianBump\_xc}
+   \item {\tt gaussianBump\_yb}
+   \item {\tt gaussianBump\_yc}
+   \item {\tt problem\_type}
+\end{itemize}
+
+\item{ { \tt  BasalFrictionPowerLaw } group  }
+\begin{itemize}
+  \item{\tt m}
+  \item{\tt includeEffectivePressure}
+\end{itemize}
+
+\item{ { \tt  vieliPayne } group  }
+  \begin{itemize}
+    \item {\tt thickness }
+    \item {\tt seaLevel }
+    \item {\tt basal\_slope}
+    \item {\tt originElevation}
+  \end{itemize}
+
+\item{ { \tt  marineIceSheet } group  }
+  \begin{itemize}
+    \item {\tt seaLevel}
+    \item {\tt thickness\_type }
+    \item {\tt thickness }
+    \item {\tt thickness\_flowline\_dx}
+    \item {\tt thickness\_flowline\_file }
+    \item {\tt thickness\_flowline\_set }
+    \item {\tt geometry }
+    \item {\tt basal\_slope}
+    \item {\tt originElevation}
+    \item {\tt originElevation}
+    \item {\tt schoofLengthScaleFactor}
+    \item {\tt schoofCoeff2}
+    \item {\tt schoofCoeff4}
+    \item {\tt schoofCoeff6}
+    \item {\tt originElevation}
+    \item {\tt schoofLengthScaleFactor}
+    \item {\tt katzAlpha}
+    \item {\tt katzSigma}
+    \item {\tt schoofCoeff2}
+    \item {\tt schoofCoeff4}
+    \item {\tt schoofCoeff6}
+  \end{itemize}
+
+\item{ { \tt  hump } group  }
+  \begin{itemize}
+  \item {\tt radSqr }
+  \item {\tt maxThickness }
+  \item {\tt baseElevation }
+  \item {\tt minThickness }
+    
+  \item {\tt center }
+  \item {\tt widthScale }
+\end{itemize}
+
+\item{ { \tt  temperature } group  }
+\begin{itemize}
+  \item {type}
+  \item {value}
+\end{itemize}
+
+\item{ { \tt  amr } group  }
+  \begin{itemize}
+    \item {\tt num\_cells}
+  \end{itemize}
+
+\end{itemize}
+
+
+\section{ \tt AmrIce inputs}
+  These inputs are read by the {\tt AmrIce} class (\verb|BISICLES/code/src/AmrIce.cpp| ).
+ 
+\begin{itemize}
+\item { \tt constants } group 
+Physical onstants which are settable from inputs file
+\begin{itemize}
+  \item {\tt ice\_density }
+  \item {\tt sea\_water\_density }
+  \item {\tt gravity }
+\end{itemize}
+
+ \item { \tt amr } group 
+\begin{itemize}
+  \item {\tt maxLevel}
+  \item {\tt tagCap}
+  \item {\tt num\_cells}
+  \item {\tt domain\_size }
+  \item {\tt is\_periodic }
+  \item {\tt cfl }
+  \item {\tt initial\_cfl }
+  \item {\tt max\_dt\_grow\_factor }
+  \item {\tt time\_step\_ticks }
+  \item {\tt fixed\_dt }
+  \item {\tt offsetTime }
+  \item {\tt isothermal }
+  \item {\tt isothermalTemperature }
+  \item {\tt plot\_interval }
+  \item {\tt plot\_time\_interval }
+  \item {\tt plot\_prefix }
+  \item {\tt write\_map\_file }
+  \item {\tt write\_preSolve\_plotfiles }
+  \item {\tt write\_flux\_velocities }
+  \item {\tt write\_viscous\_tensor }
+  \item {\tt write\_base\_velocities }
+  \item {\tt write\_temperature }
+  \item {\tt write\_thickness\_sources }
+  \item {\tt write\_layer\_velocities }
+  \item {\tt evolve\_thickness }
+  \item {\tt grounded\_ice\_stable }
+  \item {\tt floating\_ice\_stable }
+  \item {\tt check\_interval }
+  \item {\tt check\_prefix }
+  \item {\tt check\_overwrite }
+  \item {\tt check\_exit }
+  \item {\tt write\_dHDt }
+  \item {\tt write\_solver\_rhs }
+      \item {\tt ref\_ratio }
+  \item {\tt verbosity }
+  \item {\tt regrid\_interval }
+  \item {\tt interpolate\_zb }
+  \item {\tt blockFactor }
+%  // \item {\tt n\_tag\_subset\_boxes }
+%  //     \item {\tt tag\_subset\_boxes }
+  \item {\tt fill\_ratio }
+  \item {\tt nestingRadius }
+  \item {\tt tag\_on\_grad\_velocity }
+  \item {\tt tagging\_val }
+  \item {\tt tag\_on\_laplacian\_velocity }
+  \item {\tt tag\_on\_grounded\_laplacian\_velocity }
+      \item {\tt lap\_vel\_tagging\_val }
+      \item {\tt lap\_vel\_tagging\_max\_basal\_friction\_coef }
+  \item {\tt tag\_on\_strain\_rate\_invariant }
+      \item {\tt strain\_rate\_invariant\_tagging\_val }
+  \item {\tt tag\_on\_velocity\_rhs }
+      \item {\tt velocity\_rhs\_tagging\_val }
+  \item {\tt tag\_grounding\_line }
+      \item {\tt grounding\_line\_tagging\_min\_vel }
+      \item {\tt grounding\_line\_tagging\_max\_basal\_friction\_coef }
+  \item {\tt tag\_ice\_margin }
+  \item {\tt tag\_all\_ice }
+  \item {\tt tag\_on\_div\_H\_grad\_vel }
+      \item {\tt div\_H\_grad\_vel\_tagging\_val }
+  \item {\tt tags\_grow }
+  \item {\tt max\_box\_size }
+  \item {\tt max\_base\_grid\_size }
+  \item {\tt report\_sum\_grounded\_ice }
+  \item {\tt temporal\_accuracy }
+  \item {\tt velocity\_solver\_type }
+  \item {\tt max\_solver\_iterations }
+  \item {\tt velocity\_solver\_tolerance }
+  \item {\tt limit\_velocity\_rhs }
+  \item {\tt limit\_rhs\_radius }
+  \item {\tt limit\_flux\_speed }
+  \item {\tt do\_initial\_velocity\_solve }
+  \item {\tt do\_initial\_velocity\_guess }
+  \item {\tt initial\_velocity\_guess\_type }
+  \item {\tt initial\_velocity\_guess\_const\_mu }
+  \item {\tt initial\_velocity\_guess\_solver\_type }
+  \item {\tt initial\_velocity\_guess\_const\_vel }
+  \item {\tt additional\_velocity }
+  \item {\tt diffusion\_treatment }
+  \item {\tt additional\_diffusivity }
+  \item {\tt finest\_timestep\_level }
+  \item {\tt basal\_length\_scale }
+  \item {\tt basal\_friction\_decay }
+  \item {\tt wallDrag }
+  \item {\tt wallDragExtra }
+  \item {\tt grounding\_line\_regularization }
+  \item {\tt grounding\_line\_correction }
+  \item {\tt calving\_model\_type }
+  \item {\tt sigma }
+  \item {\tt tagSubsetBoxesFile }
+  \item {\tt gridsFile }
+  \item {\tt restart\_file }
+
+  \item {\tt initial\_velocity\_function\_type }
+  \item {\tt initial\_velocity\_function\_flowline\_dx }
+  \item {\tt initial\_velocity\_function\_flowline\_file }
+  \item {\tt initial\_velocity\_function\_flowline\_set }
+\end{itemize}
+
+\item { \tt DeglaciationCalvingModelA } group 
+\begin{itemize}
+  \item {\tt min\_thickness }
+  \item {\tt calving\_thickness }
+  \item {\tt calving\_depth }
+  \item {\tt start\_time }
+  \item {\tt end\_time }
+\end{itemize}
+
+\item { \tt DomainEdgeCalvingModel } group 
+\begin{itemize}
+  \item {\tt front\_lo }
+  \item { \tt front\_hi }
+  \item {\tt preserveSea }
+  \item {\tt preserveLand }
+\end{itemize}
+
+\item { \tt geometry } group 
+\begin{itemize}
+\item  {\tt basalSlope }
+\end{itemize}
+
+\end{itemize}
+
+\section {\tt BasicThicknessIBC} inputs 
+\begin{itemize}
+  \item {\tt geometry } group  
+  \begin{itemize}
+    \item {\tt basal\_type }
+    \item {\tt thickness\_type }
+    \item {\tt thickness\_scale }
+    \item {\tt basalSlope }
+  \end{itemize}
+
+  \item {\tt bc} group
+     \begin{itemize}
+       \item {\tt lo\_bc }
+       \item {\tt hi\_bc }
+     \end{itemize}
+\end{itemize}
+
+\section {\tt CalvingModel} 
+\begin{itemize}
+  \item {\tt a\_prefix } group
+     \begin{itemize}
+       \item {\tt type }
+       \item {\tt front\_lo}
+       \item {\tt front\_hi }
+       \item {\tt preserveSea }
+       \item {\tt preserveLand }
+       \item {\tt min\_thickness }
+       \item {\tt calving\_thickness }
+       \item {\tt calving\_depth }
+       \item {\tt start\_time }
+       \item {\tt end\_time }
+       \item {\tt proximity }
+       \item {\tt velocity }
+       \item {\tt startTime }
+       \item {\tt endTime }
+     \end{itemize}
+     
+\end{itemize}
+
+\section {\tt FortranInterfaceIBC }
+\begin{itemize}
+  \item {\tt geometry } group
+    \begin{itemize}
+      \item {\tt thickness\_scale }
+      \item {\tt basalSlope }
+      \item {\tt extrap\_boundary}
+    \end{itemize}
+
+\item {\tt bc } group
+  \begin{itemize}
+     \item {\tt lo\_bc }
+     \item {\tt hi\_bc }
+  \end{itemize}
+
+\end{itemize}
+
+%\section{ \tt HumpIBC.cpp }
+
+\section{JFNKSolver.cpp}
+\begin{itemize}
+\item {\tt JFNKSolver} group
+\begin{itemize}
+  \item {\tt maxIter }
+  \item {\tt absTol }
+  \item {\tt relTol }
+  \item {\tt normType }
+  \item {\tt verbosity}
+  \item {\tt vtopSafety}
+  \item {\tt vtopRelaxTol}
+  \item {\tt vtopRelaxMinIter}
+  \item {\tt numMGSmooth}
+  \item {\tt numMGIter}
+  \item {\tt h}
+  \item {\tt hAdaptive}
+  \item {\tt err}
+  \item {\tt umin}
+  \item {\tt switchRate}
+  \item {\tt minPicardIterations}
+  \item {\tt muMax}
+  \item {\tt muMin}
+  \item {\tt uMaxAbs}
+  \item {\tt writeResiduals}
+
+  \item {\tt solverType}
+  \item {\tt BiCGStabRelTol}
+  \item {\tt maxBiCGStabIter}
+  \item {\tt RelaxTol}
+  \item {\tt RelaxRelTol}
+  \item {\tt maxRelaxIter}
+  \item {\tt RelaxHang}
+  \item {\tt CGRelTol}
+  \item {\tt maxCGIter}
+  \item {\tt RelaxTol}
+  \item {\tt RelaxRelTol}
+  \item {\tt maxRelaxIter}
+  \item {\tt RelaxHang}
+  \item {\tt bottom\_solver\_type}
+  \item {\tt mg\_solver\_depth}
+  \item {\tt mgCoefficientAverageType}
+  \item {\tt mgProlongType}
+\end{itemize}
+
+\end{itemize}
+
+\section {\tt KnownVelocitySolver.cpp}
+\begin{itemize}
+\item {\tt KnownVelocitySolver } group
+  \begin{itemize}
+    \item {\tt function\_type}
+    \item {\tt flowline\_dx}
+    \item {\tt flowline\_file }
+    \item {\tt flowline\_set}
+  \end{itemize}
+\end{itemize}
+
+\section{ \tt PetscIceSolver.cpp}
+\begin{itemize} 
+\item {\tt petscSolver } group
+\end{itemize}
+
+\section{\tt PicardSolver.cpp }
+\begin{itemize}
+  \item {\tt  picardSolver} group
+    \begin{itemize}
+      \item {\tt writeResidualPlots }
+      \item {\tt absoluteTolerance }
+      \item {\tt max\_picard\_iterations }
+      \item {\tt vtopSafety }
+      \item {\tt linearSolver }
+      \item {\tt mgBottomSolver }
+      \item {\tt linearsolver\_tolerance }
+      \item {\tt maxMGdepth }
+      \item {\tt numMGSmooth }
+    \end{itemize}
+    
+\end{itemize}
+
+\section{The {\tt SurfaceFlux} class}
+These are a bit different -- a prefix name is passed in to the 
+\begin{itemize}
+\item { \tt a\_prefix} group
+  \begin{itemize}
+  \item {\tt type } Types may have additional inputs, also with the {\tt prefix} prefix. Types can be: 
+    \begin{itemize}
+      \item {\tt zeroFlux}  (no additional inputs)
+      \item {\tt constantFlux}
+        \begin{itemize}
+          \item {\tt flux\_value}
+        \end{itemize}
+      \item {\tt LevelData }
+        \begin{itemize}
+          \item {\tt fileFormat }
+          \item {\tt n }
+          \item {\tt offset }
+          \item {\tt startTime }
+          \item {\tt timeStep }
+          \item {\tt name }
+        \end{itemize}
+
+        \item {\tt piecewiseLinearFlux}
+          \begin{itemize}
+            \item {\tt n }
+            \item {\tt abscissae }
+            \item {\tt ordinates }
+          \end{itemize}
+
+        \item {\tt maskedFlux }
+          The {\tt maskedFlux } type recursively calls the {\tt parseSurfaceFlux} function, adding {\tt .grounded}, {\tt .floating}, {\tt .openLand}, {\tt .openSea} to classify the flux types for regions with grounded ice, floating ice, open land, and open sea, respectively. 
+          
+        \item {\tt boxBoundedFlux }
+
+        \item {\tt axbyFlux }
+
+        \item {\tt compositeFlux }
+
+        \item {\tt groundingLineLocalizedFlux }
+
+        \item {\tt pythonFlux }
+    \end{itemize}
+    
+  \end{itemize}
+\item {\tt prefix.c\_str()} group (``pe'')
+\end{itemize}
+
+
+\end{document}

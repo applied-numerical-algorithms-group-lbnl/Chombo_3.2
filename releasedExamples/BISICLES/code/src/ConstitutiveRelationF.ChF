@@ -1,0 +1,279 @@
+c -----------------------------------------------------
+c  computes shallow-shelf approximation to the strain invariant
+c  epsilon^2. Note that both cell-centered and face-centered
+c  computations call this subroutine, since the centering info is 
+c  only used when computing derivatives, which is done elsewhere.
+c  all that is done here is to combine the pre-computed derivatives 
+c  appropriately. 
+c  
+c INPUTS/OUTPUTS:
+c epsSqr  <=  strain rate invariant
+c derivs   => precomputed derivatives
+c dudxComp => component in derivs containing du/dx
+c dudyComp => component in derivs containing du/dy
+c dvdxComp => component in derivs containing dv/dx
+c dvdyComp => component in derivs containing dv/dy
+c box      => box over which to compute epsSqr
+c ---------------------------------------------------------------
+      subroutine STRAININVARSSA(CHF_FRA1[epsSqr],
+     &                          CHF_FRA[derivs],
+     &                          CHF_INT[dudxComp],
+     &                          CHF_INT[dudyComp],
+     &                          CHF_INT[dvdxComp],
+     &                          CHF_INT[dvdyComp],
+     &                          CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+
+c      CHF_AUTOMULTIDO[box; i]
+c        epsSqr(CHF_AUTOIX[i]) = derivs(CHF_AUTOIX[i],dudxcomp)**2
+c     &                         +derivs(CHF_AUTOIX[i],dvdycomp)**2
+c     &                         +(derivs(CHF_AUTOIX[i],dudxcomp)
+c     &                          +derivs(CHF_AUTOIX[i],dvdycomp))**2
+c     &                    +half*(derivs(CHF_AUTOIX[i],dudycomp)
+c     &                          +derivs(CHF_AUTOIX[i],dvdxcomp))**2
+c      CHF_ENDDO
+c
+c slc:i think this is the correct strain rate invariant (see e.g MacAyeal 1996)
+
+      CHF_AUTOMULTIDO[box; i]
+#if (CH_SPACEDIM == 1)
+        epsSqr(CHF_AUTOIX[i]) = derivs(CHF_AUTOIX[i],dudxcomp)**2
+#elif (CH_SPACEDIM == 2)
+        epsSqr(CHF_AUTOIX[i]) = derivs(CHF_AUTOIX[i],dudxcomp)**2
+     &                         +derivs(CHF_AUTOIX[i],dvdycomp)**2
+     &                         +(derivs(CHF_AUTOIX[i],dudxcomp)
+     &                          *derivs(CHF_AUTOIX[i],dvdycomp))
+     &                    +0.25*(derivs(CHF_AUTOIX[i],dudycomp)
+     &                          +derivs(CHF_AUTOIX[i],dvdxcomp))**2
+#endif 
+
+      CHF_ENDDO
+
+
+
+
+      return 
+      end
+
+c--------------------------------------------------------
+c  compute the factor A in Glen's flow law from the 
+c  temperature dependent Arrhenius relation described in Pattyn (2003)
+c  A        <= 
+c  theta      => temperature (Kelvin,  corrected for pressure melting)
+c  box        => box over which to compute mu
+c  nParameter => exponent in power law
+c  mParameter => m from Pattyn for Arrhenius relation
+c  B0         => B_0 from Pattyn for Arrhenius relation
+c  thetaR     => theta_r from Pattyn for Arrhenius relation
+c  Kexponent  => K from Pattyn for Arrhenius relation
+c  Cfactor  => C from Pattyn for Arrhenius relation
+c  RgasConst  => R (gas constant) for Arrhenius relation
+c  Q          => Q from Pattyn for Arrhenius relation
+c --------------------------------------------------------
+      subroutine COMPUTEARRHENIUSA(CHF_FRA1[A],
+     &     CHF_CONST_FRA1[theta],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[nParameter], 
+     &     CHF_CONST_REAL[mParameter],
+     &     CHF_CONST_REAL[B0],
+     &     CHF_CONST_REAL[thetaR],
+     &     CHF_CONST_REAL[Kexponent],
+     &     CHF_CONST_REAL[Cfactor],
+     &     CHF_CONST_REAL[RgasConst],
+     &     CHF_CONST_REAL[Q])
+
+      integer CHF_AUTODECL[i]
+      REAL_T APrefactor, QonR, thisA
+
+      APrefactor = mParameter*((one/B0)**nParameter)      
+      QonR = Q/RgasConst
+     
+      CHF_AUTOMULTIDO[box;i]
+
+c     compute A based on local temperature
+      thisA = exp( (three*Cfactor/((thetaR - theta(CHF_AUTOIX[i]))**Kexponent))
+     &     - QonR/theta(CHF_AUTOIX[i]))
+
+      A(CHF_AUTOIX[i]) = APrefactor*thisA
+        
+	 
+      CHF_ENDDO
+
+      end subroutine
+
+
+c--------------------------------------------------------
+c  compute the factor A in Glen's flow law from the 
+c  temperature dependent Arrhenius relation 
+c  described in e.g Cuffey and Paterson 2010, 
+c  'The physics of glaciers', p72-74
+c
+c   A = E*A0*exp(-Qc / R * [1/theta - 1/theta0]
+c   where Qc = Qm = if theta < theta0; Qc = Qp otherwise.
+c
+c  A          <= 
+c  box        => box over which to compute A
+c  E          => enhancement factor
+c  A0         => isotropic ice constant of proportionality
+c  theta      => temperature (Kelvin, corrected for pressure melting)
+c  theta0     => transition temperature (Kelvin, corrected for pressure melting)
+c  R          => R (gas constant)
+c  Qm         => Q- from Cuffey and Paterson
+c  Qp         => Q+ from Cuffey and Paterson
+c --------------------------------------------------------
+      subroutine COMPUTEPATERSONA(CHF_FRA1[A],
+     &     CHF_CONST_FRA1[theta],
+     &     CHF_CONST_FRA1[theta0],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[E],
+     &     CHF_CONST_REAL[A0],
+     &     CHF_CONST_REAL[R],
+     &     CHF_CONST_REAL[Qm],
+     &     CHF_CONST_REAL[Qp])
+
+      integer CHF_AUTODECL[i]
+      REAL_T EA0, QmOnR, QpOnR, thisA, QonR, T, T0
+
+      EA0 = E * A0     
+      QmOnR = Qm/R
+      QpOnR = Qp/R
+
+      CHF_AUTOMULTIDO[box;i]
+
+      T = theta(CHF_AUTOIX[i])
+      T0 = theta0(CHF_AUTOIX[i])
+      if (T.ge.T0) then
+         QonR = QpOnR
+      else
+         QonR = QmOnR
+      end if
+      A(CHF_AUTOIX[i]) = EA0 * exp(-QonR *(one/T - one/T0))
+      
+      CHF_ENDDO
+
+      end subroutine
+
+c--------------------------------------------------------
+c  compute the factor A in Glen's flow law from the 
+c  temperature dependent Arrhenius relation 
+c  described in Zwinger (2007) Annals of Glaciology vol 45 p 29
+c  and used in (older versions of?) Elmer/Ice. 
+c
+c   A = E*A0*exp(-Qc / (R * T) ]
+c   where Qc = Qm = if theta < theta0; Qc = Qp otherwise.
+c   and   A0 = Am = if theta < theta0; A0 = Ap otherwise.
+c   Am is computed so that A is continuous with T
+c  A          <= 
+c  box        => box over which to compute A
+c  E          => enhancement factor
+c  Ap         => isotropic ice constant of proportionality for T > theta0
+c  theta      => temperature (Kelvin, corrected for pressure melting)
+c  theta0     => transition temperature (Kelvin, corrected for pressure melting)
+c  R          => R (gas constant)
+c  Qm         => Q- activation energy for T < theta0
+c  Qp         => Q+ activation energy for T > theta0
+c --------------------------------------------------------
+      subroutine COMPUTEZWINGERA(CHF_FRA1[A],
+     &     CHF_CONST_FRA1[theta],
+     &     CHF_CONST_FRA1[theta0],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[E],
+     &     CHF_CONST_REAL[Ap],
+     &     CHF_CONST_REAL[R],
+     &     CHF_CONST_REAL[Qm],
+     &     CHF_CONST_REAL[Qp])
+
+      integer CHF_AUTODECL[i]
+      REAL_T  A0,Am,QmOnR, QpOnR, thisA, QonR, T, T0
+   
+      QmOnR = Qm/R
+      QpOnR = Qp/R
+ 
+
+      CHF_AUTOMULTIDO[box;i]
+
+      T = theta(CHF_AUTOIX[i])
+      T0 = theta0(CHF_AUTOIX[i])
+      Am =  Ap * exp(-QpOnR *(one/T0)) / exp(-QmOnR *(one/T0))
+
+      if (T.ge.T0) then
+         QonR = QpOnR
+         A0 = Ap
+      else
+         QonR = QmOnR
+         A0 = Am
+      end if
+      
+      A(CHF_AUTOIX[i]) = E * A0 * exp(-QonR *(one/T))
+      
+      CHF_ENDDO
+
+      end subroutine
+
+c -------------------------------------------------------
+c  compute the factor mu0 in Glen's flow law from the 
+c  relation mu0 = A^(-1/n) 
+c  mu0        =>A, <= mu0 = 0.5 * A^(-1/n)
+c  box        => box over which to compute mu
+c  nParameter => power law index
+c  epsSqr0 => small value for strain rate invariant
+c --------------------------------------------------------
+      subroutine COMPUTEGLENSMU0(CHF_FRA1[mu0],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[nParameter])
+
+      integer CHF_AUTODECL[i]
+      REAL_T  muexponent
+
+c first, precompute what we can
+
+      muexponent = -1.0 / nParameter
+      CHF_AUTOMULTIDO[box;i]
+         
+      mu0(CHF_AUTOIX[i]) =  half * (mu0(CHF_AUTOIX[i])**muExponent)
+	 
+      CHF_ENDDO
+      
+      return
+      end 
+c --------------------------------------------------------
+c  compute approximation to viscosity using Glen's flow law.
+c  mu = mu0 [ (e^2 + e0^2)^(n-1)/2 + delta]
+c  temperature dependence is due to Arrhenius relation described in 
+c  Pattyn (2003).  
+c  INPUTS/OUTPUTS:
+c  mu        <=>  on input, mu0 (temperature dependent coefficent of strain rate invariant, 
+c                 on output, approximation to viscosity
+c  epsSqr     => strain rate invariant
+c  mu0        => temperature dependent coefficient of strain rate invariant
+c  box        => box to do computation over
+c  nExponent  => power law index,n 
+c  epsSqr0    => small parameter from Pattyn
+c -----------------------------------------------------------
+      subroutine COMPUTEGLENSMU(CHF_FRA1[mu],
+     &                          CHF_CONST_FRA1[epsSqr],
+     &                          CHF_BOX[box],
+     &                          CHF_CONST_REAL[nExponent],
+     &                          CHF_CONST_REAL[epsSqr0], 
+     &                          CHF_CONST_REAL[delta])
+
+
+      integer CHF_AUTODECL[i]
+     
+      REAL_T epsExponent
+      REAL_T thisMu, thisEpsSqr
+      epsExponent = (one - nExponent)/(two*nExponent)
+   
+      CHF_AUTOMULTIDO[box;i]
+        thisEpsSqr = max(epsSqr(CHF_AUTOIX[i]),epsSqr0)
+        thisMu=mu(CHF_AUTOIX[i])*((thisEpsSqr)**epsExponent + delta)
+        mu(CHF_AUTOIX[i]) = thisMu
+
+      CHF_ENDDO
+
+      return
+      end
+
+      
+                      

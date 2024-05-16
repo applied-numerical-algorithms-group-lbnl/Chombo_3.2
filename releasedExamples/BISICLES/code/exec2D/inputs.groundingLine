@@ -1,0 +1,153 @@
+#inputs file for Amr ice-sheet solver
+main.poutBaseName = pout.GL
+main.maxTime = 1000  # maximum time to run to
+main.maxStep = 2   # maximum number of steps to run
+#main.maxStep = 20000   # maximum number of steps to run
+#main.constitutiveRelation = GlensLaw
+main.constitutiveRelation = L1L2
+#main.constitutiveRelation = constMu
+#constMu.mu = 1.279e8
+main.rateFactor = constRate
+constRate.epsSqr0 = 1.0e-16
+
+main.domain_size = 100000.0 100000.0 100000.0  # half-domain
+#main.domain_size = 200000.0 200000.0 200000.0  # full-domain
+
+
+#CalvingModel.type = DomainEdgeCalvingModel
+CalvingModel.type = NoCalvingModel
+#CalvingModel.type = DeglaciationCalvingModelB
+CalvingModel.min_thickness = 0.0
+CalvingModel.calving_thickness = 50.0
+CalvingModel.calving_depth = 100.0
+#CalvingModel.front_lo = 0 0 # for half-domain
+#CalvingModel.front_lo = 1 0 # for full-domain
+CalvingModel.front_hi = 1 0
+
+surfaceFlux.type = constantFlux
+surfaceFlux.flux_value = 5.0
+basalFlux.type = zeroFlux
+
+amr.mask_sources = 1 # scale source terms by real-valued ice mask
+amr.write_mask = 1
+amr.write_thickness_sources = 1
+
+geometry.problem_type = marineIceSheet
+marineIceSheet.geometry = symmetricPlane
+marineIceSheet.basal_slope = -0.005 0
+marineIceSheet.symmetryPoint = 0 0 0 
+marineIceSheet.originElevation = -250
+marineIceSheet.thickness_type = compactSupportConstant
+marineIceSheet.thickness = 500.0
+# note that compactSupportConstant spills over the domain
+# boundaries where appropriate
+marineIceSheet.loBound = -90000.0 -100000 
+marineIceSheet.hiBound =  90000.0 200000.0
+
+geometry.beta_type = constantBeta
+geometry.betaValue = 1000.0
+#geometry.betaValue = 0.0
+
+geometry.basalSlope = 0 0 0 
+#geometry.basalSlope = 0  0
+
+#amr.gridsFile = grids.dat
+
+amr.maxLevel = 3   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2
+#amr.num_cells = 128 128 128   #number of cells in base grid
+amr.num_cells = 64 64 16   #number of cells in base grid for half-domain
+amr.num_cells = 32 32 16   #number of cells in base grid for half-domain
+#amr.num_cells = 128 128 16   #number of cells in base grid for full-domain
+#amr.domainLoIndex = -64 0 0 # full-domain offset
+amr.is_periodic = 0 0 1    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# velocity BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+#                     2 = free-slip (Dirichlet-normal, Neumann-tangential)
+bc.lo_bc = 0 2 0  
+bc.hi_bc = 1 2 0  
+bc.new_bc = 1
+
+amr.temporal_accuracy = 1
+#amr.temporal_accuracy = 2
+#amr.temporal_accuracy = 4
+
+amr.cfl = 0.1  # "cfl" number
+amr.initial_cfl = 0.1  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+
+amr.plot_interval = 1
+amr.plot_prefix = plot.groundingLine.
+amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+amr.check_interval = 20
+amr.check_prefix = chk
+amr.verbosity = 5
+
+
+amr.ref_ratio = 2 2 2   # refinement ratios
+amr.regrid_interval = 10   # number of timesteps between regridding
+amr.blockFactor = 4           # block factor used in grid generation
+amr.fill_ratio = 0.8          # how efficient are the grids
+amr.nestingRadius = 3         # proper nesting radius required
+amr.tags_grow = 2             # amount to buffer tags
+amr.max_box_size = 32         # largest box length allowed
+#amr.max_box_size = 64         # largest box length allowed
+amr.max_box_size = 256         # largest box length allowed
+
+amr.tag_on_grad_velocity = 0
+amr.tag_on_laplacian_velocity = 1
+amr.lap_vel_tagging_val = 1
+amr.tag_on_strain_rate_invariant = 0
+amr.strain_rate_invariant_tagging_val = 1
+
+
+amr.velocity_solver_tolerance = 1.0e-10
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+picardSolver.num_smooth = 8
+#picardSolver.linearSolver = multigrid
+picardSolver.linearSolver = BiCGStab
+
+JFNKSolver.vtopSafety = 0.9
+JFNKSolver.minPicardIterations = 2
+JFNKSolver.switchRate = 5.0
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.maxIter = 100
+
+JFNKSolver.absTol = 1.0e-5
+JFNKSolver.relTol = 1.0e-10
+#JFNKSolver.BiCGStabRelTol = 4.0e-3
+JFNKSolver.BiCGStabRelTol = 1.0e-5
+JFNKSolver.maxBiCGStabIter = 10
+JFNKSolver.maxBiCGStabIter = 40
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxMinIter = 4
+JFNKSolver.vtopRelaxTol = 0
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.hAdaptive = true 
+JFNKSolver.mgProlongType = 1
+
+# 0 = relax, 1 = BiCGStab, 2 = GMRES, 3 = MultiGrid, 4 = PETSc
+JFNKSolver.solverType = 4
+JFNKSolver.maxBiCGStabIter = 50
+JFNKSolver.MGtol = 1.0e-5
+JFNKSolver.RelaxTol = 1.0e-5
+JFNKSolver.maxRelaxIter = 50
+JFNKSolver.vtopRelaxTol = 0
+
+JFNKSolver.writeResiduals = false
+
+

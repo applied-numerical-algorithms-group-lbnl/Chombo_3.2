@@ -1,0 +1,596 @@
+c-----------------------------------------------
+c set a maximum value on fab
+c----------------------------------------------- 
+
+      subroutine L1L2LIMITFAB
+     &     (CHF_FRA1[fab],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[mv])
+      
+      integer CHF_AUTOIX[i]
+     
+
+      CHF_AUTOMULTIDO[box; i]
+
+      if (.not.(fab(CHF_AUTOIX[i]) .lt. mv)) then
+         fab(CHF_AUTOIX[i]) = mv
+      end if
+
+      CHF_ENDDO
+
+      return
+      end subroutine
+
+c-----------------------------------------------
+c supress fab beyond mv
+c----------------------------------------------- 
+
+      subroutine L1L2SUPRESSFAB
+     &     (CHF_FRA1[fab],
+     &     CHF_BOX[box],
+     &     CHF_CONST_REAL[mv])
+      
+      integer CHF_AUTOIX[i]
+      REAL_T t
+
+      CHF_AUTOMULTIDO[box; i]
+      
+      t = fab(CHF_AUTOIX[i])
+
+      if (t .gt. zero) then
+         if (.not.(fab(CHF_AUTOIX[i]) .le. mv)) then
+            fab(CHF_AUTOIX[i]) = mv + log(t - mv + 1.0)
+         end if
+      else
+         if (.not.(fab(CHF_AUTOIX[i]) .ge. -mv)) then
+            fab(CHF_AUTOIX[i]) = -mv - log(-t - mv + 1.0)
+         end if 
+      end if
+
+      CHF_ENDDO
+
+      return
+      end subroutine
+
+
+c------------------------------------------------
+c compute L1L2 mu (of Schoof and Hindmarsh, 2010)
+c by solving the equation 
+c 
+c 1 - 2 A mu (4 mu ^2 e^2 + t^2)^(n-1)/2 = 0
+c
+c there is an analytic solution for the 
+c common case n = 3, 
+c------------------------------------------------
+      subroutine ANALYTICL1L2MU(CHF_FRA1[mu],
+     &     CHF_CONST_FRA1[A],
+     &     CHF_CONST_FRA1[epsSqr],
+     &     CHF_CONST_FRA1[torSqr],
+     &     CHF_BOX[box], 
+     &     CHF_CONST_REAL[sigma],
+     &     CHF_CONST_REAL[nExponent],
+     &     CHF_CONST_REAL[epsSqr0])
+
+      integer CHF_AUTODECL[i], niter
+      REAL_T  tmu, tA, tesqr, ttsqr, q, sigmaSqr  
+
+      sigmaSqr = sigma*sigma;
+
+      CHF_AUTOMULTIDO[box;i]
+      
+      tA = A(CHF_AUTOIX[i])
+      tesqr = epsSqr(CHF_AUTOIX[i]) + epsSqr0 
+      ttsqr = sigmaSqr * torSqr(CHF_AUTOIX[i])
+
+      q = (4.0 * ta**two * ttsqr**three + 27.0 * tesqr)**half
+     &     + three**(three/two) * tesqr**half 
+
+      q = q**(third)
+
+      tmu = q**two - two**(two/three) * tA**(two/three) * ttsqr
+        
+      tmu = tmu / (four**(two/three) * three**half * tA**(third) 
+     &     * tesqr**half * q)
+
+      mu(CHF_AUTOIX[i]) = tmu
+
+      CHF_ENDDO
+
+
+      return 
+      end
+
+
+c------------------------------------------------
+c compute 1 - 2 A mu (4 mu ^2 e^2 + t^2)^p
+c-------------------------------------------------
+
+      subroutine COMPUTEL1L2RES(CHF_REAL[res], CHF_REAL[mu],
+     &     CHF_CONST_REAL[A], CHF_CONST_REAL[esqr], 
+     &     CHF_CONST_REAL[tsqr], CHF_CONST_REAL[p])
+
+
+      res = 1.0 - 2.0 * A * mu * (4.0 * mu**2 * esqr + tsqr)**p
+      return
+      end subroutine
+      
+c-----------------------------------------------
+c  solve 1 - 2 A mu (4 mu ^2 e^2 + t^2)^p = 0
+c  using up to maxIter iterations of the secant method 
+c  with starting points mu and mua, 
+c  such that |1 - 2 A mu (4 mu ^2 e^2 + t^2)^p| < tol
+c-----------------------------------------------
+
+      subroutine L1L2SECANTSOLVE(CHF_REAL[mu], CHF_REAL[mua],
+     &     CHF_CONST_REAL[A], CHF_CONST_REAL[esqr],
+     &     CHF_CONST_REAL[tsqr], CHF_CONST_REAL[p],
+     &     CHF_INT[niter], CHF_CONST_REAL[tol])
+      
+      
+      REAL_T fa,fb,t
+      integer i, j
+c      call COMPUTEL1L2RES(fb,mu,A,esqr,tsqr,p) 
+c         if (abs(fb) .lt. tol) return
+
+      if (abs(mua - mu) .lt. 0.005) then
+         mua = 1.005 * mu;
+      end if
+
+      call COMPUTEL1L2RES(fa,mua,A,esqr,tsqr,p)
+      do i = 0, niter
+c         j = i + 1
+         call COMPUTEL1L2RES(fb,mu,A,esqr,tsqr,p) 
+         if (abs(fb) .lt. tol) exit
+         t = mu
+         mu = mua - (mua - mu)/(fa - fb)*fa
+         mua = t
+         fa = fb 
+         
+      end do
+      mua = fb
+c      niter = j
+ 
+      return
+      end subroutine
+
+
+
+c------------------------------------------------
+c compute (a regularized) L1L2 mu (of Schoof and Hindmarsh, 2010)
+c by solving the equation 
+c 
+c 1 - 2 A mu0 (4 mu0 ^2 e^2 + t^2)^(n-1)/2 = 0
+c
+c where
+c
+c e^2 = epsSqr + epsSqr0 
+c
+c and setting
+c
+c mu = mu0 + A^{-1/n} delta
+c
+c a secant method is used, initialised
+c by mu and res. on return, res is overwritten
+c with the residual 1 - 2 A mu0 (4 mu0 ^2 e^2 + t^2)^(n-1)/2
+c------------------------------------------------
+
+      subroutine COMPUTEL1L2MU(CHF_FRA1[mu],
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[A],
+     &     CHF_CONST_FRA1[epsSqr],
+     &     CHF_CONST_FRA1[torSqr],
+     &     CHF_BOX[box], 
+     &     CHF_CONST_REAL[sigma],
+     &     CHF_CONST_REAL[nExponent],
+     &     CHF_CONST_REAL[epsSqr0],
+     &     CHF_CONST_REAL[delta],
+     &     CHF_CONST_REAL[tol],
+     &     CHF_CONST_INT[maxIter])
+
+
+      integer CHF_AUTODECL[i], niter, isec
+      REAL_T tmua, tmu, tA, tesqr, ttsqr, p1, p2, p3 , mu0, t
+      REAL_T fa,fb
+      
+      p1 = (nExponent - one)*half
+      p2 = -p1 / nExponent
+      p3 = - one / nExponent
+
+      CHF_AUTOMULTIDO[box;i]
+
+          tA = A(CHF_AUTOIX[i])
+          tesqr = epsSqr(CHF_AUTOIX[i]) + epsSqr0 
+          ttsqr = sigma * sigma * torSqr(CHF_AUTOIX[i])
+          
+          if (ttsqr .gt. epsSqr0) then
+c     secant solve
+             niter = maxIter
+             tmu = mu(CHF_AUTOIX[i])
+             tmua = res(CHF_AUTOIX[i])
+c             call L1L2SECANTSOLVE(tmu,tmua,tA,tesqr,ttsqr,
+c     &            p1, niter, tol)      
+             if (abs(tmua - tmu) .lt. 0.005d0*(tmu+1.0)) then
+                tmua = 1.005d0 * tmu;
+             end if       
+             !call COMPUTEL1L2RES(fa,tmua,tA,tesqr,ttsqr,p1)
+             fa = 1.0d0 - 2.0d0 * tA * tmua * 
+     &            (4.0d0 * tmua**2 * tesqr + ttsqr)**p1
+             do isec = 0, niter
+                !call COMPUTEL1L2RES(fb,tmu,tA,tesqr,ttsqr,p1)
+                fb = 1.0d0 - 2.0d0 * tA * tmu * 
+     &               (4.0d0 * tmu**2 * tesqr + ttsqr)**p1
+               
+                if (abs(fb) .lt. tol) exit
+                if (abs(fb-fa) .lt. tol**2) exit
+
+                t = tmu
+                tmu = tmua - (tmua - tmu)/(fa - fb)*fa 
+                tmua = t
+                fa = fb 
+         
+             end do
+             tmua = fb
+             res(CHF_AUTOIX[i]) = fb
+             !res(CHF_AUTOIX[i]) = tmua
+             mu(CHF_AUTOIX[i]) = tmu
+          else
+c     no vertical shearing means we can just return plain Glen's law
+             tmua = half * tA**p3 * tesqr**p2
+             mu(CHF_AUTOIX[i]) = tmua
+             res(CHF_AUTOIX[i]) = 0.0d0
+          end if
+
+          mu(CHF_AUTOIX[i]) = mu(CHF_AUTOIX[i]) + tA**p3 * delta
+
+      CHF_ENDDO
+      return
+      end subroutine
+      
+
+c------------------------------------------------
+c compute the expressions
+c
+c siyy = 4 * mu * du/dx + 2 * mu * dv/dy
+c sixy = mu * (du/dy + dv/dx)
+c siyy) = 4 * mu * dv/dx + 2 * mu * du/dy
+c------------------------------------------------
+      
+      subroutine L1L2PHIINTEGRANDS(
+     &     CHF_FRA1[sixx],
+     &     CHF_FRA1[sixy],
+     &     CHF_FRA1[siyy],
+     &     CHF_CONST_FRA1[H],
+     &     CHF_CONST_FRA1[mu],
+     &     CHF_FRA[derivs],
+     &     CHF_INT[dudxComp],
+     &     CHF_INT[dudyComp],
+     &     CHF_INT[dvdxComp],
+     &     CHF_INT[dvdyComp],
+     &     CHF_BOX[box])
+      
+
+      integer CHF_AUTOIX[i]
+      REAL_T thisMuH
+
+      CHF_AUTOMULTIDO[box; i]
+             thisMuH = mu(CHF_AUTOIX[i]) * H(CHF_AUTOIX[i])
+	     
+
+             sixx(CHF_AUTOIX[i]) = thisMuH * 
+     &            (four *  derivs(CHF_AUTOIX[i],dudxcomp)
+     &            + two *  derivs(CHF_AUTOIX[i],dvdycomp))
+
+             sixy(CHF_AUTOIX[i]) = thisMuH * 
+     &            (derivs(CHF_AUTOIX[i],dudycomp)
+     &            + derivs(CHF_AUTOIX[i],dvdxcomp))
+       
+             siyy(CHF_AUTOIX[i]) = thisMuH * 
+     &            (four *  derivs(CHF_AUTOIX[i],dvdycomp)
+     &            + two *  derivs(CHF_AUTOIX[i],dudxcomp))        
+
+             
+
+
+      CHF_ENDDO
+      return
+      end subroutine
+
+c------------------------------------------------
+c compute the expressions
+c
+c f_zx = 2 * A * (4*mu^2*epsSqr + phi^2)^(n-1)/2 
+c  * phi_zx
+c f_zy = 2 * A * (4*mu^2*epsSqr + phi^2)^(n-1)/2 
+c  * phi_zy
+c
+c--------------------------------------------------
+
+      subroutine L1L2UINTEGRANDS(
+     &     CHF_FRA1[fzx],
+     &     CHF_FRA1[fzy],
+     &     CHF_CONST_FRA1[H],    
+     &     CHF_CONST_FRA1[A],
+     &     CHF_CONST_FRA1[mu],
+     &     CHF_CONST_FRA1[epssqr],
+     &     CHF_CONST_FRA1[phizx],
+     &     CHF_CONST_FRA1[phizy],
+     &     CHF_CONST_REAL[n],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T phisqr, g , p
+
+      p = half * (n-one)
+
+      CHF_AUTOMULTIDO[box; i]
+
+        phisqr = phizx(CHF_AUTOIX[i])**2 
+     &     +  phizy(CHF_AUTOIX[i])**2
+         
+        g = two * A(CHF_AUTOIX[i]) * H(CHF_AUTOIX[i])
+     &       * (four * mu(CHF_AUTOIX[i])**2 
+     &       * epsSqr(CHF_AUTOIX[i]) + phisqr)**p
+
+        
+       fzx(CHF_AUTOIX[i]) = g * phizx(CHF_AUTOIX[i])
+       fzy(CHF_AUTOIX[i]) = g * phizy(CHF_AUTOIX[i])
+
+      CHF_ENDDO
+      return
+      end subroutine
+
+c------------------------------------------------
+c compute the expressions
+c
+c f_zi = 2 * A * (4*mu^2*epsSqr + phi^2)^(n-1)/2 
+c  * phi_zi
+c f_zy = 2 * A * (4*mu^2*epsSqr + phi^2)^(n-1)/2 
+c  * phi_zy
+c
+c--------------------------------------------------
+
+      subroutine L1L2UIGRAND(
+     &     CHF_FRA[fzi],
+     &     CHF_CONST_FRA1[H],    
+     &     CHF_CONST_FRA1[A],
+     &     CHF_CONST_FRA1[mu],
+     &     CHF_CONST_FRA1[epssqr],
+     &     CHF_CONST_FRA[phizi],
+     &     CHF_CONST_REAL[n],
+     &     CHF_CONST_INT[ncomp],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i], icomp
+      REAL_T phisqr, g , p
+
+ 
+      p = half * (n-one)
+
+      CHF_AUTOMULTIDO[box; i]
+
+      phisqr = 0.0;
+      do icomp = 0, ncomp -1
+         phisqr = phisqr +  phizi(CHF_AUTOIX[i],icomp)**2 
+      end do
+ 
+      g = two * min( A(CHF_AUTOIX[i]), 1.0e-10) * H(CHF_AUTOIX[i])
+     &     * (four * mu(CHF_AUTOIX[i])**2 
+     &     * epsSqr(CHF_AUTOIX[i]) + phisqr)**p
+      
+        
+       do icomp = 0, ncomp -1
+          fzi(CHF_AUTOIX[i],icomp) = g * phizi(CHF_AUTOIX[i],icomp)
+       end do
+
+      CHF_ENDDO
+      return
+      end subroutine
+
+c------------------------------------------------
+c limit each cell in fab such that 
+c sum (fab(IntVect i,n)**2) .le. lim**2 
+c------------------------------------------------
+
+      subroutine L1L2MODLIMIT(
+     &     CHF_FRA[fab],
+     &     CHF_CONST_REAL[lim],
+     &     CHF_BOX[box],
+     &     CHF_CONST_INT[ncomp])
+
+      REAL_T limsq,t
+      integer CHF_AUTOIX[i], icomp
+
+      limsq = lim**two;
+      CHF_AUTOMULTIDO[box; i]
+      t = zero
+      do icomp = 0, ncomp-1
+         t = t + fab(CHF_AUTOIX[i],icomp)**two
+      end do
+      if (t .gt. limsq) then
+         t = lim * t**(-half)
+         do icomp = 0, ncomp-1
+            fab(CHF_AUTOIX[i],icomp) = t * fab(CHF_AUTOIX[i],icomp) 
+         end do
+      end if
+      CHF_ENDDO
+      return
+      end
+
+c------------------------------------------------
+c increment phi(icomp) by - sigma * H * G(icomp)
+c------------------------------------------------
+
+      subroutine L1L2ADDGSTRESS(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[G],
+     &     CHF_CONST_FRA1[H],
+     &     CHF_CONST_REAL[sigma],
+     &     CHF_BOX[box],
+     &     CHF_CONST_INT[ncomp])
+
+      integer CHF_AUTODECL[i], icomp
+     
+      do icomp = 0, ncomp-1
+
+         CHF_AUTOMULTIDO[box; i]
+
+         phi(CHF_AUTOIX[i],icomp) = phi(CHF_AUTOIX[i],icomp)
+     &        - sigma * G (CHF_AUTOIX[i],icomp) * H(CHF_AUTOIX[i])
+
+         CHF_ENDDO
+
+      end do
+      return
+      end subroutine
+
+
+c----------------------------------------------
+c SIA approximation to vertical contribution to 
+c second invariant of
+c deviatoric stress (rho * g * H * grad(s))^2 
+c------------------------------------------------ 
+      subroutine L1L2PHITILDESQR(
+     &     CHF_FRA1[ptsqr],
+     &     CHF_CONST_FRA1[H],
+     &     CHF_CONST_FRA[grads],
+     &     CHF_CONST_REAL[rhog],
+     &     CHF_INT[ncomp],
+     &     CHF_BOX[box])
+
+   
+      integer CHF_AUTOIX[i], icomp
+
+     
+      CHF_AUTOMULTIDO[box; i]
+      
+      ptsqr(CHF_AUTOIX[i]) =  (rhog * H(CHF_AUTOIX[i]) 
+     &     * grads( CHF_AUTOIX[i], 0))**2
+      
+
+      CHF_ENDDO
+     
+      if (ncomp .gt. 1) then
+
+          CHF_AUTOMULTIDO[box; i]
+
+         ptsqr(CHF_AUTOIX[i]) = ptsqr(CHF_AUTOIX[i]) 
+     &        + (rhog * H(CHF_AUTOIX[i]) 
+     &        * grads( CHF_AUTOIX[i], 1))**2
+         
+         CHF_ENDDO
+         
+      end if
+
+
+      return 
+      end subroutine
+
+
+c------------------------------------------------
+c D = 2 * (rho * g)^n |grad(s)|^(n-1) H^(n+2)
+c------------------------------------------------
+      subroutine L1L2DIFFFACTOR(CHF_FRA1[D],
+     &     CHF_CONST_FRA1[H],
+     &     CHF_CONST_FRA[grads],
+     &     CHF_CONST_REAL[n],
+     &     CHF_CONST_REAL[rhog],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i], ncomp
+      Real_t  G, f, p1, p2
+      
+      f = 2.0*rhog**n
+      p1 = (n+two)
+      p2 = ((n-one)/two)
+      ncomp = CHF_NCOMP[grads]
+
+      CHF_AUTOMULTIDO[box; i]
+      G = grads(CHF_AUTOIX[i],0)**2
+      if (ncomp .gt. 1) then 
+         G = G + grads(CHF_AUTOIX[i],1)**2
+      end if
+      D(CHF_AUTOIX[i]) = f * H(CHF_AUTOIX[i])**p1 * G**p2
+      CHF_ENDDO
+      return
+      end
+
+
+
+c-------------------------------------------------
+c compute diffusivity D from vertically averaged velocity u
+c through D = - u H / grad(s). all fields are cell-centered
+c------------------------------------------------- 
+
+      subroutine L1L2COMPUTEDIFFUSIVITY(CHF_FRA1[D],
+     &     CHF_CONST_FRA1[ux],
+     &     CHF_CONST_FRA1[uy],
+     &     CHF_CONST_FRA1[thck],
+     &     CHF_CONST_FRA1[s],
+     &     CHF_CONST_INT[dir],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[dy],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ix]
+      integer CHF_AUTODECL[iy]
+      REAL_T oneOnDx, uxc,uyc, uc, dsx, dsy, ds
+
+      oneOnDx = one/dx
+
+      CHF_DTERM[
+      ix0 = CHF_ID(0,0);
+      ix1 = CHF_ID(0,1);
+      ix2 = CHF_ID(0,2)
+      ]
+
+      CHF_DTERM[
+      iy0 = CHF_ID(1,0);
+      iy1 = CHF_ID(1,1);
+      iy2 = CHF_ID(1,2)
+      ]
+  
+
+          
+      CHF_AUTOMULTIDO[box ; i]
+      uxc = half * (ux(CHF_AUTOIX[i])+ux(CHF_OFFSETIX[i;+ix]))
+      uyc = half * (uy(CHF_AUTOIX[i])+uy(CHF_OFFSETIX[i;+iy]))
+      uc = (uxc**2 + uyc**2)**half
+      dsx = half*(s(CHF_OFFSETIX[i;+ix])
+     &     -s(CHF_OFFSETIX[i;-ix]))/dx
+      dsy = half*(s(CHF_OFFSETIX[i;+iy])
+     &     -s(CHF_OFFSETIX[i;-iy]))/dy
+      ds = (dsx**2 + dsy**2)**half
+      
+      D(CHF_AUTOIX[i]) = thck(CHF_AUTOIX[i]) * uc
+     &		       / max(ds,1.0e-4)
+      
+      CHF_ENDDO
+
+      return 
+      end
+c-------------------------------------------------
+c cell to face harmonic average (must exist elsewhere, surely)
+c------------------------------------------------- 
+
+      subroutine L1L2CELLTOFACEHARMONIC(CHF_FRA1[face],
+     &     CHF_CONST_FRA1[cell],
+     &     CHF_CONST_INT[dir],
+     &     CHF_CONST_REAL[tiny],
+     &     CHF_BOX[fbox])
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+
+      CHF_DTERM[
+      ii0 = CHF_ID(dir,0);
+      ii1 = CHF_ID(dir,1);
+      ii2 = CHF_ID(dir,2)]
+      
+      CHF_AUTOMULTIDO[fbox ; i]
+      face(CHF_AUTOIX[i]) = half * 
+     &     cell(CHF_AUTOIX[i]) * cell (CHF_OFFSETIX[i;-ii]) / 
+     &     (tiny + cell(CHF_AUTOIX[i]) + cell (CHF_OFFSETIX[i;-ii]))
+      CHF_ENDDO
+
+      return
+      end

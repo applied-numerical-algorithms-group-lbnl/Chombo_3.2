@@ -1,0 +1,29 @@
+Create sector masks for antarctica
+
+Given Steph's 8/4km velocity plot, ant_bmach_vel_4km.2d.hdf5
+
+0. Create base mask:
+./createMaskFromVel2d.Linux.64.mpiCC.gfortran.DEBUG.MPI.ex ant_bmach_vel_4km.2d.hdf5 ant_maskBase_4km.2d.hdf5 xVelb yVelb
+
+creates mask file ant_maskBase_4km.2d.hdf5 with 10,000 "ice" and 0 "no ice"
+
+1. then go sector-by-sector and build masks using createSectorsFromVel
+
+e.g. for sector 2:
+
+./createSectorsFromVel2d.Linux.64.mpiCC.gfortran.DEBUG.MPI.ex inputs.sector2
+
+Order of sectors:
+2 (ASE)
+1 (Peninsula)
+3 (Getz)
+10 (Amery)
+11
+9
+8
+12 (Wilkes/totten)
+13
+Ross (4 & 14) -- together for now (needs to be tweaked at boundary with 6)
+5 (rutford)
+7
+6

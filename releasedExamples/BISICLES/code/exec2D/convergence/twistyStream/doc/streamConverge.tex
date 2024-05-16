@@ -1,0 +1,187 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epsfig}
+\usepackage{subfigure}
+
+
+\newcommand{\topg}{b} % bedrock topgraphy
+
+\title{Convergence of ``twisty-stream'' problem}
+\author{Dan Martin}
+
+\begin{document}
+
+
+\maketitle
+
+This document presents the convergence of the ``twisty-stream'' example for
+the BISICLES code. This is a 2-D doubly-periodic test case in a $160km \times
+160 km$ domain. In this
+example, the ice has constant thickness $H = 1 km$ on a sloping bed, 
+\begin{equation}
+\topg = -x cos( \theta )
+\end{equation}
+where $\theta= 0.1 \deg$. The basal friction is given by 
+\begin{equation}
+C(x,y) = \beta_o x( 1 + \epsilon + sin(2 \pi  y + m sin(2 \pi x) ) )
+\end{equation}
+where $\beta_0 = 1000, \epsilon = 0.001$, and $m = 0.25$. A plot of
+$C$ is shown in figure \ref{fig:streamFriction}, and a representative plot 
+of the velocity magnitude in figure \ref{fig:streamMagVel}.
+
+\begin{figure}
+\centering
+\epsfig{width=3.5in,figure=streamFriction.eps}
+\caption{Basal friction field for ice stream problem}
+\label{fig:streamFriction}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\epsfig{width=3.5in,figure=streamMagVel.eps}
+\caption{Magnitude of velocity field for ice stream problem}
+\label{fig:streamMagVel}
+\end{figure}
+
+
+
+
+\section{Single-level convergence}
+We first use Richardson extrapolation to calculate the convergence rate of the
+velocity field, which involves pairwise comparison between solutions with grid
+spacing $h$ and $2h$. Convergence results are shown in figure
+(\ref{fig:RichardsonConverge}); both velocity components exhibit second-order
+convergence. 
+
+\begin{figure}
+\centering
+\subfigure[$x-$velocity]{\epsfig{width=4.0in,figure=xVelRichardson.eps} }
+\subfigure[$y-$velocity]{\epsfig{width=4.0in,figure=yVelRichardson.eps}}
+\caption{Richardson convergence of velocity}
+\label{fig:RichardsonConverge}
+\end{figure}
+
+\subsection{L1L2 convergence}
+For the L1L2 approximation, we discretize the vertical direction in layers,
+which are then vertically integrated. Two velocity fields are computed. The
+first is the basal velocity field, which is computed using
+vertically-integrated viscosities at cell faces. The second is the flux
+velocity field, which is an estimate of the vertically-integrated velocity
+field. To evaluate the effect of the number of layers on the solution, we hold
+the horizontal resolution fixed at $128 \times 128$ and then increase the
+number of vertical layers. We then compare the velocity fields. Figure
+\ref{fig:layersConverge} demonstrates that the solution converges at
+second-order rates as we increase the number of layers.
+
+\begin{figure}
+\centering
+\subfigure[$L_1(error)$]{\epsfig{width=2.8in,figure=layers.L1.eps} }
+\subfigure[$L_2(error)$]{\epsfig{width=2.8in,figure=layers.L2.eps} }
+\subfigure[$L_\infty(error)$]{\epsfig{width=2.8in,figure=layers.max.eps} }
+
+\caption{Convergence of velocity fields as with increased number of vertical layers.}
+\label{fig:layersConverge}
+\end{figure}
+
+\section{AMR convergence}
+To evaluate AMR performance, we compute a uniform-mesh solution on a very fine mesh (in this case $2048 \times 2048$) and then take that as the ``exact'' solution. This will give a slightly different convergence from Richardson extrapolation. However, we can compute the single-grid ``error'' and the AMR ``error'' and then demonstrate that the AMR error is similar to that of the single-level solution with the same effective resolution. This is shown in figures (\ref{fig:xVelAMRConverge}) and (\ref{fig:yVelAMRConverge}), in which we see that for $n_{ref}=2,4,$ and $(2,2)$, we get the same error as the equivalent fine-level solution. 
+
+
+\begin{figure}
+\centering
+\subfigure[$L_1(error)$]{\epsfig{width=2.8in,figure=xVel.AMR.L1.eps} }
+\subfigure[$L_2(error)$]{\epsfig{width=2.8in,figure=xVel.AMR.L2.eps} }
+\subfigure[$L_\infty(error)$]{\epsfig{width=2.8in,figure=xVel.AMR.max.eps} }
+
+\caption{Convergence of $x-$velocity}
+\label{fig:xVelAMRConverge}
+\end{figure}
+
+\begin{figure}
+\centering
+\subfigure[$L_1(error)$]{\epsfig{width=2.8in,figure=yVel.AMR.L1.eps} }
+\subfigure[$L_2(error)$]{\epsfig{width=2.8in,figure=yVel.AMR.L2.eps} }
+\subfigure[$L_\infty(error)$]{\epsfig{width=2.8in,figure=yVel.AMR.max.eps} }
+
+\caption{Convergence of $y-$velocity}
+\label{fig:yVelAMRConverge}
+\end{figure}
+
+
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+effective &  &  &  &  &  &  &  &  \\
+resolution & single-level & rate & $n_{ref}=2$ & rate & $n_{ref} =
+4$ & rate & $n_{ref}=(2,2)$ & rate \\
+$(1/h)$ &  &  &  &  &  &  &  &  \\
+\hline
+32  &  &  &  &  &  &  &  &  \\
+64  &  &  &  &  &  &  &  &  \\
+128  &  &  &  &  &  &  &  &  \\
+256  &  &  &  &  &  &  &  &  \\
+512  &  &  &  &  &  &  &  &  \\
+1024  &  &  &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+\caption{$L_1(x-{\rm vel})$}
+\end{table}
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+effective &  &  &  &  &  &  &  &  \\
+resolution & single-level & rate & $n_{ref}=2$ & rate & $n_{ref} =
+4$ & rate & $n_{ref}=(2,2)$ & rate \\
+$(1/h)$ &  &  &  &  &  &  &  &  \\
+\hline
+32  &  &  &  &  &  &  &  &  \\
+64  &  &  &  &  &  &  &  &  \\
+128  &  &  &  &  &  &  &  &  \\
+256  &  &  &  &  &  &  &  &  \\
+512  &  &  &  &  &  &  &  &  \\
+1024  &  &  &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+\caption{$L_2(x-{\rm vel})$}
+\end{table}
+
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+effective &  &  &  &  &  &  &  &  \\
+resolution & single-level & rate & $n_{ref}=2$ & rate & $n_{ref} =
+4$ & rate & $n_{ref}=(2,2)$ & rate \\
+$(1/h)$ &  &  &  &  &  &  &  &  \\
+\hline
+32  &  &  &  &  &  &  &  &  \\
+64  &  &  &  &  &  &  &  &  \\
+128  &  &  &  &  &  &  &  &  \\
+256  &  &  &  &  &  &  &  &  \\
+512  &  &  &  &  &  &  &  &  \\
+1024  &  &  &  &  &  &  &  &  \\
+\hline
+\end{tabular}
+\caption{$L_\infty(x-{\rm vel})$}
+\end{table}
+
+\section{Solver performance}
+Look at nonlinear solver convergence for the initial velocity solve.
+
+\subsection{Single-level}
+Experimenting with various parameters:
+\begin{itemize}
+\item JFNK vs. Picard (prefer JFNK, but can run into convergence problems if not ``near'' solution)
+\item BiCGStab vs. MG (or GMRES) for linear solver. BiCGStab has better convergence properties for highly varying coefficients and is required for JFNK, but may ``hide'' bad behaviors, but pure MG is probably better to look at initially since it's simpler.
+\item Arithmetic vs. Harmonic averaging (default had been harmonic, but arithmetic looks better)
+\item
+\end{itemize}
+
+\end{document}

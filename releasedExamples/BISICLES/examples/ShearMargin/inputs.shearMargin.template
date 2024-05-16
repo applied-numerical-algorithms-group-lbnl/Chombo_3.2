@@ -1,0 +1,141 @@
+#shear margin thermo-mechanical experiment
+constants.ice_density = 918.0 
+constants.sea_water_density = 1028.0 
+constants.gravity = 9.81 
+
+main.maxTime = 30000  # maximum time to run to
+main.maxStep = 0   # maximum number of steps to runx
+main.constitutiveRelation = @CRE
+#main.rateFactor = constRate
+#constRate.epsSqr0 = 1.0e-12
+#constRate.A =  4.0e-17 
+
+main.rateFactor = arrheniusRate
+ArrheniusRate.epsSqr0 = 1.0e-12
+
+amr.isothermal=false
+temperature.type=constant
+temperature.value=268.0
+
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+  
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+CalvingModel.type = NoCalvingModel
+
+main.domain_size = 128.0e+3 128.0e+3 1.0e+3
+
+geometry.problem_type = basic
+geometry.basal_type = constantZb
+geometry.basalSlope = -0.0087488664 0.0  # 0.5 degree slope
+geometry.basalSlope = -0.001745331 0.0 # 0.1 degree slope
+geometry.basalSlope = -0.002 0.0 # 
+geometry.thickness_type = constantThickness1km
+
+
+
+geometry.beta_type = singularStream
+geometry.slippyC = 0.0
+geometry.stickyC = 1.0e+6
+geometry.width = 16.0e+3
+geometry.twistNumber = 1.0
+geometry.twistAmplitude = 0.0
+
+amr.num_cells = @RESX @RESY 10
+
+amr.is_periodic = 1 1 0    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# velocity BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 1 1 1  
+bc.hi_bc = 1 1 1   
+
+amr.temporal_accuracy = 1
+
+amr.cfl = 0.5  # "cfl" number
+amr.initial_cfl = 0.5  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+amr.time_step_ticks = 1
+
+amr.plot_interval = 1
+amr.plot_prefix = plot.@NAME.
+amr.write_temperature = 1
+amr.write_solver_rhs = 1
+amr.check_interval = 100
+amr.check_prefix = chk.@NAME.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+amr.maxLevel = 10  # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 1  # number of timesteps between regridding
+amr.blockFactor = 8          # block factor used in grid generation
+amr.fill_ratio = 0.85         # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = 1             # amount to buffer tags
+amr.n_tag_subset_boxes = 1
+amr.tag_subset_boxes = 8 0 119 16
+amr.tagCap = @TAGCAP
+
+amr.max_box_size = 32        # largest box length allowed
+#amr.max_box_size = 10000         # largest box length allowed
+
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_laplacian_velocity = 1
+amr.lap_vel_tagging_val = 1
+
+# FAS Multigrid solver parameters
+FASSolver.max_iterations = 5000
+FASSolver.min_iterations = 1
+FASSolver.num_smooth = 2
+FASSolver.num_cycles = 1
+#FASSolver.num_pre = 2
+#FASSolver.num_post = 2
+FASSolver.cycle_type = 1  # FULL=0,VCYCLE=1,FCYCLE=2,SMOOTHER=3
+FASSolver.smoother =   1  # FAS_GSRB=0,FAS_RICH=1
+FASSolver.smoothing_damping_factor = .9
+FASSolver.avoid_norms = 0
+FASSolver.verbosity = 2
+FASSolver.num_v_cycles = 5 
+FASSolver.stagnate = 1.0e-30
+FASSolver.prol_poly_order = 1
+FASSolver.fmg_prol_poly_order = 2
+amr.velocity_solver_tolerance = 1.0e-6 # this overrides FAS's tol
+
+#velocity solve type -- 0 = Picard, 1 = JFNK, 2=???, 3 = petsc, 4 = FAS-MG
+amr.velocity_solver_type = 4
+
+#initial guess 
+amr.do_initial_velocity_guess = 0
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.999
+JFNKSolver.minPicardIterations = 1
+JFNKSolver.maxIter = 15
+JFNKSolver.absTol = 1.0e-1
+JFNKSolver.relTol = 1.0e-6
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 1.0e-4
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.0025
+JFNKSolver.switchRate = 5.0
+JFNKSolver.minStepFactor = 0.125
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+
+#amr.additional_velocity = true
+#amr.diffusion_treatment = implicit

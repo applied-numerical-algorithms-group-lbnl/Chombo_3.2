@@ -1,0 +1,473 @@
+ <html>
+<head>
+  <title>
+    BISICLES Pine Island Glacier application
+  </title>
+  <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+<head>
+<body>
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+
+<h1>Contents</h1>
+<ol>
+<li><a href='#preprocess'>Creating input data</a></li>
+<li><a href='#convert'>netcdf to hdf5 conversion</a></li>
+<li><a href='#configure'>Configuration file</a></li>
+<li><a href='#runpig'>Running the simulation</a></li>
+</ol>
+
+</div>
+
+<div id="main">
+
+  <H1>BISICLES Pine Island Glacier application</H1>
+  <p> These instructions assume that you have working BISICLES executable, including both driver 
+     and nctoamr. If that is not the case, there are some <a href='readme.html'>BISICLES build instructions</a> to follow.
+     Anne Le Brocq has provided us with the data for this application - thanks Anne.
+  </p> 
+  <p>
+    We will run through the steps needed to run BISICLES on a fairly realistic problem, namely
+    a simulation of Pine Island Glacier retreating under the influence of sub-shelf melting.
+    To that end we will
+    <ol>
+      <li>
+	<a href='#preprocess'>preprocess some data</a>, that is, pull together data 
+	from a few sources, do a few simple calculations, and create  a single netCDF file that
+	contains just the data that BISICLES needs. Note however that we will <strong>not</strong> 
+	get an especially realistic velocity field using these inputs - for that we need to find our initial 
+	values of the basal friction coefficient (C, or beta) and the damage coefficient (phi, or muCoef)
+	by solving an <a href='pineislandinverse.html'>inverse problem</a>. 
+      </li>
+      <li> 
+	<a href='#convert'>Convert</a> the data from the netCDF file into the hdf5 based format that BISICLES can read
+      </li>
+      <li>
+      Create a BISICLES <a href='#configure'>input</a> file, which specifies the data file, but also
+      parameters which affect the behavior of the solver.
+      </li>
+      <li>
+	<a href='#runpig'>Run a simulation</a>
+      </li>
+    </ol>
+  </p>
+
+  <h2><a name='preprocess'>Pre-processing</a> </h2>
+  <p> 
+    Pre-processing might involve a few steps : here we take a subset of the original elevation and topography
+    data to cover a 256 x 384 grid - because we use a multigrid solver in BISICLES, it is essential that the 
+    geometry is of dimensions (nx,ny) = (2^n * a , 2^m * b), where n and m are integers and a and b are small
+    integers. We then crudely estimate a basal traction coefficient from velocity data, and invent a temperature structure.
+    This step is somewhat iterative with actually running the model - we might find that some part of the topography
+    (say) causes us problems down the line, and choose to alter it in some way.
+  </p>
+  <p>
+    <strong>
+      NetCDF no longer provides a fortran API by default, so we have included the file
+      pig-bisicles-1km.nc mentioned below.  
+    </strong>
+  </p>
+  <p>
+    In this case, the pre-processing is done with a FORTRAN 90 program contained in the files friction.f90 and
+    mgrelax.f90. mgrelax.f90 just provides a simple multigrid solver that we use to smooth data, so most of the
+    work is in friction.f90. To compile this program, change into the appropriate directory 
+    <pre>
+      > cd $BISICLES_HOME/BISICLES/examples/PineIslandGlacier
+    </pre>
+    then, if your netcdf is not installed at $BISICLES_HOME/netcdf, 
+    edit the file 'GNUMakefile' to give the correct value for NETCDF_HOME. 
+    Then  make and execute, like so (you can skip this step)
+    <pre>
+      > make friction
+      > ./friction
+    </pre>
+    Some text will be written to standard output, and the end result is a file containing 'pig-bisicles-1km.nc'.
+    You can have a quick look at the contents</a> by running
+    <pre>
+      > $BISICLES_HOME/netcdf/serial/bin/ncdump pig-bisicles-1km.nc | head -n 30
+    </pre>
+    and you should see:
+    <pre>
+    netcdf pig-bisicles-1km {
+dimensions:
+        x = 256 ;
+        y = 384 ;
+        sigma = 10 ;
+variables:
+        double x(x) ;
+                x:units = "m" ;
+        double y(y) ;
+                y:units = "m" ;
+        double sigma(sigma) ;
+        double thk(y, x) ;
+        double topg(y, x) ;
+        double beta(y, x) ;
+        double xvel(y, x) ;
+        double yvel(y, x) ;
+        double velc(y, x) ;
+        double divuh(y, x) ;
+        double divuhc(y, x) ;
+        double temp000000(y, x) ;
+        double temp000001(y, x) ;
+        double temp000002(y, x) ;
+        double temp000003(y, x) ;
+        double temp000004(y, x) ;
+        double temp000005(y, x) ;
+        double temp000006(y, x) ;
+        double temp000007(y, x) ;
+        double temp000008(y, x) ;
+        double temp000009(y, x) ;
+data:
+
+ x = 0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 
+    12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000, 21000, 
+    22000, 23000, 24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 
+    32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 
+</pre>
+    The first part of the output above is a list of the basic variables we need, and they sit on 
+    a uniform, square cell 256 x 384 grid in (x,y) that we'll call the <strong>data level grid</strong>.
+    BISICLES will perform its calculations on a set of level grids, one of which
+    will have the same mesh spacing as the data level grid, some of which may be 
+    coarser , and some of which will be finer. As for the vertical direction, the
+    ice sheet is divided into N layers (10 in this case), with the
+    top of layer 0 the upper surface and the bottom of layer N-1 at the lower surface.
+    Temperature data is stored at the midpoint of each layer.
+    The variables are 
+    <ol>
+    <li>the x and y co-ordinates of the centers of each grid cell </li>
+    <li>thk : the thickness of ice</li>
+    <li>topg : the bedrock elevation</li>
+    <li>beta : the basal traction coefficient</li>
+    <li>tempXXXXXX : temperatures at the mid-point of layer XXXXXX</li>
+    </ol>
+    The remainder are only needed by the <a href='pineislandinverse.html'>inverse problem</a>
+    In fact, only thk,topg, and beta are essential : it is easy enough to specify either a constant rate 
+    factor A, or a constant ice temperature, in BISICLES configuration file. If you are starting
+    a new problem, it is likely easiest to start with thk, topg, and beta (possibly a constant beta, though
+    in Pine Island Glacier a spatially varying beta is required if the simulation is to look at all realistic).
+  </p>
+  <h2><a name='convert'>Conversion</a> </h2>
+  BISICLES cannot (yet) read  netCDF data directly, instead we must use the nctoamr tool to 
+  convert it into a Chombo AMR hierarchy stored in an .hdf5 file. Run
+  <pre>
+    $BISICLES_HOME/BISICLES/code/filetools/nctoamr2d.Linux.64.g++.gfortran.DEBUG.ex pig-bisicles-1km.nc pig-bisicles-1km.2d.hdf5 thk topg beta temp000000 temp000001 temp000002 temp000003 temp000004 temp000005 temp000006 temp000007 temp000008 temp000009  xvel yvel velc divuh divuhc
+  </pre>
+  and you should end up with a file called pig-bisicles-1km.2d.hdf5 that has the same data as pig-bisicles-1km.nc.
+  You can inspect the contents of this file with the h5ls and h5dump programs, but it won't be pretty. Instead,
+  copy the file to your workstation and open into <a href='visit.html'>VisIt</a> which
+  has a special module for viewing Chombo AMR hierarchies.
+  <h2><a name='configure'>Configuration file</a> </h2>
+  <p>
+    As in the MISMIP3D example, we can generate a bunch of configuration files by running
+    a script
+    <pre>
+      > sh make_inputs.sh
+    </pre>
+    which should create several files, with names like <quote>inputs.pigv5.1km.l1l2.l2</quote>, where
+    l1l2 stands for the choice of the Schoof-Hindmarsh L1L2 physics (as opposed to ssa, for shelfy-stream approximation (aka shallow-shelf approximation))
+    and l2 stands for 2 levels of refinement (on top of the base level, to give us 2 level grids). The names
+    aren't important of course, only the contents. Below, we'll look at the entries in inputs.pigv5.1km.l1l2.l2.
+    </p>
+  <p>
+The first section sets up the domain. 
+<pre> 
+#domain details
+main.domain_size = 256e+3 384e+3 1.0e+3
+amr.num_cells = 64 96 10 #quarter data resolution (4 km)
+amr.is_periodic = 0 0 0
+</pre>
+First, we have a comment, beginning with #.
+Next three quantities are given for the domain size, the third of which is ignored for now.
+Also notice that amr.num_cells specifes the coarsest mesh.
+The first two numbers specify the base resolution, and because the data level sits on a  256 x 384
+grid, the choice of a 64 x 96 grid means that the data on the base grid
+will be coarsened by a factor of 4 from the input data. The third number is the number of vertical layers,
+which remains the same on every grid.
+</p>
+
+<p>
+The next specifies the bulk constitutive relation and its attendant rate factor
+<pre>
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+#main.rateFactor = constRate
+#constRate.epsSqr0 = 1.0e-12
+#constRate.A =  4.0e-17
+main.rateFactor = patersonRate
+PatersonRate.epsSqr0 = 1.0e-12
+</pre>
+<p>
+constRate allow us to specify A, petersonRate allows us to chose a temperature dependent A(T)
+(as in, for example, Cuffey and Paterson, 2010).
+</p>
+<p>
+  We also need to specify a rule for basal friction: here we are using a power
+  law (Weertman) rule, where the friction |T(x,y)| = beta(x,y) * |u(x,y)|^1/3.
+</p> 
+<pre>
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 0.3333
+</pre>
+
+
+<p>
+Next we specify the input data.
+<pre>
+#geometry,temperature & basal friction input data
+geometry.problem_type = LevelData
+geometry.beta_type = LevelData
+temperature.type = LevelData
+#temperature.type = constant
+#temperature.value = 268
+
+amr.sigma = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+inputLevelData.geometryFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.frictionFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.temperatureFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.thicknessName = thk
+inputLevelData.topographyName = topg
+inputLevelData.frictionName = beta
+inputLevelData.temperatureName = temp000000
+</pre>
+we have chosen to load all our data from one file, though it is possible
+to load the geometry (thickness and topography), the basal friction coefficient,
+and the temperature from three separate files. We should also include an
+entry for amr.sigma, which specifies the sigma values of the layer interfaces, starting
+from the upper surface and finishing at the base. Therefore, amr.sigma should list n+1
+numbers, where n is the number of layers. As for inputLevelData.temperatureName, 
+we need to give the name of the first layer's temperature field,
+and the remaining n-1 will be read from the next n-1 fields in the file, in order.
+</p>
+
+<p>
+It is also possible to specify a few physical constants, such 
+as ice density (constants.ice_density), the gravitational constant
+(constants.gravity), and water density (constants.water_density),
+<pre>
+#physical constants
+constants.ice_density=918
+</pre>
+</p>
+
+<p>
+Surface mass balance is chosen in the next section.
+<pre>
+#surface fluxes
+SurfaceFlux.type = constantFlux
+SurfaceFlux.flux_value = 0.3
+
+BasalFlux.type =  maskedFlux
+BasalFlux.grounded.type = zeroFlux
+BasalFlux.floating.type = piecewiseLinearFlux
+BasalFlux.floating.n = 2
+BasalFlux.floating.abscissae = 50.0 500.0
+BasalFlux.floating.ordinates = 0 -50.0
+</pre>
+Here, we have chosen a constant rate of accumulation at the upper surface.
+At the low surface, we have used the maskedFlux option in order to 
+select no flux in the grounded region, and a piecewise linear relation between
+melting and thickness beneath the ice shelves. 
+</p>
+
+<p>
+Next up is the calving law
+<pre>
+#calving model
+CalvingModel.type = FixedFrontCalvingModel
+CalvingModel.min_thickness = 1.0
+</pre>
+DeglaciationCalvingModelA maintains zero ice thickness in regions that initially have no ice
+and also prevents ice thickness from dropping below min_thickness. In effect, it works to maintain
+a fixed calving front (though a large region of ice only 1m thick might as well not be present at
+all, so something like a retreating calving front is possible). It is
+OK to set CalvingModel.min_thickness = 0.0, in which case the Calving front can retreat, and
+is irreversible. However, that can result in regions of floating ice unconnected to grounded ice,
+in which case the stress-balance equations become ill-posed.
+</p>
+
+<p>
+The next several parameters are related to the way the stress-balance equations
+are solved. 
+<pre>
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 10
+JFNKSolver.absTol = 1.0e+0
+JFNKSolver.relTol = 1.0e-3
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 2.0e-3
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 4
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 2.0
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+</pre>
+We will not say much about these, except that if JFNKSolver.writeResiduals = true is present
+(not commented, as it is above), a file named 'jknkopres.XXXXXX.2d.hdf5' will be written to disk
+on every evaluation of the stress-balance equation's residuals, containing velocity and residual data.
+These are useful when trying to understand solver failures.
+</p>
+
+<p>
+Various time stepping parameters come next
+<pre>
+#time stepping
+main.maxTime = 75  # maximum time to run to
+main.maxStep = 10000   # maximum number of steps to run
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+</pre>
+</p>
+
+<p>
+Below, we ask for detailed plots every 1 year, and specify the
+filename pattern (we will get files called plot.pigv5.1km.l1l2.2lev.XXXXXX.2d.hdf5 in this case)
+<pre>
+#plotting options
+#amr.plot_interval = 1
+amr.plot_time_interval = 1.0
+amr.plot_prefix = plot.pigv5.1km.l1l2.2lev.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+</pre>
+</p>
+<p>
+Check point files cannot be viewed in VisIt, but can be used to continue a
+run from the point where the check point was written. Specify
+a file in the amr.restart_file to that end.
+<pre>
+#check points
+amr.check_interval = 10
+amr.check_prefix = chk.pigv5.1km.l1l2.2lev.
+amr.check_overwrite = 0
+amr.verbosity = 5
+#amr.restart_file = chk.pigv5.1km.l1l2.2lev.000100.2d.hdf5
+</pre>
+</p>
+
+<p>
+Finally, we have a number of AMR parameters
+<pre>
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 1  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+amr.tagSubsetBoxesFile = tag_subset.pigv5
+amr.tagCap = 1
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32 # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 0 
+amr.lap_vel_tagging_val = 30
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 20
+
+#misc options
+amr.verbosity = 5
+</pre>
+In this case we only refine close to the grounding line.
+amr.tagCap means the finest level which will be tagged for refinement,
+while the entry amr.tagSubsetBoxesFile = tag_subset.pigv5 selects a subset
+of every grid where refinement is permitted. The contents of tag_subset.pigv5 are shown 
+below 
+<pre>
+level 0
+1
+( (16,16) (47,81) (0,0) )
+
+level 1
+0
+
+level 2
+0
+
+level 3
+0
+
+level 4
+0
+
+level 5
+0
+
+level 6
+0
+
+level 7
+0
+
+level 8
+0
+
+level 9
+0
+
+level 10
+0
+
+</pre>
+</p>
+There are 10 entries (corresponding to amr.max_level=10 : level 10 is never refined),
+each of which consists of the string level X on one line, the number, n, of subset boxes on 
+the next line, then n lines indicating the indices of the corners of the box.
+For now, follow this format exactly (if amr.tagSubsetBoxesFile exists at all) . We'll improve this soon to
+allow comments and so on.
+</p>
+<h2><a name='runpig'>Running a simulation</a> </h2>
+If you have a parallel workstation, run a simulation with 4 or 5 levels of refinement,
+e.g
+<pre>
+nohup mpirun -np 4 $BISICLES_HOME/BISICLES/code/exec2D/driver2d.Linux.64.mpic++.gfortran.DEBUG.OPT.MPI.ex inputs.pigv5.1km.l1l2.l4 &
+</pre>
+On a serial computer, run a simulation with 2 or 3 levels of refinement. e.g
+<pre>
+> $BISICLES_HOME/BISICLES/code/exec2D/driver2d.Linux.64.g++.gfortran.DEBUG.OPT.ex inputs.pigv5.1km.l1l2.l2 > sout.0 2>err.0 &
+</pre>
+<p>
+In both cases, you can view the resulting plot*2d.hdf5 files in visit. You should see
+the grounding line of Pine Island Glacier retreat rather rapidly in either case, and the
+AMR mesh changing to follow it.
+If you do have the time, try running the simulation for a range of finest meshes, and observe the
+way that the grounding line motion differs. You should see that the rate of retreat grows
+as the finest mesh spacing decreases, with the difference between no refinement and one level of refinement being much 
+larger than the difference between four and five levels of refinement.
+</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+
+BedMachineGreenland-2021-04-20.nc (Morlighem, NSIDC)
+
+geothermal_heat_flow_map_10km_with_NGRIP.nc (Colgan et al)
+
+Greenland_5km_v1.1.nc (Searise http://websrv.cs.umt.edu/isis/index.php/Present_Day_Greenland). Need to warp to EPSG3413 to produce
+smb_searise_epsg3413.nc, surftemp_searise_epsg3413.nc.
+
+Greenland_ice_speed_v2017.nc (Mouginot, NSIDC)
+
+----
+
+#example warp (then need to convert to netcdf...)
+
+gdalwarp -s_srs "PROJCRS["""unknown""",BASEGEOGCRS["""unknown""",DATUM["""World Geodetic System 1984""",ELLIPSOID["""WGS 84""",6378137,298.257223563,LENGTHUNIT["""metre""",1]],ID["""EPSG""",6326]],PRIMEM["""Greenwich""",0,ANGLEUNIT["""degree""",0.0174532925199433],ID["""EPSG""",8901]]],CONVERSION["""unknown""",METHOD["""Polar Stereographic (variant B)""",ID["""EPSG""",9829]],PARAMETER["""Latitude of standard parallel""",71,ANGLEUNIT["""degree""",0.0174532925199433],ID["""EPSG""",8832]],PARAMETER["""Longitude of origin""",-39,ANGLEUNIT["""degree""",0.0174532925199433],ID["""EPSG""",8833]],PARAMETER["""False easting""",0,LENGTHUNIT["""metre""",1],ID["""EPSG""",8806]],PARAMETER["""False northing""",0,LENGTHUNIT["""metre""",1],ID["""EPSG""",8807]]],CS[Cartesian,2],AXIS["""(E)""",south,MERIDIAN[90,ANGLEUNIT["""degree""",0.0174532925199433,ID["""EPSG""",9122]]],ORDER[1],LENGTHUNIT["""metre""",1,ID["""EPSG""",9001]]],AXIS["""(N)""",south,MERIDIAN[180,ANGLEUNIT["""degree""",0.0174532925199433,ID["""EPSG""",9122]]],ORDER[2],LENGTHUNIT["""metre""",1,ID["""EPSG""",9001]]]]" -t_srs EPSG:3413 -tr 5000.0 5000.0 -r cubicspline -te -653000.0 -3384500.0 883000.0 -619700.0 -of GTiff "NETCDF:""/Greenland_5km_v1.1.nc""":smb" searise_smb_epsg3413.tif 

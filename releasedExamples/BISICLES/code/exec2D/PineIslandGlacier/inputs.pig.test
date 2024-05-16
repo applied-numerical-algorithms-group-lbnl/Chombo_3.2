@@ -1,0 +1,118 @@
+#domain details
+main.domain_size = 256.0e+3 384.0e+3 1.0e+3
+#main.num_cells = 256 384 11
+#main.num_cells = 128 192 11
+amr.num_cells = 64 96 11
+amr.max_box_size = 1024
+amr.is_periodic = 0 0 0
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+main.rateFactor = constRate
+constRate.epsSqr0 = 1.0e-12
+constRate.A =  4.0e-17
+
+#geometry & basal friction input data
+geometry.problem_type = LevelData
+geometry.beta_type = LevelData
+inputLevelData.geometryFile = pigv5.1km.2d.hdf5
+inputLevelData.frictionFile = pigv5.1km.2d.hdf5
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+
+#physical constants
+constants.ice_density=918
+
+#surface fluxes
+main.surface_flux_type = constantFlux
+constFlux.flux_value = 0.3
+
+main.basal_flux_type = maskedFlux
+basalMaskedFlux.grounded_flux_type = zeroFlux
+basalMaskedFlux.floating_flux_type = piecewiseLinearFlux
+floatingBasalPWLFlux.n = 2
+floatingBasalPWLFlux.abscissae = 50.0 500.0
+floatingBasalPWLFlux.ordinates = 0 -50.0
+
+#calving model
+amr.calving_model_type = DeglaciationCalvingModelA
+DeglaciationCalvingModelA.min_thickness = 1.0
+DeglaciationCalvingModelA.calving_thickness = 100.0
+DeglaciationCalvingModelA.calving_depth = 10800.0
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 10
+JFNKSolver.absTol = 1.0e-5
+JFNKSolver.relTol = 1.0e-4
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 4.0e-3
+JFNKSolver.maxRelaxIter = 10
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 4
+JFNKSolver.numMGSmooth = 4
+JFNKSolver.numMGIter = 2
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 5.0
+
+
+#time stepping
+main.maxTime = 75  # maximum time to run to
+main.maxStep = 1000000   # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+#amr.plot_interval = 1
+amr.plot_time_interval = 1.0
+amr.plot_prefix = plot.pigv5.1km.l1l2.3lev.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+
+#check points
+amr.check_interval = 10
+amr.check_prefix = chk.pigv5.1km.l1l2.3lev.
+amr.check_overwrite = 0
+
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 1  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+amr.n_tag_subset_boxes = 1
+amr.tag_subset_boxes = 16 16 47 81
+amr.tagCap = 2
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32        # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_laplacian_velocity = 0
+amr.lap_vel_tagging_val = 100
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 20
+
+
+
+#misc options
+amr.verbosity = 5
+
+
+

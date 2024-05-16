@@ -1,0 +1,197 @@
+#include "CONSTANTS.H"
+#include "IceConstants.H"
+
+c------------------------------------
+c compute C p^n |u|^m
+c-----------------------------------
+
+      subroutine BFRICTIONPOWER(CHF_FRA1[alpha],
+     &     CHF_CONST_FRA[u],
+     &     CHF_CONST_FRA1[C],
+     &     CHF_CONST_FRA1[p],
+     &     CHF_CONST_FIA1[mask],
+     &     CHF_CONST_REAL[m],
+     &     CHF_CONST_REAL[n],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T usq, mExp, nExp, usq0
+      usq0 = TINY_VEL**2
+
+      mExp = m/two
+      nExp = n
+      
+      CHF_AUTOMULTIDO[box;i]
+         CHF_DTERM[
+         usq = u(CHF_AUTOIX[i],0)**2;
+     &        + u(CHF_AUTOIX[i],1)**2;
+     &        + u(CHF_AUTOIX[i],2)**2]
+         if (mask(CHF_AUTOIX[i]).eq.GROUNDEDMASKVAL) then       
+            alpha(CHF_AUTOIX[i]) = C(CHF_AUTOIX[i]) 
+     &           * (usq + usq0)**mExp
+
+            if (n.ne.0.0d0) then
+               alpha(CHF_AUTOIX[i]) = alpha(CHF_AUTOIX[i]) *
+     &            p(CHF_AUTOIX[i])**nExp 
+            end if
+
+         else
+            alpha(CHF_AUTOIX[i]) = C(CHF_AUTOIX[i]) 
+         end if
+         
+      
+      CHF_ENDDO
+      return
+      end
+
+c------------------------------------
+c compute alpha = alpha * u.u
+c-----------------------------------
+      subroutine BFRICTIONAUU(CHF_FRA1[alpha],
+     &     CHF_CONST_FRA[u],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i], ncomp, icomp
+      REAL_T usq
+      CHF_AUTOMULTIDO[box;i]
+      CHF_DTERM[
+      usq = u(CHF_AUTOIX[i],0)**2;
+     &     + u(CHF_AUTOIX[i],1)**2;
+     &     + u(CHF_AUTOIX[i],2)**2]
+      
+      alpha(CHF_AUTOIX[i]) = alpha(CHF_AUTOIX[i]) * usq
+      
+      CHF_ENDDO
+
+      return
+      end
+      
+c------------------------------------
+c alpha <- min(alpha, a*p*|u|**(-1))
+c-----------------------------------
+      subroutine BFRICTIONPLIMITTSAI(CHF_FRA1[alpha],
+     &     CHF_CONST_FRA[u],CHF_CONST_FRA1[p],CHF_CONST_FRA1[a],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T usq, usq0
+
+      usq0 = TINY_VEL**2
+
+      CHF_AUTOMULTIDO[box;i]
+      CHF_DTERM[
+      usq = usq0 + u(CHF_AUTOIX[i],0)**2;
+     &     + u(CHF_AUTOIX[i],1)**2;
+     &     + u(CHF_AUTOIX[i],2)**2]
+      
+      alpha(CHF_AUTOIX[i]) = min(alpha(CHF_AUTOIX[i]),
+     &     a(CHF_AUTOIX[i])  * p(CHF_AUTOIX[i]) * usq**(-half))
+      
+      CHF_ENDDO
+
+      return
+      end
+c------------------------------------
+c alpha <- alpha * ( p^n / (a * |u| + p*n))^(1/n)
+c-----------------------------------
+      subroutine BFRICTIONPLIMITLEGUY(CHF_FRA1[alpha],
+     &     CHF_CONST_FRA[u],CHF_CONST_FRA1[p],
+     &     CHF_CONST_REAL[a],CHF_CONST_REAL[n],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T usq, usq0, pn, oneOnN
+
+      usq0 = TINY_VEL**2
+      oneOnN = one / n
+
+      CHF_AUTOMULTIDO[box;i]
+      CHF_DTERM[
+      usq = usq0 + u(CHF_AUTOIX[i],0)**2;
+     &     + u(CHF_AUTOIX[i],1)**2;
+     &     + u(CHF_AUTOIX[i],2)**2]
+      
+      pn = p(CHF_AUTOIX[i])**n
+
+      alpha(CHF_AUTOIX[i]) = alpha(CHF_AUTOIX[i])
+     &     * ((pn) / (a*usq**(half) + pn))**oneOnN
+
+      CHF_ENDDO
+
+      return
+      end
+
+
+c--------------------------------------------------------------------------------------------------------
+c     alpha <- alpha / (|u|/|ur| + 1 )^(m). The regularized Coulomb law of Joughin 2019: does not depend on pressure
+c     but instead has characteristic 'fast flow' |ur|.
+c
+c     The full rule is Tb = Cb * |u|^(m)* u/|u| * (|u|/|ur| + 1)^(1/n), where n is typically 1/3.
+c     Joughin 2019 is equivalent but has Tb =  Cj * |u|^(m)* u/|u| * (|u|+|ur|)^m, i.e Cb = Cj/(|ur|^m). 
+c     Cb is convenient because it then has the same units as in the usual power law
+c     (our m is Joughin's 1/m )
+c
+c     Also supports modified rule with alpha <- alpha * N /( Nr^1/m  (|u|/|ur| + N^1/m )^(m)
+c     That is Tb =  Cjn * N * |u|^(m)* u/|u| / ( Nr^1/m*|u|+ N^1/m*|ur|)^m
+c     When |u| >> |u_r|, |Tb| -> Cjn * N/Nr (Coulomb law that depends on pressure)
+c     When |u| << |u_r|, |Tb| -> Cjn * |u|^(m) / |ur|^m
+c     N is effective pressure, Nr is a reference (high!) pressure
+c     N,Nr can have any units so long as they are the same, so use thickness units (i.e N = thickness above flotation)
+c---------------------------------------------------------------------------------------------------------
+      subroutine BFRICTIONJOUGHIN(CHF_FRA1[alpha],
+     &     CHF_CONST_FRA[u],CHF_CONST_REAL[ur],
+     &     CHF_CONST_FRA1[N],CHF_CONST_REAL[Nr],
+     &     CHF_CONST_REAL[m], CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T usq, usq0, q, om
+
+      om = one / m
+      usq0 = TINY_VEL**2
+      CHF_AUTOMULTIDO[box;i]
+      CHF_DTERM[
+      usq = usq0 + u(CHF_AUTOIX[i],0)**2;
+     &     + u(CHF_AUTOIX[i],1)**2;
+     &     + u(CHF_AUTOIX[i],2)**2]
+
+c     maybe a bit belt and braces...
+      q = (usq**half)/(abs(ur) + TINY_VEL)
+      
+      if (Nr .lt. TINY_THICKNESS) then
+         alpha(CHF_AUTOIX[i]) = alpha(CHF_AUTOIX[i])
+     &        * ( q + one )**(-m)
+      else
+         alpha(CHF_AUTOIX[i]) = alpha(CHF_AUTOIX[i])
+     &        *     N(CHF_AUTOIX[i])
+     &        * ( q * Nr**om + N(CHF_AUTOIX[i])**om )**(-m)
+      end if
+
+      CHF_ENDDO
+
+      return
+      end
+
+
+      
+c------------------------------------
+c N = rhog * h * ( 1- hf/h)^p = rhog * h^(1-p) * (h - hf)^p
+c-----------------------------------
+      subroutine BFRICTIONLEGUYEFFPRES(CHF_FRA1[N],
+     &     CHF_CONST_FRA1[hab],CHF_CONST_FRA1[h],
+     &     CHF_CONST_REAL[p],CHF_CONST_REAL[rhog],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T pp
+      
+      pp = one - p
+      CHF_AUTOMULTIDO[box;i]
+
+      N(CHF_AUTOIX[i]) = rhog 
+     &     * h(CHF_AUTOIX[i])**pp
+     &     * hab(CHF_AUTOIX[i])**p
+
+      CHF_ENDDO
+
+      return
+      end

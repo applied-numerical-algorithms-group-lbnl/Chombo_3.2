@@ -1,0 +1,93 @@
+#inputs file for Amr ice-sheet solver
+main.maxTime = 10000000  # maximum time to run to
+main.maxStep = 4   # maximum number of steps to run
+main.constitutiveRelation = GlensLaw
+
+main.domain_size = 160000.0 160000.0 160000.0 
+
+CalvingModel.type = NoCalvingModel
+
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+
+geometry.problem_type = basic
+#geometry.basal_type = xInclineZb
+geometry.basal_type = constantZb
+geometry.thickness_type = constantThickness1km
+
+geometry.beta_type = twistyStreamx
+geometry.betaValue = 100000.0
+geometry.betaEps = 0.01
+# slope should correspond to a 5 degree x-slope
+geometry.basalSlope = -0.087488664 0.0
+
+amr.maxLevel = 2   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2
+amr.num_cells = 32 32 12   #number of cells in base grid
+amr.is_periodic = 1 1 1    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# physical BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 0 0 0  
+bc.hi_bc = 0 0 0  
+
+amr.cfl = 0.1  # "cfl" number
+amr.initial_cfl = 0.1  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+
+amr.plot_style_cf = true
+CFIO.lithk = true
+CFIO.whole_domain_diagnostics = true
+
+
+amr.plot_interval = 1  
+amr.plot_prefix = stream.
+amr.check_interval = -1
+amr.check_prefix = chk
+amr.verbosity = 5
+amr.write_solver_rhs = 1
+
+amr.ref_ratio = 2 2 2   # refinement ratios
+amr.regrid_interval = 10000   # number of timesteps between regridding
+amr.blockFactor = 4           # block factor used in grid generation
+amr.fill_ratio = 0.8          # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = 1             # amount to buffer tags
+amr.max_box_size = 640000         # largest box length allowed
+amr.tagging_val = 0.00001       # min undivided grad(vel) resulting in tagging
+
+ # this problem seems to need more picard iterations
+amr.max_solver_iterations = 10
+
+
+amr.write_layer_vertical_velocities = true
+amr.isothermal = false
+amr.velocity_solver_type = 1
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 8
+JFNKSolver.absTol = 1.0e-3
+JFNKSolver.relTol = 1.0e-8
+# 0 = relax, 1 = BiCGStab, 2 = GMRES, 3 = CG, 4 = petsc
+JFNKSolver.solverType = 0
+JFNKSolver.RelaxRelTol = 2.0e-3
+JFNKSolver.RelaxHang = 0.8
+JFNKSolver.maxRelaxIter = 8
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 2.0
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+
+amr.isothermal = false
+amr.write_internal_energy = true
+hydrology_model = distributed

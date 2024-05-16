@@ -1,0 +1,475 @@
+<html>
+<head>
+  <title>BISICLES site specific notes</title> 
+  <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+
+<h1>Contents</h1>
+
+<ol>
+  <li><a href='#debian'>Debian based systems (e.g Ubuntu) </a></li>
+  <li><a href='#uob'>University of Bristol</a></li>
+  <li><a href='#nersc'>NERSC</a></li>
+  <li><a href='#archer'>ARCHER (Cray XC30,</li>
+  <li><a href='#monsoon'>UKMO Monsoon (Cray XC40)</a></li>
+</ol>
+</div>
+
+
+<div id="main">
+<h1><a name='top'>BISICLES site specific notes</a></h1>
+
+<h2><a name='debian'>Debian based systems (e.g Ubuntu)</a></h2>
+
+<p>
+  Recent Debian GNU/Linux derivatives (from around 2016), including Ubuntu 22.04 (Jammy Jellyfish, the latest LTS) allow an mpi environment ,
+  hdf5, and netcdf to be installed in a way that works well for BISICLES. On Ubuntu 22.04 run
+</p>
+<pre>
+  sudo apt install subversion build-essential g++ gfortran csh mpi-default-bin mpi-default-dev libhdf5-mpi-dev libhdf5-dev hdf5-tools libnetcdff-dev libnetcdf-dev python3 python3-dev libpython3-dev
+</pre>
+<p>
+If you want to use python for analysis you will need the usual libraries (numpy, matplotlib etc) 
+The file $BISICLES_HOME/Chombo/lib/mk/Make.defs.local should contain:
+</p>
+<pre>
+PRECISION     = DOUBLE  
+CXX           = g++
+FC            = gfortran
+MPICXX        = mpiCC
+USE_HDF       = TRUE
+HDFINCFLAGS   = -I/usr/include/hdf5/serial/
+HDFLIBFLAGS   = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5 -lz
+HDFMPIINCFLAGS= -I/usr/include/hdf5/openmpi/ 
+HDFMPILIBFLAGS= -L/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ -lhdf5  -lz
+cxxdbgflags    = -g -fPIC 
+cxxoptflags    = -fPIC -O2
+fdbgflags     =  -g -fPIC 
+foptflags     = -fPIC -O3 -ffast-math -funroll-loops 
+</pre>
+<p>
+  and the file $BISICLES_HOME/BISICLES/code/mk/Make.defs.$mymachine (where $mymachine is
+  the output from 'uname -n') can be copied from s$BISICLES_HOME/BISICLES/code/mk/Make.defs.ubuntu_22.4 and should contain
+</p>
+<pre>
+PYTHON_INC=$(shell python3-config --includes)
+#--ldflags does not contain -lpython for reasons that escape me
+PYTHON_LIBS=-lpython3.10 $(shell python3-config --ldflags)
+NETCDF_HOME=$(shell nc-config --prefix)
+NETCDF_LIBS=-lnetcdff -lnetcdf -lhdf5_hl
+</pre>
+
+
+<h2><a name='uob'>University of Bristol</a></h2>
+<p>
+  You might not need to compile BISICLES at UoB since
+  a number of the developers work there. 
+</p>
+  <h3>Blue Pebble, GNU Compilers</h3>
+<p>
+  Load the module lib/openmpi/4.0.2-gcc.
+  Add the commands below to ~/.bash_profile.
+</p>
+<pre>
+  module load lib/openmpi/4.0.2-gcc
+</pre>
+<p>
+  Then follow the <a href='readme.html'>generic instructions</a>.
+  For BISICLES configuration, used the file $BISICLES_HOME/BISICLES/code/mk/Make.defs.blue_pebble. For
+  example,
+</p>
+<pre>
+  cd $BISICLES_HOME/BISICLES/code/mk
+  ln -s Make.defs.blue_pebble Make.defs.none
+</pre>
+<h3>Blue Crystal Phase 4, GNU Compilers</h3>
+ 
+    
+
+   <h2><a name='nersc'>NERSC</a></h2>
+    The US DOE-run National Energy Research Supercomputing Center ( <a href='http://www.nersc.gov'>NERSC</a>)
+    has several machines which BISICLES users may find useful. 
+
+<h3>Cori </h3>
+
+<p>
+  The Cray XC40 ( <a href='https://www.nersc.gov/users/computational-systems/cori'>Cori </a>) at NERSC offers Cray, GNU, and Intel compilers. Cori has two partitions -- the Intel Xeon "Haswell" partition is often faster execution time-wise, but has longer waits in the queues. The Knights Landing "KNL" partition has slower run times, but often significantly faster turnaround in the queues. I (Dan Martin) generally use the Haswell nodes for things like visualization (I use VisIt in client-server mode, leaving the data on NERSC), and the KNL nodes for moderate to large production runs. We are also maintaining precompiled executables for our own (and others') use if that's more convenient. If you have any difficulties with these, e-mail Dan at DFMartin@lbl.gov.
+</p>
+<h4> Haswell nodes -- precompiled binaries </h4>
+<p>
+  The precompiled BISICLES executable for Haswell nodes (from the public/trunk branch) can be found at
+  </p>
+<pre>
+/global/common/software/m1041/BISICLES/haswell/bin/driver2d.Linux.64.CC.ftn.OPT.MPI.PETSC.ex
+</pre>
+To use it, you'll need to load the python, GNU PrgEnv, and hdf5 modules as below, and add the python library directory to your LD_LIBRARY_PATH environment. In a csh/tcsh environment, this looks like:
+<pre>
+> module load craype-haswell
+> module swap PrgEnv-intel PrgEnv-gnu
+> module load cray-hdf5-parallel
+> module load python
+> module load cray-netcdf-hdf5parallel
+> module unload cray-shmem #needed for python only  
+> module load python
+> setenv LD_LIBRARY_PATH ${PYTHON_DIR}/lib:${LD_LIBRARY_PATH}
+</pre>
+
+
+</p>
+<h4> Haswell nodes -- GNU compilers </h4>
+<p>
+  <p>
+  To compile with GNU, switch to the correct PrgEnv and load an hdf5 module, plus netcdf and python if desired
+</p>
+<pre>
+> module load craype-haswell
+> module swap PrgEnv-intel PrgEnv-gnu
+> module load cray-hdf5-parallel
+> module load python
+> module load cray-netcdf-hdf5parallel
+> module unload cray-shmem #needed for python only
+</pre>
+<p>
+  To have the python interface work, the compiler needs the -shared and -fPIC flags, and
+  the linker needs the -dynamic flag. You may also need to have the environment variable CRAYPE_LINK_TYPE set to "dynamic"; in the csh or tcsh shells:
+</p>
+<pre>
+> setenv CRAYPE_LINK_TYPE dynamic
+</pre>
+<p>
+If you want to use the PETSc solvers, you can use the libraries maintained by Mark Adams:
+<p>
+  PETSC_DIR=/global/common/software/m1041/petsc_install/petsc_haswell_gnu
+<p>
+PETSC_ARCH=""
+<p>
+ You should be able to use the existing Chombo/lib/mk/local/Make.defs.cori.hsw.gnu file in the Chombo release as a starting point.  An example $BISICLES_HOME/Chombo/lib/mk/local/Make.defs.local would be:
+</p>
+<pre>
+makefiles+=Make.defs.local
+
+#default to MPI=TRUE,OPT=TRUE,DEBUG=FALSE 
+MPI=TRUE
+OPT=TRUE
+DEBUG=FALSE
+
+#this seems to be the Cray way
+CXX=CC
+FC=ftn
+MPICXX=CC
+USE_64=TRUE
+
+ifeq ($(PE_ENV),GNU)
+
+CH_CPP=$(CXX) -E -P 
+XTRACONFIG=.GNU
+cxxoptflags += -shared -fPIC 
+foptflags += -shared -fPIC
+ldoptflags += -dynamic
+cxxoptflags +=  -O3 -mavx2  -ffast-math 
+foptflags += -O3 -mavx2 -ffast-math 
+XTRALDFLAGS += -Wl,-zmuldefs
+
+else
+$(ECHO) "UNKNOWN PROGRAMMING ENVIRONMENT!"
+endif
+
+# The appropriate module (cray-hdf5-parallel) must be loaded for this to work.
+USE_HDF=TRUE
+HDFLIBFLAGS=   -L$(HDF5_DIR)/lib     $(HDF_POST_LINK_OPTS)  -lhdf5 -lz
+HDFMPILIBFLAGS=-L$(HDF5_DIR)/lib     $(HDF_POST_LINK_OPTS)  -lhdf5 -lz
+HDFINCFLAGS=   -I$(HDF5_DIR)/include $(HDF_INCLUDE_OPTS)
+HDFMPIINCFLAGS=-I$(HDF5_DIR)/include $(HDF_INCLUDE_OPTS)
+</pre>
+
+<p>
+  For python and netcdf, the build should hopefully see the existing Make.defs.cori file.
+<p>
+If you want to use the python functionality, then you should also load the python module. Unfortunately, you currently also have to add the python library directory to your LD_LIBRARY_PATH environment. In a csh/tcsh environment, this looks like:
+<pre>
+module load python
+setenv LD_LIBRARY_PATH ${PYTHON_DIR}/lib:${LD_LIBRARY_PATH}
+</pre>
+
+  
+<h4> KNL Nodes -- Intel compilers </h4>
+
+<p>
+  The precompiled BISICLES executable for KNL nodes (from the public/trunk branch) can be found at
+  </p>
+<pre>
+/global/common/software/m1041/BISICLES/KNL/bin/driver-public2d.Linux.64.CC.ftn.OPT.MPI.PETSC.ex
+</pre>
+<p>
+  
+    We've found that the Intel compilers work well for the KNL part of Cori. You'll first need to load the correct modules and set some environment variables (including pointing the build toward the Mark Adams-maintained PETSC library).
+    
+<pre>
+setenv NERSC_HOST `/usr/common/usg/bin/nersc_host`
+
+module unload PrgEnv-gnu
+module unload craype-haswell
+module load PrgEnv-intel
+module load craype-mic-knl
+module load cray-hdf5-parallel
+module load cray-netcdf-hdf5parallel
+module load visit  
+setenv PETSC_DIR PETSC_DIR=/global/common/software/m1041/petsc_install/petsc_knl_intel
+setenv PETSC_ARCH ""
+setenv CRAY_ROOTFS DSL
+setenv CRAYPE_LINK_TYPE dynamic
+</pre>
+
+And then use Chombo/lib/mk/local/Make.defs.cori.knl
+
+If you want to use the python functionality, then you should also load the python module. Unfortunately, it appears that you currently also have to add the python library directory to your LD_LIBRARY_PATH environment. In a csh/tcsh environment, this looks like:
+<pre>
+module load python
+setenv LD_LIBRARY_PATH ${PYTHON_DIR}/lib:${LD_LIBRARY_PATH}
+</pre>
+  
+Your build should also automagically access the existing Make.defs.cori file in BISICLES/code/mk, which is being kept up to date for KNL builds and runs that we are constantly doing.
+  
+
+<h2><a name='archer'>ARCHER</a></h2>
+
+<p>
+The Cray XC30 at ARCHER (UK National HPC) offers Cray, GNU, and Intel compilers.
+Cray is the default (but doesn't seem to work for now). All three compilers can be supported with a single
+Make.def.locals, it only only necessary to load the correct PrgEnv module and the cray-hdf5-parallel. 
+One complexity is with statically versus  dynamically linked executables. Static linking
+is often simpler, but, will prevent you from using the python interface as freely as you might
+like - in particular, 'import math', which is needed for many common math functions, will
+result in a segfault. The alternative is dynamic linking, which results in executables
+that have a longer list of dependencies that must be matched between login nodes and compute
+nodes. Choose static if you have no strong preference.
+</p>
+
+  <p>
+    It is not generally a good idea to work with the filetools (nctoamr, stats, flatten etc)
+    on ARCHER - these are intended for interactive use, and can be used on a workstation
+    even with larger data, such as whole Antarctic simulations. Ideally, you
+    will have a GNU/linux workstation to compile and run these tools, but
+    if you have only a Windows or Mac OS X machine, one possibility is to run
+    a virtual machine with GNU/linux. We have found that Oracle virtualbox
+    and Ubuntu 18.04 work well on both Windows and MacOS X machines. 
+  </p>
+  
+<h3>ARCHER -- GNU compilers -- static linking </h3>
+
+  <p>
+    For static linking, use the file Make.defs.archer included with Chombo
+  </p>
+  <pre>
+    ln -s $BISICLES_HOME/Chombo/lib/mk/local/Make.defs.archer $BISICLES_HOME/Chombo/lib/mk/Make.defs.local
+  </pre>
+  
+  <p>
+    To build statically linked executables with GNU, switch to the correct PrgEnv and load an hdf5 module
+    q</p>
+  <pre>
+    > module unload PrgEnv-cray PrgEnv-intel
+    > module load PrgEnv-gnuq
+    > module load cray-hdf5-parallel
+    > module load cray-petsc # if you want to build petsc-enabled executables
+    > module load cray-netcdf-hdf5parallel # if you want to build the filetools
+  </pre>
+
+  <p>
+    $BISICLES_HOME/BISICLES/code/mk/Make.defs.archer
+    includes the following details for the python interface
+    and netcdf. 
+  </p>
+  <pre>   
+    PYTHON_DIR=/work/y07/y07/cse/python/2.7.6-static/
+    PYTHON_INC=-I$(PYTHON_DIR)/include/python2.7/
+    PYTHON_LIBS=-L$(PYTHON_DIR)/lib -lpython2.7 -lpthread -ldl -lutil
+    
+    NETCDF_INC=-I$(NETCDF_DIR)/include
+    NETCDF_LIBS=-L$(NETCDF_DIR)/lib -lnetcdf
+  </pre>
+
+<p>
+  Copy this file to Make.defs.none or Make.defs.$UNAMEN
+  (where $UNAMEN is the output from uname -n)
+  Then compile:
+</p>
+<pre>
+  cd BISICLES/code/exec2D
+  make all OPT=TRUE MPI=TRUE DEBUG=FALSE # are all default 
+</pre>
+  <p>
+    the executable will be driver2d.Linux.64.CC.ftn.OPT.MPI.GNU.ex. To
+    compile a PETSc-enable executable,  driver2d.Linux.64.CC.ftn.OPT.MPI.PETSC.GNU.ex
+  </p>
+  <pre>
+     cd BISICLES/code/exec2D
+     make all OPT=TRUE MPI=TRUE DEBUG=FALSE USE_PETSC=TRUE 
+  </pre>
+
+  <h3>ARCHER -- GNU compilers -- dynamic linking </h3>
+  
+  <p>
+    For dynamic linking, use the file Make.defs.archer_dynamic_chombo included with BISICLES
+  </p>
+  <pre>
+    ln -s $BISICLES_HOME/BISICLES/code/mk/Make.defs.archer_dynamic_chombo $BISICLES_HOME/Chombo/lib/mk/Make.defs.local
+  </pre>
+  
+  <p>
+To build with GNU, switch to the correct PrgEnv and load an hdf5 module
+  </p>
+  <pre>
+    > module unload PrgEnv-cray PrgEnv-intel
+    > module load PrgEnv-gnuq
+    > module load cray-hdf5-parallel
+    > module load python-compute
+    > module load cray-netcdf-hdf5parallel
+    > module load cray-petsc #if you want petsc
+    > module unload cray-shmem
+    > export CRAYPE_LINK_TYPE dynamic
+  </pre>
+  
+  <p>
+    $BISICLES_HOME/BISICLES/code/mk/Make.defs.archer_dyamic
+    includes the following details for the python interface
+    and netcdf. 
+</p>
+  <pre>
+    PYTHON_DIR=/work/y07/y07/cse/python/2.7.6/
+    PYTHON_INC=-I$(PYTHON_DIR)/include/python2.7
+    PYTHON_LIBS=-L$(PYTHON_DIR)/lib -lpython2.7 -lm -lpthread -lutil 
+
+    NETCDF_INC=-I$(NETCDF_DIR)/include
+    NETCDF_LIBS=-L$(NETCDF_DIR)/lib -lnetcdf
+</pre>
+
+  <p>
+    Copy this file to Make.defs.none or Make.defs.$UNAMEN
+    (where $UNAMEN is the output from uname -n)
+    Then compile 
+  </p>
+  <pre>
+    cd BISICLES/code/exec2D
+    make all OPT=TRUE MPI=TRUE DEBUG=FALSE # are all default 
+  </pre>
+  <p>
+    the executable will be driver2d.Linux.64.CC.ftn.OPT.MPI.GNU.DY.ex. To
+    compile a PETSc-enable executable,  driver2d.Linux.64.CC.ftn.OPT.MPI.PETSC.GNU.DY.ex
+  </p>
+  <pre>
+    cd BISICLES/code/exec2D
+    make all OPT=TRUE MPI=TRUE DEBUG=FALSE USE_PETSC=TRUE 
+  </pre>
+  </p>
+
+  
+<h3>ARCHER - Intel compilers </h3>
+
+Compiling with Intel is essentially the same as with GNU. It's just a case of running
+<pre>
+  > module unload PrgEnv-cray PrgEnv-gnu
+  > module load PrgEnv-gnu
+  > module load cray-hdf5-parallel # and so on
+</pre>
+instead of
+<pre>
+  > module unload PrgEnv-cray PrgEnv-intel
+  > module load PrgEnv-gnu
+  > module load cray-hdf5-parallel #and so on
+</pre>
+<p>
+The binary will be called driver2d.Linux.64.CC.ftn.OPT.MPI.INTEL.ex. (or driver2d.Linux.64.CC.ftn.OPT.MPI.INTEL.DY.ex)
+</p>
+<h3>Running jobs on ARCHER</h3>
+  
+<p> ARCHER's compute nodes do not have access to the /home mount point (and therefore your home directory) 
+It's not obvious where login scripts come from in that case, either. This can all be dealt with inside the submission script
+(the MOM nodes do have access to home...). A minimal script (run from somewhere in /work) would look something like
+<pre>
+#PBS -l walltime=00:10:00 
+#PBS -j oe 
+#PBS -l select=1
+#PBS -A /your allocation/  
+
+export PBS_O_WORKDIR=$(readlink -f $PBS_O_WORKDIR)
+
+#load modules needed to get GLIBCXX, HDF5, python where the compute nodes can see them
+module unload PrgEnv-cray PrgEnv-intel
+module load PrgEnv-gnu
+module load cray-hdf5-parallel
+module load python-compute
+
+cd $PBS_O_WORKDIR
+
+#A GNU dynamic executable - change the name for intel, static linking, etc  
+EXE=/path/to/driver2d.Linux.64.CC.ftn.OPT.MPI.GNU.DY.ex 
+aprun -n 24 $EXE inputs.whatever
+</pre>
+
+<h2><a name='monsoon'>The Monsoon Cray XC40 at the UK Met Office</a></h2>
+<p>
+  The Monsoon Cray XC40 is much like ARCHER (and Edison and Cori at NERSC).
+  So much so that the ARCHER makefile seems to work, ie
+</p>
+<pre>
+ln -s $BISICLES_HOME/Chombo/lib/mk/local/Make.defs.archer $BISICLES_HOME/Chombo/lib/mk/Make.defs.local
+</pre>
+<p>
+  I'm assuming that Monsoon users are interested in BISICLES coupled via glimmer-cism to
+  UKESM, i.e have checked out UniCiCles, and want to use the intel compiler. 
+</p>
+<pre>
+> module swap PrgEnv-cray PrgEnv-intel
+> module load cray-hdf5-parallel
+> module load python/v2.7.9 #optional, needed if you want the python interface
+> module load cray-netcdf-hdf5parallel #optional, needed if you want glimmer-cism 
+> module load cray-tpsl/1.5.2 #optional, needed if you want the petsc solver
+> module load cray-petsc/3.6.1.0 #optional, needed if you want the petsc solver
+</pre>
+<p>
+If you want the python interface, make sure that  $BISICLES_HOME/BISICLES/code/mk/Make.defs includes 
+the following
+</p>
+<pre>      
+PYTHON_DIR=opt/python/gnu/2.7.9                                                                                    
+PYTHON_INC=$(PYTHON_DIR)/include/python2.7                                                                        
+PYTHON_LIBS=-L$(PYTHON_DIR)/lib -lpython2.7                                                            
+</pre>
+<p>
+and for netcdf stuff (e.g glimmer-cism, filetoools)
+</p>
+NETCDF_INC=$(NETCDF_DIR)/include  
+NETCDF_LIBS=-L$(NETCDF_DIR)/lib -lnetcdf
+<p>
+Compile with
+</p>
+<pre>
+cd BISICLES/code/exec2D
+make all OPT=TRUE MPI=TRUE DEBUG=FALSE # are all default 
+</pre>
+<op>
+The binary will be called driver2d.Linux.64.CC.ftn.OPT.MPI.INTEL.ex
+</p>
+<p>
+Or, with the PETSC interface
+</p>
+<pre>
+cd BISICLES/code/exec2D
+make all OPT=TRUE MPI=TRUE DEBUG=FALSE USE_PETSC=TRUE
+</pre>
+<op>
+The binary will be called driver2d.Linux.64.CC.ftn.OPT.MPI.PETSC.INTEL.ex
+</p>
+
+
+</div>
+</body>
+</html>

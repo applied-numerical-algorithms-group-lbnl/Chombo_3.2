@@ -1,0 +1,147 @@
+c -----------------------------------------------------
+c computes cell-centered centered-difference derivatives of 
+c cell-centered data in a single direction
+c INPUTS/OUTPUTS:
+c deriv <=  d(data)/d(x_dir)
+c data   =>
+c dx     => cell-spacing in dir-direction
+c dir    => direction of derivatives
+c -----------------------------------------------------
+      subroutine CCDERIV(CHF_FRA1[deriv],
+     &                   CHF_CONST_FRA1[data],
+     &                   CHF_BOX[derivBox],
+     &                   CHF_CONST_REAL[dx],
+     &                   CHF_INT[derivDir])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      REAL_T halfOnDx
+
+      halfOnDx = half/dx
+
+      CHF_DTERM[
+      ii0 = CHF_ID(0,derivDir);
+      ii1 = CHF_ID(1,derivDir);
+      ii2 = CHF_ID(2,derivDir)]
+
+      CHF_AUTOMULTIDO[derivBox; i]
+        deriv(CHF_AUTOIX[i]) = halfOnDx*(data(CHF_OFFSETIX[i;+ii]) 
+     &                                 -data(CHF_OFFSETIX[i;-ii]) )
+
+      CHF_ENDDO
+      
+      return
+      end
+      
+c -----------------------------------------------------
+c computes cell-centered centered-difference derivatives of 
+c cell-centered data in a single direction, switching to
+c one sided differences next to zero-thickness regions
+c INPUTS/OUTPUTS:
+c deriv <=  d(data)/d(x_dir)
+c data   =>
+c thk    => coord-sys thickness
+c dx     => cell-spacing in dir-direction
+c dir    => direction of derivatives
+c -----------------------------------------------------
+      subroutine CCDERIVMASK(CHF_FRA1[deriv],
+     &     CHF_CONST_FRA1[data],
+     &     CHF_CONST_FRA1[thk],
+     &     CHF_BOX[derivBox],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_INT[derivDir])
+      
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      REAL_T halfOnDx, oneOnDx, thkl,thkr
+
+      oneOnDx = one/dx
+      halfOnDx = half/dx
+
+      CHF_DTERM[
+      ii0 = CHF_ID(0,derivDir);
+      ii1 = CHF_ID(1,derivDir);
+      ii2 = CHF_ID(2,derivDir)]
+
+      CHF_AUTOMULTIDO[derivBox; i]
+    
+      deriv(CHF_AUTOIX[i]) = zero
+      if (thk(CHF_AUTOIX[i]).gt.zero) then
+           thkl = thk(CHF_OFFSETIX[i;-ii])
+           thkr = thk(CHF_OFFSETIX[i;+ii])
+           if ((thkl.gt.zero).and.(thkr.gt.zero)) then
+              deriv(CHF_AUTOIX[i]) = halfOnDx*(data(CHF_OFFSETIX[i;+ii]) 
+     &             -data(CHF_OFFSETIX[i;-ii]))
+           else if (thkl.gt.zero) then
+              deriv(CHF_AUTOIX[i]) = oneOnDx * (data(CHF_AUTOIX[i]) 
+     &             -data(CHF_OFFSETIX[i;-ii]))
+           else if (thkr.gt.zero) then
+              deriv(CHF_AUTOIX[i]) = oneOnDx *(data(CHF_OFFSETIX[i;+ii]) 
+     &             -data(CHF_AUTOIX[i])) 
+           end if
+      end if
+      CHF_ENDDO
+      
+      return
+      end
+
+
+c -----------------------------------------------------
+c computes face-centered centered-difference derivatives of 
+c cell-centered data in a single (normal) direction
+c INPUTS/OUTPUTS:
+c deriv <=  d(data)/d(x_dir)
+c ccData   =>
+c dx     => cell-spacing in dir-direction
+c dir    => direction of derivatives
+c faceDir => direction of face
+c -----------------------------------------------------
+      subroutine FACEDERIV(CHF_FRA1[deriv],
+     &                     CHF_CONST_FRA1[ccData],
+     &                     CHF_BOX[derivBox],
+     &                     CHF_CONST_REAL[dx],
+     &                     CHF_INT[derivDir],
+     &                     CHF_INT[faceDir])
+              
+      REAL_T oneOnDx
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer CHF_AUTODECL[jj]
+
+      oneOnDx = one/dx
+      
+      if (derivDir.eq.faceDir) then
+
+         CHF_DTERM[
+         ii0 = CHF_ID(0,derivDir);
+         ii1 = CHF_ID(1,derivDir);
+         ii2 = CHF_ID(2,derivDir)]
+         
+         CHF_AUTOMULTIDO[derivBox; i]
+            deriv(CHF_AUTOIX[i]) = oneOnDx*(ccData(CHF_AUTOIX[i]) 
+     &                                     -ccData(CHF_OFFSETIX[i;-ii]) )
+
+         CHF_ENDDO
+      else
+
+         CHF_DTERM[
+         ii0 = CHF_ID(0,derivDir);
+         ii1 = CHF_ID(1,derivDir);
+         ii2 = CHF_ID(2,derivDir)]
+         
+         CHF_DTERM[
+         jj0 = CHF_ID(0,faceDir);
+         jj1 = CHF_ID(1,faceDir);
+         jj2 = CHF_ID(2,faceDir)]
+
+         CHF_AUTOMULTIDO[derivBox; i]
+            deriv(CHF_AUTOIX[i]) = fourth*oneOnDx*(ccData(CHF_OFFSETIX[i;+ii])
+     &                                    -ccData(CHF_OFFSETIX[i;-ii]) 
+     &                    +ccData(CHF_IX[i0+ii0-jj0;i1+ii1-jj1;i2+ii2-jj2])
+     &                    -ccData(CHF_IX[i0-ii0-jj0;i1-ii1-jj1;i2-ii2-jj2]))
+
+          CHF_ENDDO
+       endif
+
+      return
+      end

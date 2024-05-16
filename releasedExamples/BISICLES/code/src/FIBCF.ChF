@@ -1,0 +1,231 @@
+#include "CONSTANTS.H"
+
+c ----------------------------------------------------
+c  fill in holes in data
+c
+c INPUT/OUTPUT:
+c        data <=> data array being modified
+c     holeVal  => value which a "hole" in the data will have
+c         eps  => real-real comparison tolerance
+c  numNeigbor  => number of neigbors which need to be not at  
+c                 the holeVal in order to qualify a given 
+c                 value as a "hole"c  
+c         box  => 
+c ----------------------------------------------------
+      subroutine FILLHOLES(CHF_FRA1[data],
+     &                     CHF_REAL[holeVal],
+     &                     CHF_REAL[eps],
+     &                     CHF_INT[numNeigbor],
+     &                     CHF_BOX[box])
+
+      integer CHF_AUTODECL[ii]
+      integer CHF_AUTODECL[i]
+      integer count
+      REAL_T sum
+      
+
+      CHF_AUTOMULTIDO[box; i]
+
+         if (abs(data(CHF_AUTOIX[i]) - holeVal).lt.eps) then
+            write(6,*) 'in conditional'
+         endif
+            
+      CHF_ENDDO
+      
+      return
+      end
+
+c----------------------------------------------------------
+c average node data to cell centers
+c
+c INPUTS/OUTPUTS:
+c nodeData  => node-centered field
+c cellData <=  cell-centered field
+c cellBox   => box which defines cellData valid region
+c----------------------------------------------------------
+      subroutine NODETOCELL(CHF_CONST_FRA1[nodeData],
+     &     CHF_FRA1[cellData],
+     &     CHF_BOX[cellBox])
+
+      integer CHF_DDECL[i;j;k]
+      REAL_T w,t
+
+      CHF_DTERM[w=half;
+      w=w*half;
+      w=w*half;]
+
+      CHF_MULTIDO[cellBox; i; j; k]
+      
+      CHF_DTERM[
+      t = nodeData(CHF_IX[i;j;k])
+     &     + nodeData(CHF_IX[i+1;j;k]);
+      t = t + nodeData(CHF_IX[i;j+1;k])
+     &     + nodeData(CHF_IX[i+1;j+1;k]);
+      t = t + nodeData(CHF_IX[i;j;k + 1])
+     &     + nodeData(CHF_IX[i+1;j;k + 1])        
+     &     + nodeData(CHF_IX[i;j+1;k + 1] )          
+     &     + nodeData(CHF_IX[i+1;j+1;k + 1])] 
+
+      cellData(CHF_IX[i;j;k]) = w * t
+     
+      CHF_ENDDO
+
+      return 
+      end
+
+
+c----------------------------------------------------------
+c average node data to cell centers
+c
+c INPUTS/OUTPUTS:
+c nodeData  => node-centered field
+c cellData <=  cell-centered field
+c cellBox   => box which defines cellData valid region
+c----------------------------------------------------------
+      subroutine NODETOCELLCISMVEL(CHF_CONST_FRA[nodeData],
+     &     CHF_FRA[cellData],
+     &     CHF_CONST_INT[nGhost],
+     &     CHF_CONST_INT[offset],
+     &     CHF_BOX[cellBox])
+
+      integer CHF_DDECL[i;j;k]
+      integer nlayers, n
+      integer verticalOffset
+      REAL_T w,t
+
+      CHF_DTERM[w=half;
+      w=w*half;
+      w=w*half;]
+
+      nlayers = (CHF_UBOUND[cellData;0] - CHF_LBOUND[cellData;0] +1)
+
+c third "component" is offset to begin at zero in poor-man's multidim mode
+      verticalOffset = -CHF_LBOUND[cellData;0]
+#if (CH_SPACEDIM== 2)
+      verticalOffset = -CHF_LBOUND[cellData;1]
+#endif
+
+
+      do n=0,nlayers-1
+      CHF_MULTIDO[cellBox; i; j; k]
+      
+      CHF_DTERM[
+      t = nodeData(n,CHF_IX[i;j;k]+verticalOffset)
+     &     + nodeData(n,CHF_IX[i+1;j;k]+verticalOffset);
+      t = t + nodeData(n,CHF_IX[i;j+1;k]+verticalOffset)
+     &     + nodeData(n,CHF_IX[i+1;j+1;k]+verticalOffset);
+      t = t + nodeData(n,CHF_IX[i;j;k + 1]+verticalOffset)
+     &     + nodeData(n,CHF_IX[i+1;j;k + 1]+verticalOffset)        
+     &     + nodeData(n,CHF_IX[i;j+1;k + 1]+verticalOffset )          
+     &     + nodeData(n,CHF_IX[i+1;j+1;k + 1]+verticalOffset)] 
+
+      cellData(n,CHF_IX[i;j;k]+verticalOffset) = w * t
+     
+      CHF_ENDDO
+
+      enddo
+
+      return 
+      end
+
+
+c----------------------------------------------------------
+c average cell-centered data to nodes
+c
+c INPUTS/OUTPUTS:
+c nodeData  => node-centered field
+c cellData <=  cell-centered fieldrout
+c cellBox   => box which defines cellData valid region
+c----------------------------------------------------------
+      subroutine CELLTONODE(CHF_FRA1[nodeData],
+     &     CHF_CONST_FRA1[cellData],
+     &     CHF_BOX[nodeBox])
+
+      integer CHF_DDECL[i;j;k]
+      REAL_T w,t
+
+      CHF_DTERM[w=half;
+      w=w*half;
+      w=w*half;]
+
+      CHF_MULTIDO[nodeBox; i; j; k]
+      
+      CHF_DTERM[
+      t =     cellData(CHF_IX[i-1;j-1;k-1])
+     &     +  cellData(CHF_IX[i  ;j-1;k-1]);
+      t = t + cellData(CHF_IX[i-1;j  ;k-1])
+     &     +  cellData(CHF_IX[i  ;j  ;k-1]);
+      t = t + cellData(CHF_IX[i-1;j-1;k  ])
+     &      + cellData(CHF_IX[i  ;j-1;k  ])        
+     &      + cellData(CHF_IX[i-1;j  ;k  ])          
+     &      + cellData(CHF_IX[i  ;j  ;k  ])] 
+
+      nodeData(CHF_IX[i;j;k]) = w * t
+     
+      CHF_ENDDO
+
+      return 
+      end
+
+
+c----------------------------------------------------------
+c average cell-centered data to nodes while also swapping index
+c ordering to match CISM (so input (i.j.k) > output (k,i.j)
+c
+c this version assumes no vertical shear (so copy basal velocities all 
+c the way up the column)
+c
+c INPUTS/OUTPUTS:
+c nodeData  => node-centered field
+c cellData <=  cell-centered fieldrout
+c cellBox   => box which defines cellData valid region
+c---------------------------------------------------------
+      subroutine CELLTONODECISMVELNOSHEAR(CHF_FRA[nodeData],
+     &     CHF_CONST_FRA1[cellData],
+     &     CHF_CONST_INT[nGhost],
+     &     CHF_CONST_INT[offset],
+     &     CHF_CONST_INTVECT[boxlovect],
+     &     CHF_BOX[nodeBox])
+
+      integer CHF_DDECL[i;j;k]
+      integer nlayers, n
+      integer verticalOffset
+      REAL_T w,t, nodeVal
+
+      CHF_DTERM[w=half;
+      w=w*half;
+      w=w*half;]
+
+      nlayers = (CHF_UBOUND[nodeData;0] - CHF_LBOUND[nodeData;0] +1)
+
+c third "component" is offset to begin at zero in poor-man's multidim mode
+      verticalOffset = -boxlovect(0)
+#if (CH_SPACEDIM== 2)
+      verticalOffset = -boxlovect(1)
+#endif
+
+      CHF_MULTIDO[nodeBox; i; j; k]
+      
+      CHF_DTERM[
+      t =     cellData(CHF_IX[i-1;j-1;k-1])
+     &     +  cellData(CHF_IX[i  ;j-1;k-1]);
+      t = t + cellData(CHF_IX[i-1;j  ;k-1])
+     &     +  cellData(CHF_IX[i  ;j  ;k-1]);
+      t = t + cellData(CHF_IX[i-1;j-1;k  ])
+     &      + cellData(CHF_IX[i  ;j-1;k  ])        
+     &      + cellData(CHF_IX[i-1;j  ;k  ])          
+     &      + cellData(CHF_IX[i  ;j  ;k  ])] 
+      
+      nodeVal = w*t
+
+c copy averaged value down the column...      
+      do n=0, nlayers-1
+         nodeData(n,CHF_IX[i;j;k]+verticalOffset) = nodeVal
+      enddo 
+     
+      CHF_ENDDO
+
+
+
+      return 
+      end

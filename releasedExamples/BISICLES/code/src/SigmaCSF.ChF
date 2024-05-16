@@ -1,0 +1,723 @@
+#include "CONSTANTS.H"
+#include "IceConstants.H"
+
+c ---------------------------------------------------------
+c computes cell-centered centered derivatives in the given direction
+c INPUTS/OUTPUTS:
+c deltaPhi <= dPhi/dx in the given direction
+c phi       => 
+c derivBox  => box over which to compute dPhi/dx
+c dx        => cell spacing
+c dir       => direction in which to take derivatives
+c ---------------------------------------------------------
+      subroutine CENTEREDDIFF(CHF_FRA1[deltaPhi],
+     &                        CHF_FRA1[phi],
+     &                        CHF_BOX[derivBox],
+     &                        CHF_REAL[dx],
+     &                        CHF_INT[dir])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+
+      CHF_DTERM[
+      ii0 = CHF_ID(dir,0);
+      ii1 = CHF_ID(dir,1);
+      ii2 = CHF_ID(dir,2)]
+
+
+      CHF_AUTOMULTIDO[derivBox;i]
+        deltaPhi(CHF_AUTOIX[i]) = (phi(CHF_OFFSETIX[i;+ii]) 
+     &                            -phi(CHF_OFFSETIX[i;-ii]) )
+
+      CHF_ENDDO
+
+      return
+      end
+
+      
+c ------------------------------------------------------------------
+c defines the delta factors for the current mapping 
+c INPUTS/OUTPUTS
+c deltaFactor <=
+c deltaH       => precomputed dH/dx in derivDir
+c deltaZs      => precomputed dZs/dx in derivDir
+c dx           => cell-spacing
+c box          => box over which to compute deltaFactor
+c derivDir     => derivative direction
+c ------------------------------------------------------------------
+      subroutine DEFINECELLGEOM(CHF_FRA1[deltaFactors],
+     &                          CHF_FRA1[deltaH],
+     &                          CHF_FRA1[deltaZb],
+     &                          CHF_REALVECT[dx],
+     &                          CHF_BOX[box],
+     &                          CHF_INT[derivDir])
+
+      integer Hindex
+      integer Zindex
+      integer CHF_AUTODECL[i]
+      REAL_T sigma
+
+      Hindex = CHF_LBOUND[deltaH]
+      Zindex = CHF_LBOUND[deltaZb]
+
+      CHF_AUTOMULTIDO[box;i]
+c  cell-centered sigma
+        sigma = dx(0)*(i0 + half)
+c d(z_s)/dx = d(zb)/dx + d(H)/dx
+        deltaFactors(CHF_AUTOIX[i]) = deltaH(CHF_IX[Hindex;i1;i2])
+     &                                + deltaZb(CHF_IX[Zindex;i1;i2])
+     &                                - sigma*deltaH(CHF_IX[Hindex;i1;i2])
+
+      CHF_ENDDO
+
+      return
+      end
+
+
+c ---------------------------------------------------------------
+c sets face-centered H to zero if adjacent to a cell with H=0
+c 
+c xFaceH <= 
+c yFaceH <=
+c cellH   =>
+c gridbox =>
+c xdir    =>
+c ydir    =>
+c -------------------------------------------------------------      
+      subroutine FIXFACEH(CHF_FRA1[xFaceH],      
+     &                    CHF_FRA1[yFaceH],
+     &                    CHF_CONST_FRA1[cellH],
+     &                    CHF_BOX[gridbox],
+     &                    CHF_INT[xDir],
+     &                    CHF_INT[yDir])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[xFaceOff]
+      integer CHF_AUTODECL[yFaceOff]
+
+      REAL_T zeroVal;
+
+      zeroVal = 1.0e-18
+
+      CHF_DTERM[
+      xFaceOff0 = CHF_ID(xDir,0);
+      xFaceOff1 = CHF_ID(xDir,1);
+      xFaceOff2 = CHF_ID(xDir,2)]
+
+      CHF_DTERM[
+      yFaceOff0 = CHF_ID(yDir,0);
+      yFaceOff1 = CHF_ID(yDir,1);
+      yFaceOff2 = CHF_ID(yDir,2)]
+
+      CHF_AUTOMULTIDO[gridbox;i]
+
+         if (abs(cellH(CHF_AUTOIX[i])) .lt. zeroVal) then
+            
+c   set all adjacent faces to be zero
+            xFaceH(CHF_AUTOIX[i]) = zero
+            xFaceH(CHF_OFFSETIX[i;+xFaceOff]) = zero
+
+            yFaceH(CHF_AUTOIX[i]) = zero
+            yFaceH(CHF_OFFSETIX[i;+yFaceOff]) = zero
+
+         endif
+
+      CHF_ENDDO
+
+      return 
+      end
+
+
+
+c ---------------------------------------------------------------
+c sets face-centered H to zero if adjacent to a cell with H=0
+c zSurface    <=  z_surface
+c H            => ice thickness
+c baseHeight   => elevation of base
+c iceDensity   => density of ice
+c waterDensity => density of seawater
+c seaLevel     => 
+c box          => box over which to compute this
+c -------------------------------------------------------------      
+      subroutine surfaceheight(CHF_FRA1[zSurface],
+     &                         CHF_CONST_FRA1[H],
+     &                         CHF_CONST_FRA1[baseHeight],
+     &                         CHF_CONST_REAL[iceDensity],
+     &                         CHF_CONST_REAL[waterDensity],
+     &                         CHF_CONST_REAL[seaLevel],
+     &                         CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i]
+      REAL_T ratio, zs
+      REAL_T groundedHeight, floatingHeight
+
+      
+      ratio = one - (iceDensity/waterDensity)
+
+      CHF_AUTOMULTIDO[box; i]
+         groundedHeight = H(CHF_AUTOIX[i]) + baseHeight(CHF_AUTOIX[i])
+         floatingHeight = seaLevel + ratio*H(CHF_AUTOIX[i]) 
+         zs = max(groundedHeight, floatingHeight);
+         zSurface(CHF_AUTOIX[i]) = zs
+      CHF_ENDDO
+
+      return
+      end
+
+c ----------------------------------------------------
+c sets mask to indicate whether ice is floating or grounded
+c ----------------------------------------------------
+      subroutine SETFLOATINGMASK(CHF_FIA1[floatingMask],
+     &                           CHF_CONST_FRA1[Zsurf],
+     &                           CHF_CONST_FRA1[zBase],
+     &                           CHF_CONST_FRA1[H],
+     &                           CHF_INT[anyFloating],
+     &                           CHF_REAL[iceDensity],
+     &                           CHF_REAL[waterDensity],
+     &                           CHF_REAL[seaLevel],
+     &                           CHF_BOX[box])
+
+      
+
+      integer CHF_AUTODECL[i]
+c      REAL_T zs, zb, thish, thisSum
+c      REAL_T ratio
+c eps is a floating-point tolerance
+      REAL_T eps
+      eps = 1.0e-10
+
+      CHF_AUTOMULTIDO[box; i]
+
+c  first condition is an attempt to set ice mask to opensea/openland if there's no ice 
+      if (H(CHF_AUTOIX[i]).lt.eps) then
+         if (zBase(CHF_AUTOIX[i]).lt.seaLevel) then
+c        open sea 
+            anyFloating = 1;
+            floatingMask(CHF_AUTOIX[i]) = OPENSEAMASKVAL 
+         else
+c        open land
+            floatingMask(CHF_AUTOIX[i]) = OPENLANDMASKVAL 
+         end if
+c     test to see if ice is floating
+      else if (Zsurf(CHF_AUTOIX[i]) .gt. (zBase(CHF_AUTOIX[i])
+     &        +H(CHF_AUTOIX[i])+eps*H(CHF_AUTOIX[i]))) then
+c     ice is floating...
+         anyFloating = 1;
+         floatingMask(CHF_AUTOIX[i]) = FLOATINGMASKVAL
+      else
+         floatingMask(CHF_AUTOIX[i]) = GROUNDEDMASKVAL
+      endif
+      
+      CHF_ENDDO
+
+      return
+      end
+
+c$$$c ----------------------------------------------------
+c$$$c sets mask to indicate whether ice is floating or grounded
+c$$$c ----------------------------------------------------
+c$$$      subroutine SETFLOATINGMASK(CHF_FIA1[floatingMask],
+c$$$     &                           CHF_CONST_FRA1[Zsurf],
+c$$$     &                           CHF_CONST_FRA1[zBase],
+c$$$     &                           CHF_CONST_FRA1[H],
+c$$$     &                           CHF_INT[anyFloating],
+c$$$     &                           CHF_REAL[iceDensity],
+c$$$     &                           CHF_REAL[waterDensity],
+c$$$     &                           CHF_REAL[seaLevel],
+c$$$     &                           CHF_BOX[box])
+c$$$
+c$$$      
+c$$$
+c$$$      integer CHF_AUTODECL[i]
+c$$$c      REAL_T zs, zb, thish, thisSum
+c$$$c      REAL_T ratio
+c$$$c eps is a floating-point tolerance
+c$$$      REAL_T eps
+c$$$
+c$$$      eps = 1.0e-10
+c$$$c   turns out that I don't really need this...
+c$$$c      ratio = (one - (iceDensity/waterDensity))
+c$$$
+c$$$      CHF_AUTOMULTIDO[box; i]
+c$$$
+c$$$c      zs = Zsurf(CHF_AUTOIX[i])
+c$$$c      zb = zBase(CHF_AUTOIX[i])
+c$$$c      thish = H(CHF_AUTOIX[i])
+c$$$c      thisSum = zBase(CHF_AUTOIX[i])+H(CHF_AUTOIX[i])
+c$$$
+c$$$c  first condition is an attempt to set ice mask to opensea if there's
+c$$$c  no ice and zBase is below sea level
+c$$$        if ((H(CHF_AUTOIX[i]).lt.eps).and.(zBase(CHF_AUTOIX[i]).lt.seaLevel)) then
+c$$$           anyFloating = 1;
+c$$$           floatingMask(CHF_AUTOIX[i]) = OPENSEAMASKVAL
+c$$$         
+c$$$c     test to see if ice is floating
+c$$$        else if (Zsurf(CHF_AUTOIX[i])
+c$$$     &          .gt.(zBase(CHF_AUTOIX[i])+H(CHF_AUTOIX[i])+eps*H(CHF_AUTOIX[i]))) then
+c$$$
+c$$$c  ice is floating...
+c$$$           anyFloating = 1;
+c$$$           floatingMask(CHF_AUTOIX[i]) = FLOATINGMASKVAL
+c$$$        else
+c$$$           floatingMask(CHF_AUTOIX[i]) = GROUNDEDMASKVAL
+c$$$        endif
+c$$$      
+c$$$      CHF_ENDDO
+c$$$
+c$$$      return
+c$$$      end
+
+c ---------------------------------------------------------------
+c adjust lower surface given upper surface, topography, lower surface and mask
+c fields such that the same mask would be computed
+c from the thickness (upper surface - lower surface) and topography.
+c
+c thck <= ice thickness
+c lsrf <=> ice lower surface
+c usrf <=> ice upper surface
+c topg <=> bedock topography
+c iceDensity   => density of ice
+c waterDensity => density of seawater
+c seaLevel     => sea level
+c box          => box over which to compute this
+c -------------------------------------------------------------
+      subroutine preservemask( CHF_FRA1[lsrf],
+     &     CHF_FRA1[usrf],
+     &     CHF_FRA1[topg],
+     &     CHF_FRA1[thck], 
+     &     CHF_CONST_FIA1[mask],  
+     &     CHF_REAL[iceDensity],
+     &     CHF_REAL[waterDensity],
+     &     CHF_REAL[seaLevel],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i] 
+      REAL_T ratio, oneOnRatio, lapa, lapb
+      
+
+
+      ratio = (iceDensity / waterDensity)
+      oneOnRatio = one/ratio;
+
+      CHF_AUTOMULTIDO[box; i]
+     
+      if (mask(CHF_AUTOIX[i]) .eq. GROUNDEDMASKVAL) then
+c     grounded ice : upper surface must be above flotation
+         thck(CHF_AUTOIX[i]) = 
+     &        max(usrf(CHF_AUTOIX[i])-lsrf(CHF_AUTOIX[i]),
+     &        tiny_thickness)
+
+         thck(CHF_AUTOIX[i]) = max(thck(CHF_AUTOIX[i]), 
+     &        (seaLevel-topg(CHF_AUTOIX[i]))*oneOnRatio)
+
+         lsrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]);
+
+         usrf(CHF_AUTOIX[i]) = lsrf(CHF_AUTOIX[i]) + thck(CHF_AUTOIX[i])
+
+      else if (mask(CHF_AUTOIX[i]) .eq. OPENLANDMASKVAL) then
+c     open land : upper and lower surface both at topography, topography above seaLevel
+
+         topg(CHF_AUTOIX[i]) = max(topg(CHF_AUTOIX[i]), 
+     &        seaLevel+tiny_thickness)
+         lsrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i])
+         usrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i])
+         thck(CHF_AUTOIX[i]) = zero            
+         
+      else if (mask(CHF_AUTOIX[i]) .eq. OPENSEAMASKVAL) then
+c     open sea : upper surface and lower surface are both at sea level,topography below seaLevel
+         lsrf(CHF_AUTOIX[i]) = seaLevel;
+         usrf(CHF_AUTOIX[i]) = seaLevel;
+         topg(CHF_AUTOIX[i]) = min(topg(CHF_AUTOIX[i]), 
+     &        seaLevel-tiny_thickness)
+         thck(CHF_AUTOIX[i]) = zero
+      
+      else
+c     ice shelf : upper surface must be below flotation, topography must be below lower surface
+         topg(CHF_AUTOIX[i]) = min(
+     &        topg(CHF_AUTOIX[i]), 
+     &        seaLevel - two*tiny_thickness)
+
+         thck(CHF_AUTOIX[i]) =max(
+     &        usrf(CHF_AUTOIX[i])-lsrf(CHF_AUTOIX[i]),
+     &        tiny_thickness)
+
+         thck(CHF_AUTOIX[i]) = min(
+     &        thck(CHF_AUTOIX[i]), 
+     &        (seaLevel-topg(CHF_AUTOIX[i]))*oneOnRatio-tiny_thickness)
+
+         usrf(CHF_AUTOIX[i]) = (1-ratio)*thck(CHF_AUTOIX[i]) + seaLevel;
+         lsrf(CHF_AUTOIX[i]) = usrf(CHF_AUTOIX[i]) - thck(CHF_AUTOIX[i])
+
+         topg(CHF_AUTOIX[i]) = min(topg(CHF_AUTOIX[i]), 
+     &        lsrf(CHF_AUTOIX[i]) - two*tiny_thickness)
+      end if
+
+      CHF_ENDDO
+
+      return
+      end
+
+c ---------------------------------------------------------------
+c adjust lower surface given upper surface, topography, lower surface and mask
+c fields such that the same mask would be computed
+c from the thickness (upper surface - lower surface) and topography.
+c
+c thck <= ice thickness
+c lsrf <=> ice lower surface
+c usrf => ice upper surface
+c topg => bedock topography
+c iceDensity   => density of ice
+c waterDensity => density of seawater
+c seaLevel     => sea level
+c box          => box over which to compute this
+c -------------------------------------------------------------
+      subroutine preservemaskr( CHF_FRA1[lsrf],
+     &     CHF_FRA1[usrf],
+     &     CHF_FRA1[topg],
+     &     CHF_CONST_FIA1[mask],  
+     &     CHF_REAL[iceDensity],
+     &     CHF_REAL[waterDensity],
+     &     CHF_REAL[seaLevel],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T ratio, thck, oneOnRatio
+
+      ratio = (iceDensity / waterDensity)
+      oneOnRatio = one/ratio;
+
+      CHF_AUTOMULTIDO[box; i]
+     
+
+      if (mask(CHF_AUTOIX[i]) .eq. GROUNDEDMASKVAL) then
+c     grounded ice : upper surface must be above flotation
+         thck = max(usrf(CHF_AUTOIX[i])-lsrf(CHF_AUTOIX[i]),
+     &        tiny_thickness)
+         thck = max(thck, (seaLevel-topg(CHF_AUTOIX[i]))*oneOnRatio)
+         lsrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]);
+         usrf(CHF_AUTOIX[i]) = lsrf(CHF_AUTOIX[i]) + thck;
+
+      else if (mask(CHF_AUTOIX[i]) .eq. OPENLANDMASKVAL) then
+c     open land : upper and lower surface both at topography, topography above seaLevel
+         topg(CHF_AUTOIX[i]) = max(topg(CHF_AUTOIX[i]), 
+     &        seaLevel+tiny_thickness)
+         lsrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]);
+         usrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]);
+         
+      else if (mask(CHF_AUTOIX[i]) .eq. OPENSEAMASKVAL) then
+c     open sea : upper surface and lower surface are both at sea level
+         lsrf(CHF_AUTOIX[i]) = seaLevel;
+         usrf(CHF_AUTOIX[i]) = seaLevel;
+         topg(CHF_AUTOIX[i]) = min(topg(CHF_AUTOIX[i]), 
+     &        seaLevel-tiny_thickness)
+      
+      else
+c     ice shelf : upper surface must be below flotation, topography must be below lower surface
+         topg(CHF_AUTOIX[i]) = min(topg(CHF_AUTOIX[i]), 
+     &        seaLevel - two*tiny_thickness)
+         thck = max(usrf(CHF_AUTOIX[i])-lsrf(CHF_AUTOIX[i]),
+     &        tiny_thickness)
+         thck = min(thck, (seaLevel-topg(CHF_AUTOIX[i]))*oneOnRatio
+     &        - tiny_thickness)
+         usrf(CHF_AUTOIX[i]) = (1-ratio)*thck + seaLevel;
+         lsrf(CHF_AUTOIX[i]) = usrf(CHF_AUTOIX[i]) - thck
+         topg(CHF_AUTOIX[i]) = min(topg(CHF_AUTOIX[i]), 
+     &        lsrf(CHF_AUTOIX[i]) - two*tiny_thickness)
+      end if
+
+      CHF_ENDDO
+
+      return
+      end
+
+c ---------------------------------------------------------------
+c adjust lower surface given upper surface, topography, lower surface and mask
+c fields such that the same mask would be computed
+c from the thickness (upper surface - lower surface) and topography.
+c
+c thck <= ice thickness
+c lsrf <=> ice lower surface
+c usrf => ice upper surface
+c topg => bedock topography
+c iceDensity   => density of ice
+c waterDensity => density of seawater
+c seaLevel     => sea level
+c box          => box over which to compute this
+c -------------------------------------------------------------
+      subroutine preservemasko( CHF_FRA1[lsrf],
+     &     CHF_CONST_FRA1[usrf],
+     &     CHF_CONST_FRA1[topg],
+     &     CHF_CONST_FIA1[mask],  
+     &     CHF_REAL[iceDensity],
+     &     CHF_REAL[waterDensity],
+     &     CHF_REAL[seaLevel],
+     &     CHF_BOX[box])
+
+      
+      integer CHF_AUTODECL[i]
+      
+      
+      REAL_T oneOnRatio,usc,sslc
+      REAL_T tempThck
+      oneOnRatio = one  / (one - iceDensity / waterDensity)
+      usc = one - oneOnRatio
+      sslc = seaLevel * oneOnRatio
+ 
+      CHF_AUTOMULTIDO[box; i]
+         tempThck = max(usrf(CHF_AUTOIX[i]) - lsrf(CHF_AUTOIX[i]),zero)
+         if (mask(CHF_AUTOIX[i]) .eq. GROUNDEDMASKVAL
+     &     .or. mask(CHF_AUTOIX[i]) .eq. OPENLANDMASKVAL) then 
+c     land
+c        no negative thickness!
+         lsrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i])
+c     handle case where this adjustment moved the lower surface
+c     above the upper surface by preserving original thickness
+c     (DFM -- 11/09/11)
+         if (usrf(CHF_AUTOIX[i]) .le. lsrf(CHF_AUTOIX[i]) ) then
+            usrf(CHF_AUTOIX[i]) = lsrf(CHF_AUTOIX[i]) + tempThck
+         endif
+c open sea
+      else if (mask(CHF_AUTOIX[i]).eq.OPENSEAMASKVAL) then
+c set to make thickness ->zero (DFM -- 7/15/11)
+c at any rate, don't allow either surface to go below topography
+c (DFM -- 11/09/11)
+         if (usrf(CHF_AUTOIX[i]) .lt. topg(CHF_AUTOIX[i])) then
+            usrf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i])
+         endif
+         lsrf(CHF_AUTOIX[i]) = usrf(CHF_AUTOIX[i])         
+      else 
+c     sea
+         lsrf(CHF_AUTOIX[i]) = max(topg(CHF_AUTOIX[i]) + tiny_thickness,
+     &        usrf(CHF_AUTOIX[i]) *  usc  - sslc)
+c     handle case where this adjustment moved the lower surface
+c     above the upper surface by preserving original thickness
+c     (DFM -- 11/09/11)
+         if (usrf(CHF_AUTOIX[i]) .le. lsrf(CHF_AUTOIX[i]) ) then
+            usrf(CHF_AUTOIX[i]) = lsrf(CHF_AUTOIX[i]) + tempThck
+         endif
+
+
+      end if
+      CHF_ENDDO
+      return
+      end
+
+c----------------------------------------------------
+c destroy any single cell floating ice (otherwise we
+c end up solving 0 != 0 there
+c-----------------------------------------------------
+
+      subroutine odestroyscfi(CHF_FRA1[thck],
+     &     CHF_FIA1[mask],
+     &     CHF_INT[count],
+     &     CHF_CONST_INT[xdir],
+     &     CHF_CONST_INT[ydir],
+     &     CHF_CONST_REAL[thresh],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ix]
+      integer CHF_AUTODECL[iy]
+
+      CHF_DTERM[ix0 = CHF_ID(xdir,0);
+                ix1 = CHF_ID(xdir,1);
+                ix2 = CHF_ID(xdir,2)]
+
+                
+      CHF_DTERM[iy0 = CHF_ID(ydir,0);
+                iy1 = CHF_ID(ydir,1);
+                iy2 = CHF_ID(ydir,2)]
+
+
+      CHF_AUTOMULTIDO[box ; i]
+      
+      if ( mask(CHF_AUTOIX[i]).eq.FLOATINGMASKVAL ) then
+         if ( (thck(CHF_OFFSETIX[i;-ix]).le.thresh)
+     &        .and.(thck(CHF_OFFSETIX[i;+ix]).le.thresh)
+     &        .and.(thck(CHF_OFFSETIX[i;-iy]).le.thresh)  
+     &        .and.(thck(CHF_OFFSETIX[i;+iy]).le.thresh)) then
+            count = count + 1
+            thck(CHF_AUTOIX[i])=0.0;
+            mask(CHF_AUTOIX[i])=OPENSEAMASKVAL
+         end if
+      end if
+      
+      CHF_ENDDO
+
+      end subroutine
+c----------------------------------------------------
+c destroy any single cell floating ice (otherwise we
+c end up solving 0 != 0 there
+c-----------------------------------------------------
+
+      subroutine destroyscfi(CHF_FRA1[thck],
+     &     CHF_FIA1[mask],
+     &     CHF_INT[count],
+     &     CHF_CONST_INT[dir],
+     &     CHF_CONST_REAL[thresh],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+     
+
+      CHF_DTERM[ii0 = CHF_ID(dir,0);
+                ii1 = CHF_ID(dir,1);
+                ii2 = CHF_ID(dir,2)]
+
+
+
+      CHF_AUTOMULTIDO[box ; i]
+      
+      if ( mask(CHF_AUTOIX[i]).eq.FLOATINGMASKVAL ) then
+         if ((thck(CHF_OFFSETIX[i;-ii]).le.thresh)
+     &        .and.(thck(CHF_OFFSETIX[i;+ii]).le.thresh)) then
+            count = count + 1
+            thck(CHF_AUTOIX[i])=0.0;
+            mask(CHF_AUTOIX[i])=OPENSEAMASKVAL
+         end if
+      end if
+      
+      CHF_ENDDO
+
+      end subroutine
+
+
+c --------------------------------------------------
+c set surface elevation to topography on open land and to
+c sea level on open sea regions
+c --------------------------------------------------
+
+      subroutine ssetopensurface(CHF_FRA1[surf],
+     &     CHF_CONST_FIA1[mask],
+     &     CHF_CONST_FRA1[topg],  
+     &     CHF_CONST_REAL[seaLevel],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box ; i]
+      
+      if ( mask(CHF_AUTOIX[i]).eq. OPENSEAMASKVAL ) then
+         surf(CHF_AUTOIX[i]) = seaLevel
+      else if( mask(CHF_AUTOIX[i]).eq. OPENLANDMASKVAL ) then
+         surf(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i])
+      end if
+
+      CHF_ENDDO
+      return 
+      end
+
+c ---------------------------------------------------
+c adjust grad(s) in cells either side of the grounding line
+c ----------------------------------------------------
+      subroutine sglgrads(CHF_FRA1[grads], 
+     &     CHF_FRA1[surff], 
+     &     CHF_CONST_FRA1[thck],
+     &     CHF_CONST_FRA1[surf],
+     &     CHF_CONST_FRA1[topg],
+     &     CHF_CONST_FIA1[mask],
+     &     CHF_CONST_REAL[ratio],
+     &     CHF_CONST_REAL[seaLevel],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_INT[dir],
+     &     CHF_BOX[box],
+     &     CHF_BOX[faceBox])
+      
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer maskP, maskL, maskR
+      integer LISH
+      REAL_T oneOnDx
+      REAL_T topgf, thckf
+  
+      LISH = IOR(GROUNDEDMASKVAL, FLOATINGMASKVAL)
+      
+      oneOnDx = one/dx 
+      
+      CHF_DTERM[ii0 = CHF_ID(dir,0);
+                ii1 = CHF_ID(dir,1);
+                ii2 = CHF_ID(dir,2)]
+      
+c     first, compute face  surface elevations, 
+c     using specific calculations where the
+c     mask changes or on open sea and land
+      CHF_AUTOMULTIDO[facebox ; i]
+      
+      maskL = mask(CHF_OFFSETIX[i;-ii])
+      maskR = mask(CHF_AUTOIX[i])
+      
+ 
+      if (1.eq.0 .and. IOR(maskL,maskR) .eq. LISH) then
+c     land ice | shelf or  shelf | land ice : surface elevation given
+c     by the flotation condition
+         topgf = half*(topg( CHF_AUTOIX[i]) 
+     &        + topg( CHF_OFFSETIX[i;-ii]))
+        
+         surff(CHF_AUTOIX[i]) =  seaLevel
+     &        + (one-ratio)*(seaLevel - topgf)/ratio
+      else
+c     everwhere else : linear interpolation
+        
+         surff(CHF_AUTOIX[i]) = half * 
+     &        (surf(CHF_OFFSETIX[i;-ii]) + surf(CHF_AUTOIX[i]))
+      end if
+ 
+      if (maskL.eq.OPENLANDMASKVAL) then
+         surff(CHF_AUTOIX[i]) = 
+     &        min(surff(CHF_AUTOIX[i]), surf(CHF_AUTOIX[i]))
+      end if
+
+      if (maskR.eq.OPENLANDMASKVAL) then
+         surff(CHF_AUTOIX[i]) = 
+     &        min(surff(CHF_AUTOIX[i]), surf(CHF_OFFSETIX[i;-ii]))
+      end if
+
+      CHF_ENDDO
+      
+c     now compute  grad(S), setting to zero outside of the ice
+      CHF_AUTOMULTIDO[box ; i] 
+      if (iand(mask(CHF_AUTOIX[i]),LISH).gt.0) then
+  
+         grads(CHF_AUTOIX[i]) = oneOnDx  *
+     &        (- surff(CHF_AUTOIX[i]) + surff(CHF_OFFSETIX[i;+ii]))
+         
+      else
+         grads(CHF_AUTOIX[i]) = zero
+      end if
+
+      CHF_ENDDO
+      return
+      end
+      
+c---------------------------------------------------
+c compute thickness over flotation
+c--------------------------------------------------
+      
+      subroutine thicknessoverflotation(CHF_FRA1[p], 
+     &     CHF_CONST_FRA1[thck],
+     &     CHF_CONST_FRA1[topg],
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhoo],
+     &     CHF_CONST_REAL[sealevel], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T ratio
+      REAL_T eps
+      eps = 1.0e-10
+
+      ratio = rhoo / rhoi
+
+      CHF_AUTOMULTIDO[box; i]
+      p(CHF_AUTOIX[i]) = zero
+      if (thck(CHF_AUTOIX[i]).ge.eps) then
+          p(CHF_AUTOIX[i]) = min( thck(CHF_AUTOIX[i]),
+     &        max(zero,
+     &        (topg(CHF_AUTOIX[i])-sealevel) * ratio  
+     &        + thck(CHF_AUTOIX[i])))
+      endif
+
+      CHF_ENDDO
+
+      return
+      end

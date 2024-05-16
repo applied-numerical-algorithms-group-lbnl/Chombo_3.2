@@ -1,0 +1,86 @@
+#inputs file for Amr ice-sheet solver
+main.maxTime = 1.0e-10 # maximum time to run to
+main.maxStep = 0   # maximum number of steps to run
+main.constitutiveRelation = @CRE
+main.rateFactorType = constRate
+constRate.A = 1.0e-16
+constRate.epsSqr0 = 1.0e-12
+constants.ice_density  = 910
+constants.gravity  = 9.8
+
+l1l2.solverTolerance = 1.0e-6
+amr.additional_velocity = true
+
+main.domain_size = @DOMX @DOMY 1.0e+3
+
+CalvingModel.type = NoCalvingModel
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+
+geometry.problem_type = basic
+geometry.basal_type = constantZb
+geometry.thickness_type = constantThickness1km
+
+geometry.beta_type = sinusoidalBeta
+geometry.betaValue = 1000
+geometry.betaEps = 0.00001
+geometry.basalSlope = -0.001745331 0.0 # 0.1 degree slope in x
+
+amr.maxLevel = 10   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 
+amr.num_cells = @NCELLX @NCELLY @NLAYER   #number of cells in base grid
+amr.is_periodic = 1 1 1    # 1 if domain is periodic 
+amr.tagCap = @TAGCAP
+
+# (note that periodic BC's override physical BC types)
+# physical BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 0 0 0  
+bc.hi_bc = 0 0 0  
+
+amr.cfl = 0.1  # "cfl" number
+amr.initial_cfl = 0.1  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+
+
+amr.plot_interval = 1  
+amr.plot_prefix = plot.ISMIP-HOMC.@NAME.
+amr.write_layer_velocities = true
+
+amr.check_interval = -1
+amr.check_prefix = chk
+amr.verbosity = 5
+amr.regrid_interval = 10000   # number of timesteps between regridding
+amr.blockFactor = 4           # block factor used in grid generation
+amr.fill_ratio = 0.8          # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = 1             # amount to buffer tags
+amr.max_box_size = 64         # largest box length allowed
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+JFNKSolver.vtopSafety = 0.9
+JFNKSolver.minPicardIterations = 2
+JFNKSolver.switchRate = 5.0
+JFNKSolver.numMGSmooth = 4
+JFNKSolver.maxIter = 100
+
+JFNKSolver.absTol = 1.0e-6
+JFNKSolver.relTol = 1.0e-6
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxMinIter = 4
+JFNKSolver.vtopRelaxTol = 0
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.hAdaptive = false
+JFNKSolver.mgProlongType = 1
+
+# 0 = relax, 1 = BiCGStab, 2 = GMRES, 3 = MultiGrid
+JFNKSolver.solverType = 0
+JFNKSolver.RelaxTol = 1.0e-2
+JFNKSolver.maxRelaxIter = 10
+
+
+

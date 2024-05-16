@@ -1,0 +1,619 @@
+#include "CONSTANTS.H"
+#include "IceConstants.H"
+
+c---------------------------------------------------
+c contribution to the right hand side of the  
+c ssa/l1l2 adjoint equations due to mismatch
+c between model and observed *speeds* um and uo 
+c (not velocity)
+c
+c rhs[x] = (uo/um - 1)*ux
+c rhs[y] = (uo/um - 1)*uy
+c
+c rhs <- contribution
+c misfit <- (uo - um)**2
+c umx,umy -> model velocity components
+c uox,uoy -> observed velocity components. so long 
+c as the observed speed is uo = (uox^2 + uoy^2)**(1/2),
+c it doesn't matter what lives in these 
+c---------------------------------------------------
+      subroutine adjrhsspeedctrl( CHF_FRA1[rhsx],CHF_FRA1[rhsy], 
+     &     CHF_FRA1[misfit],
+     &     CHF_CONST_FRA1[umx],CHF_CONST_FRA1[umy],
+     &     CHF_CONST_FRA1[uox],CHF_CONST_FRA1[uoy],
+     &     CHF_BOX[box] )
+
+      integer CHF_AUTODECL[i]
+      REAL_T uo,um,t
+
+      CHF_AUTOMULTIDO[box; i]
+      uo = (uox(CHF_AUTOIX[i])**two + uoy(CHF_AUTOIX[i])**two)**half
+      um = (umx(CHF_AUTOIX[i])**two+umy(CHF_AUTOIX[i])**two)**half
+      
+      misfit(CHF_AUTOIX[i]) = (uo-um)**two
+c      misfit(CHF_AUTOIX[i]) = (uo-um)
+      t = (uo/(TINY_NORM + um)-1.0)
+      rhsx(CHF_AUTOIX[i]) = t * umx(CHF_AUTOIX[i])
+      rhsy(CHF_AUTOIX[i]) = t * umy(CHF_AUTOIX[i])
+ 
+      CHF_ENDDO
+
+      return
+      end
+
+
+c---------------------------------------------------
+c contribution to the right hand side of the  
+c ssa/l1l2 adjoint equations due to mismatch
+c between model and observed *velocities* um and uo 
+
+c
+c rhs[x] = (uxo - umy)
+c rhs[y] = (uyo - umy)
+c
+c rhs <- contribution
+c misfit <- 0.5 * (uo - um) . (uo - um)
+c umx,umy -> model velocity components
+c uox,uoy -> observed velocity components.
+c---------------------------------------------------
+      subroutine adjrhsvelctrl( CHF_FRA1[rhsx],CHF_FRA1[rhsy], 
+     &     CHF_FRA1[misfit],
+     &     CHF_CONST_FRA1[umx],CHF_CONST_FRA1[umy],
+     &     CHF_CONST_FRA1[uox],CHF_CONST_FRA1[uoy],
+     &     CHF_BOX[box] )
+
+      integer CHF_AUTODECL[i]
+      REAL_T uo,um,t
+
+      CHF_AUTOMULTIDO[box; i]
+      
+      rhsx(CHF_AUTOIX[i]) = uox(CHF_AUTOIX[i]) - umx(CHF_AUTOIX[i])
+      rhsy(CHF_AUTOIX[i]) = uoy(CHF_AUTOIX[i]) - umy(CHF_AUTOIX[i])
+      
+      misfit(CHF_AUTOIX[i]) = half *
+     &     rhsx(CHF_AUTOIX[i])**two 
+     &     + rhsy(CHF_AUTOIX[i])**two
+
+      CHF_ENDDO
+
+      return
+      end
+c---------------------------------------------------
+c contribution to the right hand side of the  
+c ssa/l1l2 adjoint equations due to mismatch
+c between logs of and observed speed um and uo 
+
+c
+c rhs[x] = ln(|um|/|uo|) |um|/|uo|^2 uox
+c rhs[y] = ln(|um|/|uo|) |um|/|uo|^2 uoy
+c
+c rhs <- contribution
+c misfit <- 0.5 * [ln(|uo|/|um|)]**2
+c umx,umy -> model velocity components
+c uox,uoy -> observed velocity components.
+c---------------------------------------------------
+      subroutine adjrhslogspdctrl( CHF_FRA1[rhsx],CHF_FRA1[rhsy], 
+     &     CHF_FRA1[misfit],
+     &     CHF_CONST_FRA1[umx],CHF_CONST_FRA1[umy],
+     &     CHF_CONST_FRA1[uox],CHF_CONST_FRA1[uoy],
+     &     CHF_BOX[box] )
+
+      integer CHF_AUTODECL[i]
+      REAL_T uo,um,r,s,t
+
+      CHF_AUTOMULTIDO[box; i]
+
+      uo = (uox(CHF_AUTOIX[i])**two+uoy(CHF_AUTOIX[i])**two)**half
+      um = (umx(CHF_AUTOIX[i])**two+umy(CHF_AUTOIX[i])**two)**half
+
+      uo = uo + 10.0
+      um = um + 10.0
+      r = um/uo
+      t = log(r)
+      s = t *  uo / um**2
+
+      rhsx(CHF_AUTOIX[i]) = s*uox(CHF_AUTOIX[i]) 
+      rhsy(CHF_AUTOIX[i]) = s*uoy(CHF_AUTOIX[i])
+      
+      misfit(CHF_AUTOIX[i]) = half * t**2 
+
+      CHF_ENDDO
+
+      return
+      end
+
+c-----------------------------------------------------
+c contribution to the right hand side of the  
+c ssa/l1l2 adjoint equations due to mismatch
+c between model and observed div(UH)
+c
+c rhs[x] = thck * d/dx (misfit)
+c-------------------------------------------------------
+      subroutine adjrhsmassctrl( CHF_FRA[rhs], 
+     &     CHF_FRA1[misfit],CHF_CONST_FRA1[thck],
+     &     CHF_CONST_REAL[dx], CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_DDECL[ip;jp;kp]
+      integer dir,ndir
+      REAL_T oneontwodx
+
+      oneontwodx = half / dx
+      ndir = CHF_DSELECT[1;2;3]     
+      do dir =0,ndir-1
+
+         CHF_DTERM[
+         ip = CHF_ID(0,dir);
+         jp = CHF_ID(1,dir);
+         kp = CHF_ID(2,dir)]
+
+         CHF_AUTOMULTIDO[box; i]
+
+         rhs(CHF_AUTOIX[i],dir) =  thck(CHF_AUTOIX[i]) * oneontwodx 
+     &        * (misfit(CHF_IX[i0+ip;i1+jp;i2+kp]) 
+     &        - misfit(CHF_IX[i0-ip;i1-jp;i2-kp])) 
+         
+         CHF_ENDDO
+      end do
+      return
+      end
+
+
+c----------------------------------------------------
+c x <- x * exp(min(ub,max(lb,a)))
+      subroutine boundexpctrl( 
+     &     CHF_FRA1[x],CHF_CONST_FRA1[a],
+     &     CHF_CONST_REAL[lb],CHF_CONST_REAL[ub],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T t
+
+      CHF_AUTOMULTIDO[box; i]
+      t = min(ub,max(a(CHF_AUTOIX[i]),lb))
+      x(CHF_AUTOIX[i]) = x(CHF_AUTOIX[i]) * exp(t)
+      CHF_ENDDO
+      return
+      end
+
+c----------------------------------------------------
+c x <- x * exp(a)
+      subroutine expctrl( 
+     &     CHF_FRA1[x],
+     &     CHF_CONST_FRA1[a],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+
+      CHF_AUTOMULTIDO[box; i]
+      x(CHF_AUTOIX[i]) = x(CHF_AUTOIX[i]) 
+     &     * exp(a(CHF_AUTOIX[i]))
+      CHF_ENDDO
+      return
+      end
+
+c----------------------------------------------------
+c x <- (min(ub,max(lb,x)))
+      subroutine boundctrl( 
+     &     CHF_FRA1[x],
+     &     CHF_CONST_REAL[lb],
+     &     CHF_CONST_REAL[ub],  
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T t
+
+      CHF_AUTOMULTIDO[box; i]
+      t = x(CHF_AUTOIX[i])
+      x(CHF_AUTOIX[i]) = min(ub,max(lb,t))
+      CHF_ENDDO
+      return
+      end
+
+c----------------------------------------------------
+c z <- y + (min(ub,max(lb,x)))
+      subroutine incrboundctrl( 
+     &     CHF_FRA1[z], 
+     &     CHF_CONST_FRA1[y],
+     &     CHF_CONST_FRA1[x],
+     &     CHF_CONST_REAL[lb],
+     &     CHF_CONST_REAL[ub],  
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T t
+
+      CHF_AUTOMULTIDO[box; i]
+      t = x(CHF_AUTOIX[i])
+      z(CHF_AUTOIX[i]) = y(CHF_AUTOIX[i]) +  min(ub,max(lb,t))
+      CHF_ENDDO
+      return
+      end
+
+
+
+c--------------------------------------------------------
+c barrier penalty p and its gradient g
+c p = -ln( (x+b+tol)*(b+tol-x) / b^2), where b > 0
+c g = -{1/(x+b+tol) + 1/(x-b-tol)} 
+      subroutine gradbarrierctrl(
+     &     CHF_FRA1[p],
+     &     CHF_FRA1[g],
+     &     CHF_CONST_FRA1[x],
+     &     CHF_CONST_REAL[b],
+     &     CHF_CONST_REAL[tol],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i]
+      REAL_T xx,dm,dp,bsq
+      bsq = b**2
+
+      CHF_AUTOMULTIDO[box; i]
+      xx = x(CHF_AUTOIX[i])
+      if (xx.le.-b) then
+         xx = -b+tol
+      else if (xx.ge.b) then
+         xx = b-tol
+      end if
+      dm = xx+b+tol
+      dp = xx-b-tol
+
+      p(CHF_AUTOIX[i]) = - log(- dp * dm / bsq)
+      g(CHF_AUTOIX[i]) = - one / dm - one / dp 
+      CHF_ENDDO
+
+      return
+      end
+
+c--------------------------------------
+c fab <- fab * (lb < x < ub)?1:0  
+c-------------------------------------
+      subroutine multhatctrl(CHF_FRA1[fab],
+     &     CHF_CONST_FRA1[x],
+     &     CHF_CONST_REAL[lb],
+     &     CHF_CONST_REAL[ub],
+     &     CHF_BOX[box])
+ 
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box; i]
+
+      if ((x(CHF_AUTOIX[i]).le.lb).or.(x(CHF_AUTOIX[i]).ge.ub)) then
+         fab(CHF_AUTOIX[i]) = zero
+      end if
+      CHF_ENDDO
+
+      return
+      end
+
+c--------------------------------------
+c modify a gradient (fab) to point downhill into
+c the interior of [lb,ub]
+c        { fab    :      lb < x < ub
+c fab <- { min(0, fab) :  x <= lb 
+c        { max(0, fab) :  z => ub
+c-------------------------------------
+      subroutine hardpointinctrl(CHF_FRA1[fab],
+     &     CHF_CONST_FRA1[x],
+     &     CHF_CONST_REAL[lb],
+     &     CHF_CONST_REAL[ub],
+     &     CHF_BOX[box])
+ 
+      integer CHF_AUTODECL[i]
+      CHF_AUTOMULTIDO[box; i]
+
+      if (x(CHF_AUTOIX[i]).le.lb) then
+         fab(CHF_AUTOIX[i]) = min(zero,fab(CHF_AUTOIX[i]))
+      else if (x(CHF_AUTOIX[i]).ge.ub) then
+         fab(CHF_AUTOIX[i]) = max(zero,fab(CHF_AUTOIX[i]))
+      end if
+      CHF_ENDDO
+
+      return
+      end
+
+
+c--------------------------------------
+c r <- c (a.b), r,c are a one-component FABs 
+c               a,b are n-components FABs 
+c-------------------------------------
+      subroutine cadotbctrl(CHF_FRA1[r],
+     &     CHF_CONST_FRA1[c],
+     &     CHF_CONST_FRA[a],
+     &     CHF_CONST_FRA[b], 
+     &     CHF_BOX[box])
+ 
+
+      integer CHF_AUTODECL[i], icomp
+
+      CHF_AUTOMULTIDO[box; i]
+      r(CHF_AUTOIX[i]) =   c(CHF_AUTOIX[i]) *  
+     &           a(CHF_AUTOIX[i],0) *
+     &           b(CHF_AUTOIX[i],0) 
+      CHF_ENDDO
+
+      if (CHF_NCOMP[a].gt.1) then
+         do icomp = 1, CHF_NCOMP[a] - 1
+            CHF_AUTOMULTIDO[box; i]
+            
+            r(CHF_AUTOIX[i]) = r(CHF_AUTOIX[i]) +
+     &           c(CHF_AUTOIX[i]) *  
+     &           a(CHF_AUTOIX[i],icomp) *
+     &           b(CHF_AUTOIX[i],icomp) 
+            
+            CHF_ENDDO
+         end do
+      end if
+
+      return
+      end
+
+c -----------------------------------------------------
+c h <- max(0, min(ho + limit, max( ho - limit )))
+c ------------------------------------------------------
+      subroutine limitincrctrl(CHF_FRA1[h], 
+     &     CHF_CONST_FRA1[dh],
+     &     CHF_CONST_FRA1[ho],
+     &     CHF_CONST_REAL[limit],
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTODECL[i]
+      REAL_T t
+
+      CHF_AUTOMULTIDO[box; i]
+      t = h(CHF_AUTOIX[i]) + dh(CHF_AUTOIX[i])
+      t = max(t,zero)
+      t = max(ho(CHF_AUTOIX[i])-limit,t)
+      t = min(ho(CHF_AUTOIX[i])+limit,t)
+      h(CHF_AUTOIX[i]) = t
+      CHF_ENDDO
+
+      return
+      end
+
+      
+c----------------------------------------------------
+c set dh <- max(-h, dh)
+c and topg <- topg + d
+c d = -dh on land
+c d = min(-dh, -(h+dh)*r - topg) in shelf
+c ie modify topg so that the mask does not change
+c for floating ice and the surface does not change for grounded ice
+c So, the grounding line can retreat but not re-advance
+c also limit |h - ho| <= dhmax and set h <- 0 if h < hmin
+c----------------------------------------------------
+
+      subroutine updatehctrlb(CHF_FRA1[h],
+     &     CHF_FRA1[topg], 
+     &     CHF_FRA1[dh],
+     &     CHF_CONST_FIA1[mask],  
+     &     CHF_CONST_FRA1[ho],
+     &     CHF_CONST_REAL[r],
+     &     CHF_CONST_REAL[dhmax],
+     &     CHF_CONST_REAL[hmin],
+     &     CHF_BOX[box])
+
+      
+      integer CHF_AUTODECL[i]
+      REAL_T d, t
+
+      CHF_AUTOMULTIDO[box; i]
+      dh(CHF_AUTOIX[i]) = max(dh(CHF_AUTOIX[i]),-h(CHF_AUTOIX[i]))
+
+      if ( h(CHF_AUTOIX[i]) .lt. TINY_THICKNESS) then
+         dh(CHF_AUTOIX[i]) = zero
+      end if
+
+      t = h(CHF_AUTOIX[i])
+      h(CHF_AUTOIX[i]) = h(CHF_AUTOIX[i]) + dh(CHF_AUTOIX[i])
+
+      if ( h(CHF_AUTOIX[i]) .lt. hmin) then
+         h(CHF_AUTOIX[i]) = zero
+      end if
+
+      if ( h(CHF_AUTOIX[i]) .gt. ho(CHF_AUTOIX[i]) +  dhmax) then
+         h(CHF_AUTOIX[i]) = ho(CHF_AUTOIX[i]) +  dhmax
+      else if (h(CHF_AUTOIX[i]) .lt. ho(CHF_AUTOIX[i]) - dhmax) then
+         h(CHF_AUTOIX[i]) = ho(CHF_AUTOIX[i]) -  dhmax
+      end if
+
+      dh(CHF_AUTOIX[i]) = h(CHF_AUTOIX[i]) - t 
+
+      if (mask (CHF_AUTOIX[i]) .eq. FLOATINGMASKVAL) then
+         d = min(-dh(CHF_AUTOIX[i]), zero) ! don't allow sub-shelf cavity to shrink 
+      else if (mask (CHF_AUTOIX[i]) .eq. GROUNDEDMASKVAL) then
+         d = -dh(CHF_AUTOIX[i])
+      else
+         d = zero
+      end if
+      topg(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]) + d
+
+     
+
+
+      CHF_ENDDO
+
+      return
+      end
+
+
+c----------------------------------------------------
+c set dh <- max(-h, dh) and topg <- topg + d 
+c d = -dh on land
+c d = min(-dh, -(h+dh)*r - topg) in shelf
+c ie modify topg and thck so that the mask does not change
+c for floating ice and the neither the bedrock nor the surface
+c are raised for for grounded ice.
+c
+c so, if ice thins, the surface lowers, and if it thickens
+c the bedrock lowers. this is a crude rule, and assumes 
+c bedrock elevation tends to be overestimated (which
+c might occur because radar reflections tend to be biased
+c to early returns - hyperbolae, crevasses) and surface
+c elevation tends to be overestimated (by interpolating 
+c across the cliffs)
+c
+c So, the grounding line can retreat but not re-advance
+c
+c also limit |h - ho| <= dhmax and set h <- 0 if h < hmin
+c----------------------------------------------------
+
+      subroutine updatehctrlc(CHF_FRA1[h],
+     &     CHF_FRA1[topg], 
+     &     CHF_FRA1[dh],
+     &     CHF_CONST_FIA1[mask],  
+     &     CHF_CONST_FRA1[ho],
+     &     CHF_CONST_REAL[r],
+     &     CHF_CONST_REAL[dhmax],
+     &     CHF_CONST_REAL[hmin],
+     &     CHF_BOX[box])
+
+      
+      integer CHF_AUTODECL[i]
+      REAL_T d, t
+
+      CHF_AUTOMULTIDO[box; i]
+      dh(CHF_AUTOIX[i]) = max(dh(CHF_AUTOIX[i]),-h(CHF_AUTOIX[i]))
+
+      if ( h(CHF_AUTOIX[i]) .lt. TINY_THICKNESS) then
+         dh(CHF_AUTOIX[i]) = zero
+      end if
+
+      t = h(CHF_AUTOIX[i])
+      h(CHF_AUTOIX[i]) = h(CHF_AUTOIX[i]) + dh(CHF_AUTOIX[i])
+
+      if ( h(CHF_AUTOIX[i]) .lt. hmin) then
+         h(CHF_AUTOIX[i]) = zero
+      end if
+
+      if ( h(CHF_AUTOIX[i]) .gt. ho(CHF_AUTOIX[i]) +  dhmax) then
+         h(CHF_AUTOIX[i]) = ho(CHF_AUTOIX[i]) +  dhmax
+      else if (h(CHF_AUTOIX[i]) .lt. ho(CHF_AUTOIX[i]) - dhmax) then
+         h(CHF_AUTOIX[i]) = ho(CHF_AUTOIX[i]) -  dhmax
+      end if
+
+      dh(CHF_AUTOIX[i]) = h(CHF_AUTOIX[i]) - t 
+
+      !nb : rule is the same for grounded and floating ice - bedrock down only
+      if (mask (CHF_AUTOIX[i]) .eq. FLOATINGMASKVAL) then
+         d = min(-dh(CHF_AUTOIX[i]), zero) ! don't allow sub-shelf cavity to shrink 
+      else if (mask (CHF_AUTOIX[i]) .eq. GROUNDEDMASKVAL) then
+         d = min(-dh(CHF_AUTOIX[i]), zero) ! don't allow topography to be raised.
+      else
+         d = zero
+      end if
+      topg(CHF_AUTOIX[i]) = topg(CHF_AUTOIX[i]) + d
+
+     
+
+
+      CHF_ENDDO
+
+      return
+      end
+
+c-------------------------------------------------
+c apply a red-black 'simple gaussian' convolution 
+c adapted from AMRPoissonOp.ChF::GSRBLAPLACIAN
+c-------------------------------------------------
+      subroutine convolvectrlrb(
+     &     CHF_FRA[u],
+     &     CHF_CONST_INT[rb],
+     &     CHF_BOX[box])
+
+     
+      integer CHF_DDECL[i;j;k]
+      integer n,ncomp,imin,imax,indtot
+      REAL_T w,t,twow
+
+      w = two * CH_SPACEDIM;
+      twow = two * w;
+
+      ncomp = CHF_NCOMP[u]
+      do n = 0, ncomp - 1
+#if CH_SPACEDIM==3
+         do k=CHF_LBOUND[box; 2], CHF_UBOUND[box; 2]
+            
+#endif
+#if CH_SPACEDIM > 1
+            do j=CHF_LBOUND[box; 1], CHF_UBOUND[box; 1]  
+#endif
+               imin = CHF_LBOUND[box; 0]
+               CHF_DTERM[indtot = imin; + j ; + k ]
+               
+               imin = imin + abs(mod(indtot + rb, 2))
+               imax = CHF_UBOUND[box; 0]
+               do i = imin, imax, 2
+                  
+                  t = ( CHF_DTERM[
+     &                 u(CHF_IX[i+1;j;k],n)
+     &            +    u(CHF_IX[i-1;j;k],n);
+     &            +    u(CHF_IX[i;j+1;k],n)
+     &            +    u(CHF_IX[i;j-1;k],n);
+     &            +    u(CHF_IX[i;j;k+1],n)
+     &            +    u(CHF_IX[i;j;k-1],n)]
+     &                 ) 
+                  
+                  u(CHF_IX[i;j;k],n) = (t + w *u(CHF_IX[i;j;k],n))/(twow)
+                  
+               end do
+#if CH_SPACEDIM > 1
+            end do
+#endif
+#if CH_SPACEDIM==3
+         end do
+#endif
+      end do
+
+      return
+      end
+
+
+c-------------------------------------------------
+c apply a 'simple gaussian' convolution 
+c-------------------------------------------------
+      subroutine convolvectrl(
+     &     CHF_FRA[u],
+     &     CHF_FRA[r],
+     &     CHF_BOX[box])
+
+     
+      integer CHF_DDECL[i;j;k]
+      integer n,ncomp,imin,imax,indtot
+      REAL_T w,t,twow
+
+      w = two * CH_SPACEDIM;
+      twow = two * w;
+
+      ncomp = CHF_NCOMP[u]
+      do n = 0, ncomp - 1
+#if CH_SPACEDIM==3
+         do k=CHF_LBOUND[box; 2], CHF_UBOUND[box; 2]
+            
+#endif
+#if CH_SPACEDIM > 1
+            do j=CHF_LBOUND[box; 1], CHF_UBOUND[box; 1]  
+#endif
+               do i=CHF_LBOUND[box; 0], CHF_UBOUND[box; 0]   
+                  
+                  t = ( CHF_DTERM[
+     &                 r(CHF_IX[i+1;j;k],n)
+     &            +    r(CHF_IX[i-1;j;k],n);
+     &            +    r(CHF_IX[i;j+1;k],n)
+     &            +    r(CHF_IX[i;j-1;k],n);
+     &            +    r(CHF_IX[i;j;k+1],n)
+     &            +    r(CHF_IX[i;j;k-1],n)]
+     &                 ) 
+                  
+                  u(CHF_IX[i;j;k],n) = (t + w*r(CHF_IX[i;j;k],n))/(twow)
+                  
+               end do
+#if CH_SPACEDIM > 1
+            end do
+#endif
+#if CH_SPACEDIM==3
+         end do
+#endif
+      end do
+
+      return
+      end

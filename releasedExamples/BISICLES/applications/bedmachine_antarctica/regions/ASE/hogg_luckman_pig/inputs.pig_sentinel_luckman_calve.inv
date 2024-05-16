@@ -1,0 +1,244 @@
+main.poutBaseName = pout.pig_sentinel_luckman_calve
+#domain details (whole ase)
+main.domain_size = 896.0e+3 1024.0e+3 1.0e+3
+amr.num_cells = 224 256 24 # 2km
+
+amr.is_periodic = 0 0 0
+amr.sigma = 0.0 0.1663 0.3179 0.4547 0.5768 0.6842 0.7768 0.8547 0.9179 0.9663 1
+amr.sigma = 0.0 0.0712603   0.14191442  0.21137662  0.27910062  0.3445959
+  0.40744022  0.46728806  0.52387456  0.5770154   0.62660312  0.67260068
+  0.71503302  0.75397751  0.78955403  0.82191523  0.85123747  0.87771266
+  0.90154127  0.92292652  0.94206966  0.95916636  0.97440401  0.98795991
+  1. 
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+L1L2.layerCoarsening = 1
+main.rateFactor = patersonRate
+patersonRate.epsSqr0 = 1.0e-12
+
+#geometry & basal friction input data
+geometry.problem_type = LevelData
+
+inputLevelData.geometryFile =  ../ase_bedmachine_geometry_500m.2d.hdf5
+inputLevelData.thicknessName = thk
+inputLevelData.topographyName = topg
+
+inputLevelData.frictionFile = ../ase_bedmachine_inverse_0_500m.2d.hdf5
+inputLevelData.frictionName = c_one
+
+muCoefficient.type = LevelData
+inputLevelData.muCoefFile = ../ase_bedmachine_inverse_0_500m.2d.hdf5
+inputLevelData.muCoefName = mu_coef
+
+#temperature data 
+temperature.type = LevelData
+inputLevelData.temperatureFile = ../ase_bedmachine_temperature_4km_24.2d.hdf5
+inputLevelData.temperatureName = temp000000
+
+geometry.beta_type = LevelData
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+
+#physical constants
+constants.ice_density=917.0
+constants.sea_water_density=1027.0
+
+#surface fluxes
+surfaceFlux.type = constantFlux
+surfaceFlux.flux_value = 0.0
+
+amr.grounding_line_proximity_scale = 1.0e+4
+amr.grounding_line_proximity_calc_type = 1
+
+basalFlux.type = maskedFlux
+basalFlux.grounded.type = constantFlux
+basalFlux.grounded.flux_value = 0.0
+
+amr.floating_ice_basal_flux_is_dhdt = true
+amr.grounded_ice_basal_flux_is_dhdt = true
+basalFlux.type = maskedFlux
+basalFlux.grounded.type = constantFlux
+basalFlux.grounded.flux_value = 0.0
+basalFlux.floating.type = LevelData
+basalFlux.floating.fileFormat =  hogg_data/hogg_pig_calving_%02d.2d.hdf5
+basalFlux.floating.n = 8
+basalFlux.floating.name = bflux
+basalFlux.floating.timeStep = 1.0
+basalFlux.floating.startTime = 15.0
+basalFlux.floating.offset = 15
+basalFlux.floating.linearInterp = false
+
+#calving model - hold the calving front steady
+CalvingModel.type = FixedFrontCalvingModel
+CalvingModel.min_thickness = 0.0
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 2.9e+6
+amr.initial_velocity_guess_solver_type = 1 #JFNK
+
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 20
+JFNKSolver.absTol = 1.0
+JFNKSolver.relTol = 1.0e-4
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.solverType = 4 #PETSC
+JFNKSolver.RelaxRelTol = 1.0e-3
+JFNKSolver.RelaxHang = 0.95
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 2
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 1.6
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+JFNKSolver.eliminateFastIce = false
+#JFNKSolver.eliminateFastIceEdgeOnly = true
+JFNKSolver.eliminateFastIceSpeed = 5.0e+5
+JFNKSolver.eliminateRemoteIceTol = 50.0
+JFNKSolver.eliminateRemoteIceMaxIter = 16
+
+#time stepping
+main.maxTime = 20  # maximum time to run to
+main.maxStep = 6  # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 2.0 
+amr.time_step_ticks = 0
+amr.fixed_dt = 1.0
+#amr.evolve_thickness= false
+
+
+#plotting options
+#amr.plot_interval = 1
+amr.plot_time_interval = 1.0
+amr.plot_prefix = plot.pig_sentinel_luckman_calve.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+#check points
+amr.check_interval = 1
+amr.check_prefix = chk.pig_sentinel_luckman_calve.
+amr.check_overwrite = 0
+#
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 3200  # number of timesteps between regridding
+amr.blockFactor = 16      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+#amr.tagSubsetBoxesFile = tag_subset.ase
+amr.tagCap = 2
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32        # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+
+#amr.tag_on_grounded_laplacian_velocity = 0
+#amr.lap_vel_tagging_val = 150
+
+#amr.tag_grounding_line = 1
+#amr.grounding_line_tagging_min_vel = 20.0
+
+
+amr.tag_vel_dx = 1
+amr.vel_dx_tagging_val = 5.0e+5
+amr.vel_dx_finest_level_grounded = 4
+amr.vel_dx_finest_level_floating = 3
+
+#misc options
+amr.verbosity = 5
+
+amr.velocity_solver_type = 6 # Inverse problem !
+amr.velocity_solve_interval = 1
+
+control.velMisfitType = speed # match observed speed (not velocity)
+    
+control.outerStepFileNameBase = ctrl.pig_sentinel_luckman_calve.
+
+#field of data expressing confidence in speed observations. 0 for no confidence
+control.velCoef.type = LevelData
+control.velCoef.fileFormat = luckman_data/luckman_pig_%02d.2d.hdf5
+control.velCoef.name = uc
+control.velCoef.n = 7
+control.velCoef.startTime = 14.0
+control.velCoef.timeStep = 1.0
+control.velCoef.offset = 14
+control.velCoef.linearInterp = false
+
+#x-component of the observed velocity (could be the speed)
+control.xVel.type = LevelData
+control.xVel.fileFormat = luckman_data/luckman_pig_%02d.2d.hdf5
+control.xVel.name = uo
+control.xVel.n = 7
+control.xVel.startTime = 14.0
+control.xVel.timeStep = 1.0
+control.xVel.offset = 14
+control.xVel.linearInterp = false
+
+amr.offsetTime = 14.0
+
+#Tikhonov regularization coefficients
+control.gradCsqRegularization = 1.5e+2
+control.gradMuCoefsqRegularization = 1.5e+9
+
+#control.gradX0sqRegularization = 1.0e+9
+#control.gradX1sqRegularization = 0.1
+
+#control.X0TimeRegularization = 1.0e+4
+#control.X1TimeRegularization = 1.0e+4
+
+
+#some box constraints. 
+control.boundMethod = Projection
+control.lowerX0 = -5
+control.upperX0 = 5.0
+control.lowerX1 = -2.0
+control.upperX1 = 0.5
+    
+control.writeInnerSteps = false
+control.CGmaxIter = 16
+control.CGhang = 0.9999999
+control.CGsecantMaxIter = 20
+
+control.initialLowerC = 1.0
+control.initialUpperC = 1.0e+5
+
+control.initialLowerMuCoef = 0.03125
+control.initialUpperMuCoef = 1.5
+
+#control.divuhMisfitCoefficient = 3.0e+3
+#control.divuhMisfitSmooth = 64.0e+3
+
+
+
+control.minLevelForOptimization = 3
+
+#tag thin submarine cavities in an attempt to refine around pinning points
+#amr.tag_thin_cavity = true
+#amr.tag_thin_cavity_thickness = 50.0
+
+
+amr.restart_file = chk.pig_sentinel_luckman_calve.000000.2d.hdf5

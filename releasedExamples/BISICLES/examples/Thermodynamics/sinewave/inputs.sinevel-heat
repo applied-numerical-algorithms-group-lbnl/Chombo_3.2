@@ -1,0 +1,97 @@
+domain details
+main.domain_size = 64e+3 64e+3 1.0e+3
+amr.num_cells = 64 64 10
+amr.is_periodic = 1 1 0
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = GlensLaw
+main.rateFactor = constRate
+constRate.epsSqr0 = 1.0e-12
+constRate.A =  1.0e-16
+#main.rateFactor = arrheniusRate
+#ArrheniusRate.epsSqr0 = 1.0e-12
+
+
+
+#geometry,temperarture & basal friction input data
+geometry.problem_type = Python
+PythonIBC.module = sinewave
+PythonIBC.thicknessFunction = thicknessB
+PythonIBC.topographyFunction = topography	
+
+geometry.beta_type = constantBeta
+geometry.betaValue = 100.0
+
+temperature.type = constant
+temperature.value = 270
+
+amr.sigma = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+
+#physical constants
+constants.ice_density=918
+
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+
+
+amr.velocity_solver_type = 5 # python
+PythonVelocitySolver.module = sinewave
+PythonVelocitySolver.function = velocityB
+
+
+#time stepping
+main.maxTime = 10000.0  # maximum time to run to
+main.maxStep = 100000   # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25 
+amr.initial_cfl = 0.25 
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+amr.plot_interval = 10
+amr.plot_prefix = plot.sinevel-heat.
+amr.write_solver_rhs = 1
+amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+
+#check points
+amr.check_interval = 1000
+amr.check_prefix = chk.sinevel-heat.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 1  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+#amr.tagSubsetBoxesFile = tag_subset.Deep
+amr.tagCap = 1
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32 # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 0
+amr.lap_vel_tagging_val = 1
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 0
+
+#misc options
+amr.verbosity = 5
+
+amr.isothermal = false
+amr.write_temperature = true
+amr.write_internal_energy = true
+

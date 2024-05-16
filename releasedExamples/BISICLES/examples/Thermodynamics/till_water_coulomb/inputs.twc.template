@@ -1,0 +1,176 @@
+#domain details
+main.domain_size = 480e+3 480e+3 2.0e+3
+main.poutBaseName = pout.twc.@LEVlev.
+
+amr.num_cells = 48 48 16
+amr.is_periodic = 0 0 0
+
+#geometry,temperature & basal friction input data
+geometry.problem_type = Python
+PythonIBC.bc_lo = 0 0
+PythonIBC.bc_hi = 0 0
+PythonIBC.module = twc
+PythonIBC.thicknessFunction = thickness
+PythonIBC.topographyFunction = topography
+
+#initial temperature
+temperature.type = constant
+temperature.value = 268
+
+#physical constants
+constants.ice_density=918
+
+#surface fluxes
+surfaceFlux.type = constantFlux
+surfaceFlux.flux_value = 0.3
+basalFlux.type = zeroFlux
+
+#calving model
+
+CalvingModel.type = DomainEdgeCalvingModel
+CalvingModel.front_hi = 1 1
+CalvingModel.front_lo = 0 0
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 1
+JFNKSolver.absTol = 1.0e+0
+JFNKSolver.relTol = 1.0e-3
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 2.0e-3
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 2.0
+JFNKSolver.eliminateFastIce = true
+JFNKSolver.eliminateFastIceSpeed = 5.0e+5
+
+
+#time stepping
+main.maxTime = 8192 # maximum time to run to
+main.maxStep = 1000000000   # maximum number of steps to run
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+#amr.plot_interval = 1
+amr.plot_prefix = plot.twc.@LEVlev.
+amr.write_solver_rhs = 1
+amr.write_internal_energy = true
+amr.plot_time_interval = 32.0
+#amr.plot_interval = 32
+amr.write_viscous_tensor = true
+
+#check points
+amr.check_interval = 512
+amr.check_prefix = chk.twc.@LEVlev.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 16  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+amr.tagCap = @TAGCAP
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32 # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_laplacian_velocity = 1
+amr.lap_vel_tagging_val = 1
+
+amr.tag_grounding_line = 0
+amr.grounding_line_tagging_min_vel = 20
+
+#misc options
+amr.verbosity = 5
+amr.velocity_solve_interval = 1
+
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+#main.rateFactor = patersonRate
+#PatersonRate.epsSqr0 = 1.0e-12
+main.rateFacotr = constRate
+constRate.A = 9.0e-18
+
+#add these if you want vertical shearing
+#amr.additional_velocity = true
+#amr.diffusion_treatment = implicit
+
+
+#Basal friction, Weertman parameters
+#main.basalFrictionRelation = powerLaw
+geometry.beta_type = constantBeta
+geometry.betaValue = 0.3e+4
+BasalFrictionPowerLaw.m = 0.333
+
+#Coulomb limit:
+main.basalFrictionRelation = pressureLimitedLaw
+BasalFrictionPressureLimitedLaw.coefficient = 0.5
+BasalFrictionPressureLimitedLaw.basalFrictionRelation = powerLaw
+BasalFrictionPressureLimitedLaw.tillPressureFactor = 0.99
+
+#Columb limit depends on till water depth
+BasalFrictionPressureLimitedLaw.maxTillWaterDepth = 2.0
+amr.isothermal = false
+
+
+# Surface heat fluxes (as a temperature in K)
+surfaceHeatBoundaryData.Dirichlett = true  # false by default
+surfaceHeatBoundaryData.Temperature = true # true by default
+surfaceHeatBoundaryData.type =  constantFlux
+surfaceHeatBoundaryData.flux_value = 268
+
+# Geothermal flux (in J/a/m^2)
+basalHeatBoundaryData.type = constantFlux
+basalHeatBoundaryData.type =  constantFlux
+basalHeatBoundaryData.flux_value = 3.0e+6
+
+basalFlux.type = pythonFlux
+basalFlux.module = twc
+basalFlux.function = basal_flux
+
+#ColumnThermodynamics.water_fraction_drain = 0.01
+#ColumnThermodynamics.water_fraction_max = 0.05
+#ColumnThermodynamics.water_drain_factor = 0.02
+#ColumnThermodynamics.till_water_drain_factor = 0.005 # default 0.001
+
+#tillWaterDrainFactor.type = constantFlux
+#tillWaterDrainFactor.flux_value = 0.005
+tillWaterDrainFactor.type = pythonFlux
+tillWaterDrainFactor.module = twc
+tillWaterDrainFactor.function =  till_water_drain_factor
+
+
+
+
+#amr.restart_file = chk.twc.0lev.000512.2d.hdf5
+

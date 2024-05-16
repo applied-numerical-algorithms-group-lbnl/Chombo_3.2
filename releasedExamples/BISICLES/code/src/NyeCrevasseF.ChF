@@ -1,0 +1,328 @@
+c----------------------------------------------
+c  Compute symmettric tensor Vij = 1/2 (Uij + Uji) 
+c  1D,2D only
+c----------------------------------------------
+      subroutine uplusut(CHF_FRA[e],
+     &     CHF_CONST_FRA[u],
+     &     CHF_INT[xxComp],
+     &     CHF_INT[xyComp],
+     &     CHF_INT[yxComp],
+     &     CHF_INT[yyComp], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T uxx,uxy,uyx,uyy
+
+      CHF_AUTOMULTIDO[box; i]
+#if (CH_SPACEDIM == 1)
+      uxx = u(CHF_AUTOIX[i],xxComp)
+      e(CHF_AUTOIX[i],0) = uxx
+
+#elif (CH_SPACEDIM == 2)
+
+      uxx = u(CHF_AUTOIX[i],xxComp)
+      uyy = u(CHF_AUTOIX[i],yyComp)
+      uxy = u(CHF_AUTOIX[i],xyComp)
+      uyx = u(CHF_AUTOIX[i],yxComp)
+
+      e(CHF_AUTOIX[i],xxComp) = uxx;
+      e(CHF_AUTOIX[i],xyComp) = half * ( uxy + uyx ) ;
+      e(CHF_AUTOIX[i],yxComp) = e(CHF_AUTOIX[i],xyComp);
+      e(CHF_AUTOIX[i],yyComp) = uyy;
+
+#endif
+      
+      CHF_ENDDO
+      return 
+      end
+c----------------------------------------------
+c  Compute symmettric tensor Vij =  (Uij + Uji) + I*Ukk
+c  1D,2D only
+c----------------------------------------------
+      subroutine eplustre(CHF_FRA[e],
+     &     CHF_CONST_FRA[u],
+     &     CHF_INT[xxComp],
+     &     CHF_INT[xyComp],
+     &     CHF_INT[yxComp],
+     &     CHF_INT[yyComp], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T uxx,uxy,uyx,uyy,uzz
+
+      CHF_AUTOMULTIDO[box; i]
+#if (CH_SPACEDIM == 1)
+
+      e(CHF_AUTOIX[i],0) = 2.0d0*u(CHF_AUTOIX[i],0)
+
+#elif (CH_SPACEDIM == 2)
+
+      uxx = u(CHF_AUTOIX[i],xxComp)
+      uyy = u(CHF_AUTOIX[i],yyComp)
+      uxy = u(CHF_AUTOIX[i],xyComp)
+      uyx = u(CHF_AUTOIX[i],yxComp)
+      uzz = uxx + uyy
+
+      e(CHF_AUTOIX[i],xxComp) = (uxx + uzz) ;
+      e(CHF_AUTOIX[i],xyComp) = half * ( uxy + uyx ) ;
+      e(CHF_AUTOIX[i],yxComp) = e(CHF_AUTOIX[i],xyComp);
+      e(CHF_AUTOIX[i],yyComp) = (uyy + uzz);
+
+#endif
+      
+      CHF_ENDDO
+      return 
+      end
+
+c----------------------------------------------
+c  Compute eigenvalues of a tensor Tij. 
+c
+c  In 2D, requires
+c  Txy * Tyx >= - (half*(Txx - Tyy))**2 (for real eigenvalues),
+c  which is always true for symmetric tensors 
+c
+c  3D case not included
+c----------------------------------------------
+      subroutine symteigen(CHF_FRA[lambda],
+     &                     CHF_CONST_FRA[T],
+     &                     CHF_INT[xxComp],
+     &                     CHF_INT[xyComp],
+     &                     CHF_INT[yxComp],
+     &                     CHF_INT[yyComp], 
+     &                     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T b,d,txx,txy,tyy
+
+      CHF_AUTOMULTIDO[box; i]
+#if (CH_SPACEDIM == 1)
+
+      lambda(CHF_AUTOIX[i],0) = T(CHF_AUTOIX[i],0)
+
+#elif (CH_SPACEDIM == 2)
+
+      txx = T(CHF_AUTOIX[i],xxComp)
+      tyy = T(CHF_AUTOIX[i],yyComp)
+      txy = half*(abs(T(CHF_AUTOIX[i],xyComp)) + abs(T(CHF_AUTOIX[i],yxComp)))
+
+
+      b = half * (txx + tyy)
+      d = ( (half*(txx - tyy))**2 + txy**2)**half
+      lambda(CHF_AUTOIX[i],0) = b + d;
+      lambda(CHF_AUTOIX[i],1) = b - d;
+
+#endif
+      
+      CHF_ENDDO
+      return 
+      end
+
+
+
+
+c----------------------------------------------------
+c compute total crevasse depth d, either 0,  the surface 
+c crevasse depth or the total, whichever is the larger,
+c given the vertically integrated 'undamaged' stretching 
+c stress tp such that the 'damaged' stretching stress 
+c is t = (1 - d/h) tp
+c
+c the crevasse depths are given by the Nye zero-stress
+c rule, used recently in e.g Nick et al 2010 J Glac
+c (equations 4 and 6) - our t is their Rxx
+c
+c Substituting (1 - d/h) tp for t in the usual expressions
+c (as in subroutine nyecrevassedeptht below)
+c leads to the epxressions in this subroutine 
+c nyecrevassedepthtp. That allows the damage to become
+c part of the effective viscosity when solving
+c the stress balance equations for the velocity
+c----------------------------------------------------
+      subroutine nyecrevassedepthtp(CHF_FRA1[dfab],
+     &     CHF_CONST_FRA1[dwfab],
+     &     CHF_CONST_FRA1[hfab],
+     &     CHF_CONST_FRA1[tpfab],
+     &     CHF_CONST_FRA1[habfab],
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhoo],
+     &     CHF_CONST_REAL[g],  
+     &     CHF_CONST_REAL[eps], 
+     &     CHF_CONST_REAL[dmax], 
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTOIX[i]
+      REAL_T h,d,tp,hab,Q,Qw,ds,dtot,dw
+
+      CHF_AUTOMULTIDO[box; i]
+
+      h = hfab(CHF_AUTOIX[i])
+      tp = tpfab( CHF_AUTOIX[i] )
+      hab = habfab(CHF_AUTOIX[i])
+      dw = dwfab(CHF_AUTOIX[i])
+
+      Q = rhoi * g * h * h
+      Qw = rhoo * g * h * h
+
+!     surface and basal crevasses
+      dtot  = ( - (dw * rhoo + hab*rhoi)*Q
+     &     + rhoo * (Qw * dw + h * tp) )
+     &     / ( (rhoo-rhoi)*Q + tp*rhoo + eps )
+      
+!     just surface crevasses
+      ds  = (Qw * dw + h * tp)/(eps + Q + tp) 
+      
+      dfab(CHF_AUTOIX[i])  = max(zero,min(max(ds,dtot),h*dmax))
+
+      CHF_ENDDO
+      return 
+      end
+
+c----------------------------------------------------
+c compute total crevasse depth d, either 0,  the surface 
+c crevasse depth or the total, whichever is the larger,
+c given the vertically integrated 'damaged' stretching 
+c stress t 
+c
+c the crevasse depths are given by the Nye zero-stress
+c rule, used recently in e.g Nick et al 2010 J Glac
+c (equations 4 and 6) - our t is their Rxx
+c----------------------------------------------------
+
+      subroutine nyecrevassedeptht(CHF_FRA1[dfab],
+     &     CHF_CONST_FRA1[dwfab],
+     &     CHF_CONST_FRA1[hfab],
+     &     CHF_CONST_FRA1[tfab],
+     &     CHF_CONST_FRA1[habfab],
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhoo],
+     &     CHF_CONST_REAL[g],  
+     &     CHF_CONST_REAL[eps], 
+     &     CHF_CONST_REAL[dlim], 
+     &     CHF_BOX[box])
+      
+      integer CHF_AUTOIX[i]
+      REAL_T h,d,t,hab,ds,db,dw
+
+      CHF_AUTOMULTIDO[box; i]
+
+      h = hfab(CHF_AUTOIX[i])
+      t = tfab( CHF_AUTOIX[i] )/(eps + hfab(CHF_AUTOIX[i]))
+      hab = habfab(CHF_AUTOIX[i])
+      dw = dwfab(CHF_AUTOIX[i])
+
+!     basal crevasses
+      db = rhoi/(rhoo-rhoi) * ( t/(rhoi * g) -hab)
+      
+!      surface crevasses
+      ds  = t/(rhoi * g) + rhoo/rhoi * dw
+      
+      dfab(CHF_AUTOIX[i]) =  max(zero,min(max(ds,ds+db),h*dlim))
+
+      CHF_ENDDO
+
+      return 
+      end
+
+c$$$c----------------------------------------------------
+c$$$c compute a crevasse depth d = a d_0 + b d_NYE, where
+c$$$c d_NYE depends on stress and d_0 is input
+c$$$c----------------------------------------------------
+c$$$      subroutine crevassedepth(CHF_FRA1[depth],
+c$$$     &     CHF_CONST_FRA1[depth0],
+c$$$     &     CHF_CONST_FRA1[thck],
+c$$$     &     CHF_CONST_FRA1[stress],
+c$$$     &     CHF_CONST_FRA1[thckab],
+c$$$     &     CHF_CONST_REAL[rhoi],
+c$$$     &     CHF_CONST_REAL[rhoo],
+c$$$     &     CHF_CONST_REAL[g],
+c$$$     &     CHF_CONST_REAL[a],
+c$$$     &     CHF_CONST_REAL[b],  
+c$$$     &     CHF_CONST_REAL[eps], 
+c$$$     &     CHF_CONST_REAL[max_damage], 
+c$$$     &     CHF_BOX[box])
+c$$$      
+c$$$      integer CHF_AUTOIX[i]
+c$$$      REAL_T h,tp,hab,d0,Q,tcrit,ds,dtot
+c$$$
+c$$$      CHF_AUTOMULTIDO[box; i]
+c$$$
+c$$$      h = thck(CHF_AUTOIX[i])
+c$$$      tp = stress( CHF_AUTOIX[i] )
+c$$$      hab = thckab(CHF_AUTOIX[i])
+c$$$      d0 = depth0(CHF_AUTOIX[i])
+c$$$
+c$$$     
+c$$$      Q = rhoi * g * h * h
+c$$$      
+c$$$!     surface and basal crevasses
+c$$$      dtot  = ( a * d0 * Q * (rhoo - rhoi) 
+c$$$     &     + b * (rhoo * h * Tp - rhoi * hab * Q) ) /
+c$$$     &     ( rhoo * (Q + b*Tp) - rhoi * Q + eps)
+c$$$      
+c$$$!     just surface crevasses
+c$$$      ds  = (a * d0 * Q + b * h * Tp) /
+c$$$     &     (eps + Q + b * Tp) 
+c$$$
+c$$$    
+c$$$      depth(CHF_AUTOIX[i])  = min(max(ds,dtot),h*max_damage)
+c$$$
+c$$$
+c$$$
+c$$$      CHF_ENDDO
+c$$$      return 
+c$$$      end
+
+
+c----------------------------------------------------
+c a = max(a,b)
+c----------------------------------------------------
+
+      subroutine fabmax(CHF_FRA1[a],
+     &     CHF_CONST_FRA1[b], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      
+      CHF_AUTOMULTIDO[box; i]
+      a(CHF_AUTOIX[i]) = max( a(CHF_AUTOIX[i]), b(CHF_AUTOIX[i]))
+      CHF_ENDDO
+      return 
+      end
+c----------------------------------------------------
+c a = min(a,b)
+c----------------------------------------------------
+
+      subroutine fabmin(CHF_FRA1[a],
+     &     CHF_CONST_FRA1[b], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      
+      CHF_AUTOMULTIDO[box; i]
+      a(CHF_AUTOIX[i]) = min( a(CHF_AUTOIX[i]), b(CHF_AUTOIX[i]))
+      CHF_ENDDO
+      return 
+      end
+
+c----------------------------------------------------
+c m *= (1-d/h) with d < h, h > 0
+c----------------------------------------------------
+
+      subroutine crevassemu(CHF_FRA1[mu],
+     &     CHF_CONST_FRA1[thck],
+     &     CHF_CONST_FRA1[depth],  
+     &     CHF_CONST_REAL[eps], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T h,d
+      CHF_AUTOMULTIDO[box; i]
+      d = depth(CHF_AUTOIX[i])
+      h = thck(CHF_AUTOIX[i])
+      
+      mu(CHF_AUTOIX[i]) = mu(CHF_AUTOIX[i])
+     &    * h * (h - min(d,h-eps))/(h*h + eps)
+
+      CHF_ENDDO
+      return 
+      end

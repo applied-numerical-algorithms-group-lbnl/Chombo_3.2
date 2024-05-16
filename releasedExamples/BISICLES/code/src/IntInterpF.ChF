@@ -1,0 +1,278 @@
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+#include "CONSTANTS.H"
+
+c
+c piecewise constant interpolation. same as the
+c original in Interp.ChF, but with FRA replaced
+c by FIA ...
+c
+      subroutine intinterpconstant(
+     &     CHF_FIA[fine],
+     &     CHF_CONST_FIA[coarse],
+     &     CHF_BOX[b],
+     &     CHF_CONST_INT[ref_ratio],
+     &     CHF_BOX[bref]
+     &     )
+
+      integer var
+      integer CHF_AUTODECL[ic]
+      integer CHF_AUTODECL[if]
+      integer CHF_AUTODECL[ii]
+
+c compute on the refined box of each coarse point
+      do var = 0, CHF_NCOMP[coarse] - 1
+         CHF_AUTOMULTIDO[ b;ic]
+            CHF_AUTOMULTIDO[ bref; ii]
+            CHF_DTERM[
+               if0 = ic0*ref_ratio + ii0;
+               if1 = ic1*ref_ratio + ii1;
+               if2 = ic2*ref_ratio + ii2;
+               if3 = ic3*ref_ratio + ii3;
+               if4 = ic4*ref_ratio + ii4;
+               if5 = ic5*ref_ratio + ii5 ]
+
+               fine(CHF_AUTOIX[if],var) = coarse(CHF_AUTOIX[ic],var)
+            CHF_ENDDO
+         CHF_ENDDO
+      end do
+
+      return
+      end
+
+c
+C     -----------------------------------------------------------------
+C     subroutine PROLONGQUAD_ICE
+C     computes quadradic prolongation of correction to finer level
+C       phi[h] += I[rh->h](coarse[rh])
+C     Needs one ghost
+C
+C     INPUTS/OUTPUTS:
+C     phi             <=   phi[h]
+C     coarse           =>  coarse[rh]
+C     fineBox          =>  box of phi to be prolonged
+C     refRatio         =>  refinement ratio
+C
+C     mfa Nov 2012
+C     ------------------------------------------------------------------
+      subroutine PROLONGQUAD_ICE(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[coarse],
+     &     CHF_BOX[fineBox],
+     &     CHF_CONST_INT[refRatio])
+      
+      INTEGER ncomp, n
+      integer CHF_DDECL[i ;j ;k ]
+      integer CHF_DDECL[ic;jc;kc]
+      REAL_T L12,R12,L14,R14,L24,R24,C14,C24
+      data L12,R12/0.125d0,-0.125d0/
+      data L14,R14/0.21875d0,-0.15625d0/
+      data L24,R24/0.03125d0,-0.09375d0/
+      data C14,C24 /-0.0625d0,0.0625d0/
+
+      ncomp = CHF_NCOMP[phi]
+      do n = 0, ncomp-1
+         CHF_MULTIDO[fineBox; i; j; k]
+
+         CHF_DTERM[
+         ic = (i+1048576)/refRatio - 1048576/refRatio;
+         jc = (j+1048576)/refRatio - 1048576/refRatio;
+         kc = (k+1048576)/refRatio - 1048576/refRatio]
+
+         phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &        coarse(CHF_IX[ic;jc;kc],n)
+
+         if( refRatio == 2 ) then
+            CHF_DTERM[
+            if ( ic*2.lt.i ) then ! right
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic+1;jc;kc],n) + 
+     $              R12*coarse(CHF_IX[ic-1;jc;kc],n)
+            else                ! left or first cell
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic-1;jc;kc],n) + 
+     $              R12*coarse(CHF_IX[ic+1;jc;kc],n)
+            endif;
+            if ( jc*2.lt.j ) then
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic;jc+1;kc],n) + 
+     $              R12*coarse(CHF_IX[ic;jc-1;kc],n)
+            else
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic;jc-1;kc],n) + 
+     $              R12*coarse(CHF_IX[ic;jc+1;kc],n)
+            endif;
+            if ( kc*2.lt.k ) then
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic;jc;kc+1],n) + 
+     $              R12*coarse(CHF_IX[ic;jc;kc-1],n)
+            else
+               phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     $              L12*coarse(CHF_IX[ic;jc;kc-1],n) + 
+     $              R12*coarse(CHF_IX[ic;jc;kc+1],n)
+            endif
+            ]
+          else if( refRatio == 4 ) then
+
+             CHF_DTERM[
+             if ( i - ic*4 .lt. 4/2) then ! left half
+                if( (i-ic*4) == 0 ) then
+                   phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n)
+     $                  + L14*coarse(CHF_IX[ic-1;jc;kc],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic+1;jc;kc],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) 
+     $                  + L24*coarse(CHF_IX[ic-1;jc;kc],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic+1;jc;kc],n)
+                endif
+             else               ! right half
+                if( (i-ic*4) == 2 ) then
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L24*coarse(CHF_IX[ic+1;jc;kc],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic-1;jc;kc],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L14*coarse(CHF_IX[ic+1;jc;kc],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic-1;jc;kc],n)
+                endif  
+             endif;
+             if ( j - jc*4 .lt. 4/2 ) then
+                if( (j-jc*4) == 0 ) then
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) 
+     $                  + L14*coarse(CHF_IX[ic;jc-1;kc],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic;jc+1;kc],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) 
+     $                  + L24*coarse(CHF_IX[ic;jc-1;kc],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic;jc+1;kc],n)    
+                endif
+             else
+                if( (j-jc*4) == 2 ) then
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) 
+     $                  + L24*coarse(CHF_IX[ic;jc+1;kc],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic;jc-1;kc],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) 
+     $                  + L14*coarse(CHF_IX[ic;jc+1;kc],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic;jc-1;kc],n)
+                endif
+             endif;
+             if ( k - kc*4 .lt. 4/2 ) then
+                if( (k-kc*4) == 0 ) then
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L14*coarse(CHF_IX[ic;jc;kc-1],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic;jc;kc+1],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L24*coarse(CHF_IX[ic;jc;kc-1],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic;jc;kc+1],n)
+                endif
+             else
+                if( (k-kc*4) == 2 ) then
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L24*coarse(CHF_IX[ic;jc;kc+1],n)
+     $                  + (C24-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R24*coarse(CHF_IX[ic;jc;kc-1],n)
+                else
+                   phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n)
+     $                  + L14*coarse(CHF_IX[ic;jc;kc+1],n)
+     $                  + (C14-1.d0)*coarse(CHF_IX[ic;jc;kc],n)
+     $                  + R14*coarse(CHF_IX[ic;jc;kc-1],n)
+                endif
+             else
+                stop 'unknown refine ratio'
+             endif
+            ]
+
+
+          endif
+          CHF_ENDDO
+       enddo
+       
+       return
+       
+       end
+                       
+C     -----------------------------------------------------------------
+C     subroutine PROLONGLINEAR_ICE
+C     computes linear prolongation of correction to finer level
+C       phi[h] += I[rh->h](coarse[rh])
+C     INPUTS/OUTPUTS:
+C     phi             <=   phi
+C     coarse           =>  coarse[rh]
+C     fineBox          =>  box of phi to be prolonged
+C     refRatio                =>  refinement ratio
+C     
+C     Qinghai Zhang Aug 10, 2010, mfa Oct 2012
+C     ------------------------------------------------------------------
+      subroutine PROLONGLINEAR_ICE(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[coarse],
+     &     CHF_BOX[fineBox],
+     &     CHF_CONST_INT[refRatio])
+      
+      INTEGER ncomp, n
+      integer CHF_DDECL[i ;j ;k ]
+      integer CHF_DDECL[ic;jc;kc]
+
+      ncomp = CHF_NCOMP[phi]    ! cover could have more dof, but takes from cover[0:nc-1]
+
+      do n = 0, ncomp-1
+         CHF_MULTIDO[fineBox; i; j; k]
+
+         CHF_DTERM[
+         ic = (i+1048576)/refRatio - 1048576/refRatio;
+         jc = (j+1048576)/refRatio - 1048576/refRatio;
+         kc = (k+1048576)/refRatio - 1048576/refRatio]
+
+         phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &        coarse(CHF_IX[ic;jc;kc],n)
+         CHF_DTERM[
+         if ( ic*refRatio.lt.i ) then
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (coarse(CHF_IX[ic+1;jc;kc],n)
+     &           - coarse(CHF_IX[ic;jc;kc],n))/refRatio*(i+half-ic*refRatio-half*refRatio)
+         else
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (- coarse(CHF_IX[ic-1;jc;kc],n)
+     &           + coarse(CHF_IX[ic;jc;kc],n))/refRatio*(i+half-ic*refRatio-half*refRatio)
+         endif;
+         if ( jc*refRatio.lt.j ) then
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (coarse(CHF_IX[ic;jc+1;kc],n)
+     &           - coarse(CHF_IX[ic;jc;kc],n))/refRatio*(j+half-jc*refRatio-half*refRatio)
+         else
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (- coarse(CHF_IX[ic;jc-1;kc],n)
+     &           + coarse(CHF_IX[ic;jc;kc],n))/refRatio*(j+half-jc*refRatio-half*refRatio)
+         endif;
+         if ( kc*refRatio.lt.k ) then
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (coarse(CHF_IX[ic;jc;kc+1],n)
+     &           - coarse(CHF_IX[ic;jc;kc],n))/refRatio*(k+half-kc*refRatio-half*refRatio)
+         else
+            phi(CHF_IX[i;j;k],n) =  phi(CHF_IX[i;j;k],n) +
+     &           (- coarse(CHF_IX[ic;jc;kc-1],n)
+     &           + coarse(CHF_IX[ic;jc;kc],n))/refRatio*(k+half-kc*refRatio-half*refRatio)
+         endif
+         ]
+          CHF_ENDDO
+       enddo
+       
+       return
+       
+       end

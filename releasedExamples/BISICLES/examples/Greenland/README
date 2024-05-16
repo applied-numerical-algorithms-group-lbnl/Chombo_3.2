@@ -1,0 +1,33 @@
+This example sets up and runs a Greenland example based on the SeaRise
+Greenland_5km_dev1.2.nc dataset (since that's the only one which
+conveniently also had balance velocities in it). This example looks
+and feels very similar to the PineIslandGlacier example, which isn't
+terribly surprising since it's based on it.
+
+To set up example:
+1. compile friction code (gmake all, assuming that definitions in
+BISICLES/code/mk are set up correctly)
+
+2. run friction code, which reads in fields in balvelmag_5gis.dat  thck_5gis.dat
+topg_5gis.dat (the balance velocities, ice thickness, and bedrock
+topography which have been extracted from the original nc datafile)
+and computes an approximate basal friction field, then writes it out
+to Greenland-bisicles-5km.nc.
+
+3. run nctoamr to convert netcdf->BISICLES-readable hdf5. For example:
+
+../../code/filetools/nctoamr2d.Linux.64.g++.gfortran.OPT.ex
+Greenland-bisicles-5km.nc Greenland-bisicles-5km.2d.hdf5 thck topg
+beta temp000000 temp000001 temp000002 temp000003 temp000004 temp000005
+temp000006 temp000007 temp000008 temp000009 
+
+4. generate inputs files: ./make_inputs.sh
+
+5. run code. For example: 
+
+../../code/exec2D/driver2d*.ex inputs.GIS.5km.l1l2.l4 
+
+	  
+	  
+	  
+	  

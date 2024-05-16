@@ -1,0 +1,136 @@
+#domain details
+main.domain_size = 800.0e+3 100.0e+3 1.0e+3
+amr.num_cells = 128 16 11
+amr.is_periodic = 0 1 0
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = GlensLaw
+main.rateFactor = constRate
+constRate.epsSqr0 = 1.0e-12
+constRate.A =  3.1536e-18 #1e25 * (365 * 24 * 3600 =  seconds per year)
+
+#geometry,temperarture & basal friction input data
+geometry.problem_type = Python
+PythonIBC.module = mismip3D
+PythonIBC.thicknessFunction = thickness
+PythonIBC.topographyFunction = topography	
+
+
+temperature.type = constant
+temperature.value = 268
+
+#amr.sigma = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 0.333
+
+geometry.beta_type = constantBeta
+geometry.betaValue = 31651.76
+
+#physical constants
+constants.ice_density = 900.0 # As required by MISMIP 3D
+constants.sea_water_density = 1000.0 # As required by MISMIP 3D
+constants.gravity = 9.8 # As required by MISMIP 3D
+
+surfaceFlux.type = constantFlux
+surfaceFlux.flux_value = 0.5
+basalFlux.type = zeroFlux
+
+CalvingModel.type = ThicknessCalvingModel
+CalvingModel.calving_thickness = 500.0
+CalvingModel.min_thickness = 0.0
+CalvingModel.front_hi = 1 0
+CalvingModel.front_lo = 0 0
+amr.eliminate_remote_ice = true
+
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 
+amr.initial_velocity_guess_const_vel = 1.0 0.0
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 10
+JFNKSolver.absTol = 10.0e+0
+JFNKSolver.relTol = 1.0e-4
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 2.0e-3
+JFNKSolver.RelaxHang = 0.975
+JFNKSolver.maxRelaxIter = 10
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 5.0
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+6
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+#time stepping
+main.maxTime = 500.0 # maximum time to run to
+main.maxStep = 100000   # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25 
+amr.initial_cfl = 0.25 
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+amr.plot_interval = 1
+#amr.plot_time_interval = 1
+amr.plot_prefix = plot.mismip3D.thickness.calve.ssa.0lev.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+amr.write_mask = true
+
+#check points
+amr.check_interval = 100
+amr.check_prefix = chk.mismip3D.thickness.calve.ssa.0lev.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 100  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+#amr.tagSubsetBoxesFile = tag_subset.Deep
+amr.tagCap = -1
+amr.n_tag_subset_boxes = 1
+amr.tag_subset_boxes = 8 0 119 16
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32 # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 0
+amr.lap_vel_tagging_val = 1
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 0
+
+#misc options
+amr.verbosity = 5
+
+amr.restart_file = chk.mismip3D.Benn.ssa.0lev.013000.2d.hdf5
+amr.restart_set_time = true
+amr.restart_time = 0.0

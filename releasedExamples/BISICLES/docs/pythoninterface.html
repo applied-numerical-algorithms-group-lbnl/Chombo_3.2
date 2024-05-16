@@ -1,0 +1,201 @@
+<html>
+<head>
+  <title>BISICLES Python Interface</title>
+  <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+
+<h1>Contents</h1>
+<ol>
+<li><a href='#flux'>Surface fluxes</a></li>
+<li><a href='#ibc'>Initial geometry</a></li>
+<li><a href='#ibctemp'>Initial temperature</a></li>
+<li><a href='#btrc'>Basal traction coefficient</a></li>
+</ol>
+
+</div>
+
+<div id="main">
+
+<h1>BISICLES Python Interface</h1>
+
+
+<p>BISICLES' python interface is intended to make some of less performance intensive
+parts of BISICLES easier to program. It is fairly crude : at certain points during a run BISICLES 
+will use an embedded python interpreter to evaluate various fields. At the moment, it is possible to
+specify <a href='#flux'>surface 
+fluxes</a> (that is, accumulation and melting), the <a href='#ibc'>initial geometry</a> (topography and thickness), 
+the <a href='#ibctemp'>initial temperature</a>
+and the <a href='#btrc'>basal traction coefficient</a>. 
+The most likely application of the Python
+interface is in defining idealized problems, where the use of the <a href='leveldatainterface.html'>LevelData interface</a>
+would lead to undesirable numerical error</p> 
+
+<p>You should have included the python interface when <a href='readme.html'>building BISICLES</a>, otherwise
+you will need to do so. You will need to run the appropriate <a href='readme.html#makeclean'>make clean</a></p>
+
+<p>To run BISICLES with the python interface, you need to ensure that the environment variable PYTHONPATH
+includes the directory where your python modules (.py files) are stored. If this is the working directory, 
+then in serial, run BISICLES like so
+<pre>
+PYTHONPATH=`pwd` driver2d.Linux.64.mpic++.gfortran.DEBUG.OPT.ex inputs.file sout.0 2>err.0 &
+</pre>
+and in parallel, assuming 4 processors, 
+<pre>
+nohup mpirun -np 4 -x PYTHONPATH=`pwd` driver2d.Linux.64.mpic++.gfortran.DEBUG.OPT.MPI.ex inputs.file &
+</pre>
+</p>
+
+<h2><a name='flux'>Surface Fluxes</a></h2>
+
+To specify a <a href='surfaceflux.html'>surface flux</a> through a python function write
+a python function that takes five scalar arguments (x,y,t,thickness,topography).
+Let's say that you have created a file foo.py
+<pre>
+#file foo.py
+def acab(x,y,t,thck,topg):
+    return 1.0e-3 * (thck + topg)
+</pre>
+then you would include lines like
+<pre>
+surfaceFlux.type = pythonFlux
+surfaceFlux.module = foo
+surfaceFlux.function = acab
+</pre>
+in the input file. It is possible to add a few keyword args (kwargs) to surfaceFlux.function, e.g,
+if you want to compute a melt rate that depends on distance from the grounding line, you could have 
+<pre>
+#file foo.py
+import math
+def melt(x,y,t,thck,topg,gl_proximity=0.0,gl_proximity_scale=1.0):
+    d = - math.log(gl_proximity + 1.0e-10) * gl_proximity_scale
+    return -  (d/1.0e+3)**2 * gl_proximity 
+
+</pre>
+with input file lines
+<pre>
+basalFlux.type = maskedFlux
+basalFlux.floating.type = pythonFlux
+baslaFlux.floating.module = foo
+basalFlux.floating.function = acab
+basalFlux.floating.n_kwargs = 2
+basalFlux.floating.kwargs = gl_proximity gl_proximity_scale
+</pre>
+<p>
+So far the supported list is short 
+<ol>
+<li>gl_proximity : solution to p + scale^2 * grad^2 = 1 (grounded) or 0 (floating) with natural BCs</li> 
+<li>gl_proximity_scale : scale in the above</li>
+</ol>
+</p>
+
+<h2><a name='ibc'>Initial Geometry and boundary conditions</a></h2>
+
+To set the initial thickness and topography using python functions, create a python
+module contain two scalar functions of (x,y), e.g
+<pre>
+#file foo.py
+def thck(x,y):
+     return 1.5e+2
+
+def topg(x,y):
+    return -1.0e+2 - x/1.0e+3
+</pre>
+and specify it in the configuration file like so
+<pre>
+geometry.problem_type = Python
+PythonIBC.module = foo
+PythonIBC.thicknessFunction = thck
+PythonIBC.topographyFunction = topg
+</pre>
+x and y are double precision floating point numbers, they are given in meters, and will
+correspond to the centers of cells. Note that they will be on the BISICLES co-ordinate system, ie
+the bottom left corner of the mesh is (0,0)
+</p>
+
+<p>
+The choice of <pre>geometry.problem_type = Python</pre> implies <strong>boundary conditions as well as initial conditions</strong>.
+By default, reflection boundary conditions (ice divides) are imposed on all four domain edges. This can
+be changed to periodic boundary conditions in the usual way, e.g
+<pre>
+amr.is_periodic = 0 1 0
+</pre>
+selects reflection boundaries at the x-faces of the domain, but periodic boundaries at the y-faces. Alternatively , a  mixture of Reflection (Ice Divide) and No Slip conditions can be imposed through the PythonIBC.bc_lo and PythonIBC.bc_hi options. Choose 0 for reflection , and 1 for no-slip. For example
+<pre>
+PythonIBC.bc_lo = 0 1 # ice divide at x = 0 , no slip at y = 0
+PythonIBC.bc_hi = 1 1 # no-slip at x = L , no slip at y = W
+</pre>
+To set a marine boundary condition, use DomainEdgeCalvingModel, e.g
+<pre>
+CalvingModel.type = DomainEdgeCalvingModel
+CalvingModel.front_hi = 1 0    #impose a marine boundary at the high x-face 
+CalvingModel.front_lo = 0 0
+</pre>
+Alternatively, it is possible to maintain a calving front inside the domain by setting a large negative accumulation:
+Adding a function
+<pre>
+#file foo.py
+def melt(x,y,t,thck,topg):
+    melt = 0.0
+    if (x^2 + y^2 > 1.0e+12):
+      melt = -1.0e+3
+    return melt
+</pre>
+to a python module and the configuration lines
+<pre>
+basalFlux.type = pythonFlux
+basalFlux.module = foo
+basalFlux.function = melt
+</pre>
+would lead to a quarter-circular calving front centered on the bottom left corner with radius 1000 km
+</p>
+
+<h2><a name='ibctemp'>Initial Geometry and temperature boundary conditions</a></h2>
+
+To set the initial temperature using python functions, create a python
+module containing a scalar function of (x,y,thickness,topography,sigma), e.g
+<pre>
+#file foo.py
+def temperature(x,y,thck,topg,sigma):
+    T = 263.0
+    if (abs(y-64.0e+3) < 8.0e+3):
+        T = T + sigma*10.0
+    return T
+
+</pre>
+and specify it in the configuration file like so
+<pre>
+temperature.type = Python
+PythonIceTemperatureIBC.module = foo
+PythonIceTemperatureIBC.function = temperature
+</pre>
+
+<h2><a name='btrc'>Basal Friction Coefficient</a></h2>
+<p>
+You can specify a basal friction coefficient in much the same way as a surface flux, e.g
+add 
+<pre>
+#file foo.py
+import math
+
+def friction(x,y,t,thck,topg):
+    friction = 1.01e+3 + 1.0e+3 * math.sin(x * 1.0e+3)*math.sin(y * 1.0e+3)
+    return friction   
+</pre>
+in a python module and 
+<pre>
+geometry.beta_type = Python
+PythonBasalFriction.module = foo
+PythonBasalFriction.function = friction
+</pre>
+in the configuration file.
+</p>
+</div>
+</body>
+</html>

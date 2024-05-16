@@ -1,0 +1,88 @@
+<html>
+<head>
+  <title>Viewing BISICLES output with VisIt</title>
+   <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+
+</div>
+
+<div id="main">
+
+<h1>Viewing BISICLES output with VisIt</h1>
+<p>
+VisIt can be obtained from <a href='https://wci.llnl.gov/codes/visit/'>https://wci.llnl.gov/codes/visit/</a>.
+<p>
+
+<p>
+  This document aims to show how you can view BISICLES data in VisIt by describing the steps
+  necessary to produce a video of Pine Island Glacier retreating from the data produced in the
+  <a href='pineisland.html'>Pine Island Glacier example</a>. So, run that example before you continue.
+  We assume you have installed VisIt on a workstation that has direct access to the plot files, 
+  although it is also possible (and often more convenient) to use the remote host features of
+  VisIt to view remote files.
+</p>
+
+<h2>Opening a string of files</h2>
+<p>
+From VisIt's main Window, select File -&gt; Open. Use the resulting file dialog
+to browse to the directory where the plot files are stores. In the screenshot
+below, we have used a filter 'plot*hdf5' to avoid seeing a whole bunch of files (including
+check point files called chk*hdf5) that VisIt can't open. If you also select 
+&quot;Smart File Grouping&quot; the various plot files
+should be grouped together into a notional object, in this case called 
+<pre>
+plot.pigv5.1km.l1l2.4lev.*hdf5 database
+</pre>
+</p>
+<img src='visit_file_dialog.png' alt='the visit file dialog'/>
+<p>
+Select that object, and it should appear as the &quot;Active Source&quot
+on VisIt's main window.
+</p>
+
+<ol>
+<li>choose Plots -&gt; Add -&gt; psuedocolor -&gt; basal_friction
+(from the toolbar about halfway down the main window). Double click the
+item that appears in the Plots list title Psuedocolor - basal friction, 
+and modify the resulting dialog to give a maximum value of 1, change
+the Color table to &quot;gray&quot; and the Opacity to 25%.
+</li>
+<li>choose Plots -&gt; Add -&gt; psuedocolor -&gt; Vel_magnitude
+(from the toolbar about halfway down the main window). Double click the
+Vel_magnitude item, 
+and modify the resulting dialog to give a log scale, a minimum value of 1 and
+a  maximum value of 1e3. Change the Color table to &quot;bluehot&quot;
+</li>
+<li>choose Plots -&gt; Add -&gt; subset -&gt; levels. Double Click the
+Subset - levels item and check the wireframe box in the resulting dialog.
+</li>
+</ol>
+<p>
+Click the Draw button, and you should see an image like this:
+</p>
+<img src='visit_image_1.png' alt='PIG speed map produced by visit'/>
+<p>
+The colormap shows the ice flow speed, while the use of a translucent mask
+derived from basal_friction outlines the ice shelf. The progressively small
+and gaudy boxes indicate regions of progressively higher resolution - in the image above, the smallest boxes
+are regions of 250m resolution. If you only see large
+boxes, make sure &quot;Apply subset selections to all plots' (at the bottom
+of VisIt's main window) is checked and the follow the Controls -&gt; subset -&gt;
+menu item to select all levels.
+</p>
+<p>
+Now you can use the Time slider in the main window, or the playback button below it,
+or the playback button in the image window (&quot;Window 1;&quot) to watch
+the grounding line retreat merrily up Pine Island Glacier's trunk, and the
+mesh evolve with it so that high resolution is maintained at the grounding line.
+Feel free to add velocity vectors...
+</p>
+</div>
+</body>
+</html>

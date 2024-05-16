@@ -1,0 +1,161 @@
+#amr.eliminate_remote_ice = true
+
+#domain details
+main.domain_size = 80e+3 40e+3 1.0e+3
+amr.num_cells = 80 40 10 # 2 km
+amr.is_periodic = 0 0 0
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = GlensLaw
+main.rateFactor = constRate
+constRate.epsSqr0 = 1.0e-12
+constRate.A =  5.6e-17
+
+
+#geometry,temperarture & basal friction input data
+geometry.problem_type = Python
+PythonIBC.module = eliminatetest
+PythonIBC.thicknessFunction = thickness
+PythonIBC.topographyFunction = topography	
+
+geometry.beta_type = constantBeta
+geometry.betaValue = 100.0
+
+temperature.type = constant
+temperature.value = 268
+
+amr.sigma = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 0.333
+BasalFrictionPowerLaw.includeEffectivePressure = true
+
+#physical constants
+constants.ice_density=920
+constants.water_density=1028
+constants.gravity=9.8
+
+surfaceFlux.type = pythonFlux
+surfaceFlux.module = eliminatetest
+surfaceFlux.function = accumulation 
+
+basalFlux.type = zeroFlux
+
+
+#CalvingModel.type = DomainEdgeCalvingModel
+#CalvingModel.waterDepth = 0.0
+#CalvingModel.front_hi = 1 0
+#CalvingModel.front_lo = 0 0
+#CalvingModel.preserveLand = true
+#CalvingModel.preserveLand = false
+#CalvingModel.preserveSea = false
+
+
+CalvingModel.type = BennCalvingModel
+CalvingModel.waterDepth = 80.0
+CalvingModel.front_hi = 1 0
+CalvingModel.front_lo = 0 0
+CalvingModel.preserveLand = true
+CalvingModel.preserveSea = false
+CalvingModel.inclBasalCrev = true
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 
+amr.initial_velocity_guess_const_vel = 1.0 0.0
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 2
+JFNKSolver.maxIter = 15
+JFNKSolver.absTol = 1.0e+0
+JFNKSolver.relTol = 1.0e-4
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 1.0e-4
+JFNKSolver.RelaxHang = 0.975
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 2.5
+JFNKSolver.minStepFactor = 0.125
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+6
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+#wall drag
+amr.wallDrag = true
+amr.wallDragExtra = 1.0e+4
+
+
+#time stepping
+main.maxTime = 1.0  # maximum time to run to
+main.maxStep = 2000000  # maximum number of steps to runx
+amr.temporal_accuracy = 1
+#amr.cfl = 0.25 
+#amr.initial_cfl = 0.25 
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+amr.fixed_dt = 0.0625
+
+
+ 
+#plotting options
+amr.plot_interval = 1
+#amr.plot_time_interval = 10.0
+amr.plot_prefix = plot.noeliminate.2lev.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+
+#check points
+amr.check_interval = 400
+amr.check_prefix = chk.noeliminate.2lev.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 10
+# number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 0        # amount to buffer tags
+amr.tags_grow_dir = 1 0 0 # grow tags in x only
+#amr.tagSubsetBoxesFile = tag_subset.testing
+amr.tagCap = 2
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 40 # largest box length allowed
+
+#AMR tagging
+
+amr.tag_python = 1
+amr.tag_python_module = eliminatetest
+amr.tag_python_function = tag
+
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 0
+amr.lap_vel_tagging_val = 1
+
+amr.tag_grounding_line = 0
+amr.grounding_line_tagging_min_vel = 0
+
+#misc options
+amr.verbosity = 5
+

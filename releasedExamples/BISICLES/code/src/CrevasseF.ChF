@@ -1,0 +1,182 @@
+
+
+c----------------------------------------------------------
+c compute integrated stress from the base to the tip of 
+c a basal crevasse, using the formula in
+c Van der Veen (1998) , Cold Regions Sci. Tech. vol 27 p 231
+c 
+c  k    : net stress concentration (Pa m^1/2)
+c  h    : ice thickness (m)
+c  hp   : piezometric head (m)
+c  d    : crevasse depth (m)
+c  rxx  : first principal deviatoric stress (vertical average) (Pa)
+c  rhoi : ice density (kg/m^3)
+c  rhow : water density (kg/m^3)
+c  g    : acceleration due gravity (m/s^2) c
+c
+c
+c  integrand is
+c  
+c     2.0 * sigma(z) / sqrt (pi * d) * G(lambda,gamma(z))
+c  
+c  where
+c
+c     sigma(z) = - rhoi * g * (h-z) + rhow * g * (hp-z) + rxx
+c
+c  which can be written as
+c  
+c     sigma(z) = a + b*z, a = rhow*g*hp  - rhoi*g*h + rxx, b = (rhoi-rhow)*g 
+c
+c----------------------------------------------------------
+c  We need to find
+c  
+c    2.0  / sqrt (pi * d) * I
+c
+c  where I =     
+c
+c    \int _0^d (rxx + rhoi*g(z-h)) G dz +  \int _0^min(hp,d) rhow*g*(hp-z) G dz ] 
+c  
+c  the first integrand is (a+bz)G(z) where a = rxx-rhoi*g*h, b = rhoi*g
+c  the second is  (a+bz)G(z) where a = (rhow*g*hp), b = -rhow*g*z
+c
+
+      subroutine VDVSTRESSB(
+     &     CHF_FRA1[k],
+     &     CHF_CONST_FRA1[h],
+     &     CHF_CONST_FRA1[hp],
+     &     CHF_CONST_FRA1[d],
+     &     CHF_CONST_FRA1[rxx], 
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhow],
+     &     CHF_CONST_REAL[gravity],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T sqrtpid, pi, a, b, c, ires,ierr, ki, kw
+      
+      pi = 4.0 * atan(1.0) 
+      CHF_AUTOMULTIDO[box; i]
+      if (h(CHF_AUTOIX[i]).gt.zero) then
+
+         sqrtpid = (d(CHF_AUTOIX[i]) * pi)**half
+
+!     ice-only stresses
+         a = rxx(CHF_AUTOIX[i])-rhoi*gravity*h(CHF_AUTOIX[i])
+         b = rhoi*gravity 
+
+         call vdvint(ires,ierr,zero, d(CHF_AUTOIX[i]),
+     &        d(CHF_AUTOIX[i]),h(CHF_AUTOIX[i]),a,b)
+
+         k(CHF_AUTOIX[i]) = two / sqrtpid * ires
+         
+
+!     water stresses
+         if (hp(CHF_AUTOIX[i]) .gt. zero) then
+            c = min(hp(CHF_AUTOIX[i]),d(CHF_AUTOIX[i]))
+            a = rhow*gravity*hp(CHF_AUTOIX[i])
+            b = -rhow*gravity 
+            
+            call vdvint(ires,ierr,zero,c,
+     &           d(CHF_AUTOIX[i]),h(CHF_AUTOIX[i]),a,b)
+
+            kw = two / sqrtpid * ires
+            
+            k(CHF_AUTOIX[i]) = k(CHF_AUTOIX[i]) + kw
+
+
+         end if
+
+
+      else
+         k(CHF_AUTOIX[i]) = zero
+      end if
+      CHF_ENDDO
+
+
+
+      return
+      end
+
+c----------------------------------------------------------
+c compute integrated stress from the surface to the tip of 
+c a surface crevasse, using  Eqn 3 from
+c Van der Veen (1998) , Cold Regions Sci. Tech. vol 27 p 231
+c and the longitudinal stress from Eqns 16
+c Van der Veen (1998) , Cold Regions Sci. Tech. vol 27 p 31
+c
+c  k    : net stress concentration (Pa m^1/2)
+c  h    : ice thickness (m)
+c  dw   : water depth (m)
+c  d    : crevasse depth (m)
+c  rxx  : first principal deviatoric stress (vertical average) (Pa)
+c  rhoi : ice density (kg/m^3)
+c  rhow : water density (kg/m^3)
+c  g    : acceleration due gravity (m/s^2) c
+c
+c
+c  We need to find
+c  
+c    2.0  / sqrt (pi * d) * I
+c
+c  where I =     
+c
+c    \int _0^d (rxx - rhoi*g*z) G dz +  \int _(d-dw) ^d (z-d+dw)*(rhow*g) G dz ] 
+c  
+c  the first integrand is (a+bz)G(z) where a = rxx, b = - rhoi*g
+c  the second is  (a+bz)G(z) where a = (dw-d)*(rhow*g), b = rhow*g*z
+c
+c----------------------------------------------------------
+
+
+      subroutine VDVSTRESSS(
+     &     CHF_FRA1[k],
+     &     CHF_CONST_FRA1[h],
+     &     CHF_CONST_FRA1[dw],
+     &     CHF_CONST_FRA1[d],
+     &     CHF_CONST_FRA1[rxx], 
+     &     CHF_CONST_REAL[rhoi],
+     &     CHF_CONST_REAL[rhow],
+     &     CHF_CONST_REAL[gravity],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTOIX[i]
+      REAL_T sqrtpid, pi, a, b, c, ires,ierr, ki,kw
+      
+      pi = 4.0 * atan(1.0) 
+      CHF_AUTOMULTIDO[box; i]
+      if (h(CHF_AUTOIX[i]).gt.zero) then
+
+         sqrtpid = (d(CHF_AUTOIX[i]) * pi)**half
+
+!     ice-only stresses
+         a = rxx(CHF_AUTOIX[i])
+         b = -rhoi*gravity 
+
+         call vdvint(ires,ierr,zero, d(CHF_AUTOIX[i]),
+     &        d(CHF_AUTOIX[i]),h(CHF_AUTOIX[i]),a,b)
+
+         k(CHF_AUTOIX[i]) = two / sqrtpid * ires
+  
+
+!     water stresses
+         if (dw(CHF_AUTOIX[i]) .gt. zero) then
+            c = d(CHF_AUTOIX[i])-dw(CHF_AUTOIX[i])
+            a = -rhoi*gravity*c 
+            b = rhow*gravity 
+            
+            call vdvint(ires,ierr,c,d(CHF_AUTOIX[i]),
+     &           d(CHF_AUTOIX[i]),h(CHF_AUTOIX[i]),a,b)
+            
+            kw = two / sqrtpid * ires
+            
+            k(CHF_AUTOIX[i]) = k(CHF_AUTOIX[i]) + kw
+         end if
+      else
+         k(CHF_AUTOIX[i]) = zero
+      end if
+      CHF_ENDDO
+
+
+
+      return
+      end

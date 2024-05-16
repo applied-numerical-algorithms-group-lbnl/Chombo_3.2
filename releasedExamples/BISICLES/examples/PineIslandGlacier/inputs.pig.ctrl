@@ -1,0 +1,184 @@
+#domain details
+main.domain_size = 256e+3 384e+3 1.0e+3
+amr.num_cells = 64 96 10 #4km (half data) resolution
+amr.is_periodic = 0 0 0
+
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+#main.rateFactor = constRate
+#constRate.epsSqr0 = 1.0e-12
+#constRate.A =  4.0e-17
+main.rateFactor = arrheniusRate
+ArrheniusRate.epsSqr0 = 1.0e-12
+
+
+#geometry,temperature & basal friction input data
+geometry.problem_type = LevelData
+geometry.beta_type = LevelData
+temperature.type = LevelData
+#temperature.type = constant
+#temperature.value = 268
+
+amr.sigma = 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+
+inputLevelData.geometryFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.frictionFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.temperatureFile = pig-bisicles-1km.2d.hdf5
+inputLevelData.thicknessName = thk
+inputLevelData.topographyName = topg
+inputLevelData.frictionName = beta
+inputLevelData.temperatureName = temp000000
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+BasalFrictionPowerLaw.m = 1.0
+
+#physical constants
+constants.ice_density=918
+
+#surface fluxes
+surfaceFlux.type = constantFlux
+surfaceFlux.flux_value = 0.3
+
+basalFlux.type =  maskedFlux
+basalFlux.grounded.type = zeroFlux
+basalFlux.floating.type = piecewiseLinearFlux
+basalFlux.floating.n = 2
+basalFlux.floating.abscissae = 50.0 500.0
+basalFlux.floating.ordinates = 0 -50.0
+
+#calving model
+CalvingModel.type = FixedFrontCalvingModel
+CalvingModel.min_thickness = 1.0
+
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 # use JFNK solver's linear mode
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 10
+JFNKSolver.absTol = 1.0e+0
+JFNKSolver.relTol = 1.0e-3
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 2.0e-3
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 2.0
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+
+#time stepping
+main.maxTime = 75  # maximum time to run to
+main.maxStep = 10000   # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 1.1 
+amr.time_step_ticks = 1
+
+#plotting options
+#amr.plot_interval = 1
+amr.plot_time_interval = 1.0
+amr.plot_prefix = plot.pigv5.1km.l1l2.2lev.
+#amr.write_preSolve_plotfiles = true
+amr.write_solver_rhs = 1
+
+#check points
+amr.check_interval = 10
+amr.check_prefix = chk.pigv5.1km.l1l2.2lev.
+amr.check_overwrite = 0
+amr.verbosity = 5
+
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 1  # number of timesteps between regridding
+amr.blockFactor = 8      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+amr.tagSubsetBoxesFile = tag_subset.pigv5
+amr.tagCap = 1
+
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32 # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+amr.tag_on_grounded_laplacian_velocity = 0 
+amr.lap_vel_tagging_val = 30
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 20
+
+#misc options
+amr.verbosity = 5
+
+
+    main.maxTime = 0 #we don't want time dependence, yet
+
+    amr.velocity_solver_type = 6 # Inverse problem !
+    control.velMisfitType = speed # match observed speed (not velocity)
+    
+    #field of data expressing confidence in speed observations. 0 for no confidence
+    control.velCoef.type = LevelData
+    control.velCoef.fileFormat = pig-bisicles-1km.2d.hdf5
+    control.velCoef.name = velc
+    control.velCoef.n = 1
+
+    #x-component of the observed velocity (could be the speed if the y-component is zero)
+    control.xVel.type = LevelData
+    control.xVel.fileFormat = pig-bisicles-1km.2d.hdf5
+    control.xVel.name = xvel
+    control.xVel.n = 1
+
+    #y-component of the observed velocity (could be the speed if the x-component is zero))
+    control.yVel.type = LevelData
+    control.yVel.fileFormat = pig-bisicles-1km.2d.hdf5
+    control.yVel.name = yvel
+    control.yVel.n = 1
+
+    #Tikhonov regularization coefficients
+    control.gradCsqRegularization = 1.0e+1
+    control.gradMuCoefsqRegularization = 1.0e+7
+
+    #some box constraints. 
+    control.boundMethod = Projection
+    control.lowerX0 = -5
+    control.upperX0 = 5.0
+    control.lowerX1 = -2.0
+    control.upperX1 = 0.5
+    
+    control.writeInnerSteps = false
+    control.CGmaxIter = 24
+    control.CGhang = 0.95
+
+    control.minLevelForOptimization = 2 # refine to level 2 based on the observed speed, then optmize
+
+#refine generously in ice streams
+amr.tag_vel_dx = true
+amr.vel_dx_tagging_val = 5.0e+5 # refine 500 m/a regions to 1 km    
+amr.vel_dx_finest_level_grounded = 2
+amr.vel_dx_finest_level_floating = 1
+
+#tag thin submarine cavities in an attempt to refine around pinning points
+amr.tag_thin_cavity = true
+amr.tag_thin_cavity_thickness = 50.0

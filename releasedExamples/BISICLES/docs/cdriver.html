@@ -1,0 +1,105 @@
+<html>
+<head>
+  <title>BISICLES cdriver interface</title>
+  <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+<a href='index.html'>User documentation index<a/>
+
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+<h1>Contents</h1>
+<ol>
+  <li><a href='#over'>Overview</a></li>
+  <li><a href='#fortran'>FORTRAN 90 example</a></li>
+</ol>
+
+
+</div>
+<div id="main">
+<h1><a name='top'>BISICLES cdriver interface</a></h1>
+
+
+</body>
+
+
+<h2><a name='over'>Overview</a></h2>
+<p>
+  The BISICLES cdriver interface allows a C or FORTRAN (or indeed, any language that can
+  call simple C functions) to control BISICLES without any direct interaction with C++.
+  The <a href='https://puma.nerc.ac.uk/svn/UniCiCles_svn/UniCiCles'>UniCiCles</a>
+  repository packages BISICLES and Chombo with a version of the Glimmer-CISM
+  ice sheet model that is able to interface with BISICLES through cdriver.
+  In effect, Glimmer-CISM hands over ice sheet dynamics to BISICLES but continues
+  to compute GIA, interact with atmosphere models through glint, etc. FORTRAN models
+  able to interact with  Glimmer-CISM automatically gain the ability to interact
+  with BISICLES. Source code documentation can be found at 
+  <a href='../code/doc/doxygen/html/cwrapper_8H.html'>cwrapper_8H.html</a> if
+  you gave built the doxygen documentation.
+</p>
+<p>
+  In terms of the interface itself, it is possible to: 
+</p>
+<ul>
+  <li>create multiple BISICLES instances (for example, to simulate
+    several ice sheets in a global model); </li>
+  <li>instruct BISICLES to read e.g surface mass balance data from a rectangular array,
+    potentially distributed across MPI ranks in parallel programs; </li>
+  <li>initialize BISICLES, including mesh generation;</li>
+  <li>advance the ice sheet to a certain time;</li>
+  <li>read data from BISICLES into rectangular arrays, again, potentially distributed across MPI ranks.</li>
+</ul>
+
+<p>
+  A calling program will typically:
+</p>
+<ol>
+  <li> Set up MPI, if applicable </li>
+  <li> Call bisicles_new_instance (C) or f_bisicles_new_instance (Fortran), obtaining an integer
+    <emph>key</emph>  that will be used in all subsequent calls.</li>
+  <li> Allocate memory for data to BISICLES to read, such as surface mass balance </li>
+  <li> Make multiple calls to (f_)bisicles_set_2d_data to instruct BISICLES to read
+    e.g  surface mass balance from a particular array. </li>
+  <li> Call (f_)bisicles_init_instance: after this point it is possible to change the
+    (e.g) surface mass balance data but <strong>not its memory address</strong>.</li>
+  <li>Call f_bisicles_get_2d_data to  e.g the ice sheet upper surface elevation into rectangular arrays.</li>
+  <li>Modify (e.g) the surface mass balance data.</li> 
+  <li>Call (f_)bisicles_advance to instruct BISICLES to advance in time</li>
+  <li>Repeat steps 6-8 till complete.</li>
+  <li>Shut down the BISICLES instance by calling (f_)bisicles_free_instance.</li>
+  <li>Shut down MPI , if applicable. </li>
+</ol>
+
+
+<h2><a name='fortran'>FORTRAN 90 example</a></h2>
+
+<p>
+  An example FORTRAN 90 program which controls BISICLES via the cdriver interface
+  is provided with the source code <a href='../code/cdriver/testwrapper.F90'>testwrapper.F90</a>.
+  The usual combination of binary types (debug,optimized,mpi,petsc) can be built and
+  linked with the appropriate compiled objects. For example, a non-optimized
+  serial version can be compiled (assuming CXX=g++ and FC=gfortran) and run with:
+</p>
+<pre>
+  > cd $BISICLES_HOME/code/cdriver
+  > make ftestwrapper DEBUG=TRUE OPT=FALSE USE_PETSC=FALSE MPI=FALSE
+  > ./ftestwrapper.2d.Linux.64.g++.gfortran.DEBUG.ex 
+
+</pre>
+<p>
+For a optimized parallel (non-petsc) version, assuming MPICXX=mpiCC and FC=gfortan:
+</p>
+<pre>
+  > cd $BISICLES_HOME/code/cdriver
+  > make ftestwrapper DEBUG=TRUE OPT=TRUE MPI=TRUE USE_PETSC=FALSE
+  > mpirun -np 4 ftestwrapper.2d.Linux.64.mpiCC.gfortran.DEBUG.OPT.MPI.ex
+</pre>
+
+
+</div>
+</body>
+</html>

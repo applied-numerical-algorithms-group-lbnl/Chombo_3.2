@@ -1,0 +1,168 @@
+<html>
+<head>
+  <title>BISICLES file tools</title>
+  <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+
+</head>
+<body>
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+
+<h1>Contents</h1>
+<ol>
+  <li>
+    <a href='#extract'>extract</a>
+  </li>
+  <li>
+    <a href='#merge'>merge</a>
+  </li>
+  <li>
+    <a href='#pythonf'>pythonf</a>
+  </li>
+  <li>
+    <a href='#stats'>stats</a>
+  </li>
+  <li>
+    <a href='#flatten'>flatten</a>
+  </li>
+  <li>
+    <a href='#nctomar'>nctoamr</a>
+  </li>
+</ol>
+</div>
+
+<div id="main">
+
+<h1>BISICLES file tools</h1>
+<p>
+BISICLES includes some tools used to perform miscellaneous actions on BISICLES/Chombo hdf5 files (amr files).
+They are located in the code/filetools directory. The most commonly used are described below.
+</p>
+<p>
+When built (e.g by typing 'make all' in the code/filetools directory) a number
+of executables, with names like e.g extract2d.Linux.64.g++.gfortran.DEBUG.ex are created.
+Here, we will use the base name (e.g) 'extract' in examples; in practice, you would need e.g 
+extract2d.Linux.64.g++.gfortran.DEBUG.ex. All of the filetools will provide
+a usage string when executed with no (or the incorrect number) of command line arguments.
+</p>
+
+
+
+<h2><a name='extract'>extract</a></h2>
+<p>Extract one or more fields from one amr file and write to a new amr file.</p>
+<pre>
+usage: extract &lt;input_file&gt; &lt;output_file&gt; &lt;var 1&gt; [&lt;var 2&gt; [...]]
+</pre>
+
+<h2><a name='merge'>merge</a></h2>
+combine fields from two amr  files but on the same mesh into one amr file.
+<pre>
+usage: merge &lt;input_file a&gt; &lt;input_file b&gt; &lt;output_file&gt;
+</pre>
+<h2><a name='pythonf'>pythonf</a></h2>
+ 
+Evaluate a python cell by cell over an amr file and save the results to a new amr file.
+<pre>
+usage: pythonf &lt;input_file&gt; &lt;output_file&gt; &lt;python script&gt; &lt;python function&gt; &lt;input tuple&gt; &lt;output tuple&gt;
+</pre>
+<p>
+pythonf can be used to carry out a wide range of post- and pre-processing tasks. For example, imagine
+a file 'linear_traction.2d.hdf5' that contains fields C (a drag coefficient), u (x-velocity), and v (y-velocity)
+that allowed the basal traction to be computed for a linear viscous law (T_x = C * u, T_y = C * v). 
+This would be a typical result from the inverse problem. It is possible to create an hdf5
+designed to work with a third-power law ( T_i = D * |u|^{-2/3} * u_i) that should produce the same initial velocity
+by setting D = C * |u|^2/3. Create a python file 'ctransform.py'
+</p>
+<pre>
+#ctransform.py
+def c_third(c_one,u,v,*etc):
+    uu = (u*u + v*v)**(0.5)
+    c_third = c_one * uu**(2.0/3.0)
+    return c_third
+</pre>
+<p>
+then run
+</p>
+<pre>
+$BISICLES_HOME/BISICLES/code/filetools/pythonf2d.Linux.64.g++.gfortran.DEBUG.ex  linear_traction.2d.hdf5 third_traction.2d.hdf5 ctransform c_third C,u,v D,u,v
+</pre>
+
+<h2><a name='stats'>stats</a></h2>
+
+Compute summary statistics (e.g volume) from a plot file.
+<pre>
+usage: stats &lt;plot file&gt; &lt;ice_density&gt; &lt;water_density&gt; &lt;gravity&gt; [mask_file] [mask_no_start = 0] [mask_no_end = mask_no_start] 
+</pre>
+<p>
+The stats tool is primarily used to compute quantities like ice volume and volume above flotation.  At minimum, supply a
+file name and  &lt;ice_density&gt; &lt;water_density&gt; &lt;gravity&gt; arguments. e.g, for the 
+<a href='pineisland.html'>Pine Island Glacier</a> example:
+</p>
+<pre>
+../../code/filetools/stats2d.Linux.64.g++.gfortran.DEBUG.ex plot.pigv5.1km.l1l2.2lev.000000.2d.hdf5 918 1028 9.81 | grep time
+ time = 0.000000000000e+00 iceVolumeAll = 1.327650177413e+14  iceVolumeAbove = 6.305522125119e+13  groundedArea = 8.783100000000e+10  floatingArea = 5.154000000000e+09  totalArea = 9.298500000000e+10  groundedPlusOpenLandArea = 8.783100000000e+10  Total Melt = -1.995254865428e+11.
+</pre>
+<p>
+It is also possible to calculate the same statistics for a number of sub-regions. For that, you need an hdf5 (e.g mask.2d.hdf5) file 
+(created with <a href='#nctoamr'>nctoamr</a>, for example) including a single field (named e.g 'mask') that identifies each area
+by a unique double precision representation of an integer. If the Pine Island Glacier domain was split into sub-regions 0-3 inclusive,
+stats for regions 1,2 could be computed by running
+</p>
+<pre>
+../../code/filetools/stats2d.Linux.64.g++.gfortran.DEBUG.ex plot.pigv5.1km.l1l2.2lev.000000.2d.hdf5 918 1028 9.81 mask.2d.hdf5 1 2
+</pre>
+<p>
+Output would include one line per sub-region.
+</p>
+
+<h2><a name='flatten'>flatten</a></h2>
+<p>Produce a uniform mesh hdf5 or netcdf file by conservative averaging/interpolation data of from an amr file.</p>
+<pre>
+usage: flatten &lt;input_file&gt; &lt;output_file&gt; level [x0 [y0 [z0]]]
+</pre>
+<p>
+The main benefit of BISICLES AMR is in the solution of PDEs to compute the ice sheet state. The state itself
+is usually amenable to analysis at more modest resolution than is required around the grounding line, 
+and on top of that the hdf5 amr files are a specialized format that many find awkward. The flatten tool
+can be used to make a uniform mesh version of the amr file, either as an hdf5 file that BISICLES can read
+for other purposes, or a netcdf file for wider dissemination. All of the interpolation is
+locally conservative.
+</p>
+<p>
+When writing a NetCDF file, the location of the problem domain origin can be specified 
+as a command line argument. For example, the <a href='pineisland.html'>Pine Island Glacier</a> example is set on 
+a domain whose origin corresponds to the point (-1707 km,  -384 km ) on the usual Antarctic Polar Stereographic Projection (EPSG 3031). 
+To make a 4km resolution  file that can be directly compared with other data on that projection, run (e.g)
+</p>
+<pre>
+$BISICLES_HOME/BISICLES/code/filetools/flatten2d.Linux.64.g++.gfortran.DEBUG.ex plot.pigv5.1km.l1l2.2lev.000000.2d.hdf5 pig-epsg3031.nc 0 -1707000 -384000
+</pre>
+<p>
+For data at 1 km resolution, run
+<pre>
+$BISICLES_HOME/BISICLES/code/filetools/flatten2d.Linux.64.g++.gfortran.DEBUG.ex plot.pigv5.1km.l1l2.2lev.000000.2d.hdf5 pig-epsg3031.nc 2 -1707000 -384000
+</pre>
+
+
+
+<h2><a name='nctoamr'>nctoamr</a></h2>
+Convert a uniform mesh netcdf file into a uniform mesh hdf5 file.
+<pre>
+usage: nctoamr &lt;input_file&gt; &lt;output_file&gt; &lt;var 1&gt; [&lt;var 2&gt;, ...] 
+</pre>
+<p>
+If you have a NetCDF file called data.nc, which contains 2D fields named thk and topg arranged on a regular
+grid (with equal spacing in x and y), and must also contain a 1D field called x, you can run
+</p>
+<pre>
+$BISICLES_HOME/BISICLES/code/filetools/nctoamr2d.Linux.64.g++.gfortran.DEBUG.ex data.nc data.2d.hdf5 thk topg
+</pre>
+<p>
+to obtain a file called data.2d.hdf5 that BISICLES can read as (say) thickness and topography data. 
+</p>
+</body>
+</html>

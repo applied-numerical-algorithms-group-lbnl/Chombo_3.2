@@ -1,0 +1,26 @@
+c--------------------------------------------------------------
+c compute effective thickness he from thickness h and icemask m
+c--------------------------------------------------------------
+
+
+      subroutine effectivethickness(CHF_FRA1[he], 
+     &     CHF_CONST_FRA1[h], CHF_CONST_FRA1[m], CHF_BOX[box])
+
+
+      integer CHF_AUTODECL[i]
+      REAL_T mm
+
+      CHF_AUTOMULTIDO[box; i]
+      
+
+      mm = min(m(CHF_AUTOIX[i]),one)
+
+      if ( mm .gt. zero ) then
+         he(CHF_AUTOIX[i]) = h(CHF_AUTOIX[i])/ mm
+      else
+         he(CHF_AUTOIX[i]) = zero
+      end if
+
+      CHF_ENDDO
+      return
+      end

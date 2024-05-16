@@ -1,0 +1,78 @@
+# -*- Mode: Makefile -*- 
+
+## Define the variables needed by Make.example
+
+# trace the chain of included makefiles
+makefiles += multiDim_bisicles
+
+
+# in an example of true silliness, need to define ebase so that the 
+# realclean target will also remove my *.ex files...
+ebase = bogus
+
+# the location of Chombo lib dir
+CHOMBO_HOME = ../../../../../Chombo/lib
+
+# names of Chombo libraries needed by this program, in order of search.
+#1dLibNames =  BoxTools BaseTools
+2dLibNames = BoxTools BaseTools
+3dLibNames = BoxTools
+#4dLibNames = BoxTools
+#5dLibNames = BoxTools
+#6dLibNames = BoxTools
+
+#LibNames =  OldAMRElliptic  AMRTools  BoxTools
+
+# relative paths to source code directories
+base_dir = .
+1dsrc_dirs = 
+2dsrc_dirs = 
+3dsrc_dirs = ../../src ../../../src
+mdsrc_dirs = ../mdsrc
+
+# input file for 'run' target
+INPUT = regression.inputs
+
+include $(CHOMBO_HOME)/mk/Make.example.multidim
+
+#include ../../../mk/Make.defs
+include ./Make.defs
+
+
+
+# application-specific variables
+
+# application-specific targets
+
+#if NETCDF_INC was not defined, try to work it out from nc-config or NETCDF_HOME
+ifeq ($(NETCDF_INC),)
+
+#no NETCDF_HOME? try nc-config
+ifeq ($(NETCDF_HOME), )
+NETCDF_HOME := $(shell nc-config --prefix)
+
+ifneq ($(NETCDF_HOME), )
+NETCDF_INC := -I$(shell nc-config --includedir)
+
+ifeq ($(shell nc-config --has-f90), yes)
+NETCDF_LIBS := $(shell nc-config --flibs) #does no harm to link the fortran libs if present
+else ifeq ($(shell nc-config --has-fortran), yes)
+NETCDF_LIBS := $(shell nc-config --flibs) #does no harm to link the fortran libs if present
+else
+NETCDF_LIBS := $(shell nc-config --libs)
+endif
+
+endif
+
+else
+NETCDF_INC :=-I$(NETCDF_HOME)/include
+NETCDF_LIBS := -L$(NETCDF_HOME)/lib -lnetcdf
+endif
+endif
+
+
+$(info NetCDF: $(NETCDF_INC) $(NETCDF_LIBS) )
+ifneq ($(NETCDF_INC), )
+# note that in a multidim build, we use MDCPPFLAGS instead of CPPFLAGS
+MDCPPFLAGS += -DHAVE_NETCDF $(NETCDF_INC)
+endif

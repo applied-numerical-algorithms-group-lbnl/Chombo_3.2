@@ -1,0 +1,441 @@
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+#include "CONSTANTS.H"
+
+      real_t  function getphirzfunc(radius)
+      implicit none
+      real_t radius
+
+      getphirzfunc = radius*radius
+
+      return
+      end
+
+
+      real_t  function getgradphirzfunc(radius)
+
+      implicit none
+      real_t radius
+
+      getgradphirzfunc = two*radius
+
+      return
+      end
+
+      real_t  function getlaplphirzfunc(radius)
+
+      implicit none
+      real_t radius
+
+      getlaplphirzfunc = four
+
+      return
+      end
+
+
+        subroutine getphi(
+     &    chf_fra1[phi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[dx],
+     &    chf_const_realvect[problo],
+     &    chf_const_realvect[probhi],
+     &    chf_box[box])
+
+        integer chf_ddecl[i;j;k]
+
+        real_t x(0:CH_SPACEDIM-1)
+c
+c       set phi to a trig function at the spatial coordinates
+c
+        chf_multido[box;i;j;k]
+          chf_dterm[
+          x(0) = (i+half)*dx(0) + problo(0);
+          x(1) = (j+half)*dx(1) + problo(1);
+          x(2) = (k+half)*dx(2) + problo(2)]
+
+          call getphipoint(phi(chf_ix[i;j;k]),freq,x)
+        chf_enddo
+
+        return
+        end
+
+
+        subroutine getphipoint(
+     &    chf_real[phi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x])
+
+c
+c       set phi to a trig function at the spatial coordinates
+c
+        phi = chf_dterm[sin(freq(0)*x(0));
+     &                * sin(freq(1)*x(1));
+     &                * sin(freq(2)*x(2))]
+
+
+c     debug
+c        phi = x(0)*x(0) + x(1)*x(1)
+c        phi = x(0)*x(0)
+c     end debug
+
+        return
+        end
+
+        subroutine getlofphirzpoly(
+     &    chf_real[lofphi],
+     &    chf_const_realvect[x],
+     &    chf_const_real[aCoef],
+     &    chf_const_real[bCoef])
+
+        real_t phi, laplphi
+        real_t dist
+        external getlaplphirzfunc
+        real_t getlaplphirzfunc
+        external getphirzfunc
+        real_t getphirzfunc
+
+        dist = abs(x(0))
+
+        phi = getphirzfunc(dist)
+        laplphi = getlaplphirzfunc(dist)
+
+        lofphi = aCoef*phi - bCoef*laplphi
+
+
+        return
+        end
+
+        subroutine getphirzpoly(
+     &    chf_real[phi],
+     &    chf_const_realvect[x])
+
+        real_t dist
+        external getphirzfunc
+        real_t getphirzfunc
+
+        dist =abs(x(0))
+
+        phi = getphirzfunc(dist)
+
+        return
+        end
+
+
+      subroutine getgradphirzpoly(
+     &     chf_realvect[gradphi],
+     &     chf_const_realvect[x])
+
+        real_t dist
+        external getgradphirzfunc
+        real_t getgradphirzfunc
+
+        dist = abs(x(0))
+
+c     dphidr = 3r^2
+        CHF_DTERM[
+        gradphi(0) = getgradphirzfunc(dist);
+        gradphi(1) = zero;
+        gradphi(2) = zero]
+
+        return
+        end
+
+
+        subroutine getgradphipoint(
+     &    chf_realvect[gradphi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x])
+
+c       set gradphi to grad(a trig function at the spatial coordinates)
+c
+        chf_dselect[
+        gradphi(0) = freq(0) * cos(freq(0)*x(0))                                       ;
+
+        gradphi(0) = freq(0) * cos(freq(0)*x(0)) * sin(freq(1)*x(1))
+        gradphi(1) = freq(1) * sin(freq(0)*x(0)) * cos(freq(1)*x(1))                   ;
+
+        gradphi(0) = freq(0) * cos(freq(0)*x(0)) * sin(freq(1)*x(1)) * sin(freq(2)*x(2))
+        gradphi(1) = freq(1) * sin(freq(0)*x(0)) * cos(freq(1)*x(1)) * sin(freq(2)*x(2))
+        gradphi(2) = freq(2) * sin(freq(0)*x(0)) * sin(freq(1)*x(1)) * cos(freq(2)*x(2))]
+
+
+c     debug
+c        gradphi(0) = two*x(0)
+c       gradphi(1) = two*x(1)
+c        gradphi(1) = zero
+c     end debug
+        return
+        end
+
+
+        subroutine getlofphi(
+     &    chf_fra1[lofphi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[dx],
+     &    chf_const_realvect[problo],
+     &    chf_const_realvect[probhi],
+     &    chf_const_real[aCoef],
+     &    chf_const_real[bCoef],
+     &    chf_box[box])
+
+        integer chf_ddecl[i;j;k]
+
+        real_t x(0:CH_SPACEDIM-1)
+c
+c       set lofphi to l(a trig function at the spatial coordinates)
+c
+        chf_multido[box;i;j;k]
+          chf_dterm[
+          x(0) = (i+half)*dx(0) + problo(0);
+          x(1) = (j+half)*dx(1) + problo(1);
+          x(2) = (k+half)*dx(2) + problo(2)]
+
+          call getlofphipoint(lofphi(chf_ix[i;j;k]),freq,x,aCoef,bCoef)
+        chf_enddo
+
+        return
+        end
+
+
+        subroutine getlofphipoint(
+     &    chf_real[lofphi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x],
+     &    chf_const_real[aCoefmult],
+     &    chf_const_real[bCoef])
+
+        integer dir
+        real_t fac,phi, temp
+c
+c       set lofphi to l(a trig function at the spatial coordinates)
+c       aCoef = aCoefmult*x
+c       bCoef = bCoef*(x+y+z)
+c
+        fac = -(chf_dterm[freq(0)**2;
+     &                  + freq(1)**2;
+     &                  + freq(2)**2])
+
+        fac = fac *(CHF_DTERM[x(0); +x(1); +x(2)])
+
+        phi = (chf_dterm[sin(freq(0)*x(0));
+     &                 * sin(freq(1)*x(1));
+     &                 * sin(freq(2)*x(2))])
+
+        lofphi = fac*phi
+
+        temp = 0.0
+        do dir=0, CH_SPACEDIM-1
+           if (dir.eq.0) then
+              temp = freq(0)*CHF_DTERM[cos(freq(0)*x(0));
+     &                                *sin(freq(1)*x(1));
+     &                                *sin(freq(2)*x(2))]
+           else if (dir.eq.1) then
+              temp = freq(1)*CHF_DTERM[sin(freq(0)*x(0));
+     &                                *cos(freq(1)*x(1));
+     &                                *sin(freq(2)*x(2))]
+#if CH_SPACEDIM > 2
+           else if (dir.eq.2) then
+              temp = freq(2)*CHF_DTERM[sin(freq(0)*x(0));
+     &                                *sin(freq(1)*x(1));
+     &                                *cos(freq(2)*x(2))]
+#endif
+           endif
+
+           lofphi = lofphi + temp
+        enddo
+
+
+        lofphi = aCoefmult*x(0)*phi - bCoef*lofphi
+
+c     debug
+c        lofphi = four
+c        lofphi = two
+
+c     end debug
+        return
+        end
+
+        subroutine getdbgphi(
+     &    chf_fra1[dbgphi],
+     &    chf_fra1[bCoef],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[dx],
+     &    chf_const_realvect[problo],
+     &    chf_const_realvect[probhi],
+     &    chf_const_real[aCoef],
+     &    chf_box[box])
+
+        integer chf_ddecl[i;j;k]
+
+        real_t x(0:CH_SPACEDIM-1)
+c
+c       set dbgphi = aCoef*phi - div(bCoef(grad(a trig function at the spatial coordinates)))
+c       set bCoef   =                           a      function at the spatial coordinates)
+c
+        chf_multido[box;i;j;k]
+          chf_dterm[
+          x(0) = (i+half)*dx(0) + problo(0);
+          x(1) = (j+half)*dx(1) + problo(1);
+          x(2) = (k+half)*dx(2) + problo(2)]
+
+          call getdbgphipoint(dbgphi(chf_ix[i;j;k]),
+     &        bCoef(chf_ix[i;j;k]),freq,x,aCoef)
+        chf_enddo
+
+        return
+        end
+
+
+        subroutine getdbgphipoint(
+     &    chf_real[dbgphi],
+     &    chf_real[bCoef],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x],
+     &    chf_const_real[aCoef])
+
+        real_t gradphi(0:CH_SPACEDIM-1),gradBCoef(0:CH_SPACEDIM-1)
+        real_t aCoefphiminusBCoeflapphi,gradBCoefdotgradphi
+
+c
+c       set dbgphi to aCoef*phi + div(bCoef(grad(a trig function at the spatial coordinates)))
+c       set bCoef   to                           a      function at the spatial coordinates)
+c
+
+c       first compute aCoef*phi - bCoef*lap(phi)
+        call getBCoefpoint(bCoef,freq,x)
+        call getlofphipoint(aCoefphiminusBCoeflapphi,freq,x,aCoef,bCoef)
+
+c       next compute grad(bCoef) and grad(phi)
+        call getgradBCoefpoint(gradBCoef,freq,x)
+        call getgradphipoint(gradphi,freq,x)
+
+c       recall: div(bCoef(grad(phi))) = bCoef*lap(phi) + grad(bCoef).dot.grad(phi)
+        gradBCoefdotgradphi = chf_dterm[gradBCoef(0)*gradphi(0);
+     &                               + gradBCoef(1)*gradphi(1);
+     &                               + gradBCoef(2)*gradphi(2)]
+
+c       put it all together: aCoef*phi - div(bCoef(grad(phi))) = aCoef*phi - bCoef*lap(phi) - grad(bCoef).dot.grad(phi)
+        dbgphi = aCoefphiminusBCoeflapphi
+        dbgphi = dbgphi - gradBCoefdotgradphi
+
+        return
+        end
+
+        subroutine getBCoefpoint(
+     &    chf_real[bCoef],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x])
+
+
+        bCoef = chf_dterm[x(0)*x(0);
+     &                 + x(1)*x(1);
+     &                 + x(2)*x(2)]
+c        if(x(1).gt.0.5) then
+c           bCoef = 1.0
+c        else
+c           bCoef = 1000.0
+c        endif
+
+        return
+        end
+
+        subroutine getgradBCoefpoint(
+     &    chf_realvect[gradBCoef],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x])
+
+        integer idir
+c
+c       set gradBCoef to grad(bCoef)
+c
+
+
+        do idir = 0, CH_SPACEDIM-1
+            gradBCoef(idir) = two*x(idir)
+c            gradBCoef(idir) = zero
+        enddo
+
+        return
+        end
+
+        subroutine getBCoefgradphipoint(
+     &    chf_realvect[gradphi],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x])
+
+        integer idir
+        real_t bCoef
+c
+c       set gradphi to bCoef*grad(a trig function at the spatial coordinates)
+c
+        call getBCoefpoint(bCoef,freq,x)
+        call getgradphipoint(gradphi,freq,x)
+
+        do idir = 0, CH_SPACEDIM-1
+           gradphi(idir) = gradphi(idir)*bCoef
+        enddo
+
+        return
+        end
+
+        subroutine getsrc(
+     &    chf_fra1[src],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[dx],
+     &    chf_const_real[diffconst],
+     &    chf_const_realvect[problo],
+     &    chf_const_realvect[probhi],
+     &    chf_box[box])
+
+        integer chf_ddecl[i;j;k]
+
+        real_t x(0:CH_SPACEDIM-1)
+c
+c       set src to a trig function at the spatial coordinates
+c
+        chf_multido[box;i;j;k]
+          chf_dterm[
+          x(0) = (i+half)*dx(0) + problo(0);
+          x(1) = (j+half)*dx(1) + problo(1);
+          x(2) = (k+half)*dx(2) + problo(2)]
+
+          call getsrcpoint(src(chf_ix[i;j;k]),freq,x,diffconst)
+        chf_enddo
+
+        return
+        end
+
+
+        subroutine getsrcpoint(
+     &    chf_real[src],
+     &    chf_const_realvect[freq],
+     &    chf_const_realvect[x],
+     &    chf_const_real[diffconst])
+
+        real_t fac,phi
+c
+c       set src to a trig function at the spatial coordinates
+c
+        fac = -(chf_dterm[freq(0)**2;
+     &                  + freq(1)**2;
+     &                  + freq(2)**2])
+
+        phi = (chf_dterm[sin(freq(0)*x(0));
+     &                 * sin(freq(1)*x(1));
+     &                 * sin(freq(2)*x(2))])
+
+        src = (-fac*diffconst)*phi
+c        src = 2.0*time
+
+c     debug
+c        src = -4.0*diffconst
+c        src = -2.0*diffconst
+c     end debug
+
+        return
+        end
+

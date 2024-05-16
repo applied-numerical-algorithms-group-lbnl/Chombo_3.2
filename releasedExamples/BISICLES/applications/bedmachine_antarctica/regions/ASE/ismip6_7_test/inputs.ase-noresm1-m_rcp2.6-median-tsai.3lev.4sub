@@ -1,0 +1,238 @@
+main.poutBaseName = pout.ase-noresm1-m_rcp2.6-median-tsai.3lev.4sub
+#domain details (whole ase)
+main.domain_size = 896.0e+3 1024.0e+3 1.0e+3
+amr.num_cells = 224 256 24 # 4km
+
+
+amr.is_periodic = 0 0 0
+#amr.sigma = 0.0 0.1663 0.3179 0.4547 0.5768 0.6842 0.7768 0.8547 0.9179 0.9663 1
+amr.sigma = 0.0 0.0712603   0.14191442  0.21137662  0.27910062  0.3445959
+  0.40744022  0.46728806  0.52387456  0.5770154   0.62660312  0.67260068
+  0.71503302  0.75397751  0.78955403  0.82191523  0.85123747  0.87771266
+  0.90154127  0.92292652  0.94206966  0.95916636  0.97440401  0.98795991
+  1. 
+#bulk constitutive relation and parameters
+main.constitutiveRelation = L1L2
+L1L2.layerCoarsening = 1
+main.rateFactor = patersonRate
+patersonRate.epsSqr0 = 1.0e-12
+
+#geometry & basal friction input data
+geometry.problem_type = LevelData
+
+inputLevelData.geometryFile =  ../ASE-data/ase_bedmachine_geometry_500m.2d.hdf5
+inputLevelData.thicknessName = thk
+inputLevelData.topographyName = topg
+
+
+
+muCoefficient.type = LevelData
+inputLevelData.muCoefFile = ../ASE-data/ase_bedmachine_inverse_0_500m.2d.hdf5
+inputLevelData.muCoefName = mu_coef
+
+#temperature data 
+temperature.type = LevelData
+inputLevelData.temperatureFile = ../ASE-data/ase_bedmachine_temperature_4km_24.2d.hdf5
+inputLevelData.temperatureName = temp000000
+
+geometry.beta_type = LevelData
+
+#basal friction relation parameters
+main.basalFrictionRelation = powerLaw
+
+
+#BasalFrictionPowerLaw.fastSlidingSpeed = 300.0
+#inputLevelData.frictionName = c_third_jreg_300
+#BasalFrictionPowerLaw.m = 0.33333
+
+inputLevelData.frictionName = c_third
+BasalFrictionPowerLaw.m = 0.33333
+
+#inputLevelData.frictionName = c_one
+#BasalFrictionPowerLaw.m = 1.0
+
+inputLevelData.frictionFile = ../ASE-data/ase_bedmachine_inverse_0_500m.2d.hdf5
+
+#physical constants
+constants.ice_density=917.0
+constants.sea_water_density=1027.0
+
+#surface fluxes
+#surfaceFlux.type = constantFlux
+#surfaceFlux.flux_value = 0.0
+
+# ISMIP6 SMB is Arthern + anomaly
+surfaceFlux.type = axbyFlux
+
+surfaceFlux.a = 1.0
+surfaceFlux.x.type = LevelData
+surfaceFlux.x.n = 1
+surfaceFlux.x.timeStep = 1.0e+10
+surfaceFlux.x.startTime = 0.0
+surfaceFlux.x.fileFormat = ../ASE-data/ase-acca-4km-shifted.2d.hdf5
+surfaceFlux.x.name = acca
+
+surfaceFlux.b = 1.0
+surfaceFlux.y.type = LevelData
+surfaceFlux.y.n = 100
+surfaceFlux.y.timeStep = 1.0
+surfaceFlux.y.startTime = 2010
+surfaceFlux.y.fileFormat = /home/dan/people/ISMIP6/ase_ismip6_atmos/noresm1-m_rcp2.6/ase_noresm1-m_rcp2.6_smb_anomaly_8km_%04d.2d.hdf5
+surfaceFlux.y.name = smb_anomaly
+surfaceFlux.y.offset = 2010
+
+#no basal flux for grounded ice 
+basalFlux.type = maskedFlux
+basalFlux.grounded.type = constantFlux
+basalFlux.grounded.flux_value = 0.0
+
+#ISMIP6 ocean forcing
+basalFlux.floating.type = IMSIP6OceanForcing
+basalFlux.floating.start_time = 2010 
+basalFlux.floating.file_format = /home/dan/people/ISMIP6/ase_ismip6_ocean/noresm1-m_rcp2.6/ase_NorESM1-M_RCP26_thermal_forcing_8km_%04d.2d.hdf5
+basalFlux.floating.name = thermal_forcing_0000
+basalFlux.floating.anomaly = true
+basalFlux.floating.deltaT_file = /home/dan/people/ISMIP6/ase_ismip6_ocean/parameterizations/ase_coeff_gamma0_DeltaT_quadratic_non_local_median_8km.2d.hdf5
+#non-local (standard) melt rate
+basalFlux.floating.local = false
+basalFlux.floating.gamma0 = 14477.3
+basalFlux.floating.basin_var_name = basin_mask_0000
+basalFlux.floating.basin_file = /home/dan/people/ISMIP6/ase_ismip6_ocean/imbie2/ase_imbie2_basin_mask_8km.2d.hdf5
+basalFlux.floating.n_basin_mask = 16
+basalFlux.openSea.type = zeroFlux
+
+
+amr.grounding_line_proximity_scale = 1.0e+4
+amr.grounding_line_proximity_calc_type = 1
+
+#amr.floating_ice_basal_flux_is_dhdt = true
+#basalFlux.type = maskedFlux
+#basalFlux.grounded.type = constantFlux
+#basalFlux.grounded.flux_value = 0.0
+#basalFlux.floating.type = constantFlux
+#basalFlux.floating.flux_value = -10.0 # large!
+
+#calving model - don't let the front advance
+CalvingModel.type = FixedFrontCalvingModel
+CalvingModel.min_thickness = 0.0
+#velocity solve type -- 0 = Picard, 1 = JFNK
+amr.velocity_solver_type = 1
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 2.9e+6
+amr.initial_velocity_guess_solver_type = 1 #JFNK
+
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 20
+JFNKSolver.absTol = 1.0
+JFNKSolver.relTol = 1.0e-4
+JFNKSolver.solverType = 0 #Relax solver
+#JFNKSolver.solverType = 4 #PETSC
+JFNKSolver.RelaxRelTol = 1.0e-3
+JFNKSolver.RelaxHang = 0.95
+JFNKSolver.maxRelaxIter = 20
+JFNKSolver.normType = 2
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 1.6
+#JFNKSolver.writeResiduals = true
+#JFNKSolver.muMin = 1.0e+4
+#JFNKSolver.uMaxAbs = 1.0e+6
+
+JFNKSolver.eliminateFastIce = false
+#JFNKSolver.eliminateFastIceEdgeOnly = true
+JFNKSolver.eliminateFastIceSpeed = 5.0e+5
+JFNKSolver.eliminateRemoteIceTol = 50.0
+JFNKSolver.eliminateRemoteIceMaxIter = 16
+
+#time stepping
+main.maxTime = 20  # maximum time to run to
+main.maxStep = 100  # maximum number of steps to runx
+main.maxStep = 5  # maximum number of steps to runx
+amr.temporal_accuracy = 1
+amr.cfl = 0.25  
+amr.initial_cfl = 0.25  
+amr.max_dt_grow_factor = 2.0 
+amr.time_step_ticks = 0
+#amr.fixed_dt = 1.0
+#amr.evolve_thickness= false
+amr.offsetTime = 2010.0
+
+#plotting options
+amr.plot_interval = 1
+#amr.plot_time_interval = 1.0
+#amr.plot_prefix = plot.ase_fwd_0.
+#amr.plot_prefix = ../plot.ase-noresm1-m_rcp2.6-median-tsai.3lev.4sub.
+amr.plot_prefix = plot.ase-noresm1-m_rcp2.6-median-tsai.3lev.4sub.
+amr.write_preSolve_plotfiles = false
+amr.write_solver_rhs = 1
+amr.plot_style_amr = true
+amr.write_ismip6 = true
+amr.write_solver_rhs = false
+amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+amr.write_flux_velocities = false
+amr.write_dHDt = true
+#amr.plot_style_cf = true # cf comptible output with time averaging
+#CFIO.whole_domain_diagnostics = true
+#CFIO.level = 0 # TODO
+#CRS.EPSG = 3031 # WGS 84 / Antarctic Polar Stereographic
+# these aren't correct for ASE
+#CRS.origin_x = -3072000.0
+#CRS.origin_y = -3072000.0
+
+amr.write_dHDt = true
+#amr.write_viscous_tensor = true
+amr.write_thickness_sources = true
+#check points
+amr.check_interval = 1
+amr.check_prefix = chk.ase_fwd_0.
+amr.check_overwrite = 0
+#
+
+#AMR mesh options
+amr.maxLevel = 10 # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2
+amr.regrid_interval = 4  # number of timesteps between regridding
+amr.blockFactor = 16      # block factor used in grid generation
+amr.fill_ratio = 0.85    # how efficient are the grids
+amr.nestingRadius = 1    # proper nesting radius required
+amr.tags_grow = 4        # amount to buffer tags
+amr.tagSubsetBoxesFile = ../ASE-data/tag_subset.ase
+amr.tagCap = 2
+amr.interpolate_zb = 0 #go back to the IBC to regrid geometry
+amr.max_box_size = 32        # largest box length allowed
+
+#AMR tagging
+amr.tag_on_grad_velocity = 0
+
+#amr.tag_on_grounded_laplacian_velocity = 0
+#amr.lap_vel_tagging_val = 150
+
+amr.tag_grounding_line = 1
+amr.grounding_line_tagging_min_vel = 20.0
+
+#amr.tag_vel_dx = 1
+#amr.vel_dx_tagging_val = 5.0e+5
+#amr.vel_dx_finest_level_grounded = 4
+#amr.vel_dx_finest_level_floating = 3
+
+#misc options
+amr.verbosity = 5
+
+#tag thin submarine cavities in an attempt to refine around pinning points
+amr.tag_thin_cavity = true
+amr.tag_thin_cavity_thickness = 50.0
+
+
+#amr.restart_file = chk.ase_fwd_0.000000.2d.hdf5

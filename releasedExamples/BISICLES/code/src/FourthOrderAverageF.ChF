@@ -1,0 +1,117 @@
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+c  ----------------------------------------------------------------------------
+c  increment lapPhi with undivided 2nd-derivative difference of phi
+c  in direction dir
+c
+c  lapPhi <=>
+c  phi     =>
+c  gridBox =>
+c  dir     =>
+c  factor  =>
+c  ---------------------------------------------------------------------------
+      subroutine INCREMENTLAPLACIAN(CHF_FRA[lapPhi],
+     &                              CHF_CONST_FRA[phi],
+     &                              CHF_BOX[gridBox],
+     &                              CHF_CONST_INT[dir],
+     &                              CHF_CONST_REAL[factor])
+
+      integer CHF_AUTODECL[i]
+      integer CHF_AUTODECL[ii]
+      integer comp
+      REAL_T thisLap
+
+      CHF_AUTOID[ii;dir]
+      do comp=0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[gridBox; i]
+            thisLap = phi(CHF_OFFSETIX[i; +ii], comp)
+     &              + phi(CHF_OFFSETIX[i; -ii], comp)
+     &           -two*phi(CHF_AUTOIX[i], comp)
+            lapPhi(CHF_AUTOIX[i], comp) =
+     &           lapPhi(CHF_AUTOIX[i], comp) + factor*thisLap
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+c  ----------------------------------------------------------------------------
+c  increment lapPhi with undivided 2nd-derivative difference of phi
+c  in direction dir:  one-sided, on low side
+c
+c  lapPhi <=>
+c  phi     =>
+c  gridBox =>
+c  dir     =>
+c  factor  =>
+c  ---------------------------------------------------------------------------
+      subroutine INCREMENTLOSIDELAPLACIAN(
+     &     CHF_FRA[lapPhi],
+     &     CHF_FRA[phi],
+     &     CHF_BOX[gridBox],
+     &     CHF_INT[dir],
+     &     CHF_REAL[factor])
+
+      integer CHF_AUTODECL[i], comp
+      integer CHF_AUTODECL[ii]
+      REAL_T thisLap
+
+      CHF_AUTOID[ii;dir]
+      do comp=0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[gridBox; i]
+            thisLap =
+     &        two*phi(CHF_AUTOIX[i],comp)
+     &        - five*phi(CHF_OFFSETIX[i; +ii],comp)
+     &        + four*phi(CHF_OFFSETIX[i; +2*ii],comp)
+     &        - phi(CHF_OFFSETIX[i; +3*ii],comp)
+            lapPhi(CHF_AUTOIX[i],comp) =
+     &           lapPhi(CHF_AUTOIX[i],comp) + factor*thisLap
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+c  ----------------------------------------------------------------------------
+c  increment lapPhi with undivided 2nd-derivative difference of phi
+c  in direction dir:  one-sided, on high side
+c
+c  lapPhi <=>
+c  phi     =>
+c  gridBox =>
+c  dir     =>
+c  factor  =>
+c  ---------------------------------------------------------------------------
+      subroutine INCREMENTHISIDELAPLACIAN(
+     &     CHF_FRA[lapPhi],
+     &     CHF_FRA[phi],
+     &     CHF_BOX[gridBox],
+     &     CHF_INT[dir],
+     &     CHF_REAL[factor])
+
+      integer CHF_AUTODECL[i], comp
+      integer CHF_AUTODECL[ii]
+      REAL_T thisLap
+
+      CHF_AUTOID[ii;dir]
+      do comp=0, CHF_NCOMP[phi]-1
+         CHF_AUTOMULTIDO[gridBox; i]
+            thisLap =
+     &        two*phi(CHF_AUTOIX[i],comp)
+     &        - five*phi(CHF_OFFSETIX[i; -ii],comp)
+     &        + four*phi(CHF_OFFSETIX[i; -2*ii],comp)
+     &        - phi(CHF_OFFSETIX[i; -3*ii],comp)
+            lapPhi(CHF_AUTOIX[i],comp) =
+     &           lapPhi(CHF_AUTOIX[i],comp) + factor*thisLap
+         CHF_ENDDO
+      enddo
+
+      return
+      end
+

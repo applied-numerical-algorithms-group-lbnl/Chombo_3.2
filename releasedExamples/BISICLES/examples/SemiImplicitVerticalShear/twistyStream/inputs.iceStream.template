@@ -1,0 +1,88 @@
+# template for twisty-stream convergence test runs
+main.maxTime = 0.0  # maximum time to run to
+main.maxStep = 0    # maximum number of steps to run
+
+main.constitutiveRelation = @CRE
+main.domain_size = 160.0e+3 160.0e+3 1.0e+3 
+
+geometry.problem_type = basic
+geometry.basal_type = constantZb
+geometry.thickness_type = constantThickness1km
+
+geometry.beta_type = twistyStreamx
+geometry.betaValue = 100000.0
+geometry.betaEps = 5.0e-5
+# slope should correspond to a .5 degree x-slope
+geometry.basalSlope = -0.0087488664 0.0  # 0.5 degree slope
+
+surfaceFlux.type = zeroFlux
+basalFlux.type = zeroFlux
+CalvingModel.type = NoCalvingModel
+
+amr.maxLevel = @MAXLEVEL   # finest level allowed in simulation
+amr.ref_ratio = 2 2 2 2 2 2 2 2 2 2 2 
+amr.num_cells = @XRES @YRES @NLAYER   #number of cells in base grid
+amr.is_periodic = 1 1 1    # 1 if domain is periodic 
+# (note that periodic BC's override physical BC types)
+# physical BC types:  0 = homogeneous Dirichlet
+#                     1 = homogeneous Neumann
+bc.lo_bc = 0 0 0  
+bc.hi_bc = 0 0 0  
+
+amr.cfl = 0.1  # "cfl" number
+amr.initial_cfl = 0.1  # "cfl" number
+amr.max_dt_grow_factor = 1.1 #max amount dt can grow from one timestep to another
+
+#include vertical shear in flux velocities
+amr.additional_velocity = 1
+l1l2.additionalVelocitySIAGradSLimit = @SIALIMIT
+l1l2.additionalVelocitySIAOnly = @SIAONLY
+
+amr.plot_interval = 1  
+amr.plot_prefix = stream.@NAME.
+amr.write_solver_rhs = 1
+amr.check_interval = -1
+amr.check_prefix = chk
+amr.verbosity = 5
+
+amr.regrid_interval = 10000   # number of timesteps between regridding
+amr.blockFactor = @BLOCKFACTOR           # block factor used in grid generation
+amr.fill_ratio = 0.9         # how efficient are the grids
+amr.nestingRadius = 1         # proper nesting radius required
+amr.tags_grow = @TAGSGROW             # amount to buffer tags
+amr.max_box_size = 32     # largest box length allowed
+
+amr.tag_on_laplacian_velocity = 1
+amr.lap_vel_tagging_val = @TAGVAL
+
+amr.velocity_solver_type = 1 #JFNK Solver
+
+#initial guess 
+amr.do_initial_velocity_guess = 1
+amr.do_initial_velocity_solve = 1
+amr.initial_velocity_guess_type = 1 # linear PDE
+amr.initial_velocity_guess_const_mu = 1.0e+6
+amr.initial_velocity_guess_solver_type = 1 
+amr.initial_velocity_guess_const_vel = 1.0 0.0
+
+#JFNK parameters
+JFNKSolver.vtopSafety = 0.95
+JFNKSolver.minPicardIterations = 3
+JFNKSolver.maxIter = 10
+JFNKSolver.absTol = 1.0e-4
+JFNKSolver.relTol = 1.0e-8
+JFNKSolver.solverType = 0 #Relax solver
+JFNKSolver.RelaxRelTol = 1.0e-4
+JFNKSolver.RelaxHang = 0.9
+JFNKSolver.maxRelaxIter = 10
+JFNKSolver.normType = 0
+JFNKSolver.verbosity = 5
+JFNKSolver.vtopRelaxTol = 0.005
+JFNKSolver.vtopRelaxMinIter = 8
+JFNKSolver.numMGSmooth = 8
+JFNKSolver.numMGIter = 1
+JFNKSolver.h = 0.025
+JFNKSolver.switchRate = 5.0
+#JFNKSolver.writeResiduals = true
+
+

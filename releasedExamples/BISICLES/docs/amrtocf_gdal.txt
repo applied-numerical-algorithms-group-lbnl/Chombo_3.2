@@ -1,0 +1,49 @@
+Using filetool amrtocf with gdal
+
+
+You need gdal. It may be already installed on your machine or you can download it and install it in your BISICLES home directory.
+
+
+Pre-installed version
+
+It should work provided that it was built with the same compilers as those for netdf and hdf5 packages and BISICLES.
+
+Check the location of ogr_spatialref.h. 
+Mine is in /usr/include/gdal rather than /usr/include. This means I had to edit the line 
+#include "ogr_spatialref.h" 
+in $BISICLES_HOME/code/filetools/src/Transformation.H to
+#include "gdal/ogr_spatialref.h"
+
+
+DIY
+
+Download gdal package from www.gdal.org. 
+I used the 'Developer Oriented Documentation' section and downloaded gdal-2.0.1.tar.gz
+
+Instructions for installing gdal are under 'Buidling GDAL From Source', http://trac.osgeo.org/gdal/wiki/BuildHints. You need to configure gdal with --with-netcdf and --with-hdf5 set to the directory containing bin, include and lib for nectdf or hdf5. Remember to use the same compilers for all builds - main source of my errors!  
+
+For example, on my Linux machine, porthos, I did the following:
+tar -xvf gdal-2.0.1.tar.gz
+cd gdal-2.0.1
+mkdir $BISICLES_HOME/gdal
+./configure --prefix=$BISICLES_HOME/gdal --with-netcdf=/home/glacio-shared/netcdf/ --with-hdf5=/usr/
+make
+make install 
+
+You need to set the lib path to include gdal
+export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$BISICLES_HOME/gdal/lib
+I've added to my .bashrc file.
+
+
+Compiling amrtocf with gdal
+
+You need to edit $BISICLES/code/mk/Make.defs. Set 
+USE_GDAL = TRUE
+and edit GDAL_HOME. 
+
+
+Setting the projection
+
+Edit amrtocf.cpp by setting
+epsgval  : EPSG code number for a prescribed map projection.
+x0, y0   : origin of the xy grid for the geometry data.

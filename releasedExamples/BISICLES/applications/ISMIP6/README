@@ -1,0 +1,283 @@
+#=======================================================================================
+#      Processes BISICLES-generated Antarctic simulation output for ISMIP6 submission
+#=======================================================================================
+#
+#      FILE TO RUN: ismip6.sh
+#
+#            USAGE: ./ismip6.sh <name of experiment directory> (without / at the end)
+#
+#      DESCRIPTION: Processes an experiment directory which is assumed to contain
+#                   HDF5 plotfiles as well as HDF5 CF plotfiles contained within a CF
+#                   subdirectory. These plotfiles (both regular and CF) have variables that
+#                   ismip6.sh processes individually. ismip6.sh then creates
+#                   time-aggregated netCDF4 files for each variable of interest. 26 
+#                   netCDF4 files are created for each of these 26 variables:
+#                 
+#                   lithk          topg          orog        base              xvelmean
+#                   yvelmean       sftgif        acabf       libmassbffl       dlithkdt
+#                   licalvf        ligroundf     sftgrf      sftflf            strbasemag
+#                   lim            limnsw        iareag      iareaf            litemptop
+#                   litempbotgr    litempbotfl   tendacabf   tendlibmassbffl   tendlicalvf
+#                   tendligroundf
+#     
+#         REQUIRES: - At least Python 2.7 (this code was tested with 2.7.6)
+#                   - Up to date BISICLES version with working filetools
+#                       - glfacesNew2d
+#                       - extract2d
+#                       - flatten2d
+#                       - stats2d
+#                   - Initial inputs file related to experiment being processed
+#                   - 8km temperature field file
+#                   - calculateTemperature.py
+#                   - bisicles_stats-cori.py
+#                   - calculateStatsfromAllOut.py
+#                   - calculateFluxScalars.py
+#                   - aggregate.py
+# 
+# KNOWN WEAKNESSES: - Starting month/day/year is hard-coded in the following scripts and needs to
+#                     be changed if you want your starting time to be correct in the
+#                     final .nc files. The icesheet/institution/model name is also
+#		      hard-coded in: 
+#                       - calculateTemperature.py
+#                       - calculateStatsfromAllOut.py
+#                       - calculateFluxScalars.py
+#                       - aggregate.py
+#
+#		    - Variables that aggregate.py looks to aggregate are hard-coded in
+#		      lines 71, 106, 117, 129, and 143.
+#
+#                   - Expects that the CF files live within their own sub-directory
+#                     called 'CF' inside the experiment directory that's being
+#                     processed
+#
+#                   - When flattening, the value given depends on the total levels
+#                     of the multi-level plotfile being flattened. In the code, level 0
+#                     is assumed to be 8km (this value also appears in dependent 
+#                     python scripts and may need to be changed if working with different
+#                     resolution files) (we tested with plotfiles which had a level 3)
+#
+#                   - The code assumes that each plotfile in an experiment contains the
+#                     expected variables and that none are missing. For example, if 
+#                     plotfile #1, #2, #3 all have the sftgif, but plotfile #4 is
+#                     missing, then the code will display a lot of errors, but will 
+#                     continue to process.
+#
+#                   - Script can only handle square (nx=ny) Antarctica grids
+#
+#                   - bisicles_stats-cori.py and calculateTemperature.py has ice
+#		      density, water density, and gravity values that might differ from
+#		      the values in the experiment that was run.
+#
+#                   - This script assumes that the BISICLES executables are run using
+#		      mpirun. If running in serial, search for "mpirun" and remove it.
+#                     If running in parallel with something different (like srun), 
+#		      search for "mpirun" and edit.
+#                      
+#           AUTHOR: Courtney Shafer, cashafer201@gmail.com or cashafer@buffalo.edu
+#
+#             DATE: Sep 7th, 2021
+# ======================================================================================
+
+
+# ======================================================================================
+# DIRECTORY and FILE LIST
+#
+#  NOTE: Before trying the example described here, you will need to download the hdf5 files
+#  located in
+#  https://portal.nersc.gov/project/m1041/dmartin/ismip6/analysis/ismip6-analysis-example.tar
+#  and unpack the tar file in the ISMIP6 directory
+#
+#
+# > ISMIP6	
+#	- ISMIP6 is the main processing directory that contains the sub-directories and
+#	  files necessary for processing. (and is likely the directory containing this file)
+#
+# > dependent_files
+#	- dependent_files is a directory that should contain 2 files:
+#		- the original inputs file for the experiment
+#		- 8km temperature field file of the ice sheet
+#	  
+#	  The directory needs the original inputs file that was used to generate
+#	  plotfiles for the experiment being processed. This file contains model
+#	  parameters that were set and is needed for step III when glfacesNew is run.
+#	  The directory should also contain an 8km antarctica temperature field file
+#	  necessary for section II within ismip6.sh.  
+# 
+# > example
+#	- example contains 3 example plotfiles as well as an example CF directory
+#	  containing 3 example CF plotfiles. Running "./ismip6.sh example" will test to
+#	  see if what you have on your machine runs properly.
+#
+# + calculateTemperature.py
+#	- A python script that calculates temperature data using the dependent 8km
+#	  temperature field file provided and initial plotfile of the experiment being
+#	  considered. This script calculates surface temperature (litemptop), grounded 
+#	  basal temperature (litempbotgr), and the grounded floating temperature
+#	  (litempbotfl).
+#
+# + bisicles_stats-cori.py
+#	- A python script that calculates stats data from plotfiles generated from a
+#	  BISICLES run. It stores the stats output in plot*.hdf5.stats files for each
+#	  plotfile processed and then creates a single .allOut file containing stats
+#	  data for the set of .stats files.
+#
+#	- icedensity = 918.0, waterdensity = 1028.0, and gravity = 9.81 are hard-coded
+#	  in so if your experiment has those defined differently, make sure to change
+#	  these values.
+#
+# + calculateStatsfromAllOut.py
+#	- A python script that takes in an .allOut file and pulls the data for
+#	  icemassAll (lim), icemassAbove (limnsw), groundedArea (iareag), and
+#	  floatingArea (iareaf) and creates a netCDF4 file for each variable.
+#
+# + calculateFluxScalars.py
+#	- A python script that performs spatial integration on field variables located
+#	  in the CF files and another plotfile containing the ligroundf variable and
+#	  calculates the scalars total SMB flux (tendacabf), total BMB flux beneath
+#	  floating ice (tendlibmassbffl), total calving flux (tendlicalvf), and total
+#	  grounding line flux (tendligroundf). The script produces a netCDF4 file for
+#	  each of the variables.
+#
+# + aggregate.py
+#	- A python script that takes in multiple HDF5 files (either single-level or
+#	  multi-level) and aggregates them into a single netCDF4 file.
+#
+# =====================================================================================
+
+# =====================================================================================
+# SECTIONS of ismip6.sh
+#
+#   0. User Setup
+#   I. Directory Setup
+#  II. Calculate Easy State Variables
+# III. Extract Variables from Multi-Component Files
+#  IV. Calculate Flux Scalar Variables by Spatial Integration
+#   V. Aggregate Remaining HDF5 Files Into Single NetCDF4 File
+#
+#   0. User Setup
+#	
+#	Info related to the setup is explained here. Variables are also declared here
+#	relevant to the user's setup and need to be modified accordingly. Make sure the
+#	following variables are modified such that they match your setup:
+#	
+#		+ BISICLES_HOME
+#		+ ISIMIP6_HOME
+#		+ GLFACESNEW
+#		+ EXTRACT
+#		+ FLATTEN
+#		+ STATS
+#		+ INPUTS_FILE
+#		+ TEMPERATURE_FIELD_FILE
+#	
+#   I. Directory Setup
+#
+#	Directories necessary for processing are created for the experiment being
+#	considered. Data that is created and/or extracted during processing will be
+#	saved in the appropriate experiment directory.
+#
+#	The directories created are:
+#		> allOut_files
+#		> glfacesNew_output
+#		> extracted_variables (and sub directories for each variable)
+#		> flattened_8km_ligroundf
+#		> flux_scalars
+#		> final_nc_files
+#
+#  II. Calculate Easy State Variables
+#
+#	Temperature and stats data are calculated using python scripts. A netCDF4 file
+#	is generated for each variable calculated and is saved in final_nc_files
+#
+# III. Extract Variables from Multi-Component Files
+#
+#	Specific variables are contained within either the regular plotfiles or the CF files 
+#	and need to be extracted carefully. Some variables that are needed are not present in
+#	either filetypes and need to be derived. Specifically, glfacesNew takes in a regular 
+#	.hdf5 plotfile and derives the grounding line flux (ligroundf), grounded ice sheet
+#	area fraction (sftgrf), floating ice sheet area fraction (sftflf), and basal drag 
+#	(strbasemag). A new multi-level, multi-component .hdf5 file is created, which will
+#	then be used to extract the variables individually. This is performed first, then the
+#	remaining variables are extracted from the regular plotfiles and the CF files. All
+#	extracted variables are saved within the extracted_variables directory for further
+#	processing. 
+#
+#	F = Field	S = Scalar	FL = Flux	ST = State	
+#
+#	==========================================================================
+#	|                    Variables extracted from files                      |
+#	==========================================================================
+#	|____glfacesNew Output____|____regular plotfiles____|____CF plotfiles____|
+#	| ligroundf(F, FL)        | thickness(F, ST)        | acabf(F, FL)       |
+#	| sftgrf(F, ST)           | Z_base(F, ST)           | libmassbffl(F,FL)  |
+#	| sftflf(F, ST)           | Z_bottom(F, ST)         | dlithkdt(F, FL)    |
+#	| strbasemag(F, ST)       | Z_surface(F, ST)        | licalvf(F, FL)     |
+#	|                         | xVel(F, ST)             |                    |
+#	|                         | yVel(F, ST)             |                    |
+#	|                         | iceFrac(F, ST)          |                    |
+#	--------------------------------------------------------------------------
+#
+#  IV. Calculate Flux Scalar Variables by Spatial Integration
+#
+#	The flux scalar variables, which are total SMB flux (tendacabf), total BMB flux
+#	beneath floating ice (tendlibmassbffl), total calving flux (tendlicalvf), and
+#	total grounding line flux (tendligroundf) are derived in this section using
+#	the calculateFluxScalars.py script. The ligroundf files extracted in the
+#	previous section are flattened first before calculateFluxScalars.py is used. 
+#
+#   V. Aggregate Remaining HDF5 Files into Single NetCDF4 File
+#
+#	The variables that were extracted in section III still need to converted into a
+#	single netCDF4 file. aggregate.py takes in the HDF5 files and aggregates them
+#	into a single netCDF4 file for each variable. It can handle both single-level
+#	and multi-level data, but it is assumed that level 0 is 8km. The variables it
+#	looks to aggregate are hard-coded in aggregate.py in lines 71, 106, 117, 129,
+#	and 143. CF variables (acabf, libmassbffl, dlithkdt, licalvf) are handled
+#	differently.	
+#
+#
+# !!! BEFORE RUNNING ISMIP6.SH MAKE SURE YOU !!!
+#
+#	[] Have the latest BISICLES version
+#	[] Have at least Python 2.7
+#	[] Have the /ISMIP6 directory located somewhere that contains ample disk space
+#	[] Tried the example first
+#	[] Checked that your experiment contains variable data for each timestep/plotfile
+#	   and that timesteps/plotfiles aren't missing variables (this will probably be more
+#	   apparent if you get errors while running the code)
+#	[] Created symbolic links to the experiments you want to run within /ISMIP6
+#	[] Moved your CF files into their own CF directory within their appropriate
+#	   experiment directory (see /example directory)
+#	[] Updated the BISICLES filetools within the BISICLES/code/filetools directory
+#	[] Copied the initial inputs file for the experiment to /ISMIP6/dependent_files
+#	[] Got an 8km temperature field file related to the experiment and copied/moved
+#	   it to /ISMIP6/dependent_files
+#	[] Modified the setup variables in the setup section within ismip6.sh to reflect
+#	   the above changes
+#	[] Modified the starting month/day/year in the following files to reflect the time
+#	   your experiment starts:
+#		- calculateTemperature.py (line 27, 59)
+#               - calculateStatsfromAllOut.py (line 29, 47) 
+#               - calculateFluxScalars.py (line 36, 85)
+#               - aggregate.py (line 28, 95)
+#	[] Modified the name of icesheet/institution/model in:
+#		- calculateTemperature.py (line 28)
+#		- calculateStatsfromAllout.py (line 30)
+#		- calculateFluxScalars.py (line 37)
+#		- aggregate.py (line 29)
+#	[] Checked that the values of ice density, water density, and gravity match in:
+#		- The initial inputs file provided
+#		- calculateTemperature.py (line 98, 99)
+#		- bisicles_stats-cori.py (lines 29, 30, 31)
+#	[] Modified the level in the following scripts (the assumption is that
+#	   level 0 <=> 8km resolution and may need to change if working with different
+#	   leveled files - this was initially tested with level 3 files)
+#		- ismip6.sh (line 325)
+#		- aggregate.py (line 46)
+#		- calculateFluxScalars.py (line 114, 150)
+#		- calculateTemperature.py (line 75)
+#
+#
+# ~~ Helpful ~~
+#
+#   ncdump -h <plotfile> gives header information for both netCDF4 files AND HDF5 files
+#	and can be used to see what level your plotfiles are at if interested	

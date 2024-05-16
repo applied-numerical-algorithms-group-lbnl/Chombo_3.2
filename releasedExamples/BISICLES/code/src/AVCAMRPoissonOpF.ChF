@@ -1,0 +1,581 @@
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+#include "CONSTANTS.H"
+
+
+#if CH_SPACEDIM == 1
+      subroutine GSRBHELMHOLTZAVC1D(
+     &     CHF_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA1[lambda],
+     &     CHF_CONST_INT[icol])
+#elif CH_SPACEDIM == 2
+      subroutine GSRBHELMHOLTZAVC2D(
+     &     CHF_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_FRA1[lambda],
+     &     CHF_CONST_INT[icol],
+     &     CHF_CONST_INT[jcol])
+#elif CH_SPACEDIM == 3
+      subroutine GSRBHELMHOLTZAVC3D(
+     &     CHF_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_FRA[bCoef2],
+     &     CHF_CONST_FRA1[lambda],
+     &     CHF_CONST_INT[icol],
+     &     CHF_CONST_INT[jcol],     
+     &     CHF_CONST_INT[kcol])
+#else
+      Somthing_that_will_not_compile
+#endif
+
+      REAL_T dxinv,lofphi,quarter
+      integer CHF_DDECL[i;j;k]
+
+      CHF_DTERM[
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef0]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef1]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef2]) then
+         call MAYDAYERROR()
+      endif                                  ]
+
+      dxinv = one/(dx*dx)
+      quarter = half * half *  dxinv
+#if CH_SPACEDIM==3
+      do k=CHF_LBOUND[region; 2] + kcol, CHF_UBOUND[region; 2], 3
+#endif
+#if CH_SPACEDIM > 1
+         do j=CHF_LBOUND[region; 1] + jcol, CHF_UBOUND[region; 1],3
+#endif
+            do i = CHF_LBOUND[region; 0] + icol, CHF_UBOUND[region; 0], 3
+
+
+C     Normal components (same as the isotropic op)
+              lofphi =
+     &            alpha * aCoef(CHF_IX[i;j;k]) * phi(CHF_IX[i;j;k])
+     &          - beta  *
+     &             (CHF_DTERM[
+     &               bCoef0(CHF_IX[i+1;j  ;k  ],0)
+     &               * (phi(CHF_IX[i+1;j  ;k  ])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &             - bCoef0(CHF_IX[i  ;j  ;k  ],0)
+     &               * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ])) ;
+     &
+     &             + bCoef1(CHF_IX[i  ;j+1;k  ],1)
+     &               * (phi(CHF_IX[i  ;j+1;k  ])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &             - bCoef1(CHF_IX[i  ;j  ;k  ],1)
+     &               * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i  ;j-1;k  ])) ;
+     &
+     &             + bCoef2(CHF_IX[i  ;j  ;k+1],2)
+     &               * (phi(CHF_IX[i  ;j  ;k+1])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &             - bCoef2(CHF_IX[i  ;j  ;k  ],2)
+     &               * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i  ;j  ;k-1])) ]
+     &             ) * dxinv
+
+
+#if CH_SPACEDIM == 2 
+C     transverse components  
+              lofphi = lofphi - beta * (
+     &             + quarter * bCoef0(CHF_IX[i+1;j  ;k  ],1)
+     &             * (phi(CHF_IX[i+1;j+1  ;k  ]) -phi(CHF_IX[i+1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &
+     &             - quarter * bCoef0(CHF_IX[i;j  ;k  ],1)
+     &             * (phi(CHF_IX[i-1;j+1  ;k  ]) -phi(CHF_IX[i-1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &             
+     &             + quarter * bCoef1(CHF_IX[i  ;j+1  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j+1  ;k  ])-phi(CHF_IX[i-1;j+1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) )
+     &
+     &             - quarter * bCoef1(CHF_IX[i  ;j  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j-1  ;k  ])-phi(CHF_IX[i-1;j-1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) ) )            
+#endif 
+
+#if CH_SPACEDIM > 2
+C     not much point starting on this until someone cares
+      call MAYDAYERROR()         
+#endif             
+
+              phi(CHF_IX[i;j;k]) = phi(CHF_IX[i;j;k])
+     &          - lambda(CHF_IX[i;j;k]) * (lofphi - rhs(CHF_IX[i;j;k]))
+           enddo
+#if CH_SPACEDIM > 1
+         enddo
+#endif
+#if CH_SPACEDIM==3
+       enddo
+#endif
+     
+
+      return
+      end
+
+C     -----------------------------------------------------------------
+C     subroutine VCCOMPUTEOP{1D,2D,3D}
+C     computes (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi)
+C
+C     INPUTS/OUTPUTS:
+C     lofphi    <=  operator applied to phi
+C     phi        => phi
+C     alpha      => contant multiplier of aCoef
+C     aCoef      => spatially varying coef of I
+C     beta       => contant multiplier of bCoef
+C     bCoef[012] => face-centered coefs of Grad
+C     region     => box to compute over
+C     dx         => cell spacing
+C
+C     Warning: phi, lofphi must have the same number
+C     of components and span region.  Phi needs one more cell on
+C     all sides
+C
+C     ------------------------------------------------------------------
+#if CH_SPACEDIM == 1
+      subroutine AVCCOMPUTEOP1D(
+     &     CHF_FRA1[lofphi],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 2
+      subroutine AVCCOMPUTEOP2D(
+     &     CHF_FRA1[lofphi],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 3
+      subroutine AVCCOMPUTEOP3D(
+     &     CHF_FRA1[lofphi],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_FRA[bCoef2],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#else
+      Somthing_that_will_not_compile
+#endif
+
+      REAL_T dxinv, quarter
+      
+      integer CHF_DDECL[i;j;k]
+
+      CHF_DTERM[
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef0]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef1]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef2]) then
+         call MAYDAYERROR()
+      endif                                  ]
+
+      dxinv = one/(dx*dx)
+      quarter = half * half * dxinv
+C     Normal components (same as the isotropic op)
+        CHF_MULTIDO[region; i; j; k]
+          lofphi(CHF_IX[i;j;k]) =
+     &       alpha * aCoef(CHF_IX[i;j;k]) * phi(CHF_IX[i;j;k])
+     &       - beta  *
+     &         (CHF_DTERM[
+     &           bCoef0(CHF_IX[i+1;j  ;k  ],0)
+     &           * (phi(CHF_IX[i+1;j  ;k  ]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef0(CHF_IX[i  ;j  ;k  ],0)
+     &           * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i-1;j  ;k  ]));
+     &
+     &         + bCoef1(CHF_IX[i  ;j+1;k  ],1)
+     &           * (phi(CHF_IX[i  ;j+1;k  ]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef1(CHF_IX[i  ;j  ;k  ],1)
+     &           * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i  ;j-1;k  ])) ;
+     &
+     &         + bCoef2(CHF_IX[i  ;j  ;k+1],2)
+     &           * (phi(CHF_IX[i  ;j  ;k+1]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef2(CHF_IX[i  ;j  ;k  ],2)
+     &           * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i  ;j  ;k-1])) ]
+     &         ) * dxinv
+        
+
+#if CH_SPACEDIM == 2 
+C     transverse components  
+      lofphi(CHF_IX[i;j;k]) = lofphi(CHF_IX[i;j;k]) - beta * (
+     &             + quarter * bCoef0(CHF_IX[i+1;j  ;k  ],1)
+     &             * (phi(CHF_IX[i+1;j+1  ;k  ]) -phi(CHF_IX[i+1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &
+     &             - quarter * bCoef0(CHF_IX[i;j  ;k  ],1)
+     &             * (phi(CHF_IX[i-1;j+1  ;k  ]) -phi(CHF_IX[i-1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &             
+     &             + quarter * bCoef1(CHF_IX[i  ;j+1  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j+1  ;k  ])-phi(CHF_IX[i-1;j+1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) )
+     &
+     &             - quarter * bCoef1(CHF_IX[i  ;j  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j-1  ;k  ])-phi(CHF_IX[i-1;j-1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) ))            
+#endif 
+
+#if CH_SPACEDIM > 2
+C     not much point starting on this until someone cares
+      call MAYDAYERROR()         
+#endif    
+
+      CHF_ENDDO
+      return
+      end
+
+C     -----------------------------------------------------------------
+C     subroutine VCCOMPUTERES{1D,2D,3D}
+C     computes:
+C         rhs - (alpha * aCoef(i) * I - (beta * Div (bCoef(i) * Grad)))(phi)
+C
+C     INPUTS/OUTPUTS:
+C     res       <=  residual
+C     phi        => phi
+C     rhs        => rhs
+C     alpha      => contant multiplier of aCoef
+C     aCoef      => spatially varying coef of I
+C     beta       => contant multiplier of bCoef
+C     bCoef[012] => face-centered coefs of Grad
+C     region     => box to compute over
+C     dx         => cell spacing
+C
+C     Warning: phi, rhs, res must have the same number
+C     of components and span region.  Phi needs one more cell on
+C     all sides
+C
+C     ------------------------------------------------------------------
+#if CH_SPACEDIM == 1
+      subroutine AVCCOMPUTERES1D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 2
+      subroutine AVCCOMPUTERES2D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 3
+      subroutine AVCCOMPUTERES3D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_FRA[bCoef2],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#else
+      Somthing_that_will_not_compile
+#endif
+
+      REAL_T dxinv, quarter
+      integer CHF_DDECL[i;j;k]
+
+
+      CHF_DTERM[
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef0]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef1]) then
+         call MAYDAYERROR()
+      endif                                  ;
+
+      if (CH_SPACEDIM .ne. CHF_NCOMP[bCoef2]) then
+         call MAYDAYERROR()
+      endif                                  ]
+
+      dxinv = one/(dx*dx)
+      quarter = half * half * dxinv
+        CHF_MULTIDO[region; i; j; k]
+C     Normal components (same as the isotropic op)
+          res(CHF_IX[i;j;k]) =
+     &        rhs(CHF_IX[i;j;k])
+     &      - (alpha * aCoef(CHF_IX[i;j;k]) * phi(CHF_IX[i;j;k])
+     &       - beta  *
+     &          (CHF_DTERM[
+     &            bCoef0(CHF_IX[i+1;j  ;k  ],0)
+     &            * (phi(CHF_IX[i+1;j  ;k  ]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &          - bCoef0(CHF_IX[i  ;j  ;k  ],0)
+     &            * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i-1;j  ;k  ])) ;
+     &
+     &          + bCoef1(CHF_IX[i  ;j+1;k  ],1)
+     &            * (phi(CHF_IX[i  ;j+1;k  ]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &          - bCoef1(CHF_IX[i  ;j  ;k  ],1)
+     &            * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i  ;j-1;k  ])) ;
+     &
+     &          + bCoef2(CHF_IX[i  ;j  ;k+1],2)
+     &            * (phi(CHF_IX[i  ;j  ;k+1]) - phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &          - bCoef2(CHF_IX[i  ;j  ;k  ],2)
+     &            * (phi(CHF_IX[i  ;j  ;k  ]) - phi(CHF_IX[i  ;j  ;k-1])) ]
+     &          ) * dxinv
+     &        )
+      
+#if CH_SPACEDIM == 2 
+C     transverse components  
+          res(CHF_IX[i;j;k]) = res(CHF_IX[i;j;k]) + beta * (
+     &             + quarter * bCoef0(CHF_IX[i+1;j  ;k  ],1)
+     &             * (phi(CHF_IX[i+1;j+1  ;k  ]) -phi(CHF_IX[i+1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &
+     &             - quarter * bCoef0(CHF_IX[i;j  ;k  ],1)
+     &             * (phi(CHF_IX[i-1;j+1  ;k  ]) -phi(CHF_IX[i-1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &             
+     &             + quarter * bCoef1(CHF_IX[i  ;j+1  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j+1  ;k  ])-phi(CHF_IX[i-1;j+1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) )
+     &
+     &             - quarter * bCoef1(CHF_IX[i  ;j  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j-1  ;k  ])-phi(CHF_IX[i-1;j-1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) ))            
+#endif 
+
+#if CH_SPACEDIM > 2
+C     not much point starting on this until someone cares
+      call MAYDAYERROR()         
+#endif 
+          CHF_ENDDO
+      
+
+      return
+      end
+
+C     -----------------------------------------------------------------
+C     subroutine RESTRICTRESVC{1D,2D,3D}
+C     computes restriction of residual to a coarser multgrid level
+C        res[2h] = I[h->2h] (rhs[h] - L(phi[h]))
+C     INPUTS/OUTPUTS:
+C     res       <=  res[2h]
+C     rhs       =>  rhs[h]
+C     phi       =>  phi[h]
+C     alpha      => contant multiplier of aCoef
+C     aCoef      => spatially varying coef of I
+C     beta       => contant multiplier of bCoef
+C     bCoef[012] => face-centered coefs of Grad
+C     region    =>  Box over which rhs is defined (in h index space)
+C     dx        =>  grid spacing in h
+C     ------------------------------------------------------------------
+#if CH_SPACEDIM == 1
+      subroutine RESTRICTRESAVC1D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 2
+      subroutine RESTRICTRESAVC2D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#elif CH_SPACEDIM == 3
+      subroutine RESTRICTRESAVC3D(
+     &     CHF_FRA1[res],
+     &     CHF_CONST_FRA1[phi],
+     &     CHF_CONST_FRA1[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_FRA1[aCoef],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_FRA[bCoef0],
+     &     CHF_CONST_FRA[bCoef1],
+     &     CHF_CONST_FRA[bCoef2],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+#else
+      Somthing_that_will_not_compile
+#endif
+
+      REAL_T denom,dxinv,lofphi,quarter
+      
+
+      integer CHF_DDECL[i;j;k]
+      integer CHF_DDECL[ii;jj;kk]
+
+     
+
+      dxinv = one / (dx*dx)
+      denom = D_TERM(2, *2, *2)
+      quarter = half * half * dxinv
+
+        CHF_MULTIDO[region; i; j; k]
+          CHF_DTERM[
+          ii = i/2 ;
+          jj = j/2 ;
+          kk = k/2 ]
+C     Normal components (same as the isotropic op)
+          lofphi =
+     &        alpha * aCoef(CHF_IX[i;j;k]) * phi(CHF_IX[i;j;k])
+     &      - beta  *
+     &         (CHF_DTERM[
+     &           bCoef0(CHF_IX[i+1;j  ;k  ],0)
+     &           * (phi(CHF_IX[i+1;j  ;k  ])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef0(CHF_IX[i  ;j  ;k  ],0)
+     &           * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ])) ;
+     &
+     &         + bCoef1(CHF_IX[i  ;j+1;k  ],1)
+     &           * (phi(CHF_IX[i  ;j+1;k  ])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef1(CHF_IX[i  ;j  ;k  ],1)
+     &           * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i  ;j-1;k  ])) ;
+     &
+     &         + bCoef2(CHF_IX[i  ;j  ;k+1],2)
+     &           * (phi(CHF_IX[i  ;j  ;k+1])-phi(CHF_IX[i  ;j  ;k  ]))
+     &
+     &         - bCoef2(CHF_IX[i  ;j  ;k  ],2)
+     &           * (phi(CHF_IX[i  ;j  ;k  ])-phi(CHF_IX[i  ;j  ;k-1])) ]
+     &         ) * dxinv
+
+#if CH_SPACEDIM == 2 
+C     transverse components  
+              lofphi = lofphi - beta * (
+     &             + quarter * bCoef0(CHF_IX[i+1;j  ;k  ],1)
+     &             * (phi(CHF_IX[i+1;j+1  ;k  ]) -phi(CHF_IX[i+1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &
+     &             - quarter * bCoef0(CHF_IX[i;j  ;k  ],1)
+     &             * (phi(CHF_IX[i-1;j+1  ;k  ]) -phi(CHF_IX[i-1  ;j-1  ;k  ])
+     &             + phi(CHF_IX[i;j+1  ;k  ]) - phi(CHF_IX[i;j-1  ;k  ]) )
+     &             
+     &             + quarter * bCoef1(CHF_IX[i  ;j+1  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j+1  ;k  ])-phi(CHF_IX[i-1;j+1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) )
+     &
+     &             - quarter * bCoef1(CHF_IX[i  ;j  ;k  ],0)
+     &               * (phi(CHF_IX[i+1  ;j-1  ;k  ])-phi(CHF_IX[i-1;j-1  ;k  ]) 
+     &             + phi(CHF_IX[i+1  ;j  ;k  ])-phi(CHF_IX[i-1;j  ;k  ]) ) )            
+#endif 
+
+#if CH_SPACEDIM > 2
+C     not much point starting on this until someone cares
+      call MAYDAYERROR()         
+#endif 
+          res(CHF_IX[ii;jj;kk]) = res(CHF_IX[ii;jj;kk])
+     &                            + (rhs(CHF_IX[i;j;k]) - lofphi) / denom
+        CHF_ENDDO
+      
+
+      return
+      end
+
+C -------------------------------------------------------------
+C  utility function -- increments lhs with average from  faces
+C  to cell-centers of normal components of bCoefs in dir direction
+C
+C  lhs   <=> cell-centered data to be incremented
+C  beta   => multiplier of rhs
+C  bCoefs => face-centered data to be averaged to cell-centers
+C  box    => cell-centered box over which to operate
+C  dir    => direction to do averaging
+C  scale  => scaling factor
+C --------------------------------------------------------------
+      subroutine SUMAFACES(CHF_FRA1[lhs],
+     &                    CHF_CONST_REAL[beta],
+     &                    CHF_CONST_FRA[bCoefs],
+     &                    CHF_BOX[box],
+     &                    CHF_CONST_INT[dir],
+     &                    CHF_CONST_REAL[scale])
+
+      REAL_T sumVal,quarter
+      integer CHF_DDECL[i;j;k]
+      integer CHF_DDECL[ii;jj;kk]
+
+
+      CHF_DTERM[
+      ii = CHF_ID(0,dir);
+      jj = CHF_ID(1,dir);
+      kk = CHF_ID(2,dir)]
+     
+      CHF_MULTIDO[box;i;j;k]
+
+      sumVal = bCoefs(CHF_IX[i+ii;j+jj;k+kk],dir)
+     &     + bCoefs(CHF_IX[i   ;j   ;k   ],dir)
+     &
+
+      lhs(CHF_IX[i;j;k]) = lhs(CHF_IX[i;j;k]) + scale * beta * sumVal
+      CHF_ENDDO
+      
+
+      return
+      end

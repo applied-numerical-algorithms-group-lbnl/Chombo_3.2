@@ -1,0 +1,182 @@
+#include "CONSTANTS.H"
+#include "IceConstants.H"
+c-------------------------------------------
+c F = C*T + L*W
+c-------------------------------------------
+      subroutine composeinternalenergyice(
+     &     CHF_FRA[F],
+     &     CHF_CONST_FRA[T],
+     &     CHF_CONST_FRA[W],
+     &     CHF_CONST_REAL[C],
+     &     CHF_CONST_REAL[L], 
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i], ncomp, n
+      
+      ncomp = CHF_NCOMP[T]
+      CHF_AUTOMULTIDO[box; i]
+      do n = 0, ncomp-1
+         F(CHF_AUTOIX[i],n) = T(CHF_AUTOIX[i],n) * C + 
+     &        W(CHF_AUTOIX[i],n) * L 
+      end do
+      CHF_ENDDO
+
+      return 
+      end
+
+c-------------------------------------------
+c  decompose internal energy into temperature
+c  and water fraction assuming constant heat
+c  capacity 
+c  
+c  T = if(F < Fp, F/C, Tp) 
+c  W = if(F > Fpmp, (F-F0)/L, 0)
+c  where Fp = C * Tp and Tp = Tr - beta * P
+c-------------------------------------------
+      subroutine decomposeinternalenergyice(
+     &     CHF_FRA[T],
+     &     CHF_FRA[W],
+     &     CHF_CONST_FRA[F],
+     &     CHF_CONST_FRA[P],
+     &     CHF_CONST_REAL[C],
+     &     CHF_CONST_REAL[L], 
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_REAL[Tr],
+     &     CHF_CONST_REAL[Tmin],
+     &     CHF_BOX[box])
+
+      integer CHF_AUTODECL[i], ncomp, n
+      REAL_T Tp, Fp
+      ncomp = CHF_NCOMP[T]
+      CHF_AUTOMULTIDO[box; i]
+       do n = 0, ncomp-1
+          Tp = Tr - P(CHF_AUTOIX[i],n) * beta
+          Fp = C*Tp
+          if (F(CHF_AUTOIX[i],n) > Fp) then
+             T(CHF_AUTOIX[i],n) = Tp
+             W(CHF_AUTOIX[i],n) = (F(CHF_AUTOIX[i],n) - Fp) / L
+          else
+	     T(CHF_AUTOIX[i],n) = max( Tmin, 
+     &            (F(CHF_AUTOIX[i],n))/C)
+             W(CHF_AUTOIX[i],n) = zero
+          end if
+       end do
+      CHF_ENDDO
+
+      return 
+      end
+
+      subroutine COLUMNTHERMODYAMICSSETCONSTANTS(
+     &     CHF_CONST_REAL[a_seconds_per_unit_time],
+     &     CHF_CONST_REAL[a_ice_density],
+     &     CHF_CONST_REAL[a_water_density],
+     &     CHF_CONST_REAL[a_gravity],
+     &     CHF_CONST_REAL[a_ice_heat_capacity],
+     &     CHF_CONST_REAL[a_ice_latent_heat],
+     &     CHF_CONST_REAL[a_ice_conductivity],
+     &     CHF_CONST_REAL[a_moisture_conductivity],
+     &     CHF_CONST_REAL[a_ice_pressure_melt_factor],
+     &     CHF_CONST_REAL[a_triple_point],
+     &     CHF_CONST_REAL[a_water_fraction_drain],
+     &     CHF_CONST_REAL[a_water_fraction_max],
+     &     CHF_CONST_REAL[a_water_drain_factor],
+     &     CHF_CONST_REAL[a_till_water_drain_factor],
+     &	   CHF_CONST_REAL[a_till_water_max],
+     &     CHF_CONST_REAL[a_floating_base_max_heat_flux])
+
+      call column_thermodynamics_set_constants(
+     &     a_seconds_per_unit_time , 
+     &     a_ice_density , a_water_density, a_gravity ,
+     &     a_ice_heat_capacity, a_ice_latent_heat,
+     &     a_ice_conductivity , a_moisture_conductivity,
+     &     a_ice_pressure_melt_factor, a_triple_point)
+
+       call column_thermodynamics_set_water_constants(
+     &     a_water_fraction_drain, a_water_fraction_max,
+     &     a_water_drain_factor, a_till_water_drain_factor,
+     &     a_till_water_max, a_floating_base_max_heat_flux)
+      
+      return 
+      end 
+      
+      
+      
+c ---------------------------------------------------------------
+c update the mid-layer internal energies E(i,j,layer), surface temperature
+c sT(i,j) and basal temperature bT(i,j). Most of the heavy lifting
+c is done elsewhere, but the equation should be something like
+c  
+c dE / dt = (some terms) + rhs/dt
+c
+c ---------------------------------------------------------------
+
+      subroutine UPDATEINTERNALENERGY(
+     &     CHF_FRA[energy],
+     &     CHF_FRA1[tillwaterdepth],
+     &     CHF_FRA1[senergy],
+     &     CHF_FRA1[benergy],
+     &     CHF_CONST_FRA1[sflux],
+     &     CHF_CONST_FRA1[bflux],
+     &     CHF_CONST_FRA1[tillWaterDrainFactor],
+     &     CHF_CONST_FIA1[floatingMaskOld],
+     &     CHF_CONST_FIA1[floatingMaskNew],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_CONST_FRA1[thckold],
+     &     CHF_CONST_FRA1[thcknew],
+     &     CHF_CONST_FRA[usig], 
+     &     CHF_CONST_VR[sigma],
+     &     CHF_CONST_VR[dsigma],     
+     &     CHF_CONST_REAL[time],
+     &     CHF_CONST_REAL[dt],
+     &     CHF_CONST_INT[nlay],
+     &     CHF_CONST_INT[sdiric],
+     &     CHF_BOX[box])
+          
+      Real_T colenergy(0:nlay-1), colrhs(0:nlay-1)
+      Real_T colusig(0:nlay)
+
+      integer CHF_AUTODECL[i]
+      integer layer
+      integer mask
+
+c$$$      call column_thermodynamics_set_constants( secondsperyear , 
+c$$$     &     rhoi , rhoo, grav , iceheatcapacity, 
+c$$$     &     icelatentheat, iceconductivity , moistureconductivity,
+c$$$     &     icepmeltfactor, triplepoint)
+
+      CHF_AUTOMULTIDO[box; i]
+c     this is pretty inefficient, but needed because spatial indices run fastest in FABS
+      do layer = 0, nlay - 1
+         colenergy(layer) = energy(CHF_AUTOIX[i], layer)
+         colrhs(layer) = rhs(CHF_AUTOIX[i], layer)
+      end do
+      do layer = 0, nlay
+         colusig(layer) = usig(CHF_AUTOIX[i], layer)
+      end do
+      
+c     call ice floating if it is nor grounded (ie open sea or floating)
+      mask = floatingMaskOld(CHF_AUTOIX[i])
+
+      if (floatingMaskNew(CHF_AUTOIX[i]).eq.FLOATINGMASKVAL) then
+         mask = FLOATINGMASKVAL
+      end if
+
+      call column_thermodynamics_update_internal_energy(colenergy,
+     &     tillwaterdepth(CHF_AUTOIX[i]),
+     &     senergy(CHF_AUTOIX[i]),
+     &     sflux(CHF_AUTOIX[i]), sdiric.gt.0, 
+     &     benergy(CHF_AUTOIX[i]), mask,
+     &     bflux(CHF_AUTOIX[i]), colrhs,  
+     &     thckold(CHF_AUTOIX[i]),  thcknew(CHF_AUTOIX[i]),
+     &     tillWaterDrainFactor(CHF_AUTOIX[i]),
+     &     colusig, sigma, dsigma, time, dt, nlay)   
+
+      do layer = 0, nlay - 1
+         energy(CHF_AUTOIX[i], layer) = colenergy(layer)
+      end do
+      CHF_ENDDO
+
+
+      return
+      end 
+c#endif

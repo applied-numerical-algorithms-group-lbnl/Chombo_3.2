@@ -1,0 +1,161 @@
+\documentclass{article}
+\usepackage[margin=20mm]{geometry}
+\usepackage{setspace}
+\bibliographystyle{unsrt}
+
+\title{Notes on the BISICLES control problem}
+\author{Stephen L Cornford}
+\date{Aug 20 2012}
+\begin{document}
+\maketitle
+\onehalfspacing
+BISICLES requires two fields, the rate factor $A$ and the sliding
+coefficient $C$, in addition to the ice thickness $H$ and the
+bedrock topography $r$ in order to solve the stress balance equation.
+Neither of these are directly observed, but we do typically have 
+observations of either the ice velocity $\vec{u}_{\rm obs}$, or speed, and of thinning rate. 
+We adopt a  control method similar to those reported elsewhere
+\cite{JTBB09:doi:10.3189/002214309788608705,JoSH10:doi:10.1029/2010GL044819,Maca93,MRSL10:doi:10.1029/2010GL043853},
+that is, a gradient based optimization method which makes use of the model adjoint equations.
+We don't seek $A$ itself, but rather take $A$ to be a function of an imposed temperature field $T$ and seek
+a multiplier, $\phi$ of the effective viscosity (which contains a factor $A^{1/n}(T)$). The optmization
+problem we solve is inevitably ill-posed, so we employ Tikhnonov regularization, introducing
+a bias toward smoothly varying solutions.
+ 
+For simplicity, the method will be described for a 1D ice sheet, and the 2D equivalents given in the
+appendix.
+
+\section{Model equations}
+
+
+We have a stress balance equation
+\begin{equation}
+\label{eq::sb}
+\frac{\partial}{\partial x} \left ( \phi H \bar{\mu}  \frac{\partial u}{\partial x} \right ) - Cu = \rho g H \frac{\partial s}{\partial x} 
+\end{equation}
+and a mass transport equation
+\begin{equation}
+\frac{\partial H }{\partial t} + \frac{\partial}{\partial x} \left (\bar{u} H \right ) - M = 0
+\end{equation}
+plus boundary conditions. Here, $H \bar{\mu}$ is the vertically integrated effective viscosity, which is computed from $A$ and
+$u$ through Glen's flow low. $u$ is the velocity 
+at the base of the ice, and $\bar{u}$ is the verticall averaged velocity. We will assume that $u \approx \bar{u}$ for now. $M$
+is the total mass source (ie surface accumulation and ablation plus sub-shelf melting etc).
+
+\section{Objective function and gradient without regularization}
+
+We first consider the $C$ and $\phi$ which minimise the mismatch between the model speed and observed speed.
+In that case, our objective function $J$ would be, absent any kind of regularization, 
+\begin{equation}
+J_{\rm 1} = \int _{x_0} ^{x_1} \frac{1}{2\sigma^2}(|u| - |u_{\rm obs}|)^2 \,{\rm d}x .
+\end{equation}
+$\sigma^2$ is the variance in the error of $|u_{\rm obs}|$, which we assume has spatially uncorrelated Gaussian statistics.
+
+To make use of a gradient-based optimization method, we need to compute
+the functional (Gateaux) derivatives $\frac{\delta J}{\delta C}$, and $\frac{\delta J}{\delta \phi}$ so to that end we add a term to $J$,
+\begin{equation}
+J_{\rm 2} =  \int _{x_0} ^{x_1} \lambda \left \{ \frac{\partial}{\partial x} \left ( \phi H \bar{\mu}  \frac{\partial u}{\partial x} \right ) - Cu - \rho g H \frac{\partial s}{\partial x} \right\} \,{\rm d}x .
+\end{equation}
+where $\lambda$ is an undetermined Lagrange multiplier. We then seek solutions to 
+\begin{equation}
+\label{eq::gradJaug}
+\left ( \begin{array}{l}
+\frac{\delta J}{\delta \phi} \\
+\frac{\delta J}{\delta C} \\
+\frac{\delta J}{\delta u } \\
+\frac{\delta J}{\delta \lambda} \\
+\end{array} \right ) = 0.
+\end{equation}
+
+The final row of \ref{eq::gradJaug} is satisfied when provided that $u$ is a solution to the stress balance equation.
+The left hand sides of the first two rows of (\ref{eq::gradJaug}) can be written:
+\begin{equation}
+\label{eq::gradJ}
+\left (
+\begin{array}{l}
+\frac{\delta J}{\delta \phi} \\
+\frac{\delta J}{\delta C} 
+\end{array} 
+\right ) = \left ( 
+\begin{array}{l}
+  - \bar{\mu} H \frac{\partial u}{\partial x}\frac{\partial \lambda}{\partial x} \\
+  - \lambda u
+\end{array} 
+\right )
+\end{equation}
+where $\lambda$ is the solution to the last row. As for that third row, if we neglect the dependence of $\mu$ on $u$,
+we have the \emph{adjoint equation} 
+\begin{equation}
+\label{eq::adj}
+\frac{\partial}{\partial x} \left ( \phi H \bar{\mu}(u)  \frac{\partial \lambda}{\partial x} \right ) - C \lambda  = \frac{1}{\sigma^2} \left ( \frac{|u_{obs}|}{u} - 1 \right ) u 
+\end{equation}
+plus its boundary conditions
+\begin{equation}
+\lambda(x_0) = \lambda(x_1) = 0
+\end{equation}
+Equation (\ref{eq::adj}) is linear in $\lambda$ and 
+has the happy property of having the same left hand side as the stress-balance equation (\ref{eq::sb}), but with $\lambda$
+swapped for $u$. In other words, the
+stress balance equation is self-adjoint if (and only if) we neglect the dependence of $\mu$ on $u$, and we will be
+able to use the same methods to solve (\ref{eq::adj}) as we use to solve (\ref{eq::sb})
+
+We are now in a position to use a gradient-based optimization method to mimimise $J$. BISICLES uses a (nonlinear) conjugate gradient method, 
+but other methods ought to work too. Whichever one we choose, we will need to compute the functional derivatives of
+$J$, which we can do for a given $C$ and $\phi$ as follows:
+\begin{enumerate}
+\item{Solve (\ref{eq::sb}) for $u$ given $C$ and $\phi$ in order to compute $\bar{\mu}$.}
+\item{Solve the adjoint equation (\ref{eq::adj}) for $\lambda$ given $C$,$\phi$ and $\bar{\mu}$.}
+\item{Compute the functional derivatives using (\ref{eq::gradJ}).}
+\end{enumerate}
+
+\section{Objective function and gradient with regularization}
+
+The optimization problem of the previous section is ill-posed in at least two senses.
+First, we are seeking two scalar fields ($C$ and $\phi$) given one scalar field 
+of data ($|u _{obs}|$). Second, even if we were just seeking $C$, say, we might expect the
+problem to be ill-posed - imagine for example that we added a single, tiny sticky spot to
+$C$, then we would expect that to make little difference to the field $u$\footnote{SLC: do some meaningful analysis here, it shouldn't be 
+difficult to show that $u(C)$ is compact.}
+
+To ameliorate this ill-posedness, we can add some penalty functions to the objective function. To
+bias in favour of smooth $C$ and $\phi$, we can add 
+\begin{equation}
+J_{3}  = \alpha _C ^2 \left [ \int _{x_0} ^{x_1} \left ( \frac{\partial C}{ \partial x} \right )^ 2 dx + (C(x_0) - C_0) +(C(x_1) - C_0)   \right ] 
+\end{equation} 
+\begin{equation}
+J_{4}  = \alpha _\phi ^2 \left [ \int _{x_0} ^{x_1} \left ( \frac{\partial \phi}{ \partial x} \right )^ 2 dx + (\phi(x_0) - \phi_0) +(\phi(x_1) - \phi_0)   \right ] 
+\end{equation} 
+
+$C_0$,$C_1$,$\phi_0$ and $\phi _1$ are boundary data. BISICLES boundaries tend to be far from the action, at
+ice divides and in the ocean, so we set  $\phi_0 = \phi _1 = 1$ and $C_0,C_1$ to be some large value (on land),
+or zero (for floating ice). The coefficients $\alpha _C ^2$ and $\alpha _\phi ^2$ could be determined by some systematic means 
+(e.g. cross validation, finding a critical point in the $L-$curve) but they can also be regarded
+as a characteristic length scales of variation in $C$ and $\phi$, and imposed on that basis. The larger they
+are, the worse the fit between model and data will be.\footnote{We probably should support some systematic means of choosing
+these parameters, but we also make use of the iterative regularization provided by CG, so needs a bit of thought.}
+
+Adding $J_3$ and $J_4$ to the objective function, (\ref{eq::gradJ}) becomes:
+\begin{equation}
+\label{eq::gradJTikh}
+\left (
+\begin{array}{l}
+\frac{\delta J}{\delta \phi} \\
+\frac{\delta J}{\delta C} 
+\end{array} 
+\right ) = \left ( 
+\begin{array}{l}
+  - \bar{\mu} H \frac{\partial u}{\partial x}\frac{\partial \lambda}{\partial x^2} - \alpha^2_\phi \frac{\partial^2 \phi}{\partial x^2} \\
+  - \lambda u - \alpha^2_C \frac{\partial^2 C}{\partial^2 x}
+\end{array} 
+\right ).
+\end{equation}
+In effect, we are solving a pair of Poisson equations in $\phi$ and $C$ with Robin boundary conditions.
+
+
+\section*{Appendix}
+
+
+\bibliography{control}
+
+
+\end{document}

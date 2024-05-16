@@ -1,0 +1,79 @@
+<html>
+<head>
+  <title>BISICLES driver executable</title>
+  
+   <link href="bikedoc.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+
+<div id="head">
+<ul>
+<li><a href='index.html'>Index page<a/> </li>
+<li><a href='#top'>Top of page<a/> </li>
+</ul>
+</div>
+
+<div id="main">
+<h1>BISICLES driver executable</h1>
+
+
+
+
+BISICLES' driver executable is used to run standalone 
+time-dependent ice sheet simulations. At the start of a  simulation, 
+it carries out the following operations
+<ol>
+  <li>Read a <a href='io.html#config'>run-time configuration</a> file, specified as the first command line argument</li>
+  <li>
+    Compute initial thickness, topography, internal energy, stiffness and basal friction coefficient 
+    data over the whole domain on the base level (l = 0) mesh. This data might be loaded from a file through the
+    <a href='leveldatainterface.html'>LevelData interface</a>, computed through the 
+    <a href='pythoninterface.html'>Python interface</a> or through a number of special
+    purpose modules.
+  </li>
+  <li>
+    Set L = 0 and solve the stress-balance equations to find the velocity field on the l = 0 mesh
+  </li>
+  <li>
+    Generate a new mesh with  L + 1  levels on which some regions are more
+    finely resolved according to the refinement criteria
+  </li>
+  <li>
+    Compute the thickness, topography, internal energy, damage and basal friction coefficient 
+    data on the  L + 1 mesh
+  </li>
+  <li>
+    Solve the stress-balance equations to find the velocity field on the L + 1 mesh
+  </li>
+  <li>
+    Write a plot file, including the thickness, topography, surface elevation, velocity etc
+  </li>
+  <li>
+    if L has not reached its maximum value, set L = L + 1 and repeat 3-7
+  </li>
+  
+</ol> 
+It then runs the following operations until the simulation has completed
+<ol>
+  <li>Write a check-point file, if required </li>
+  <li>If time t > simulation time, exit, else continue </li>
+  <li>Compute surface fluxes (accumulation and melting) given the geometry and velocity field  </li>
+  <li>Compute horizontal thickness and internal energy fluxes given the geometry, velocity field and surface fluxes </li>
+  <li>Evolve the thickness  and internal energy fields 
+    for a time determined by the CFL condition</li>
+  <li>Solve the stress-balance equations to find a new velocity field </li>
+  <li>Write a plot file, if required </li>
+  <li>Update the mesh according to the refinement criteria</li>
+  <li>If needed, solve the stress-balance equations to find a new velocity field </li>
+  <li>repeat from step 1</li>
+</ol> 
+
+
+<p>
+It is also possible to <a href='io.html#restart'>restart</a> a simulation from a checkpoint file, for example 
+to create a number of simulation branches, having carried out some sort of relaxation
+</p>
+</div>
+
+</body>
+</html>
