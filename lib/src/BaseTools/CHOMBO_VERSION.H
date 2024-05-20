@@ -17,7 +17,11 @@
 /** signal that this is the svn trunk version of Chombo, rather than 
     the release version. This should be changed in the release version 
     of this file */
-#define CHOMBO_TRUNK TRUE
+#define CHOMBO_TRUNK FALSE
+
+/** which patch of the release is this?
+ */
+#define CHOMBO_PATCH_NUMBER 8
 
 /**
    \mainpage Chombo: Block-Structured Adaptive Mesh Refinement Library

@@ -1,0 +1,73 @@
+c     Initialize with periodic bc's
+c     u(t,x,y,z) = sin(2*pi*(t+x+y+z))
+      subroutine simplePDEsol(
+     &     CHF_FRA[u],
+     &     CHF_BOX[reg],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[t])
+
+      integer CHF_DDECL[i;j;k]
+      REAL_T CHF_DDECL[xc;yc;zc]
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[u]
+
+      do nv = 0, ncomp-1
+      CHF_MULTIDO[reg;i ; j; k]
+      CHF_DTERM[
+      xc = (i+.5)*dx;
+      yc = (j+.5)*dx;
+      zc = (k+.5)*dx]
+
+      u(CHF_IX[i;j;k],nv) = 
+     &    sin(two*PI*(CHF_DTERM[xc;+yc;+zc]+t))
+
+      CHF_ENDDO
+      end do
+
+      return
+      end
+
+c      RHS assuming periodic bc's / ghost cells filled
+c      rhs(t,u) = c*laplacian(u) + 2*pi*(cos(2*pi*(t+x+y+z))
+c                 + 2*pi*c*d*sin(2*pi*(t+x+y+z))
+      subroutine simplePDErhs(
+     &     CHF_CONST_FRA[u],
+     &     CHF_FRA[uDot],
+     &     CHF_BOX[reg],
+     &     CHF_CONST_REAL[diffusionCoeff],
+     &     CHF_CONST_REAL[dx],
+     &     CHF_CONST_REAL[t])
+
+      integer CHF_DDECL[i;j;k]
+      REAL_T CHF_DDECL[xc;yc;zc]
+      REAL_T tau
+      integer nv, ncomp
+
+      ncomp = CHF_NCOMP[uDot]
+      if(ncomp .ne. CHF_NCOMP[u]) then
+      CHF_CALL MAYDAY_ERROR()
+      endif
+
+      do nv = 0, ncomp-1
+      CHF_MULTIDO[reg;i ; j; k]
+      CHF_DTERM[
+      xc = (i+.5)*dx;
+      yc = (j+.5)*dx;
+      zc = (k+.5)*dx]
+
+      tau = 2 * PI
+      uDot(CHF_IX[i;j;k],nv) = diffusionCoeff * ( CHF_DTERM[
+     &    u(CHF_IX[i-1;j  ;k  ],nv) + u(CHF_IX[i+1;j  ;k  ],nv);
+     &  + u(CHF_IX[i  ;j-1;k  ],nv) + u(CHF_IX[i  ;j+1;k  ],nv);
+     &  + u(CHF_IX[i  ;j  ;k-1],nv) + u(CHF_IX[i  ;j  ;k+1],nv)]
+     &  - (two*CH_SPACEDIM)*u(CHF_IX[i;j;k],nv)) / (dx*dx)
+     &  + tau*(cos(tau*(CHF_DTERM[xc;+yc;+zc]+t))
+     &  + tau*CH_SPACEDIM*diffusionCoeff*sin(tau*(CHF_DTERM[xc;+yc;+zc]+t)))
+
+      CHF_ENDDO
+      end do
+
+      return
+      end
+

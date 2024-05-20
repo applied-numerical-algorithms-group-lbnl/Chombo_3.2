@@ -273,13 +273,15 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
 {
   CH_TIME("AMRPoissonOp::residualI");
 
+  
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  if (s_exchangeMode == 0)
-    phi.exchange(phi.interval(), m_exchangeCopier);
-  else if (s_exchangeMode == 1)
-    phi.exchangeNoOverlap(m_exchangeCopier);
-  else
-    MayDay::Abort("exchangeMode");
+  phi.exchange();
+//  if (s_exchangeMode == 0)
+//    phi.exchange(phi.interval(), m_exchangeCopier);
+//  else if (s_exchangeMode == 1)
+//    phi.exchangeNoOverlap(m_exchangeCopier);
+//  else
+//    MayDay::Abort("exchangeMode");
 
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
@@ -439,12 +441,13 @@ void AMRPoissonOp::applyOpI(LevelData<FArrayBox>&       a_lhs,
   CH_TIME("AMRPoissonOp::applyOpI");
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  if (s_exchangeMode == 0)
-    phi.exchange(phi.interval(), m_exchangeCopier);
-  else if (s_exchangeMode == 1)
-    phi.exchangeNoOverlap(m_exchangeCopier);
-  else
-    MayDay::Abort("exchangeMode");
+  phi.exchange();
+//  if (s_exchangeMode == 0)
+//    phi.exchange(phi.interval(), m_exchangeCopier);
+//  else if (s_exchangeMode == 1)
+//    phi.exchangeNoOverlap(m_exchangeCopier);
+//  else
+//    MayDay::Abort("exchangeMode");
 
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
@@ -803,13 +806,14 @@ void AMRPoissonOp::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
       homogeneousCFInterp(a_phiFine);
   }
 
-  if (s_exchangeMode == 0)
-    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
-  else if (s_exchangeMode == 1)
-    a_phiFine.exchangeNoOverlap(m_exchangeCopier);
-  else
-    MayDay::Abort("exchangeMode");
+//  if (s_exchangeMode == 0)
+//    a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
+//  else if (s_exchangeMode == 1)
+//    a_phiFine.exchangeNoOverlap(m_exchangeCopier);
+//  else
+//    MayDay::Abort("exchangeMode");
 
+  a_phiFine.exchange();
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   DataIterator dit = a_phiFine.dataIterator();
   int nbox=dit.size();
@@ -1523,12 +1527,13 @@ void AMRPoissonOp::levelGSRB( LevelData<FArrayBox>&       a_phi,
 
       {
         CH_TIME("AMRPoissonOp::levelGSRB::exchange");
-        if (s_exchangeMode == 0)
-          a_phi.exchange( a_phi.interval(), m_exchangeCopier );
-        else if (s_exchangeMode == 1)
-          a_phi.exchangeNoOverlap(m_exchangeCopier);
-        else
-          MayDay::Abort("exchangeMode");
+//        if (s_exchangeMode == 0)
+//          a_phi.exchange( a_phi.interval(), m_exchangeCopier );
+//        else if (s_exchangeMode == 1)
+//          a_phi.exchangeNoOverlap(m_exchangeCopier);
+//        else
+//          MayDay::Abort("exchangeMode");
+        a_phi.exchange();
       }
       {
         CH_TIME("levelGSRB_color_No_Communication");

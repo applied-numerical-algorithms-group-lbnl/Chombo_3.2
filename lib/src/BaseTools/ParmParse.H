@@ -2903,6 +2903,22 @@ public:
   */
   bool contains (const std::string& name) const;
 
+
+  ///
+  /**
+     Returns true if name is part of an entry in table.
+     (i.e. returns true if name = "name.this" and there 
+     is a "name.this.list")
+  */
+  bool looseContains (const char* name) const;
+
+  ///
+  /**
+     Returns true if name is in table.
+  */
+  bool looseContains (const std::string& name) const;
+  
+
   ///
   /** Returns the number of values associated with nth occurence of
     name (prepended with the prefix) in the table.  n == -1 implies
@@ -3942,6 +3958,7 @@ ParmParse::queryarr (const char* name,
           ptr[i] = c_array[i];
         }
     }
+  delete [] c_array;  
   return status;
 }
 

@@ -591,7 +591,7 @@ void GodunovUtilities::PPMFaceValues(FArrayBox&            a_WFace,
       int ghostbox1 = 1;
       box1cells.grow(a_dir, ghostbox1);
       box1cells.enclosedCells();
-
+      
       FArrayBox dW(box1cells, a_numSlopes);
       vanLeerSlopes(dW, a_W, a_numSlopes, a_useLimiting, a_dir, box1cells);
 
@@ -604,11 +604,9 @@ void GodunovUtilities::PPMFaceValues(FArrayBox&            a_WFace,
       Box loBox,hiBox,centerBox,entireBox;
       int hasLo,hasHi;
 
-      // (DFM 10/27/2017) This one should be over the destination box, not
-      // box1cells
+      // (DFM 11/17/2022) Revert this call back to box1cells from previous "fix"
       loHiCenterFace(loBox, hasLo, hiBox, hasHi, centerBox, entireBox,
-                     a_box, m_domain, a_dir);
-
+                     box1cells, m_domain, a_dir);
       // a_Wface[i-e/2] = (a_W[i-e] + dW[i-e]/3)/2 + (a_W[i] - dW[i]/3)/2
       FORT_PPMFACEVALUESF(CHF_FRA(a_WFace),
                           CHF_CONST_FRA(a_W),

@@ -160,15 +160,24 @@ public:
   ///
   /** Construct from a Vector of Boxes and a Vector of
       processor assignments.  On exit, the BoxLayout will be closed.
+      The communicators for two layouts must match for exchange/copyto.
   */
   BoxLayout(const Vector<Box>& a_boxes,
-            const Vector<int>& a_procIDs);
+            const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+            ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif            
+    );
 
   ///
   /** Construct from a LayoutData<Box>.
       On exit, the BoxLayout will be closed.
   */
-  BoxLayout(const LayoutData<Box>& a_newLayout);
+  BoxLayout(const LayoutData<Box>& a_newLayout
+#ifdef CH_MPI
+                  ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif                  
+    );
 
   ///
   void transform(BaseTransform& a_transform);
@@ -197,7 +206,11 @@ public:
   */
   virtual void
   define(const Vector<Box>& a_boxes,
-         const Vector<int>& a_procIDs);
+         const Vector<int>& a_procIDs
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif            
+            );
 
   ///
   /** Define this BoxLayout from a LayoutData<Box>.
@@ -207,7 +220,11 @@ public:
       each Box in the LayoutData<Box>.
       On exit, the BoxLayout will be closed, and NOT re-sorted.
   */
-  virtual void define(const LayoutData<Box>& a_newLayout);
+  virtual void define(const LayoutData<Box>& a_newLayout
+#ifdef CH_MPI            
+         ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif            
+    );
 
   /*@}*/
 
@@ -645,12 +662,20 @@ public:
   {
     return m_boxes;
   }
+#ifdef CH_MPI
+  MPI_Comm communicator() const
+  {
+    return m_comm;
+  }
+#endif  
 protected:
 
   void buildDataIndex();
   friend class LayoutIterator;
   friend class DataIterator;
-
+#ifdef CH_MPI
+  MPI_Comm m_comm;
+#endif  
   RefCountedPtr<Vector<Entry> >        m_boxes;
   RefCountedPtr<int>                   m_layout;
   RefCountedPtr<bool>                  m_closed;

@@ -39,17 +39,17 @@ using std::system;
 
 #ifdef CH_USE_HDF5
 /*
-\\ write out hierarchy of amr data in HDF5 format
-\\ filename,  == file to output to
-\\ a_vectData == data at each level
-\\ a_vectNames== names of variables
-\\ a_domain == domain at coarsest level
-\\ a_dx     == grid spacing at coarsest level
-\\ a_dt     == time step at coarsest level
-\\ a_time     == time
-\\ a_vectRatio == refinement ratio at all levels
-\\ (ith entry is refinement ratio between levels i and i + 1)
-\\ a_numLevels == number of levels to output
+  \\ write out hierarchy of amr data in HDF5 format
+  \\ filename,  == file to output to
+  \\ a_vectData == data at each level
+  \\ a_vectNames== names of variables
+  \\ a_domain == domain at coarsest level
+  \\ a_dx     == grid spacing at coarsest level
+  \\ a_dt     == time step at coarsest level
+  \\ a_time     == time
+  \\ a_vectRatio == refinement ratio at all levels
+  \\ (ith entry is refinement ratio between levels i and i + 1)
+  \\ a_numLevels == number of levels to output
 */
 void
 WriteAMRHierarchyHDF5(const string& filename,
@@ -69,14 +69,21 @@ WriteAMRHierarchyHDF5(const string& filename,
   CH_TIMER("CloseFile",closeFile);
 
 #ifdef CH_MPI
+  auto comm = a_vectGrids[0].communicator();
   {
     CH_TIME("Barrier");
-    MPI_Barrier(Chombo_MPI::comm);
+    MPI_Barrier(comm);
   }
 #endif
+  pout() <<"WriteAMRHierarchy:  about to hopen handle for file " << filename << endl;
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE);
+  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global"
+#ifdef CH_MPI
+  , comm
+#endif
+      );
   CH_STOP(createFile);
+  pout() <<"WriteAMRHierarchy:  finished opening file " << filename << endl;
 
   CH_START(writeFile);
   WriteAMRHierarchyHDF5(handle, a_vectGrids, a_vectData, a_vectNames,
@@ -86,7 +93,7 @@ WriteAMRHierarchyHDF5(const string& filename,
 #ifdef CH_MPI
   {
     CH_TIME("Barrier");
-    MPI_Barrier(Chombo_MPI::comm);
+    MPI_Barrier(comm);
   }
 #endif
   CH_START(closeFile);
@@ -95,30 +102,30 @@ WriteAMRHierarchyHDF5(const string& filename,
 }
 
 /*
-\\ write out hierarchy of anisotropic amr data in HDF5 format
-\\ filename,  == file to output to
-\\ a_vectData == data at each level
-\\ a_vectNames== names of variables
-\\ a_domain == domain at coarsest level
-\\ a_dx     == grid spacing in each direction at coarsest level
-\\ a_dt     == time step at coarsest level
-\\ a_time     == time
-\\ a_vectRatio == refinement ratio in each direction at all levels
-\\ (ith entry is refinement ratio between levels i and i + 1)
-\\ a_numLevels == number of levels to output
+  \\ write out hierarchy of anisotropic amr data in HDF5 format
+  \\ filename,  == file to output to
+  \\ a_vectData == data at each level
+  \\ a_vectNames== names of variables
+  \\ a_domain == domain at coarsest level
+  \\ a_dx     == grid spacing in each direction at coarsest level
+  \\ a_dt     == time step at coarsest level
+  \\ a_time     == time
+  \\ a_vectRatio == refinement ratio in each direction at all levels
+  \\ (ith entry is refinement ratio between levels i and i + 1)
+  \\ a_numLevels == number of levels to output
 */
 void
 WriteAnisotropicAMRHierarchyHDF5(
-    const string& filename,
-    const Vector<DisjointBoxLayout>& a_vectGrids,
-    const Vector<LevelData<FArrayBox>* > & a_vectData,
-    const Vector<string>& a_vectNames,
-    const Box& a_domain,
-    const RealVect& a_dx,
-    const Real& a_dt,
-    const Real& a_time,
-    const Vector<IntVect>& a_refRatios,
-    const int& a_numLevels)
+  const string& filename,
+  const Vector<DisjointBoxLayout>& a_vectGrids,
+  const Vector<LevelData<FArrayBox>* > & a_vectData,
+  const Vector<string>& a_vectNames,
+  const Box& a_domain,
+  const RealVect& a_dx,
+  const Real& a_dt,
+  const Real& a_time,
+  const Vector<IntVect>& a_refRatios,
+  const int& a_numLevels)
 {
   CH_TIMERS("WriteAnisotropicAMRHierarchyHDF5");
   CH_TIMER("CreateFile",createFile);
@@ -131,8 +138,8 @@ WriteAnisotropicAMRHierarchyHDF5(
 
   CH_START(writeFile);
   WriteAnisotropicAMRHierarchyHDF5(
-      handle, a_vectGrids, a_vectData, a_vectNames,
-      a_domain, a_dx, a_dt, a_time, a_refRatios, a_numLevels);
+    handle, a_vectGrids, a_vectData, a_vectNames,
+    a_domain, a_dx, a_dt, a_time, a_refRatios, a_numLevels);
   CH_STOP(writeFile);
 
 #ifdef CH_MPI
@@ -163,63 +170,64 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
   HDF5HeaderData header;
   int nComp = a_vectNames.size();
 
+
   string filedescriptor("VanillaAMRFileType");
   header.m_string ["filetype"]      = filedescriptor;
   header.m_int ["num_levels"]       = a_numLevels;
   header.m_int ["num_components"]    = nComp;
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      header.m_string[label] = a_vectNames[ivar];
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    header.m_string[label] = a_vectNames[ivar];
+  }
   header.writeToFile(handle);
 
   Box domainLevel = a_domain;
   Real dtLevel = a_dt;
   Real dxLevel = a_dx;
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    int refLevel = 1;
+    if (ilev != a_numLevels -1)
     {
-      int refLevel = 1;
-      if (ilev != a_numLevels -1)
-        {
-          refLevel = a_refRatio[ilev];
-        }
-      if (ilev != 0)
-        {
-          domainLevel.refine(a_refRatio[ilev-1]);
-          dtLevel /= a_refRatio[ilev-1];
-          dxLevel /= a_refRatio[ilev-1];
-        }
-      CH_assert(a_vectData[ilev] != NULL);
-      const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
-      CH_assert(dataLevel.nComp() == nComp);
-      Interval comps(0,nComp-1);
-      IntVect ghostVect = a_vectData[0]->ghostVect();
-      int eek = writeLevel(handle, ilev, dataLevel,
-                           dxLevel, dtLevel, a_time,
-                           domainLevel, refLevel, ghostVect, comps);
-      if (eek != 0)
-        {
-          MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
-        }
+      refLevel = a_refRatio[ilev];
     }
+    if (ilev != 0)
+    {
+      domainLevel.refine(a_refRatio[ilev-1]);
+      dtLevel /= a_refRatio[ilev-1];
+      dxLevel /= a_refRatio[ilev-1];
+    }
+    CH_assert(a_vectData[ilev] != NULL);
+    const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
+    CH_assert(dataLevel.nComp() == nComp);
+    Interval comps(0,nComp-1);
+    IntVect ghostVect = a_vectData[0]->ghostVect();
+    int eek = writeLevel(handle, ilev, dataLevel,
+                         dxLevel, dtLevel, a_time,
+                         domainLevel, refLevel, ghostVect, comps);
+    if (eek != 0)
+    {
+      MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
+    }
+  }
 }
 
 void
 WriteAnisotropicAMRHierarchyHDF5(
-    HDF5Handle& handle,
-    const Vector<DisjointBoxLayout>& a_vectGrids,
-    const Vector<LevelData<FArrayBox>* > & a_vectData,
-    const Vector<string>& a_vectNames,
-    const Box& a_domain,
-    const RealVect& a_dx, // Grid spacing in each direction
-    const Real& a_dt,
-    const Real& a_time,
-    const Vector<IntVect>& a_refRatios, // for each level, in each direction
-    const int& a_numLevels)
+  HDF5Handle& handle,
+  const Vector<DisjointBoxLayout>& a_vectGrids,
+  const Vector<LevelData<FArrayBox>* > & a_vectData,
+  const Vector<string>& a_vectNames,
+  const Box& a_domain,
+  const RealVect& a_dx, // Grid spacing in each direction
+  const Real& a_dt,
+  const Real& a_time,
+  const Vector<IntVect>& a_refRatios, // for each level, in each direction
+  const int& a_numLevels)
 {
   CH_assert(a_numLevels > 0);
   CH_assert(a_vectData.size()  >= a_numLevels);
@@ -234,43 +242,43 @@ WriteAnisotropicAMRHierarchyHDF5(
   header.m_int ["num_components"]    = nComp;
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      header.m_string[label] = a_vectNames[ivar];
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    header.m_string[label] = a_vectNames[ivar];
+  }
   header.writeToFile(handle);
 
   Box domainLevel = a_domain;
   Real dtLevel = a_dt;
   RealVect dxLevel = a_dx;
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    IntVect refLevel = IntVect::Unit;
+    if (ilev != a_numLevels -1)
     {
-      IntVect refLevel = IntVect::Unit;
-      if (ilev != a_numLevels -1)
-        {
-          refLevel = a_refRatios[ilev];
-        }
-      if (ilev != 0)
-        {
-          domainLevel.refine(a_refRatios[ilev-1]);
-          dtLevel /= a_refRatios[ilev-1][0]; // HACK - just use 0 dir ref ratio
-          dxLevel /= a_refRatios[ilev-1];
-        }
-      CH_assert(a_vectData[ilev] != NULL);
-      const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
-      CH_assert(dataLevel.nComp() == nComp);
-      Interval comps(0,nComp-1);
-      IntVect ghostVect = a_vectData[0]->ghostVect();
-      int eek = writeLevel(handle, ilev, dataLevel,
-                           dxLevel, dtLevel, a_time,
-                           domainLevel, refLevel, ghostVect, comps);
-      if (eek != 0)
-        {
-          MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
-        }
+      refLevel = a_refRatios[ilev];
     }
+    if (ilev != 0)
+    {
+      domainLevel.refine(a_refRatios[ilev-1]);
+      dtLevel /= a_refRatios[ilev-1][0]; // HACK - just use 0 dir ref ratio
+      dxLevel /= a_refRatios[ilev-1];
+    }
+    CH_assert(a_vectData[ilev] != NULL);
+    const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
+    CH_assert(dataLevel.nComp() == nComp);
+    Interval comps(0,nComp-1);
+    IntVect ghostVect = a_vectData[0]->ghostVect();
+    int eek = writeLevel(handle, ilev, dataLevel,
+                         dxLevel, dtLevel, a_time,
+                         domainLevel, refLevel, ghostVect, comps);
+    if (eek != 0)
+    {
+      MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
+    }
+  }
 }
 
 void
@@ -319,65 +327,65 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
   header.m_int ["num_components"]    = nComp;
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      header.m_string[label] = label;
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    header.m_string[label] = label;
+  }
   header.writeToFile(handle);
 
   Box domainLevel = a_domain;
   Real dtLevel = dtin;
   Real dxLevel = dxin;
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    int refLevel = 1;
+    if (ilev != a_numLevels -1)
     {
-      int refLevel = 1;
-      if (ilev != a_numLevels -1)
-        {
-          refLevel = a_refRatio[ilev];
-        }
-      if (ilev != 0)
-        {
-          domainLevel.refine(a_refRatio[ilev-1]);
-          dtLevel /= a_refRatio[ilev-1];
-          dxLevel /= a_refRatio[ilev-1];
-        }
-      CH_assert(a_vectData[ilev] != NULL);
-      const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
-      CH_assert(dataLevel.nComp() == nComp);
-      Interval comps(0,nComp-1);
-      IntVect ghostVect = a_vectData[0]->ghostVect();
-      int eek = writeLevel(handle, ilev, dataLevel,
-                           dxLevel, dtLevel, time,
-                           domainLevel, refLevel, ghostVect, comps);
-      if (eek != 0)
-        {
-          MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
-        }
+      refLevel = a_refRatio[ilev];
     }
+    if (ilev != 0)
+    {
+      domainLevel.refine(a_refRatio[ilev-1]);
+      dtLevel /= a_refRatio[ilev-1];
+      dxLevel /= a_refRatio[ilev-1];
+    }
+    CH_assert(a_vectData[ilev] != NULL);
+    const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
+    CH_assert(dataLevel.nComp() == nComp);
+    Interval comps(0,nComp-1);
+    IntVect ghostVect = a_vectData[0]->ghostVect();
+    int eek = writeLevel(handle, ilev, dataLevel,
+                         dxLevel, dtLevel, time,
+                         domainLevel, refLevel, ghostVect, comps);
+    if (eek != 0)
+    {
+      MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
+    }
+  }
 }
 
 //
 /*
-\\ Read in hierarchy of amr data in HDF5 format
-\\ filename,  == file to output to
-\\ a_vectData == data at each level
-\\ a_vectNames== names of variables
-\\ a_domain == domain at coarsest level
-\\ a_dx     == grid spacing at coarsest level
-\\ a_dt     == time step at coarsest level
-\\ a_time     == time
-\\ a_vectRatio == refinement ratio at all levels
-\\ (ith entry is refinement ratio between levels i and i + 1)
-\\ a_numLevels == number of levels to output
+  \\ Read in hierarchy of amr data in HDF5 format
+  \\ filename,  == file to output to
+  \\ a_vectData == data at each level
+  \\ a_vectNames== names of variables
+  \\ a_domain == domain at coarsest level
+  \\ a_dx     == grid spacing at coarsest level
+  \\ a_dt     == time step at coarsest level
+  \\ a_time     == time
+  \\ a_vectRatio == refinement ratio at all levels
+  \\ (ith entry is refinement ratio between levels i and i + 1)
+  \\ a_numLevels == number of levels to output
 
-return values:
-0: success
--1: bogus number of levels
--2: bogus number of components
--3: error in readlevel
--4: file open failed
+  return values:
+  0: success
+  -1: bogus number of levels
+  -2: bogus number of components
+  -3: error in readlevel
+  -4: file open failed
 */
 int
 ReadAMRHierarchyHDF5(const string& filename,
@@ -389,14 +397,30 @@ ReadAMRHierarchyHDF5(const string& filename,
                      Real& a_dt,
                      Real& a_time,
                      Vector<int>& a_refRatio,
-                     int& a_numLevels)
-{ CH_TIME("ReadAMRHierarchyHDF5 long with filename");
+                     int& a_numLevels
+#ifdef CH_MPI                     
+                     ,MPI_Comm a_comm
+#endif                     
+  )
+{
+  CH_TIME("ReadAMRHierarchyHDF5 long with filename");
+#ifdef CH_MPI
+  {
+    CH_TIME("Barrier");
+    MPI_Barrier(a_comm);
+  }
+#endif
   HDF5Handle handle;
-  { CH_TIME("open handle");
-  int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
-  if ( err < 0)
+  {
+    CH_TIME("open handle");
+    int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY, "Chombo_global"
+#ifdef CH_MPI                          
+                          , a_comm
+#endif
+      );
+    if ( err < 0)
     {
-      return -4;
+      return -4586;
     }
   }
   int eekflag = ReadAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
@@ -404,12 +428,14 @@ ReadAMRHierarchyHDF5(const string& filename,
                                      a_time, a_refRatio, a_numLevels);
 
 #ifdef CH_MPI
-  { CH_TIME("barrier");
-  MPI_Barrier(Chombo_MPI::comm);
+  {
+    CH_TIME("barrier");
+    MPI_Barrier(a_comm);
   }
 #endif
-  { CH_TIME("close handle");
-  handle.close();
+  {
+    CH_TIME("close handle");
+    handle.close();
   }
 
   return (eekflag);
@@ -451,39 +477,39 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
   a_vectNames.resize(nComp);
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      a_vectNames[ivar] = header.m_string[label];
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    a_vectNames[ivar] = header.m_string[label];
+  }
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    int refLevel = 0;
+    Box domainLevel;
+    Real dtLevel;
+    Real dxLevel;
+    a_vectData[ilev] = new LevelData<FArrayBox>();
+    int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
+                        dxLevel, dtLevel,  a_time,
+                        domainLevel, refLevel, Interval(), true);
+    if (eek != 0)
     {
-      int refLevel = 0;
-      Box domainLevel;
-      Real dtLevel;
-      Real dxLevel;
-      a_vectData[ilev] = new LevelData<FArrayBox>();
-      int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
-                          dxLevel, dtLevel,  a_time,
-                          domainLevel, refLevel, Interval(), true);
-      if (eek != 0)
-      {
-        MayDay::Warning("ReadAMRHierarchyHDF5: readLevel failed");
-        return (-3);
-      }
-
-      const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
-      a_vectGrids[ilev]= dbl;
-
-      if (ilev == 0)
-        {
-          a_domain = domainLevel;
-          a_dt = dtLevel;
-          a_dx = dxLevel;
-        }
-      a_refRatio[ilev] = refLevel;
+      MayDay::Warning("ReadAMRHierarchyHDF5: readLevel failed");
+      return (-3);
     }
+
+    const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
+    a_vectGrids[ilev]= dbl;
+
+    if (ilev == 0)
+    {
+      a_domain = domainLevel;
+      a_dt = dtLevel;
+      a_dx = dxLevel;
+    }
+    a_refRatio[ilev] = refLevel;
+  }
   return (0);
 }
 
@@ -535,77 +561,77 @@ ReadAMRHierarchyHDF5(HDF5Handle& handle,
 
   //  int nComp = header.m_int["num_components"];
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    int refLevel = 0;
+    Box domainLevel;
+    Real dtLevel;
+    Real dxLevel;
+    Real time;
+    a_vectData[ilev] = new LevelData<FArrayBox>();
+    int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
+                        dxLevel, dtLevel,  time,
+                        domainLevel, refLevel, Interval(), true);
+    if (eek != 0)
     {
-      int refLevel = 0;
-      Box domainLevel;
-      Real dtLevel;
-      Real dxLevel;
-      Real time;
-      a_vectData[ilev] = new LevelData<FArrayBox>();
-      int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
-                          dxLevel, dtLevel,  time,
-                          domainLevel, refLevel, Interval(), true);
-      if (eek != 0)
-      {
-        MayDay::Warning("ReadAMRHierarchyHDF5: readLevel failed");
-        return (-3);
-      }
-
-      const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
-      a_vectGrids[ilev]= dbl;
-
-      if (ilev == 0)
-        {
-          a_domain = domainLevel;
-        }
-      a_refRatio[ilev] = refLevel;
+      MayDay::Warning("ReadAMRHierarchyHDF5: readLevel failed");
+      return (-3);
     }
+
+    const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
+    a_vectGrids[ilev]= dbl;
+
+    if (ilev == 0)
+    {
+      a_domain = domainLevel;
+    }
+    a_refRatio[ilev] = refLevel;
+  }
 
   return (0);
 }
 
 //
 /*
-\\ Read in hierarchy of amr data in ANISOTROPIC HDF5 format
-\\ filename,  == file to output to
-\\ a_vectData == data at each level
-\\ a_vectNames== names of variables
-\\ a_domain == domain at coarsest level
-\\ a_dx     == grid spacing at coarsest level
-\\ a_dt     == time step at coarsest level
-\\ a_time     == time
-\\ a_vectRatio == refinement ratio at all levels
-\\ (ith entry is refinement ratio between levels i and i + 1)
-\\ a_numLevels == number of levels to output
+  \\ Read in hierarchy of amr data in ANISOTROPIC HDF5 format
+  \\ filename,  == file to output to
+  \\ a_vectData == data at each level
+  \\ a_vectNames== names of variables
+  \\ a_domain == domain at coarsest level
+  \\ a_dx     == grid spacing at coarsest level
+  \\ a_dt     == time step at coarsest level
+  \\ a_time     == time
+  \\ a_vectRatio == refinement ratio at all levels
+  \\ (ith entry is refinement ratio between levels i and i + 1)
+  \\ a_numLevels == number of levels to output
 
-return values:
-0: success
--1: bogus number of levels
--2: bogus number of components
--3: error in readlevel
--4: file open failed
+  return values:
+  0: success
+  -1: bogus number of levels
+  -2: bogus number of components
+  -3: error in readlevel
+  -4: file open failed
 */
 int
 ReadAnisotropicAMRHierarchyHDF5(const string& filename,
-                     Vector<DisjointBoxLayout>& a_vectGrids,
-                     Vector<LevelData<FArrayBox>* > & a_vectData,
-                     Vector<string>& a_vectNames,
-                     Box& a_domain,
-                     RealVect& a_dx,
-                     Real& a_dt,
-                     Real& a_time,
-                     Vector<IntVect>& a_refRatio,
-                     int& a_numLevels)
+                                Vector<DisjointBoxLayout>& a_vectGrids,
+                                Vector<LevelData<FArrayBox>* > & a_vectData,
+                                Vector<string>& a_vectNames,
+                                Box& a_domain,
+                                RealVect& a_dx,
+                                Real& a_dt,
+                                Real& a_time,
+                                Vector<IntVect>& a_refRatio,
+                                int& a_numLevels)
 {
   HDF5Handle handle;
   int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
   if ( err < 0)
-    {
-      return -4;
-    }
+  {
+    return -4;
+  }
   int eekflag = ReadAnisotropicAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
-                                     a_vectNames, a_domain, a_dx, a_dt,
-                                     a_time, a_refRatio, a_numLevels);
+                                                a_vectNames, a_domain, a_dx, a_dt,
+                                                a_time, a_refRatio, a_numLevels);
 
 #ifdef CH_MPI
   MPI_Barrier(Chombo_MPI::comm);
@@ -617,15 +643,15 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
 
 int
 ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
-                     Vector<DisjointBoxLayout>& a_vectGrids,
-                     Vector<LevelData<FArrayBox>* > & a_vectData,
-                     Vector<string>& a_vectNames,
-                     Box& a_domain,
-                     RealVect& a_dx,
-                     Real& a_dt,
-                     Real& a_time,
-                     Vector<IntVect>& a_refRatio,
-                     int& a_numLevels)
+                                Vector<DisjointBoxLayout>& a_vectGrids,
+                                Vector<LevelData<FArrayBox>* > & a_vectData,
+                                Vector<string>& a_vectNames,
+                                Box& a_domain,
+                                RealVect& a_dx,
+                                Real& a_dt,
+                                Real& a_time,
+                                Vector<IntVect>& a_refRatio,
+                                int& a_numLevels)
 {
 
   HDF5HeaderData header;
@@ -650,49 +676,49 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
   a_vectNames.resize(nComp);
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      a_vectNames[ivar] = header.m_string[label];
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    a_vectNames[ivar] = header.m_string[label];
+  }
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    IntVect refLevel = IntVect::Zero;
+    Box domainLevel;
+    Real dtLevel;
+    RealVect dxLevel;
+    a_vectData[ilev] = new LevelData<FArrayBox>();
+    int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
+                        dxLevel, dtLevel,  a_time,
+                        domainLevel, refLevel, Interval(), true);
+    if (eek != 0)
     {
-      IntVect refLevel = IntVect::Zero;
-      Box domainLevel;
-      Real dtLevel;
-      RealVect dxLevel;
-      a_vectData[ilev] = new LevelData<FArrayBox>();
-      int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
-                          dxLevel, dtLevel,  a_time,
-                          domainLevel, refLevel, Interval(), true);
-      if (eek != 0)
-      {
-        MayDay::Warning("ReadAnisotropicAMRHierarchyHDF5: readLevel failed");
-        return (-3);
-      }
-
-      const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
-      a_vectGrids[ilev]= dbl;
-
-      if (ilev == 0)
-        {
-          a_domain = domainLevel;
-          a_dt = dtLevel;
-          a_dx = dxLevel;
-        }
-      a_refRatio[ilev] = refLevel;
+      MayDay::Warning("ReadAnisotropicAMRHierarchyHDF5: readLevel failed");
+      return (-3);
     }
+
+    const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
+    a_vectGrids[ilev]= dbl;
+
+    if (ilev == 0)
+    {
+      a_domain = domainLevel;
+      a_dt = dtLevel;
+      a_dx = dxLevel;
+    }
+    a_refRatio[ilev] = refLevel;
+  }
   return (0);
 }
 
 int
 ReadAnisotropicAMRHierarchyHDF5(const string& filename,
-                     Vector<DisjointBoxLayout>& a_vectGrids,
-                     Vector<LevelData<FArrayBox>* > & a_vectData,
-                     Box& a_domain,
-                     Vector<IntVect>& a_refRatio,
-                     int& a_numLevels)
+                                Vector<DisjointBoxLayout>& a_vectGrids,
+                                Vector<LevelData<FArrayBox>* > & a_vectData,
+                                Box& a_domain,
+                                Vector<IntVect>& a_refRatio,
+                                int& a_numLevels)
 {
   HDF5Handle handle;
   int err = handle.open(filename.c_str(),  HDF5Handle::OPEN_RDONLY);
@@ -702,7 +728,7 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
   }
 
   int eekflag = ReadAnisotropicAMRHierarchyHDF5(handle, a_vectGrids, a_vectData,
-                                     a_domain, a_refRatio, a_numLevels);
+                                                a_domain, a_refRatio, a_numLevels);
 
 #ifdef CH_MPI
   MPI_Barrier(Chombo_MPI::comm);
@@ -713,11 +739,11 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
 
 int
 ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
-                     Vector<DisjointBoxLayout>& a_vectGrids,
-                     Vector<LevelData<FArrayBox>* > & a_vectData,
-                     Box& a_domain,
-                     Vector<IntVect>& a_refRatio,
-                     int& a_numLevels)
+                                Vector<DisjointBoxLayout>& a_vectGrids,
+                                Vector<LevelData<FArrayBox>* > & a_vectData,
+                                Box& a_domain,
+                                Vector<IntVect>& a_refRatio,
+                                int& a_numLevels)
 {
   HDF5HeaderData header;
   header.readFromFile(handle);
@@ -734,31 +760,31 @@ ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
 
   //  int nComp = header.m_int["num_components"];
   for (int ilev = 0; ilev < a_numLevels; ilev++)
+  {
+    IntVect refLevel = IntVect::Zero;
+    Box domainLevel;
+    Real dtLevel;
+    RealVect dxLevel;
+    Real time;
+    a_vectData[ilev] = new LevelData<FArrayBox>();
+    int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
+                        dxLevel, dtLevel,  time,
+                        domainLevel, refLevel, Interval(), true);
+    if (eek != 0)
     {
-      IntVect refLevel = IntVect::Zero;
-      Box domainLevel;
-      Real dtLevel;
-      RealVect dxLevel;
-      Real time;
-      a_vectData[ilev] = new LevelData<FArrayBox>();
-      int eek = readLevel(handle, ilev, *(a_vectData[ilev]),
-                          dxLevel, dtLevel,  time,
-                          domainLevel, refLevel, Interval(), true);
-      if (eek != 0)
-      {
-        MayDay::Warning("ReadAnisotropicAMRHierarchyHDF5: readLevel failed");
-        return (-3);
-      }
-
-      const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
-      a_vectGrids[ilev]= dbl;
-
-      if (ilev == 0)
-        {
-          a_domain = domainLevel;
-        }
-      a_refRatio[ilev] = refLevel;
+      MayDay::Warning("ReadAnisotropicAMRHierarchyHDF5: readLevel failed");
+      return (-3);
     }
+
+    const DisjointBoxLayout& dbl = a_vectData[ilev]->getBoxes();
+    a_vectGrids[ilev]= dbl;
+
+    if (ilev == 0)
+    {
+      a_domain = domainLevel;
+    }
+    a_refRatio[ilev] = refLevel;
+  }
 
   return (0);
 }
@@ -802,9 +828,9 @@ VisualizeFile(const char *fname)
 {
   const char *use_chombovis = getenv("CHOMBO_USE_CHOMBOVIS");
   if (use_chombovis)
-      ChomboVisVisualizeFile(fname);
+    ChomboVisVisualizeFile(fname);
   else
-      VisItVisualizeFile(fname);
+    VisItVisualizeFile(fname);
 }
 
 static void
@@ -812,9 +838,9 @@ BrowseFile(const char *fname)
 {
   const char *use_chombovis = getenv("CHOMBO_USE_CHOMBOVIS");
   if (use_chombovis)
-      ChomboBrowserBrowseFile(fname);
+    ChomboBrowserBrowseFile(fname);
   else
-      VisItBrowseFile(fname);
+    VisItBrowseFile(fname);
 }
 
 void
@@ -854,13 +880,13 @@ viewBFI(const BaseFab<int>* a_dataPtr)
   FArrayBox fab(a_dataPtr->box(), a_dataPtr->nComp());
   BoxIterator bit(fab.box());
   for (bit.begin(); bit.ok(); bit.next())
+  {
+    const IntVect& iv = bit();
+    for (int ivar = 0; ivar < fab.nComp(); ivar++)
     {
-      const IntVect& iv = bit();
-      for (int ivar = 0; ivar < fab.nComp(); ivar++)
-        {
-          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
-        }
+      fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -879,13 +905,13 @@ writeBFCname(const BaseFab<char>* a_dataPtr,
   FArrayBox fab(a_dataPtr->box(), a_dataPtr->nComp());
   BoxIterator bit(fab.box());
   for (bit.begin(); bit.ok(); bit.next())
+  {
+    const IntVect& iv = bit();
+    for (int ivar = 0; ivar < fab.nComp(); ivar++)
     {
-      const IntVect& iv = bit();
-      for (int ivar = 0; ivar < fab.nComp(); ivar++)
-        {
-          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
-        }
+      fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
     }
+  }
 
   writeFABname(&fab, a_filename);
 }
@@ -901,17 +927,17 @@ viewBFIV(const BaseFab<IntVect>* a_dataPtr)
   FArrayBox fab(a_dataPtr->box(), SpaceDim * a_dataPtr->nComp());
   BoxIterator bit(fab.box());
   for (bit.begin(); bit.ok(); bit.next())
+  {
+    const IntVect& iv = bit();
+    for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
     {
-      const IntVect& iv = bit();
-      for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
-        {
-          const IntVect& ivVal = a_dataPtr->operator()(iv, ivar);
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              fab(iv, SpaceDim*ivar + idir) = ivVal[idir];
-            }
-        }
+      const IntVect& ivVal = a_dataPtr->operator()(iv, ivar);
+      for (int idir = 0; idir < SpaceDim; idir++)
+      {
+        fab(iv, SpaceDim*ivar + idir) = ivVal[idir];
+      }
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -929,17 +955,17 @@ viewBFRV(const BaseFab<RealVect>* a_dataPtr)
   FArrayBox fab(a_dataPtr->box(), SpaceDim * a_dataPtr->nComp());
   BoxIterator bit(fab.box());
   for (bit.begin(); bit.ok(); bit.next())
+  {
+    const IntVect& iv = bit();
+    for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
     {
-      const IntVect& iv = bit();
-      for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
-        {
-          const RealVect& rvVal = a_dataPtr->operator()(iv, ivar);
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              fab(iv, SpaceDim*ivar + idir) = rvVal[idir];
-            }
-        }
+      const RealVect& rvVal = a_dataPtr->operator()(iv, ivar);
+      for (int idir = 0; idir < SpaceDim; idir++)
+      {
+        fab(iv, SpaceDim*ivar + idir) = rvVal[idir];
+      }
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -960,13 +986,13 @@ viewIVSFAB(const IVSFAB<Real>* a_dataPtr)
 
   FArrayBox fab(bx, ncomp);
   for (IVSIterator ivsit(ivs); ivsit.ok(); ++ivsit)
+  {
+    IntVect iv = ivsit();
+    for (int ivar = 0; ivar < ncomp; ivar++)
     {
-      IntVect iv = ivsit();
-      for (int ivar = 0; ivar < ncomp; ivar++)
-        {
-          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
-        }
+      fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -987,13 +1013,13 @@ viewIVSFABI(const IVSFAB<int>* a_dataPtr)
 
   FArrayBox fab(bx, ncomp);
   for (IVSIterator ivsit(ivs); ivsit.ok(); ++ivsit)
+  {
+    IntVect iv = ivsit();
+    for (int ivar = 0; ivar < ncomp; ivar++)
     {
-      IntVect iv = ivsit();
-      for (int ivar = 0; ivar < ncomp; ivar++)
-        {
-          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
-        }
+      fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -1014,17 +1040,17 @@ viewIVSFABIV(const IVSFAB<IntVect>* a_dataPtr)
 
   FArrayBox fab(bx, SpaceDim * ncomp);
   for (IVSIterator ivsit(ivs); ivsit.ok(); ++ivsit)
+  {
+    IntVect iv = ivsit();
+    for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
     {
-      IntVect iv = ivsit();
-      for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
-        {
-          const IntVect& ivVal = a_dataPtr->operator()(iv, ivar);
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              fab(iv, SpaceDim*ivar + idir) = ivVal[idir];
-            }
-        }
+      const IntVect& ivVal = a_dataPtr->operator()(iv, ivar);
+      for (int idir = 0; idir < SpaceDim; idir++)
+      {
+        fab(iv, SpaceDim*ivar + idir) = ivVal[idir];
+      }
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -1045,17 +1071,17 @@ viewIVSFABRV(const IVSFAB<RealVect>* a_dataPtr)
 
   FArrayBox fab(bx, SpaceDim * ncomp);
   for (IVSIterator ivsit(ivs); ivsit.ok(); ++ivsit)
+  {
+    IntVect iv = ivsit();
+    for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
     {
-      IntVect iv = ivsit();
-      for (int ivar = 0; ivar < a_dataPtr->nComp(); ivar++)
-        {
-          const RealVect& rvVal = a_dataPtr->operator()(iv, ivar);
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              fab(iv, SpaceDim*ivar + idir) = rvVal[idir];
-            }
-        }
+      const RealVect& rvVal = a_dataPtr->operator()(iv, ivar);
+      for (int idir = 0; idir < SpaceDim; idir++)
+      {
+        fab(iv, SpaceDim*ivar + idir) = rvVal[idir];
+      }
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -1146,18 +1172,18 @@ viewCFAB(const CFArrayBox* a_dataPtr)
   FArrayBox fab(bx, 2*ncomp);
   BoxIterator bit(bx);
   for (bit.begin(); bit.ok(); bit.next())
+  {
+    const IntVect& iv = bit();
+    int ivarr = 0;
+    for (int ivarc = 0; ivarc < ncomp; ivarc++)
     {
-      const IntVect& iv = bit();
-      int ivarr = 0;
-      for (int ivarc = 0; ivarc < ncomp; ivarc++)
-        {
-          const Complex& cval = a_dataPtr->operator()(iv, ivarc);
-          fab(iv, ivarr) = cval.re();
-          ivarr++;
-          fab(iv, ivarr) = cval.im();
-          ivarr++;
-        }
+      const Complex& cval = a_dataPtr->operator()(iv, ivarc);
+      fab(iv, ivarr) = cval.re();
+      ivarr++;
+      fab(iv, ivarr) = cval.im();
+      ivarr++;
     }
+  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -1171,12 +1197,12 @@ viewCFAB(const CFArrayBox* a_dataPtr)
 */
 void
 writeCFABname(const CFArrayBox      * a_dataPtr,
-             const char           * a_filename)
+              const char           * a_filename)
 {
   if (a_dataPtr == NULL)
-    {
-      return;
-    }
+  {
+    return;
+  }
   FArrayBox out(a_dataPtr->box(),2);
   Vector<string> names(2);
   names[0] = "real";
@@ -1185,10 +1211,10 @@ writeCFABname(const CFArrayBox      * a_dataPtr,
   Real* iptr=out.dataPtr(1);
   const Complex* cptr=a_dataPtr->dataPtr();
   for(size_t i=0; i<a_dataPtr->box().numPts(); ++i)
-    {
-      rptr[i] = cptr[i].re();
-      iptr[i] = cptr[i].im();
-    }
+  {
+    rptr[i] = cptr[i].re();
+    iptr[i] = cptr[i].im();
+  }
   writeFABname(&out, a_filename, names);
 }
 void
@@ -1221,19 +1247,19 @@ writeFABname(const FArrayBox      * a_dataPtr,
   header.m_int ["num_components"]    = nComp;
 
   for (int ivar = 0; ivar < nComp; ivar++)
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    if ( a_compNames.size() > ivar )
     {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      if ( a_compNames.size() > ivar )
-        {
-          header.m_string[label] = a_compNames[ivar] ;
-        }
-      else
-        {
-          header.m_string[label] = label;
-        }
+      header.m_string[label] = a_compNames[ivar] ;
     }
+    else
+    {
+      header.m_string[label] = label;
+    }
+  }
   header.writeToFile(handle);
 
   Box domainLevel = data.box();
@@ -1287,9 +1313,9 @@ viewLevelNoFine(const LevelData<FArrayBox>* a_dataPtr,
   LevelData<FArrayBox>* dataFineCoarsenedPtr =
     new LevelData<FArrayBox>(layoutFineCoarsened, nVar);
   for (DataIterator dit = a_dataFinePtr->dataIterator(); dit.ok(); ++dit)
-    {
-      dataFineCoarsenedPtr->operator[](dit).setVal(0.);
-    }
+  {
+    dataFineCoarsenedPtr->operator[](dit).setVal(0.);
+  }
   LevelData<FArrayBox>* dataNoFinePtr =
     new LevelData<FArrayBox>(layoutOrig, nVar);
   // *dataNoFinePtr := *a_dataPtr
@@ -1411,12 +1437,12 @@ writeVectorLevelName(const Vector<LevelData<FArrayBox>*>* a_dataPtr,
   header.m_int ["num_components"]    = nComp;
 
   for (int ivar = 0; ivar < nComp; ivar++)
-    {
-      char labelChSt[100];
-      sprintf(labelChSt, "component_%d", ivar);
-      string label(labelChSt);
-      header.m_string[label] = label;
-    }
+  {
+    char labelChSt[100];
+    sprintf(labelChSt, "component_%d", ivar);
+    string label(labelChSt);
+    header.m_string[label] = label;
+  }
   header.writeToFile(handle);
 
   // put bogus numbers here
@@ -1425,77 +1451,77 @@ writeVectorLevelName(const Vector<LevelData<FArrayBox>*>* a_dataPtr,
   Real time = 1.0;
 
   for (int level=0; level<a_dataPtr->size(); level++)
+  {
+    const LevelData<FArrayBox>& data = *(a_dataPtr->operator[](level));
+
+    // need to figure out what domain will contain this LevelData
+    // This must be LayoutIterator instead of DataIterator because
+    // we need domain over boxes in ALL procs.
+    const DisjointBoxLayout& levelBoxes = data.getBoxes();
+    LayoutIterator lit = levelBoxes.layoutIterator();
+    lit.reset();
+    Box domain;
+    // check to see if DisjointBoxLayout contains a valid domain;
+    // if so, use it. If not, compute the smallest domain box which
+    // contains this DBL.
+    const ProblemDomain& pdomain = levelBoxes.physDomain();
+    domain = pdomain.domainBox();
+    if (domain.isEmpty())
     {
-      const LevelData<FArrayBox>& data = *(a_dataPtr->operator[](level));
-
-      // need to figure out what domain will contain this LevelData
-      // This must be LayoutIterator instead of DataIterator because
-      // we need domain over boxes in ALL procs.
-      const DisjointBoxLayout& levelBoxes = data.getBoxes();
-      LayoutIterator lit = levelBoxes.layoutIterator();
-      lit.reset();
-      Box domain;
-      // check to see if DisjointBoxLayout contains a valid domain;
-      // if so, use it. If not, compute the smallest domain box which
-      // contains this DBL.
-      const ProblemDomain& pdomain = levelBoxes.physDomain();
-      domain = pdomain.domainBox();
-      if (domain.isEmpty())
-        {
-          domain = levelBoxes.get(lit());
-          for (lit.reset(); lit.ok(); ++lit)
-            {
-              const Box thisBox = levelBoxes.get(lit());
-              D_TERM6(
-                      if (thisBox.smallEnd(0)<domain.smallEnd(0))
-                        domain.setSmall(0,thisBox.smallEnd(0)); ,
-                      if (thisBox.smallEnd(1)<domain.smallEnd(1))
-                        domain.setSmall(1,thisBox.smallEnd(1)); ,
-                      if (thisBox.smallEnd(2)<domain.smallEnd(2))
-                        domain.setSmall(2, thisBox.smallEnd(2)); ,
-                      if (thisBox.smallEnd(3)<domain.smallEnd(3))
-                        domain.setSmall(3,thisBox.smallEnd(3)); ,
-                      if (thisBox.smallEnd(4)<domain.smallEnd(4))
-                        domain.setSmall(4,thisBox.smallEnd(4)); ,
-                      if (thisBox.smallEnd(5)<domain.smallEnd(5))
-                        domain.setSmall(5, thisBox.smallEnd(5)); );
-
-              D_TERM6(
-                      if (thisBox.bigEnd(0)>domain.bigEnd(0))
-                        domain.setBig(0,thisBox.bigEnd(0)); ,
-                      if (thisBox.bigEnd(1)>domain.bigEnd(1))
-                        domain.setBig(1,thisBox.bigEnd(1)); ,
-                      if (thisBox.bigEnd(2)>domain.bigEnd(2))
-                        domain.setBig(2, thisBox.bigEnd(2)); ,
-                      if (thisBox.bigEnd(3)>domain.bigEnd(3))
-                        domain.setBig(3,thisBox.bigEnd(3)); ,
-                      if (thisBox.bigEnd(4)>domain.bigEnd(4))
-                        domain.setBig(4,thisBox.bigEnd(4)); ,
-                      if (thisBox.bigEnd(5)>domain.bigEnd(5))
-                        domain.setBig(5, thisBox.bigEnd(5)); );
-
-            } // end loop over boxes on level to determine "domain"
-        } //end if ProblemDomain from DisjointBoxLayout wasn't defined
-
-      int refLevel = 1;
-      if (level < a_dataPtr->size()-1)
-        {
-          refLevel = a_refRatios->operator[](level);
-        }
-
-      Interval comps(0,nComp-1);
-      IntVect ghostVect = data.ghostVect();
-      int eek = writeLevel(handle, level, data, dxLevel, dtLevel, time,
-                           domain, refLevel, ghostVect, comps);
-
-      dtLevel /= refLevel;
-      dxLevel /= refLevel;
-
-      if (eek != 0)
+      domain = levelBoxes.get(lit());
+      for (lit.reset(); lit.ok(); ++lit)
       {
-        MayDay::Error("writeVectorLevelName: error in writeLevel");
-      }
+        const Box thisBox = levelBoxes.get(lit());
+        D_TERM6(
+          if (thisBox.smallEnd(0)<domain.smallEnd(0))
+            domain.setSmall(0,thisBox.smallEnd(0)); ,
+          if (thisBox.smallEnd(1)<domain.smallEnd(1))
+            domain.setSmall(1,thisBox.smallEnd(1)); ,
+          if (thisBox.smallEnd(2)<domain.smallEnd(2))
+            domain.setSmall(2, thisBox.smallEnd(2)); ,
+          if (thisBox.smallEnd(3)<domain.smallEnd(3))
+            domain.setSmall(3,thisBox.smallEnd(3)); ,
+          if (thisBox.smallEnd(4)<domain.smallEnd(4))
+            domain.setSmall(4,thisBox.smallEnd(4)); ,
+          if (thisBox.smallEnd(5)<domain.smallEnd(5))
+            domain.setSmall(5, thisBox.smallEnd(5)); );
+
+        D_TERM6(
+          if (thisBox.bigEnd(0)>domain.bigEnd(0))
+            domain.setBig(0,thisBox.bigEnd(0)); ,
+          if (thisBox.bigEnd(1)>domain.bigEnd(1))
+            domain.setBig(1,thisBox.bigEnd(1)); ,
+          if (thisBox.bigEnd(2)>domain.bigEnd(2))
+            domain.setBig(2, thisBox.bigEnd(2)); ,
+          if (thisBox.bigEnd(3)>domain.bigEnd(3))
+            domain.setBig(3,thisBox.bigEnd(3)); ,
+          if (thisBox.bigEnd(4)>domain.bigEnd(4))
+            domain.setBig(4,thisBox.bigEnd(4)); ,
+          if (thisBox.bigEnd(5)>domain.bigEnd(5))
+            domain.setBig(5, thisBox.bigEnd(5)); );
+
+      } // end loop over boxes on level to determine "domain"
+    } //end if ProblemDomain from DisjointBoxLayout wasn't defined
+
+    int refLevel = 1;
+    if (level < a_dataPtr->size()-1)
+    {
+      refLevel = a_refRatios->operator[](level);
     }
+
+    Interval comps(0,nComp-1);
+    IntVect ghostVect = data.ghostVect();
+    int eek = writeLevel(handle, level, data, dxLevel, dtLevel, time,
+                         domain, refLevel, ghostVect, comps);
+
+    dtLevel /= refLevel;
+    dxLevel /= refLevel;
+
+    if (eek != 0)
+    {
+      MayDay::Error("writeVectorLevelName: error in writeLevel");
+    }
+  }
   handle.close();
 }
 
@@ -1531,9 +1557,9 @@ void
 viewLevelBFI(const LevelData<BaseFab<int> >* a_dataPtr)
 {
   if (a_dataPtr == NULL)
-    {
-      return;
-    }
+  {
+    return;
+  }
 
   LevelData<FArrayBox> fabData(a_dataPtr->getBoxes(),
                                a_dataPtr->nComp(),
@@ -1541,19 +1567,19 @@ viewLevelBFI(const LevelData<BaseFab<int> >* a_dataPtr)
 
   DataIterator dit = fabData.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
+  {
+    FArrayBox& thisFabData = fabData[dit];
+    const BaseFab<int>& intData = (*a_dataPtr)[dit];
+    BoxIterator bit(intData.box());
+    for (bit.begin(); bit.ok(); ++bit)
     {
-      FArrayBox& thisFabData = fabData[dit];
-      const BaseFab<int>& intData = (*a_dataPtr)[dit];
-      BoxIterator bit(intData.box());
-      for (bit.begin(); bit.ok(); ++bit)
-        {
-          const IntVect& iv = bit();
-          for (int ivar =0; ivar<intData.nComp(); ivar++)
-            {
-              thisFabData(iv,ivar) = intData(iv,ivar);
-            }
-        }
+      const IntVect& iv = bit();
+      for (int ivar =0; ivar<intData.nComp(); ivar++)
+      {
+        thisFabData(iv,ivar) = intData(iv,ivar);
+      }
     }
+  }
 
   viewLevel(&fabData);
 
@@ -1569,45 +1595,45 @@ void writeCopier(const Copier* a_copier)
   Box domain;
   int last = -1;
   for (CopyIterator it(*a_copier, CopyIterator::LOCAL); it.ok(); ++it)
+  {
+    const MotionItem& item = it();
+    const DataIndex& to = item.toIndex;
+    if (last == -1)
     {
-      const MotionItem& item = it();
-      const DataIndex& to = item.toIndex;
-      if (last == -1)
-        {
-          last = to.intCode();
-        }
-      if (last != to.intCode())
-        {
-          if (level.size()==0)
-            {
-              break;
-            }
-          boxes.push_back(level);
-          procs.push_back(p);
-          level.resize(0);
-          p.resize(0);
-          refRatio.push_back(1);
-          last = to.intCode();
-        }
-      p.push_back(0);
-      level.push_back(item.toRegion);
-      domain.minBox(item.toRegion);
+      last = to.intCode();
     }
+    if (last != to.intCode())
+    {
+      if (level.size()==0)
+      {
+        break;
+      }
+      boxes.push_back(level);
+      procs.push_back(p);
+      level.resize(0);
+      p.resize(0);
+      refRatio.push_back(1);
+      last = to.intCode();
+    }
+    p.push_back(0);
+    level.push_back(item.toRegion);
+    domain.minBox(item.toRegion);
+  }
 
   int numLevels = boxes.size();
   Vector<DisjointBoxLayout> layouts(numLevels);
   Vector<LevelData<FArrayBox>*> ldf(numLevels);
   IntVect ghostVect(IntVect::Zero);
   for (int i=0; i<numLevels; ++i)
-    {
-      layouts[i].define(boxes[i], procs[i], ProblemDomain(domain));
-      ldf[i] = new LevelData<FArrayBox>(layouts[i], 1, ghostVect);
-    }
+  {
+    layouts[i].define(boxes[i], procs[i], ProblemDomain(domain));
+    ldf[i] = new LevelData<FArrayBox>(layouts[i], 1, ghostVect);
+  }
   WriteAMRHierarchyHDF5("copier.hdf5", layouts, ldf, domain, refRatio, numLevels);
   for (int i=0; i<numLevels; ++i)
-    {
-      delete ldf[i];
-    }
+  {
+    delete ldf[i];
+  }
 }
 
 void viewCopier(const Copier* a_copier)
@@ -1667,9 +1693,9 @@ writeDBLname(const DisjointBoxLayout* a_dataPtr,
   Real dataVal = procID();
   DataIterator dit = data.dataIterator();
   for (dit.begin(); dit.ok(); ++dit)
-    {
-      data[dit()].setVal(dataVal);
-    }
+  {
+    data[dit()].setVal(dataVal);
+  }
 
   writeLevelname(&data, a_filename);
 }
@@ -1697,12 +1723,12 @@ WritePartialAMRHierarchyHDF5(const string& filename,
 
   int leveloffset = a_levels.begin();
   for (int srcLevel = a_levels.begin(); srcLevel <= a_levels.end(); srcLevel++)
-    {
-      int destLevel = srcLevel-leveloffset;
-      newVectGrids[destLevel] = a_vectGrids[srcLevel];
-      newVectData[destLevel] = a_vectData[srcLevel];
-      newVectRatio[destLevel] = a_vectRatio[srcLevel];
-    }
+  {
+    int destLevel = srcLevel-leveloffset;
+    newVectGrids[destLevel] = a_vectGrids[srcLevel];
+    newVectData[destLevel] = a_vectData[srcLevel];
+    newVectRatio[destLevel] = a_vectRatio[srcLevel];
+  }
 
   WriteAMRHierarchyHDF5(filename, newVectGrids, newVectData, a_vectNames,
                         a_baseDomain, a_baseDx, a_dt, a_time,

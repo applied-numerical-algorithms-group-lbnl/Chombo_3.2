@@ -128,11 +128,11 @@ int readLevel(HDF5Handle& a_handle,
 
 /// writes BoxLayout to HDF5 file.
 /**
-    Writes BoxLayout to HDF5 file.  Only one BoxLayout per group is permitted, this operation overwrites
-    previous entries.
-    This operation assumes boxes are cell-centered.\\
-    returns: success:    0\\
-    HDF5 error: negative error code.\\
+   Writes BoxLayout to HDF5 file.  Only one BoxLayout per group is permitted, this operation overwrites
+   previous entries.
+   This operation assumes boxes are cell-centered.\\
+   returns: success:    0\\
+   HDF5 error: negative error code.\\
 */
 int write(HDF5Handle& a_handle,
           const BoxLayout& a_layout,
@@ -169,39 +169,39 @@ int write(HDF5Handle& a_handle,
 
 /// reads Vector<Box> from location specified by a_handle.
 /**
-     Reads BoxLayout from the group specified by a_handle.
-     Only one BoxLayout per group is permitted, this operation overwrites.
-     This operation assumes boxes are cell-centered.\\
-     returns: success:    0\\
-     HDF5 error: negative error code.\\
+   Reads BoxLayout from the group specified by a_handle.
+   Only one BoxLayout per group is permitted, this operation overwrites.
+   This operation assumes boxes are cell-centered.\\
+   returns: success:    0\\
+   HDF5 error: negative error code.\\
 
-     Arg name refers to the name of an HDF5 dataset in which the boxes you want
-     are stored in a particular format, which is the one used to output DataLayouts
-     to HDF5.  Here is an example of that format (as shown by h5dump):
+   Arg name refers to the name of an HDF5 dataset in which the boxes you want
+   are stored in a particular format, which is the one used to output DataLayouts
+   to HDF5.  Here is an example of that format (as shown by h5dump):
 
-      DATASET "datalayout" {
-         DATATYPE  H5T_COMPOUND {
-            H5T_STD_I32LE "lo_i";
-            H5T_STD_I32LE "lo_j";
-            H5T_STD_I32LE "hi_i";
-            H5T_STD_I32LE "hi_j";
-         }
-         DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
-         DATA {
-         (0): {
-               0,
-               0,
-               1,
-               0
-            },
-         (1): {
-               2,
-               0,
-               2,
-               1
-            }
-         }
-      }
+   DATASET "datalayout" {
+   DATATYPE  H5T_COMPOUND {
+   H5T_STD_I32LE "lo_i";
+   H5T_STD_I32LE "lo_j";
+   H5T_STD_I32LE "hi_i";
+   H5T_STD_I32LE "hi_j";
+   }
+   DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+   DATA {
+   (0): {
+   0,
+   0,
+   1,
+   0
+   },
+   (1): {
+   2,
+   0,
+   2,
+   1
+   }
+   }
+   }
 
 */
 int read(HDF5Handle& a_handle,
@@ -237,10 +237,10 @@ int readFArrayBox(HDF5Handle& a_handle,
 
 /// read BoxLayoutData named a_name from location specified by a_handle.
 /**
-    Read BoxLayoutData named a_name from location specified by a_handle.  User must supply the correct BoxLayout for this function if redefineData == true.  \\
-    returns: success:      0\\
-    bad location: 1\\
-    HDF5 error:   negative error code.\\
+   Read BoxLayoutData named a_name from location specified by a_handle.  User must supply the correct BoxLayout for this function if redefineData == true.  \\
+   returns: success:      0\\
+   bad location: 1\\
+   HDF5 error:   negative error code.\\
 */
 template <class T>
 int read(HDF5Handle& a_handle,
@@ -253,24 +253,24 @@ int read(HDF5Handle& a_handle,
 /// read LevelData named a_name from location specified by a_handle.
 /**
 
-    Read LevelData named a_name from location specified by a_handle.
-    User must supply the correct BoxLayout for this function.
+   Read LevelData named a_name from location specified by a_handle.
+   User must supply the correct BoxLayout for this function.
 
-    Arg a_name is significant: the HDF5 group to which a_handle is set is
-    is assumed to contain a dataset called <a_name>:datatype=<some integer>,
-    a dataset called <a_name>:offsets=<some integer>, and a subgroup named
-    <a_name>_attributes.  You will have all these items if you dumped your
-    LevelData out using the corresponding write() function defined here.
+   Arg a_name is significant: the HDF5 group to which a_handle is set is
+   is assumed to contain a dataset called <a_name>:datatype=<some integer>,
+   a dataset called <a_name>:offsets=<some integer>, and a subgroup named
+   <a_name>_attributes.  You will have all these items if you dumped your
+   LevelData out using the corresponding write() function defined here.
 
-    If arg redefineData==false, then the user must pass in a valid  LevelData.
-    Otherwise, this function figures out how many components and ghost cells there
-    are, and allocates the correct amount of space.  The actual FArray data held
-    by the LevelData gets filled in here, regardless of redefineData; "redefine"
-    alludes to the family of define() functions.
+   If arg redefineData==false, then the user must pass in a valid  LevelData.
+   Otherwise, this function figures out how many components and ghost cells there
+   are, and allocates the correct amount of space.  The actual FArray data held
+   by the LevelData gets filled in here, regardless of redefineData; "redefine"
+   alludes to the family of define() functions.
 
-    returns: success:      0\\
-    bad location: 1\\
-    HDF5 error:   negative error code.\\
+   returns: success:      0\\
+   bad location: 1\\
+   HDF5 error:   negative error code.\\
 */
 template <class T>
 int read(HDF5Handle& a_handle,
@@ -282,13 +282,13 @@ int read(HDF5Handle& a_handle,
 
 /// Handle to a particular group in an HDF file.
 /**
-    HDF5Handle is a handle to a particular group in an HDF file.  Upon
-    construction, group is defined to be the root.  All data is
-    written and read assuming the native representations for data on
-    the architecture it is running on.  When a file is opened, these
-    settings are checked and an error is flagged when things don't
-    match up.  It is the USER'S responsibility to close() this object
-    when it is no longer needed.
+   HDF5Handle is a handle to a particular group in an HDF file.  Upon
+   construction, group is defined to be the root.  All data is
+   written and read assuming the native representations for data on
+   the architecture it is running on.  When a file is opened, these
+   settings are checked and an error is flagged when things don't
+   match up.  It is the USER'S responsibility to close() this object
+   when it is no longer needed.
 
 */
 class HDF5Handle
@@ -333,33 +333,6 @@ public:
   ///
   /** Opens file and sets the current group to the root "/" group. \\
 
-  if mode == CREATE, then file is created if it didn't exist, or an
-  existing file of the same name is clobbered.\\
-
-  if mode == OPEN_*, then existing file is opened, if the file doesn't
-  already exist then open fails and isOpen() returns false.\\
-
-  Writes basic information such as SpaceDim and testReal to a global
-  group. The global group is named Chombo_global in the call signature
-  where no globalGroupName is passed.\\
-  */
-  HDF5Handle(
-        const std::string& a_filename,
-        mode a_mode,
-        const char *a_globalGroupName="Chombo_global");
-
-  // HDF5Handle(const std::string& a_filename, mode a_mode);
-
-  ~HDF5Handle();
-
-  /// {\bf File functions}
-
-  ///
-  /**
-      Opens file and sets the current group of this HDF5Handle to the
-      root "/" group.  File that this HDF5Handle previously pointed at is
-      NOT closed, that is the users responsibility.\\
-
       if mode == CREATE, then file is created if it didn't exist, or an
       existing file of the same name is clobbered.\\
 
@@ -369,20 +342,56 @@ public:
       Writes basic information such as SpaceDim and testReal to a global
       group. The global group is named Chombo_global in the call signature
       where no globalGroupName is passed.\\
+  */
+  HDF5Handle(
+    const std::string& a_filename,
+    mode a_mode,
+    const char *a_globalGroupName="Chombo_global"
+#ifdef CH_MPI    
+    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif    
+    );
 
-      returns:\\
-      0  on success\\
-      negative number if file open failed (return code from HDF5)\\
-      1  file does not appear to contain datacheck info, probably not a Chombo file\\
-      2  on data bit size differences between code and file.\\
+  // HDF5Handle(const std::string& a_filename, mode a_mode);
 
-      aborts on SpaceDim not matching between code and file\\
+  ~HDF5Handle();
+
+  /// {\bf File functions}
+
+  ///
+  /**
+     Opens file and sets the current group of this HDF5Handle to the
+     root "/" group.  File that this HDF5Handle previously pointed at is
+     NOT closed, that is the users responsibility.\\
+
+     if mode == CREATE, then file is created if it didn't exist, or an
+     existing file of the same name is clobbered.\\
+
+     if mode == OPEN_*, then existing file is opened, if the file doesn't
+     already exist then open fails and isOpen() returns false.\\
+
+     Writes basic information such as SpaceDim and testReal to a global
+     group. The global group is named Chombo_global in the call signature
+     where no globalGroupName is passed.\\
+
+     returns:\\
+     0  on success\\
+     negative number if file open failed (return code from HDF5)\\
+     1  file does not appear to contain datacheck info, probably not a Chombo file\\
+     2  on data bit size differences between code and file.\\
+
+     aborts on SpaceDim not matching between code and file\\
 
   */
   int open(
-        const std::string& a_filename,
-        mode a_mode,
-        const char *a_globalGroupName="Chombo_global");
+    const std::string& a_filename,
+    mode a_mode,
+    const char *a_globalGroupName="Chombo_global"
+#ifdef CH_MPI    
+    ,MPI_Comm a_comm = Chombo_MPI::comm
+#endif    
+    );
+
 
   // int open(const std::string& a_filename, mode a_mode);
 
@@ -410,30 +419,30 @@ public:
 
   ///
   /**
-      Set group to users choice, referenced from file root.
-      groupAbsPath will look like a Unix file path:
-      "/mySpecialData/group1/" "/" is the root group of the
-      file. returns a negative value on failure
+     Set group to users choice, referenced from file root.
+     groupAbsPath will look like a Unix file path:
+     "/mySpecialData/group1/" "/" is the root group of the
+     file. returns a negative value on failure
 
   */
   int setGroup(const std::string& groupAbsPath);
 
   ///
   /**
-      Add the indicated string to the group path.  For example, if
-      getGroup() returns "/foo" then after pushGroup("bar"), getGroup()
-      will return "/foo/bar".
-      Return value is whatever the internal setGroup returns.
+     Add the indicated string to the group path.  For example, if
+     getGroup() returns "/foo" then after pushGroup("bar"), getGroup()
+     will return "/foo/bar".
+     Return value is whatever the internal setGroup returns.
   */
   int pushGroup( const std::string& grp );
 
   ///
   /**
-      Pop off the last element of the group path.  For example, "/foo/bar"
-      becomes "/foo".  It's an error to call this function if the group,
-      going in, is "/".
-      Return value is whatever the internal setGroup returns, when we call
-      it to reset the group's path.
+     Pop off the last element of the group path.  For example, "/foo/bar"
+     becomes "/foo".  It's an error to call this function if the group,
+     going in, is "/".
+     Return value is whatever the internal setGroup returns, when we call
+     it to reset the group's path.
   */
   int popGroup();
 
@@ -522,20 +531,20 @@ public:
 
   ///
   /**
-      Writes this HDF5HeaderData's current attribute list to the
-      current group in 'file.'  Returns 0 on success, returns the
-      error code from HDF5 on failure.
+     Writes this HDF5HeaderData's current attribute list to the
+     current group in 'file.'  Returns 0 on success, returns the
+     error code from HDF5 on failure.
 
   */
   int writeToFile(HDF5Handle& file) const;
 
   ///
   /**
-      Reads into this HDF5HeaderData's attribute list from file.  Read
-      process is add/change, does not remove key-value pairs. Reads
-      from current group.  Returns 0 on success, positive number if a
-      particular member of group caused an error, negative on general
-      error.
+     Reads into this HDF5HeaderData's attribute list from file.  Read
+     process is add/change, does not remove key-value pairs. Reads
+     from current group.  Returns 0 on success, positive number if a
+     particular member of group caused an error, negative on general
+     error.
 
   */
   int readFromFile(HDF5Handle& file);
@@ -586,46 +595,46 @@ std::ostream& operator<<(std::ostream& os, const HDF5HeaderData& data);
 
 /// Methods for writing multiple LevelData to an HDF5 file.
 /**
-    While the write functions can be used to write a single LevelData, they
-    do not support writing intervals from multiple LevelData.  This is often
-    the case when you want to add diagnostic information to the output file.
-    The purpose of this class is to handle writing multiple LevelData to
-    a single file.  The dataset for the LevelData is created during
-    construction, when the boxes are written.  Any number of intervals from
-    LevelData can then be written.
+   While the write functions can be used to write a single LevelData, they
+   do not support writing intervals from multiple LevelData.  This is often
+   the case when you want to add diagnostic information to the output file.
+   The purpose of this class is to handle writing multiple LevelData to
+   a single file.  The dataset for the LevelData is created during
+   construction, when the boxes are written.  Any number of intervals from
+   LevelData can then be written.
 
-    Special behavior can be selected with the policy flags:
-    <ul>
-      <li> CH_HDF5::IOPolicyMultiDimHyperslab - The memory dataspace will be
-           set up so that HDF5 linearizes the data.  Using this requires
-           T.dataPtr() and contiguous memory (so things like T=FluxBox will
-           not work).
-      <li> CH_HDF5::IOPolicyCollectiveWrite - The write for each dataset will
-           be collective.  The write is always parallel but otherwise will
-           be done independently.  May or may not provide a speedup but it
-           should work.  Rumor has it the BG requires this.
-    </ul>
+   Special behavior can be selected with the policy flags:
+   <ul>
+   <li> CH_HDF5::IOPolicyMultiDimHyperslab - The memory dataspace will be
+   set up so that HDF5 linearizes the data.  Using this requires
+   T.dataPtr() and contiguous memory (so things like T=FluxBox will
+   not work).
+   <li> CH_HDF5::IOPolicyCollectiveWrite - The write for each dataset will
+   be collective.  The write is always parallel but otherwise will
+   be done independently.  May or may not provide a speedup but it
+   should work.  Rumor has it the BG requires this.
+   </ul>
 
-    With MPI-everywhere on x86 architectures, it is highly likely that
-    the default policy CH_HDF5::IOPolicyDefault gives the best performance
-    (i.e., use internal linearization and independent I/O).  In some limited
-    testing (2 procs, 20 cores each):
-      IOPolicyDefault - 6.77
-      IOPolicyCollectiveWrite - 33.33
-      IOPolicyMultiDimHyperslab - 168.14
-      IOPolicyCollectiveWrite | IOPolicyMultiDimHyperslab - 30.94
-    which is difficult to make sense of.
+   With MPI-everywhere on x86 architectures, it is highly likely that
+   the default policy CH_HDF5::IOPolicyDefault gives the best performance
+   (i.e., use internal linearization and independent I/O).  In some limited
+   testing (2 procs, 20 cores each):
+   IOPolicyDefault - 6.77
+   IOPolicyCollectiveWrite - 33.33
+   IOPolicyMultiDimHyperslab - 168.14
+   IOPolicyCollectiveWrite | IOPolicyMultiDimHyperslab - 30.94
+   which is difficult to make sense of.
 
-    \note
-    <ul>
-      <li> Users are resposible for matching the total number of components
-           used to allocate the dataset match the number of levelData
-           added to the dataset
-      <li> Only a single datatype is supported per file
-      <li> Since the dataset must be created in advance, T can only be
-           statically allocatable (T::preAllocatable() == 0)
-      <li> API 1.6 is not supported
-    </ul>
+   \note
+   <ul>
+   <li> Users are resposible for matching the total number of components
+   used to allocate the dataset match the number of levelData
+   added to the dataset
+   <li> Only a single datatype is supported per file
+   <li> Since the dataset must be created in advance, T can only be
+   statically allocatable (T::preAllocatable() == 0)
+   <li> API 1.6 is not supported
+   </ul>
 */
 template <class T>
 class WriteMultiData
@@ -644,9 +653,9 @@ public:
 
   /// Destructor
   ~WriteMultiData()
-    {
-      H5Dclose(m_dataSet);
-    }
+  {
+    H5Dclose(m_dataSet);
+  }
 
 private:
 
@@ -675,8 +684,8 @@ protected:
   // Both of these vectors are size 1 in the outermost dimension since
   // only 1 type is allowed.
   Vector<Vector<long long> > m_offsets;
-                                      ///< Offset in file for each process to
-                                      ///< write to
+  ///< Offset in file for each process to
+  ///< write to
   Vector<hid_t> m_types;              ///< Type of data written
 };
 
@@ -871,10 +880,34 @@ inline void dataSize(const FluxBox& item, Vector<int>& a_sizes,
   int& t = a_sizes[0];
   t = 0;
   for (int dir =0; dir<CH_SPACEDIM; dir++)
-    {
-      Box edgeBox(surroundingNodes(box,dir));
-      t += edgeBox.numPts()*comps.size();
-    }
+  {
+    Box edgeBox(surroundingNodes(box,dir));
+    t += edgeBox.numPts()*comps.size();
+  }
+}
+
+
+template <>
+inline void dataSize(const EdgeDataBox& item, Vector<int>& a_sizes,
+                     const Box& box, const Interval& comps)
+{
+  int& t = a_sizes[0];
+  t = 0;
+  for (int dir =0; dir<CH_SPACEDIM; dir++)
+  {
+    Box edgeBox(surroundingNodes(box));
+    edgeBox.enclosedCells(dir);
+    t += edgeBox.numPts()*comps.size();
+  }
+}
+
+
+template <>
+inline void dataSize(const NodeFArrayBox& item, Vector<int>& a_sizes,
+                     const Box& box, const Interval& comps)
+{
+  Box boxNodes = surroundingNodes(box);
+  a_sizes[0] = boxNodes.numPts() * comps.size();
 }
 
 
@@ -900,7 +933,6 @@ inline void dataSize(const NodeFArrayBox& item, Vector<int>& a_sizes,
   Box boxNodes = surroundingNodes(box);
   a_sizes[0] = boxNodes.numPts() * comps.size();
 }
-
 
 
 template <>
@@ -977,82 +1009,82 @@ void getOffsets(Vector<Vector<long long> >& offsets, const BoxLayoutData<T>& a_d
   {
     CH_TIMELEAF("offsets.resize");
     offsets.resize(types, Vector<long long>(layout.size()+1));
-  //  offsets.resize(layout.size() + 1, Vector<long long>(types));
+    //  offsets.resize(layout.size() + 1, Vector<long long>(types));
   }
   for (int t=0; t<types; t++) offsets[t][0] = 0;
   Vector<int> thisSize(types);
   if (T::preAllocatable()==0)
-    { // static preAllocatable
-      T dummy;
-      unsigned int index = 1;
-      for (LayoutIterator it(layout.layoutIterator()); it.ok(); ++it)
-        {
-          Box region = layout[it()];
-          region.grow(outputGhost);
-          {
-            CH_TIMELEAF("dataSize");
-            dataSize(dummy, thisSize, region, comps);
-          }
-          for (unsigned int i=0; i<thisSize.size(); ++i)
-            {
-              CH_TIMELEAF("offsets calc");
-              //offsets[index][i] = offsets[index-1][i] + thisSize[i];
-              offsets[i][index] = offsets[i][index-1] + thisSize[i];
-            }
-          ++index;
-        }
+  { // static preAllocatable
+    T dummy;
+    unsigned int index = 1;
+    for (LayoutIterator it(layout.layoutIterator()); it.ok(); ++it)
+    {
+      Box region = layout[it()];
+      region.grow(outputGhost);
+      {
+        CH_TIMELEAF("dataSize");
+        dataSize(dummy, thisSize, region, comps);
+      }
+      for (unsigned int i=0; i<thisSize.size(); ++i)
+      {
+        CH_TIMELEAF("offsets calc");
+        //offsets[index][i] = offsets[index-1][i] + thisSize[i];
+        offsets[i][index] = offsets[i][index-1] + thisSize[i];
+      }
+      ++index;
     }
+  }
   else
-    { // symmetric and dynamic preallocatable need two pass I/O
-      OffsetBuffer buff;
-      //int index = 0;
-      for (DataIterator dit(a_data.dataIterator()); dit.ok(); ++dit)
-        {
-          int index = a_data.boxLayout().index(dit());
-          //int index = dit().intCode();
-          buff.index.push_back(index);
-          Box region = layout[dit()];
-          region.grow(outputGhost);
-          { 
-            CH_TIMELEAF("dataSize");
-            dataSize(a_data[dit()], thisSize, region, comps);
-          }
-          buff.offsets.push_back(thisSize);
-        }
-      Vector<OffsetBuffer> gathering(numProc());
-      {
-        CH_TIMELEAF("gather");
-        gather(gathering, buff, uniqueProc(SerialTask::compute));
+  { // symmetric and dynamic preallocatable need two pass I/O
+    OffsetBuffer buff;
+    //int index = 0;
+    for (DataIterator dit(a_data.dataIterator()); dit.ok(); ++dit)
+    {
+      int index = a_data.boxLayout().index(dit());
+      //int index = dit().intCode();
+      buff.index.push_back(index);
+      Box region = layout[dit()];
+      region.grow(outputGhost);
+      { 
+        CH_TIMELEAF("dataSize");
+        dataSize(a_data[dit()], thisSize, region, comps);
       }
-      {
-        CH_TIMELEAF("broadcast");
-        broadcast(gathering,  uniqueProc(SerialTask::compute));
-      }
-      //  pout() << gathering<<endl;
-      for (int i=0; i<numProc(); ++i)
-        {
-          OffsetBuffer& offbuf = gathering[i];
-          for (int num=0; num<offbuf.index.size(); num++)
-            {
-              int index = offbuf.index[num];
-              for (unsigned int j=0; j<types; ++j)
-                {
-                  CH_TIMELEAF("offsets calc");
-                  //offsets[index+1][j] = offbuf.offsets[num][j];
-                  offsets[j][index+1] = offbuf.offsets[num][j];
-                }
-            }
-        }
-      for (int i=0; i<layout.size(); i++)
-        {
-          for (unsigned int j=0; j<types; ++j)
-            {
-              CH_TIMELEAF("offsets calc");
-              //offsets[i+1][j] += offsets[i][j];
-              offsets[j][i+1] += offsets[j][i];
-            }
-        }
+      buff.offsets.push_back(thisSize);
     }
+    Vector<OffsetBuffer> gathering(numProc());
+    {
+      CH_TIMELEAF("gather");
+      gather(gathering, buff, uniqueProc(SerialTask::compute));
+    }
+    {
+      CH_TIMELEAF("broadcast");
+      broadcast(gathering,  uniqueProc(SerialTask::compute));
+    }
+    //  pout() << gathering<<endl;
+    for (int i=0; i<numProc(); ++i)
+    {
+      OffsetBuffer& offbuf = gathering[i];
+      for (int num=0; num<offbuf.index.size(); num++)
+      {
+        int index = offbuf.index[num];
+        for (unsigned int j=0; j<types; ++j)
+        {
+          CH_TIMELEAF("offsets calc");
+          //offsets[index+1][j] = offbuf.offsets[num][j];
+          offsets[j][index+1] = offbuf.offsets[num][j];
+        }
+      }
+    }
+    for (int i=0; i<layout.size(); i++)
+    {
+      for (unsigned int j=0; j<types; ++j)
+      {
+        CH_TIMELEAF("offsets calc");
+        //offsets[i+1][j] += offsets[i][j];
+        offsets[j][i+1] += offsets[j][i];
+      }
+    }
+  }
 
   // pout() << offsets<<endl;
 }
@@ -1074,24 +1106,24 @@ void getOffsets(Vector<Vector<long long> >& a_offsets,
 
   a_offsets.resize(a_numTypes, Vector<long long>(a_layout.size()+1));
   for (int t = 0; t != a_numTypes; ++t)
-    {
-      a_offsets[t][0] = 0;
-    }
+  {
+    a_offsets[t][0] = 0;
+  }
   Vector<int> thisSize(a_numTypes);
   T dummy;
   unsigned int index = 1;
   for (LayoutIterator it(a_layout.layoutIterator()); it.ok(); ++it)
+  {
+    Box region = a_layout[it()];
+    region.grow(a_outputGhost);
+    dataSize(dummy, thisSize, region, a_comps);
+    for (int i = 0; i != thisSize.size(); ++i)  // Loop over (1) types
     {
-      Box region = a_layout[it()];
-      region.grow(a_outputGhost);
-      dataSize(dummy, thisSize, region, a_comps);
-      for (int i = 0; i != thisSize.size(); ++i)  // Loop over (1) types
-        {
-          //offsets[index][i] = offsets[index-1][i] + thisSize[i];
-          a_offsets[i][index] = a_offsets[i][index-1] + thisSize[i];
-        }
-      ++index;
+      //offsets[index][i] = offsets[index-1][i] + thisSize[i];
+      a_offsets[i][index] = a_offsets[i][index-1] + thisSize[i];
     }
+    ++index;
+  }
 }
 
 //==================================================================
@@ -1130,95 +1162,95 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
   CH_assert(!(newForm && types.size() != 1));
 
   for (unsigned int i=0; i<types.size(); ++i)
+  {
+    flatdims[0] = offsets[i][offsets[i].size()-1];
+    if (newForm)
     {
-      flatdims[0] = offsets[i][offsets[i].size()-1];
-      if (newForm)
+      if (a_name == "M")
       {
-        if (a_name == "M")
-        {
-          strcpy(dataname, "Mask");
-        }
-        else
-        {
-          sprintf(dataname, "%sRegular", a_name.c_str());
-        }
+        strcpy(dataname, "Mask");
       }
       else
       {
-        sprintf(dataname, "%s:datatype=%i",a_name.c_str(), i);
+        sprintf(dataname, "%sRegular", a_name.c_str());
       }
-      {
-        CH_TIME("H5Screate");
-        dataspace[i]      = H5Screate_simple(1, flatdims, NULL);
-      }
-      CH_assert(dataspace[i] >=0);
-      {
-        CH_TIME("H5Dcreate");
-#ifdef H516
-        dataset[i]        = H5Dcreate(a_handle.groupID(), dataname,
-                                      types[i],
-                                      dataspace[i], H5P_DEFAULT);
-#else
-        dataset[i]        = H5Dcreate2(a_handle.groupID(), dataname,
-                                       types[i],
-                                       dataspace[i], H5P_DEFAULT,
-                                       H5P_DEFAULT, H5P_DEFAULT);
-#endif
-      }
-      CH_assert(dataset[i] >= 0);
     }
+    else
+    {
+      sprintf(dataname, "%s:datatype=%i",a_name.c_str(), i);
+    }
+    {
+      CH_TIME("H5Screate");
+      dataspace[i]      = H5Screate_simple(1, flatdims, NULL);
+    }
+    CH_assert(dataspace[i] >=0);
+    {
+      CH_TIME("H5Dcreate");
+#ifdef H516
+      dataset[i]        = H5Dcreate(a_handle.groupID(), dataname,
+                                    types[i],
+                                    dataspace[i], H5P_DEFAULT);
+#else
+      dataset[i]        = H5Dcreate2(a_handle.groupID(), dataname,
+                                     types[i],
+                                     dataspace[i], H5P_DEFAULT,
+                                     H5P_DEFAULT, H5P_DEFAULT);
+#endif
+    }
+    CH_assert(dataset[i] >= 0);
+  }
 
   hid_t offsetspace, offsetData;
   for (unsigned int i=0; i<types.size(); ++i)
+  {
+    flatdims[0] =  offsets[i].size();
+    if (newForm)
     {
-      flatdims[0] =  offsets[i].size();
-      if (newForm)
+      if (a_name == "M")
       {
-        if (a_name == "M")
-        {
-          strcpy(dataname, "MaskOffsets");
-        }
-        else
-        {
-          sprintf(dataname, "%sOffsets",a_name.c_str());
-        }
+        strcpy(dataname, "MaskOffsets");
       }
       else
       {
-        sprintf(dataname, "%s:offsets=%i",a_name.c_str(), i);
-      }
-      {
-        CH_TIME("H5S_H5D_offsets_create");
-        offsetspace =  H5Screate_simple(1, flatdims, NULL);
-        CH_assert(offsetspace >= 0);
-#ifdef H516
-        offsetData  =   H5Dcreate(a_handle.groupID(), dataname,
-                                  H5T_NATIVE_LLONG, offsetspace, 
-                                  H5P_DEFAULT);
-#else
-        offsetData  =   H5Dcreate2(a_handle.groupID(), dataname,
-                                   H5T_NATIVE_LLONG, offsetspace, 
-                                   H5P_DEFAULT,
-                                   H5P_DEFAULT,H5P_DEFAULT);
-#endif
-        CH_assert(offsetData >= 0);
-      }
-      if (procID() == 0)
-        {
-          CH_TIME("WriteOffsets");
-          hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
-          CH_assert(memdataspace >= 0);
-          err = H5Dwrite(offsetData, H5T_NATIVE_LLONG, memdataspace, offsetspace,
-                         H5P_DEFAULT, &(offsets[i][0]));
-          CH_assert(err >= 0);
-          H5Sclose(memdataspace);
-        }
-      {
-        CH_TIME("H5S_H5D_offsets_close");
-        H5Sclose(offsetspace);
-        H5Dclose(offsetData);
+        sprintf(dataname, "%sOffsets",a_name.c_str());
       }
     }
+    else
+    {
+      sprintf(dataname, "%s:offsets=%i",a_name.c_str(), i);
+    }
+    {
+      CH_TIME("H5S_H5D_offsets_create");
+      offsetspace =  H5Screate_simple(1, flatdims, NULL);
+      CH_assert(offsetspace >= 0);
+#ifdef H516
+      offsetData  =   H5Dcreate(a_handle.groupID(), dataname,
+                                H5T_NATIVE_LLONG, offsetspace, 
+                                H5P_DEFAULT);
+#else
+      offsetData  =   H5Dcreate2(a_handle.groupID(), dataname,
+                                 H5T_NATIVE_LLONG, offsetspace, 
+                                 H5P_DEFAULT,
+                                 H5P_DEFAULT,H5P_DEFAULT);
+#endif
+      CH_assert(offsetData >= 0);
+    }
+    if (procID() == 0)
+    {
+      CH_TIME("WriteOffsets");
+      hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
+      CH_assert(memdataspace >= 0);
+      err = H5Dwrite(offsetData, H5T_NATIVE_LLONG, memdataspace, offsetspace,
+                     H5P_DEFAULT, &(offsets[i][0]));
+      CH_assert(err >= 0);
+      H5Sclose(memdataspace);
+    }
+    {
+      CH_TIME("H5S_H5D_offsets_close");
+      H5Sclose(offsetspace);
+      H5Dclose(offsetData);
+    }
+  }
 
   // write BoxLayoutData attributes into Dataset[0]
   if (!newForm)
@@ -1240,9 +1272,9 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
 
   Vector<size_t> type_size(types.size());
   for (unsigned int i=0; i<types.size(); ++i)
-    {
-      type_size[i] = H5Tget_size(types[i]);
-    }
+  {
+    type_size[i] = H5Tget_size(types[i]);
+  }
 
   Vector<int> thisSize(types.size());
 
@@ -1269,56 +1301,56 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
   Vector<void*> aggBuffers(types.size(), NULL);
 #endif
 
- // step 1, create buffer big enough to hold the biggest linearized T
- // that I will have to output.
- //  pout()<<"offsets ";
- // for (int i=0; i<offsets[0].size(); i++)
- // {
- //    pout()<<" "<<offsets[0][i];
- // }
+  // step 1, create buffer big enough to hold the biggest linearized T
+  // that I will have to output.
+  //  pout()<<"offsets ";
+  // for (int i=0; i<offsets[0].size(); i++)
+  // {
+  //    pout()<<" "<<offsets[0][i];
+  // }
   // pout()<<"\n";
   {
     CH_TIME("ComputeBufferCapacity");
     for (DataIterator it = a_data.dataIterator(); it.ok(); ++it)
+    {
+      unsigned int index = a_data.boxLayout().index(it());
+      for (unsigned int i=0; i<types.size(); ++i)
       {
-        unsigned int index = a_data.boxLayout().index(it());
-        for (unsigned int i=0; i<types.size(); ++i)
-          {
-            long long size = (offsets[i][index+1] - offsets[i][index])
-              * type_size[i];
-            // pout()<<"index:size "<<index<<" "<<size<<"\n";
-            CH_assert(size >= 0);
-            if (size > bufferCapacity[i]) // grow buffer if necessary.....
-              {
-                bufferCapacity[i] = size;
-              }
+        long long size = (offsets[i][index+1] - offsets[i][index])
+          * type_size[i];
+        // pout()<<"index:size "<<index<<" "<<size<<"\n";
+        CH_assert(size >= 0);
+        if (size > bufferCapacity[i]) // grow buffer if necessary.....
+        {
+          bufferCapacity[i] = size;
+        }
 #ifdef AGGREGATE_BOXES_
-            aggBufferSize[i] += size;
+        aggBufferSize[i] += size;
 #endif
-          }
       }
+    }
   }
   // CH_assert(bufferCapacity[0] > 1);
   for (unsigned int i=0; i<types.size(); ++i)
+  {
+    CH_TIME("mallocMT_buffers");
+    buffers[i] = mallocMT(bufferCapacity[i]);
+    if (buffers[i] == NULL)
     {
-      CH_TIME("mallocMT_buffers");
-      buffers[i] = mallocMT(bufferCapacity[i]);
-      if (buffers[i] == NULL)
-      {
-        pout() << " i=" << i
-               << " types.size() = " << types.size()
-               << " bufferCapacity[i] = " << (int)bufferCapacity[i]
-               << endl;
-        MayDay::Error("memory error in buffer allocation write");
-      }
-#ifdef AGGREGATE_BOXES_
-      aggBuffers[i] = mallocMT(aggBufferSize[i]);
-      if (aggBuffers[i] == NULL)
-      {
-        MayDay::Error("memory error in aggregate buffer allocation in write");
-      }
-#endif
+      pout() << " i=" << i
+             << " types.size() = " << types.size()
+             << " bufferCapacity[i] = " << (int)bufferCapacity[i]
+             << endl;
+      MayDay::Error("memory error in buffer allocation write");
     }
+#ifdef AGGREGATE_BOXES_
+    aggBuffers[i] = mallocMT(aggBufferSize[i]);
+    if (aggBuffers[i] == NULL)
+    {
+      MayDay::Error("memory error in aggregate buffer allocation in write");
+    }
+#endif
+  }
 
 #ifdef CH_MPI
 //#define TRY_MPI_COLLECTIVES_ 1
@@ -1336,9 +1368,9 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
   int sendBuf = maxNumBoxes;
   int result = MPI_Allreduce(&sendBuf, &maxNumBoxes, 1, MPI_INT,MPI_MAX, Chombo_MPI::comm);
   if (result != MPI_SUCCESS)
-    {
-      MayDay::Error("Couldn't collect maximum number of boxes!");
-    }
+  {
+    MayDay::Error("Couldn't collect maximum number of boxes!");
+  }
   // Set dataset transfer property to collective mode. This is how we turn
   // on MPI-IO collective in HDF5.
   hid_t DXPL = H5Pcreate(H5P_DATASET_XFER);
@@ -1361,126 +1393,126 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
     Vector<void*> bufferLoc(types.size(), NULL);
     // Set the bufferLoc to the beginning of the aggregated buffer
     for(unsigned int i=0; i<types.size(); ++i)
-      {
-        bufferLoc[i] = aggBuffers[i];
-      }
+    {
+      bufferLoc[i] = aggBuffers[i];
+    }
 #endif
     for (DataIterator it = a_data.dataIterator(); it.ok(); ++it)
-      {
-        const T& data = a_data[it()];
-        unsigned int index = a_data.boxLayout().index(it());
-        Box box = a_data.box(it());
-        box.grow(outputGhost);
-        // First, linearize the box, and put data into the buffer
-        {       
-          CH_TIMELEAF("linearize");
+    {
+      const T& data = a_data[it()];
+      unsigned int index = a_data.boxLayout().index(it());
+      Box box = a_data.box(it());
+      box.grow(outputGhost);
+      // First, linearize the box, and put data into the buffer
+      {       
+        CH_TIMELEAF("linearize");
 #ifdef AGGREGATE_BOXES_
-          // Under aggregation, we need to be careful to write to
-          // the buffer starting at bufferLoc.
-          for(unsigned int i=0; i<types.size(); i++)
-            {
-              data.linearOut(bufferLoc[i], box, comps);
-              char* tempLoc = ((char*)bufferLoc[i]) + data.size(box,comps);
-              bufferLoc[i] = (void*)tempLoc;
-              //              bufferLoc[i] += data.size(box, comps);
-            }
+        // Under aggregation, we need to be careful to write to
+        // the buffer starting at bufferLoc.
+        for(unsigned int i=0; i<types.size(); i++)
+        {
+          data.linearOut(bufferLoc[i], box, comps);
+          char* tempLoc = ((char*)bufferLoc[i]) + data.size(box,comps);
+          bufferLoc[i] = (void*)tempLoc;
+          //              bufferLoc[i] += data.size(box, comps);
+        }
 #else
-          write(data, buffers, box, comps); //write T to buffer
+        write(data, buffers, box, comps); //write T to buffer
+#endif
+      }
+      // Next select HDF5 hyperslabs to specify where to write in HDF5 file
+      // BUG: The hyperslab union generation is wrong if types.size() > 1
+      // because isFirstHyperslab isn't independent for different sizes.
+      // We don't make a fix because types.size() is almost always 1 (and
+      // will probably be set to 1 in future redesigns).
+      for (unsigned int i=0; i<types.size(); ++i)
+      {
+        offset[0] = offsets[i][index];
+        count[0] = offsets[i][index+1] - offset[0];
+#ifdef AGGREGATE_BOXES_
+        // Under aggregation, we may be sending multiple boxes to HDF5.
+        // Because boxes on a process are not necessarily written to 
+        // contiguous locations in the HDF5 file, we need to specify
+        // multiple file locations to HDF5. This is done using a 
+        // union of hyperslabs.
+
+        aggCount[i] += count[0];
+        if (isFirstHyperslab)
+        {
+          // If the box is non-empty, select the first hyperslab
+          // and set isFirstHyperslab to false.  Otherwise,
+          // we haven't encountered the first non-empty 
+          // hyperslab, so keep isFirstHyperslab equal to true.
+          if(count[0] > 0)
+          {
+            err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
+                                       offset, NULL,
+                                       count, NULL);
+            CH_assert(err >= 0);
+            isFirstHyperslab = false;
+          }
+          else // must explicitly tell HDF5 we are doing an empty write
+          {
+            H5Sselect_none(dataspace[i]);
+          }
+        }
+        else
+        {
+          if(count[0] > 0)
+          {
+            // H5S_SELECT_OR creates a union of the selected
+            // hyperslab with the already selected hyperslabs
+            // in dataspace
+            err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_OR,
+                                       offset, NULL,
+                                       count, NULL);
+            CH_assert(err >= 0);
+          }
+          // else don't do H5Sselect_none in case it overrides
+          // the already existing union of hyperslabs.
+        }
+#else
+        // Without aggregation, we create a simple hyperslab for the box.
+        hid_t memdataspace=0;
+        if (count[0] > 0)
+        {
+          err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
+                                     offset, NULL,
+                                     count, NULL);
+          CH_assert(err >= 0);
+          memdataspace = H5Screate_simple(1, count, NULL);
+          CH_assert(memdataspace >= 0);
+        }
+        else // must explicitly tell HDF5 we are doing an empty write
+        {
+          H5Sselect_none(dataspace[i]);
+          H5Sselect_none(memdataspace);
+        }
+
+        // Write out box if we are NOT performing aggregation.
+        // (Under aggregation, one single write call is issued at the
+        // end of the function.)
+        {
+          CH_TIMELEAF("H5Dwrite");
+#ifdef TRY_MPI_COLLECTIVES_
+          err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                         DXPL, buffers[i]);
+#else
+          err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                         H5P_DEFAULT, buffers[i]);
 #endif
         }
-        // Next select HDF5 hyperslabs to specify where to write in HDF5 file
-        // BUG: The hyperslab union generation is wrong if types.size() > 1
-        // because isFirstHyperslab isn't independent for different sizes.
-        // We don't make a fix because types.size() is almost always 1 (and
-        // will probably be set to 1 in future redesigns).
-        for (unsigned int i=0; i<types.size(); ++i)
-          {
-            offset[0] = offsets[i][index];
-            count[0] = offsets[i][index+1] - offset[0];
-#ifdef AGGREGATE_BOXES_
-            // Under aggregation, we may be sending multiple boxes to HDF5.
-            // Because boxes on a process are not necessarily written to 
-            // contiguous locations in the HDF5 file, we need to specify
-            // multiple file locations to HDF5. This is done using a 
-            // union of hyperslabs.
-
-            aggCount[i] += count[0];
-            if (isFirstHyperslab)
-              {
-                // If the box is non-empty, select the first hyperslab
-                // and set isFirstHyperslab to false.  Otherwise,
-                // we haven't encountered the first non-empty 
-                // hyperslab, so keep isFirstHyperslab equal to true.
-                if(count[0] > 0)
-                  {
-                    err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
-                                             offset, NULL,
-                                             count, NULL);
-                    CH_assert(err >= 0);
-                    isFirstHyperslab = false;
-                  }
-                else // must explicitly tell HDF5 we are doing an empty write
-                  {
-                    H5Sselect_none(dataspace[i]);
-                  }
-              }
-            else
-              {
-                if(count[0] > 0)
-                  {
-                    // H5S_SELECT_OR creates a union of the selected
-                    // hyperslab with the already selected hyperslabs
-                    // in dataspace
-                    err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_OR,
-                                               offset, NULL,
-                                               count, NULL);
-                    CH_assert(err >= 0);
-                  }
-                // else don't do H5Sselect_none in case it overrides
-                // the already existing union of hyperslabs.
-              }
-#else
-            // Without aggregation, we create a simple hyperslab for the box.
-            hid_t memdataspace=0;
-            if (count[0] > 0)
-              {
-                err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
-                                         offset, NULL,
-                                         count, NULL);
-                CH_assert(err >= 0);
-                memdataspace = H5Screate_simple(1, count, NULL);
-                CH_assert(memdataspace >= 0);
-              }
-            else // must explicitly tell HDF5 we are doing an empty write
-              {
-                H5Sselect_none(dataspace[i]);
-                H5Sselect_none(memdataspace);
-              }
-
-            // Write out box if we are NOT performing aggregation.
-            // (Under aggregation, one single write call is issued at the
-            // end of the function.)
-            {
-              CH_TIMELEAF("H5Dwrite");
-#ifdef TRY_MPI_COLLECTIVES_
-              err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                             DXPL, buffers[i]);
-#else
-              err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                             H5P_DEFAULT, buffers[i]);
-#endif
-            }
-            CH_assert(err >= 0);
-            H5Sclose(memdataspace);
-            if (err < 0)
-              {
-                ret = err;
-                pout() << "Before goto cleanup" << endl;
-                goto cleanup;
-              }
+        CH_assert(err >= 0);
+        H5Sclose(memdataspace);
+        if (err < 0)
+        {
+          ret = err;
+          pout() << "Before goto cleanup" << endl;
+          goto cleanup;
+        }
 #endif // end of ifdef AGGREGATE_BOXES_ 
-          } // end of loop over types
-      } // end of loop over data iterator
+      } // end of loop over types
+    } // end of loop over data iterator
 
     // Under aggregation, now we issue one write call to send all boxes to HDF5
     // If aggregation is turned off, but MPI collective is turned on, we may
@@ -1488,50 +1520,50 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
     // the same number of times.
 #ifdef AGGREGATE_BOXES_
     for(unsigned int i=0; i<types.size(); ++i)
+    {
+      if(aggCount[i] > 0)
       {
-        if(aggCount[i] > 0)
-          {
-            hid_t memdataspace = 0;
-            memdataspace = H5Screate_simple(1, &(aggCount[i]), NULL);
-            CH_assert(memdataspace >= 0);
-            {
-              CH_TIMELEAF("H5Dwrite");
+        hid_t memdataspace = 0;
+        memdataspace = H5Screate_simple(1, &(aggCount[i]), NULL);
+        CH_assert(memdataspace >= 0);
+        {
+          CH_TIMELEAF("H5Dwrite");
 #ifdef TRY_MPI_COLLECTIVES_
-              err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                           DXPL, aggBuffers[i]);
+          err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                         DXPL, aggBuffers[i]);
 #else
-              err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                                   H5P_DEFAULT, aggBuffers[i]);
+          err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                         H5P_DEFAULT, aggBuffers[i]);
 #endif
-            }
-            H5Sclose(memdataspace);
-            if (err < 0)
-              {
-                ret = err;
-                pout() << "Error! goto cleanup" << endl;
-                goto cleanup;
-              }
-          }
-        //else aggCount[i] is 0, and this processor has no data to write.
-        // For MPI collectives, still have to do an empty write call
+        }
+        H5Sclose(memdataspace);
+        if (err < 0)
+        {
+          ret = err;
+          pout() << "Error! goto cleanup" << endl;
+          goto cleanup;
+        }
+      }
+      //else aggCount[i] is 0, and this processor has no data to write.
+      // For MPI collectives, still have to do an empty write call
 #ifdef TRY_MPI_COLLECTIVES_
-        else
-          {
-            hid_t memdataspace = 0;
-            memdataspace = H5Screate_simple(1, &(aggCount[i]), NULL);
-            H5Sselect_none(memdataspace);
-            H5Sselect_none(dataspace[i]);
-            err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                           DXPL, aggBuffers[i]);
-            if (err < 0)
-              {
-                ret = err;
-                pout() << "Before goto cleanup" << endl;
-                goto cleanup;
-              }
-          }
+      else
+      {
+        hid_t memdataspace = 0;
+        memdataspace = H5Screate_simple(1, &(aggCount[i]), NULL);
+        H5Sselect_none(memdataspace);
+        H5Sselect_none(dataspace[i]);
+        err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                       DXPL, aggBuffers[i]);
+        if (err < 0)
+        {
+          ret = err;
+          pout() << "Before goto cleanup" << endl;
+          goto cleanup;
+        }
+      }
 #endif
-      } // end for loop over types
+    } // end for loop over types
 #else // not using aggregated collective buffering
 #ifdef TRY_MPI_COLLECTIVES_
     // MPI collectives expects all processes to make the same number of H5Dwrite calls,
@@ -1545,22 +1577,22 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
     H5Sselect_none(memdataspace);
     int nBoxes = a_data.dataIterator().size();
     for(int iwrite = nBoxes; iwrite < maxNumBoxes; iwrite++)
+    {
+      for (unsigned int i=0; i<types.size(); ++i)
       {
-        for (unsigned int i=0; i<types.size(); ++i)
-          {
-            H5Sselect_none(dataspace[i]);
-            // for debugging: buffers has junk data in it (but none of that data should
-            // be written out here)
-            err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
-                           DXPL, buffers[i]);
-            if (err < 0)
-              {
-                ret = err;
-                pout() << "Before goto cleanup" << endl;
-                goto cleanup;
-              }
-          }
+        H5Sselect_none(dataspace[i]);
+        // for debugging: buffers has junk data in it (but none of that data should
+        // be written out here)
+        err = H5Dwrite(dataset[i], types[i], memdataspace, dataspace[i],
+                       DXPL, buffers[i]);
+        if (err < 0)
+        {
+          ret = err;
+          pout() << "Before goto cleanup" << endl;
+          goto cleanup;
+        }
       }
+    }
     H5Sclose(memdataspace);
 
 #endif // end of #ifdef TRY_MPI_COLLECTIVES_
@@ -1574,25 +1606,25 @@ int write(HDF5Handle& a_handle, const BoxLayoutData<T>& a_data,
   
   // OK, clean up data structures
   
- cleanup:
+cleanup:
   for (unsigned int i=0; i<types.size(); ++i)
+  {
     {
-      {
-        CH_TIME("freeMT");
-        freeMT(buffers[i]);
-        #ifdef AGGREGATE_BOXES_
-        freeMT(aggBuffers[i]);
-        #endif
-      }
-      {
-        CH_TIME("H5Sclose");
-        H5Sclose(dataspace[i]);
-      }
-      {
-        CH_TIME("H5Dclose");
-        H5Dclose(dataset[i]);
-      }
+      CH_TIME("freeMT");
+      freeMT(buffers[i]);
+#ifdef AGGREGATE_BOXES_
+      freeMT(aggBuffers[i]);
+#endif
     }
+    {
+      CH_TIME("H5Sclose");
+      H5Sclose(dataspace[i]);
+    }
+    {
+      CH_TIME("H5Dclose");
+      H5Dclose(dataset[i]);
+    }
+  }
   return ret;
   
 }
@@ -1628,29 +1660,29 @@ int read(HDF5Handle& a_handle, LevelData<T>& a_data, const std::string& a_name,
          const DisjointBoxLayout& a_layout, const Interval& a_comps, bool a_redefineData)
 {
   if (a_redefineData)
+  {
+    HDF5HeaderData info;
+    std::string group = a_handle.getGroup();
+    if (a_handle.setGroup(group+"/"+a_name+"_attributes"))
     {
-      HDF5HeaderData info;
-      std::string group = a_handle.getGroup();
-      if (a_handle.setGroup(group+"/"+a_name+"_attributes"))
-        {
-          std::string message = "error opening "
-                                +a_handle.getGroup()+"/"+a_name+"_attributes" ;
-          MayDay::Warning(message.c_str());
-          return 1;
-        }
-      info.readFromFile(a_handle);
-      a_handle.setGroup(group);
-      int ncomp =  info.m_int["comps"];
-      IntVect ghost = info.m_intvect["ghost"];
-      if (a_comps.end() > 0 && ncomp < a_comps.end())
-        {
-          MayDay::Error("attempt to read component interval that is not available");
-        }
-      if (a_comps.size() == 0)
-        a_data.define(a_layout, ncomp, ghost);
-      else
-        a_data.define(a_layout, a_comps.size(), ghost);
+      std::string message = "error opening "
+        +a_handle.getGroup()+"/"+a_name+"_attributes" ;
+      MayDay::Warning(message.c_str());
+      return 1;
     }
+    info.readFromFile(a_handle);
+    a_handle.setGroup(group);
+    int ncomp =  info.m_int["comps"];
+    IntVect ghost = info.m_intvect["ghost"];
+    if (a_comps.end() > 0 && ncomp < a_comps.end())
+    {
+      MayDay::Error("attempt to read component interval that is not available");
+    }
+    if (a_comps.size() == 0)
+      a_data.define(a_layout, ncomp, ghost);
+    else
+      a_data.define(a_layout, a_comps.size(), ghost);
+  }
   return read(a_handle, (BoxLayoutData<T>&)a_data, a_name, a_layout, a_comps, false);
 
 }
@@ -1681,65 +1713,65 @@ int read(HDF5Handle& a_handle, BoxLayoutData<T>& a_data, const std::string& a_na
   Vector<Vector<char> > buffers(types.size(), 500);
 
   for (unsigned int i=0; i<types.size(); ++i)
-    {
-      sprintf(dataname, "%s:datatype=%i",a_name.c_str(), i);
+  {
+    sprintf(dataname, "%s:datatype=%i",a_name.c_str(), i);
 #ifdef H516
-      dataset[i]        = H5Dopen(a_handle.groupID(), dataname);
+    dataset[i]        = H5Dopen(a_handle.groupID(), dataname);
 #else
-      dataset[i]        = H5Dopen2(a_handle.groupID(), dataname, H5P_DEFAULT);
+    dataset[i]        = H5Dopen2(a_handle.groupID(), dataname, H5P_DEFAULT);
 #endif
-      if (dataset[i] < 0)
-      {
-        MayDay::Warning("dataset open failure"); return dataset[i];
-      }
-      dataspace[i]      = H5Dget_space(dataset[i]);
-      if (dataspace[i] < 0)
-      {
-        MayDay::Warning("dataspace open failure"); return dataspace[i];
-      }
+    if (dataset[i] < 0)
+    {
+      MayDay::Warning("dataset open failure"); return dataset[i];
     }
+    dataspace[i]      = H5Dget_space(dataset[i]);
+    if (dataspace[i] < 0)
+    {
+      MayDay::Warning("dataspace open failure"); return dataspace[i];
+    }
+  }
 
   hid_t offsetspace, offsetData;
   hsize_t flatdims[1];
   for (unsigned int i=0; i<types.size(); ++i)
-    {
-      flatdims[0] =  offsets[i].size();
-      sprintf(dataname, "%s:offsets=%i",a_name.c_str(), i);
-      offsetspace =  H5Screate_simple(1, flatdims, NULL);
-      CH_assert(offsetspace >= 0);
+  {
+    flatdims[0] =  offsets[i].size();
+    sprintf(dataname, "%s:offsets=%i",a_name.c_str(), i);
+    offsetspace =  H5Screate_simple(1, flatdims, NULL);
+    CH_assert(offsetspace >= 0);
 #ifdef H516
-      offsetData  =   H5Dopen(a_handle.groupID(), dataname);
+    offsetData  =   H5Dopen(a_handle.groupID(), dataname);
 #else
-      offsetData  =   H5Dopen2(a_handle.groupID(), dataname,H5P_DEFAULT);
+    offsetData  =   H5Dopen2(a_handle.groupID(), dataname,H5P_DEFAULT);
 #endif
-      CH_assert(offsetData >= 0);
-      hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
-      CH_assert(memdataspace >= 0);
-      err = H5Dread(offsetData, H5T_NATIVE_LLONG, memdataspace, offsetspace,
-                    H5P_DEFAULT, &(offsets[i][0]));
-      CH_assert(err >=0);
-      H5Sclose(memdataspace);
-      H5Sclose(offsetspace);
-      H5Dclose(offsetData);
-    }
+    CH_assert(offsetData >= 0);
+    hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
+    CH_assert(memdataspace >= 0);
+    err = H5Dread(offsetData, H5T_NATIVE_LLONG, memdataspace, offsetspace,
+                  H5P_DEFAULT, &(offsets[i][0]));
+    CH_assert(err >=0);
+    H5Sclose(memdataspace);
+    H5Sclose(offsetspace);
+    H5Dclose(offsetData);
+  }
 
   HDF5HeaderData info;
   std::string group = a_handle.getGroup();
   if (a_handle.setGroup(a_handle.getGroup()+"/"+a_name+"_attributes"))
-    {
-      std::string message = "error opening "+a_handle.getGroup()+"/"+a_name ;
-      MayDay::Warning(message.c_str());
-      return 1;
-    }
+  {
+    std::string message = "error opening "+a_handle.getGroup()+"/"+a_name ;
+    MayDay::Warning(message.c_str());
+    return 1;
+  }
 
   info.readFromFile(a_handle);
   a_handle.setGroup(group);
   int ncomps = info.m_int["comps"];
   IntVect outputGhost(IntVect::Zero); // backwards file compatible mode.
   if (info.m_intvect.find("outputGhost") != info.m_intvect.end())
-    {
-      outputGhost = info.m_intvect["outputGhost"];
-    }
+  {
+    outputGhost = info.m_intvect["outputGhost"];
+  }
   if (ncomps <= 0)
   {
     MayDay::Warning("ncomps <= 0 in read");
@@ -1766,53 +1798,53 @@ int read(HDF5Handle& a_handle, BoxLayoutData<T>& a_data, const std::string& a_na
 
   Vector<size_t> type_size(types.size());
   for (unsigned int i=0; i<types.size(); ++i)
-    {
-      type_size[i] = H5Tget_size(types[i]);
+  {
+    type_size[i] = H5Tget_size(types[i]);
 
-    }
+  }
 
   Vector<int> thisSize(types.size());
   DataIterator it = a_data.dataIterator();
   for ( ; it.ok(); ++it)
+  {
+    CH_TIMELEAF("H5Dread");
+    T& data = a_data[it()];
+    unsigned int index = a_data.boxLayout().index(it());
+    Box box = a_data.box(it());
+
+    for (unsigned int i=0; i<types.size(); ++i)
     {
-      CH_TIMELEAF("H5Dread");
-      T& data = a_data[it()];
-      unsigned int index = a_data.boxLayout().index(it());
-      Box box = a_data.box(it());
 
-      for (unsigned int i=0; i<types.size(); ++i)
+      offset[0] = offsets[i][index];
+      count[0] = offsets[i][index+1] - offset[0];
+      if (count[0] > 0)
+      {
+        size_t size = count[0] * type_size[i];
+        while (size > buffers[i].size())
         {
-
-          offset[0] = offsets[i][index];
-          count[0] = offsets[i][index+1] - offset[0];
-          if (count[0] > 0)
-          {
-            size_t size = count[0] * type_size[i];
-            while (size > buffers[i].size())
-              {
-                buffers[i].resize(2*buffers[i].size());
-            }
-            
-            err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
-                                       offset, NULL,
-                                       count, NULL);
-            CH_assert(err >= 0);
-            hid_t memdataspace = H5Screate_simple(1, count, NULL);
-            CH_assert(memdataspace >= 0);
-            err = H5Dread(dataset[i], types[i], memdataspace, dataspace[i],
-                          H5P_DEFAULT, &(buffers[i][0]));
-            CH_assert(err >= 0);
-            H5Sclose(memdataspace);
-            if (err < 0)
-              {
-              ret = err;
-              goto cleanup;
-              }
-          }
+          buffers[i].resize(2*buffers[i].size());
         }
-      box.grow(outputGhost);
-      read(data, buffers,  box, comps);
+            
+        err =  H5Sselect_hyperslab(dataspace[i], H5S_SELECT_SET,
+                                   offset, NULL,
+                                   count, NULL);
+        CH_assert(err >= 0);
+        hid_t memdataspace = H5Screate_simple(1, count, NULL);
+        CH_assert(memdataspace >= 0);
+        err = H5Dread(dataset[i], types[i], memdataspace, dataspace[i],
+                      H5P_DEFAULT, &(buffers[i][0]));
+        CH_assert(err >= 0);
+        H5Sclose(memdataspace);
+        if (err < 0)
+        {
+          ret = err;
+          goto cleanup;
+        }
+      }
     }
+    box.grow(outputGhost);
+    read(data, buffers,  box, comps);
+  }
 //   if (it.size()==0)
 //     {
 //       //  try doing an empty H5Dread operation to make the collective system happier.
@@ -1828,13 +1860,13 @@ int read(HDF5Handle& a_handle, BoxLayoutData<T>& a_data, const std::string& a_na
 //      }
 //     }
                         
- cleanup:
+cleanup:
   for (unsigned int i=0; i<types.size(); ++i)
-    {
-      // freeMT(buffers[i]);
-      H5Sclose(dataspace[i]);
-      H5Dclose(dataset[i]);
-    }
+  {
+    // freeMT(buffers[i]);
+    H5Sclose(dataspace[i]);
+    H5Dclose(dataset[i]);
+  }
   return ret;
 }
 
@@ -2010,28 +2042,28 @@ int readLevel(HDF5Handle&   a_handle,
   // a_dx       = meta.m_realvect["vec_dx"];
   // Allow for vec_dx to be absent, as it will be in isotropic files.
   if (meta.m_realvect.find("vec_dx") != meta.m_realvect.end())
-    {
-      a_dx = meta.m_realvect["vec_dx"];
-    }
+  {
+    a_dx = meta.m_realvect["vec_dx"];
+  }
   else
-    { // vec_dx is not present, so get dx.
-      Real dxScalar = meta.m_real["dx"];
-      a_dx = dxScalar * RealVect::Unit;
-    }
+  { // vec_dx is not present, so get dx.
+    Real dxScalar = meta.m_real["dx"];
+    a_dx = dxScalar * RealVect::Unit;
+  }
   a_dt       = meta.m_real["dt"];
   a_time     = meta.m_real["time"];
   a_domain   = meta.m_box["prob_domain"];
   // a_refRatio = meta.m_intvect["vec_ref_ratio"];
   // Allow for vec_ref_ratio to be absent, as it will be in isotropic files.
   if (meta.m_intvect.find("vec_ref_ratio") != meta.m_intvect.end())
-    {
-      a_refRatio = meta.m_intvect["vec_ref_ratio"];
-    }
+  {
+    a_refRatio = meta.m_intvect["vec_ref_ratio"];
+  }
   else
-    { // vec_ref_ratio is not present, so get ref_ratio.
-      int refRatioScalar = meta.m_int["ref_ratio"];
-      a_refRatio = refRatioScalar * IntVect::Unit;
-    }
+  { // vec_ref_ratio is not present, so get ref_ratio.
+    int refRatioScalar = meta.m_int["ref_ratio"];
+    a_refRatio = refRatioScalar * IntVect::Unit;
+  }
   Vector<Box> boxes;
   error = read(a_handle, boxes);
   Vector<int> procIDs;
@@ -2137,20 +2169,20 @@ WriteMultiData<T>::WriteMultiData(HDF5Handle&      a_handle,
     hid_t dataspace;
     flatdims[0] = m_offsets[0].back();
     if (m_newForm)
+    {
+      if (a_name == "M")
       {
-        if (a_name == "M")
-          {
-            strcpy(m_dataname, "Mask");
-          }
-        else
-          {
-            sprintf(m_dataname, "%sRegular", a_name.c_str());
-          }
+        strcpy(m_dataname, "Mask");
       }
+      else
+      {
+        sprintf(m_dataname, "%sRegular", a_name.c_str());
+      }
+    }
     else
-      {
-        sprintf(m_dataname, "%s:datatype=%i", a_name.c_str(), 0);
-      }
+    {
+      sprintf(m_dataname, "%s:datatype=%i", a_name.c_str(), 0);
+    }
     {
       CH_TIME("H5Screate");
       dataspace = H5Screate_simple(1, flatdims, NULL);
@@ -2176,20 +2208,20 @@ WriteMultiData<T>::WriteMultiData(HDF5Handle&      a_handle,
     char offsetname[128];
     flatdims[0] = m_offsets[0].size();  // Number of boxes
     if (m_newForm)
+    {
+      if (a_name == "M")
       {
-        if (a_name == "M")
-          {
-            strcpy(offsetname, "MaskOffsets");
-          }
-        else
-          {
-            sprintf(offsetname, "%sOffsets", a_name.c_str());
-          }
+        strcpy(offsetname, "MaskOffsets");
       }
+      else
+      {
+        sprintf(offsetname, "%sOffsets", a_name.c_str());
+      }
+    }
     else
-      {
-        sprintf(offsetname, "%s:offsets=%i", a_name.c_str(), 0);
-      }
+    {
+      sprintf(offsetname, "%s:offsets=%i", a_name.c_str(), 0);
+    }
     {
       CH_TIME("H5S_H5D_offsets_create");
       offsetspace = H5Screate_simple(1, flatdims, NULL);
@@ -2202,16 +2234,16 @@ WriteMultiData<T>::WriteMultiData(HDF5Handle&      a_handle,
     }
     if (procID() == 0)
       // Write the offsets
-      {
-        herr_t err;
-        CH_TIME("WriteOffsets");
-        hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
-        CH_assert(memdataspace >= 0);
-        err = H5Dwrite(offsetdataset, H5T_NATIVE_LLONG, memdataspace,
-                       offsetspace, H5P_DEFAULT, &(m_offsets[0][0]));
-        CH_assert(err >= 0);
-        H5Sclose(memdataspace);
-      }
+    {
+      herr_t err;
+      CH_TIME("WriteOffsets");
+      hid_t memdataspace = H5Screate_simple(1, flatdims, NULL);
+      CH_assert(memdataspace >= 0);
+      err = H5Dwrite(offsetdataset, H5T_NATIVE_LLONG, memdataspace,
+                     offsetspace, H5P_DEFAULT, &(m_offsets[0][0]));
+      CH_assert(err >= 0);
+      H5Sclose(memdataspace);
+    }
     {
       CH_TIME("H5S_H5D_offsets_close");
       H5Sclose(offsetspace);
@@ -2226,10 +2258,10 @@ WriteMultiData<T>::WriteMultiData(HDF5Handle&      a_handle,
     info.m_intvect["ghost"] = m_outputGhost;
     info.m_intvect["outputGhost"] = m_outputGhost;
     if (!m_newForm)
-      {
-        info.m_int["comps"] = m_allIntvFile.size();
-        info.m_string["objectType"] = name(dummy);
-      }
+    {
+      info.m_int["comps"] = m_allIntvFile.size();
+      info.m_string["objectType"] = name(dummy);
+    }
     std::string group = a_handle.getGroup();
     a_handle.setGroup(group+"/"+a_name+"_attributes");
     info.writeToFile(a_handle);
@@ -2289,9 +2321,9 @@ WriteMultiData<T>::writeData(const BoxLayoutData<T>& a_data,
   hid_t DXPL = H5Pcreate(H5P_DATASET_XFER);
 #ifdef CH_MPI
   if (m_policyFlags & CH_HDF5::IOPolicyCollectiveWrite)
-    {
-      H5Pset_dxpl_mpio(DXPL, H5FD_MPIO_COLLECTIVE);
-    }
+  {
+    H5Pset_dxpl_mpio(DXPL, H5FD_MPIO_COLLECTIVE);
+  }
 #endif
 
   if (m_policyFlags & CH_HDF5::IOPolicyMultiDimHyperslab)
@@ -2299,191 +2331,191 @@ WriteMultiData<T>::writeData(const BoxLayoutData<T>& a_data,
 //--Perform parallel writes from specified hyperslabs (when defining hyperslabs
 //--in memory, remember that HDF5 assumes row-ordering).
 
+  {
+    CH_TIME("hyperslab_H5Dwrite");
+    DataIterator dit = a_data.dataIterator();
+    const void* buffer;
+    for (int iBox = 0; iBox != m_maxBoxPerProc; ++iBox)
     {
-      CH_TIME("hyperslab_H5Dwrite");
-      DataIterator dit = a_data.dataIterator();
-      const void* buffer;
-      for (int iBox = 0; iBox != m_maxBoxPerProc; ++iBox)
+      hid_t memDataSpace;
+      if (dit.ok())
+      {
+        const T& data = a_data[dit];
+        unsigned globalIdx = a_data.boxLayout().index(dit());
+        Box dbox = data.box();         // Data box
+        Box rbox = a_data.box(dit());  // Read box
+        rbox.grow(m_outputGhost);
+        // Create the dataspace in memory
+        memCount[0] = a_data.nComp();
+        D_TERM6(memCount[SpaceDim-0] = dbox.size(0);,
+                memCount[SpaceDim-1] = dbox.size(1);,
+                memCount[SpaceDim-2] = dbox.size(2);,
+                memCount[SpaceDim-3] = dbox.size(3);,
+                memCount[SpaceDim-4] = dbox.size(4);,
+                memCount[SpaceDim-5] = dbox.size(5);)
+          memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
+        // Select the hyperslab from the memory dataspace
+        memCount[0] = a_intvMem.size();
+        D_TERM6(memCount[SpaceDim-0] = rbox.size(0);,
+                memCount[SpaceDim-1] = rbox.size(1);,
+                memCount[SpaceDim-2] = rbox.size(2);,
+                memCount[SpaceDim-3] = rbox.size(3);,
+                memCount[SpaceDim-4] = rbox.size(4);,
+                memCount[SpaceDim-5] = rbox.size(5);)
+          memOffset[0] = a_intvMem.begin();
+        D_TERM6(
+          memOffset[SpaceDim-0] = rbox.smallEnd(0) - dbox.smallEnd(0);,
+          memOffset[SpaceDim-1] = rbox.smallEnd(1) - dbox.smallEnd(1);,
+          memOffset[SpaceDim-2] = rbox.smallEnd(2) - dbox.smallEnd(2);,
+          memOffset[SpaceDim-3] = rbox.smallEnd(3) - dbox.smallEnd(3);,
+          memOffset[SpaceDim-4] = rbox.smallEnd(4) - dbox.smallEnd(4);,
+          memOffset[SpaceDim-5] = rbox.smallEnd(5) - dbox.smallEnd(5);)
+          err = H5Sselect_hyperslab(memDataSpace, H5S_SELECT_SET,
+                                    memOffset, NULL, memCount, NULL);
+        CH_assert(err >= 0);
+        // Create the hyperslab in the file dataspace
+        fileOffset[0] = m_offsets[0][globalIdx];
+        fileCount[0] = m_offsets[0][globalIdx + 1] - fileOffset[0];
+        if (fileCount[0] > 0)  // Else catches more processes than boxes
         {
-          hid_t memDataSpace;
-          if (dit.ok())
-            {
-              const T& data = a_data[dit];
-              unsigned globalIdx = a_data.boxLayout().index(dit());
-              Box dbox = data.box();         // Data box
-              Box rbox = a_data.box(dit());  // Read box
-              rbox.grow(m_outputGhost);
-              // Create the dataspace in memory
-              memCount[0] = a_data.nComp();
-              D_TERM6(memCount[SpaceDim-0] = dbox.size(0);,
-                      memCount[SpaceDim-1] = dbox.size(1);,
-                      memCount[SpaceDim-2] = dbox.size(2);,
-                      memCount[SpaceDim-3] = dbox.size(3);,
-                      memCount[SpaceDim-4] = dbox.size(4);,
-                      memCount[SpaceDim-5] = dbox.size(5);)
-              memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
-              // Select the hyperslab from the memory dataspace
-              memCount[0] = a_intvMem.size();
-              D_TERM6(memCount[SpaceDim-0] = rbox.size(0);,
-                      memCount[SpaceDim-1] = rbox.size(1);,
-                      memCount[SpaceDim-2] = rbox.size(2);,
-                      memCount[SpaceDim-3] = rbox.size(3);,
-                      memCount[SpaceDim-4] = rbox.size(4);,
-                      memCount[SpaceDim-5] = rbox.size(5);)
-              memOffset[0] = a_intvMem.begin();
-              D_TERM6(
-                memOffset[SpaceDim-0] = rbox.smallEnd(0) - dbox.smallEnd(0);,
-                memOffset[SpaceDim-1] = rbox.smallEnd(1) - dbox.smallEnd(1);,
-                memOffset[SpaceDim-2] = rbox.smallEnd(2) - dbox.smallEnd(2);,
-                memOffset[SpaceDim-3] = rbox.smallEnd(3) - dbox.smallEnd(3);,
-                memOffset[SpaceDim-4] = rbox.smallEnd(4) - dbox.smallEnd(4);,
-                memOffset[SpaceDim-5] = rbox.smallEnd(5) - dbox.smallEnd(5);)
-              err = H5Sselect_hyperslab(memDataSpace, H5S_SELECT_SET,
-                                        memOffset, NULL, memCount, NULL);
-              CH_assert(err >= 0);
-              // Create the hyperslab in the file dataspace
-              fileOffset[0] = m_offsets[0][globalIdx];
-              fileCount[0] = m_offsets[0][globalIdx + 1] - fileOffset[0];
-              if (fileCount[0] > 0)  // Else catches more processes than boxes
-                {
-                  // Revise offsets based on selection of interval
-                  const hsize_t dpnts = rbox.numPts();  // Points per comp
-                  fileOffset[0] += dpnts*a_intvFile.begin();
-                  fileCount[0] = dpnts*a_intvFile.size();
-                  CH_assert(fileOffset[0] + fileCount[0] <=
-                            m_offsets[0][globalIdx+1]);
-                  err = H5Sselect_hyperslab(fileDataSpace, H5S_SELECT_SET,
-                                            fileOffset, NULL, fileCount, NULL);
-                  CH_assert(err >= 0);
-                }
-              else  // More processes than boxes
-                {
-                  H5Sselect_none(memDataSpace);
-                  H5Sselect_none(fileDataSpace);
-                }
-              buffer = data.dataPtr();
-              ++dit;
-            }
-          else  // Does not have a box to participate in collective :(
-            {
-              std::memset(memCount, 0, (SpaceDim+1)*sizeof(hsize_t));
-              memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
-              H5Sselect_none(memDataSpace);
-              H5Sselect_none(fileDataSpace);
-              buffer = 0;
-            }
-          // Write
-          err = H5Dwrite(m_dataSet, m_types[0], memDataSpace, fileDataSpace,
-                         DXPL, buffer);
+          // Revise offsets based on selection of interval
+          const hsize_t dpnts = rbox.numPts();  // Points per comp
+          fileOffset[0] += dpnts*a_intvFile.begin();
+          fileCount[0] = dpnts*a_intvFile.size();
+          CH_assert(fileOffset[0] + fileCount[0] <=
+                    m_offsets[0][globalIdx+1]);
+          err = H5Sselect_hyperslab(fileDataSpace, H5S_SELECT_SET,
+                                    fileOffset, NULL, fileCount, NULL);
           CH_assert(err >= 0);
-          H5Sclose(memDataSpace);
-          if (err < 0)
-            {
-              ret = err;
-              goto cleanup;
-            }
         }
+        else  // More processes than boxes
+        {
+          H5Sselect_none(memDataSpace);
+          H5Sselect_none(fileDataSpace);
+        }
+        buffer = data.dataPtr();
+        ++dit;
+      }
+      else  // Does not have a box to participate in collective :(
+      {
+        std::memset(memCount, 0, (SpaceDim+1)*sizeof(hsize_t));
+        memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
+        H5Sselect_none(memDataSpace);
+        H5Sselect_none(fileDataSpace);
+        buffer = 0;
+      }
+      // Write
+      err = H5Dwrite(m_dataSet, m_types[0], memDataSpace, fileDataSpace,
+                     DXPL, buffer);
+      CH_assert(err >= 0);
+      H5Sclose(memDataSpace);
+      if (err < 0)
+      {
+        ret = err;
+        goto cleanup;
+      }
     }
+  }
   else
 
 //--Perform parallel writes with 1-D hyperslabs and using internal mechanisms
 //--for linearization.
 
+  {
+    CH_TIME("linearize_H5Dwrite");
+    void* linearBuffer;
+
+    // Step 1: create a buffer to linearize T
     {
-      CH_TIME("linearize_H5Dwrite");
-      void* linearBuffer;
-
-      // Step 1: create a buffer to linearize T
+      CH_TIMELEAF("allocateLinearBuffer");
+      long long bufferSize = 0;
+      for (DataIterator dit = a_data.dataIterator(); dit.ok(); ++dit)
       {
-        CH_TIMELEAF("allocateLinearBuffer");
-        long long bufferSize = 0;
-        for (DataIterator dit = a_data.dataIterator(); dit.ok(); ++dit)
-          {
-            unsigned globalIdx = a_data.boxLayout().index(dit());
-            {
-              const long long allIntvSize =
-                (m_offsets[0][globalIdx + 1] - m_offsets[0][globalIdx]);
-              CH_assert(allIntvSize >= 0);
-              if (allIntvSize > bufferSize)
-                {
-                  bufferSize = allIntvSize;
-                }
-            }
-          }
-        // Get buffer size in bytes, and adjusted for write interval
-        bufferSize = ((bufferSize/m_allIntvFile.size())*a_intvMem.size())*
-          H5Tget_size(m_types[0]);
-        linearBuffer = mallocMT(bufferSize);
-        if (linearBuffer == NULL)
-          {
-            pout() << " bufferCapacity = " << (int)bufferSize << endl;
-            MayDay::Error("Memory error in buffer allocation write");
-          }
-      }
-
-      // Step 2: linearize the data and then write to file
-      DataIterator dit = a_data.dataIterator();
-      for (int iBox = 0; iBox != m_maxBoxPerProc; ++iBox)
+        unsigned globalIdx = a_data.boxLayout().index(dit());
         {
-          hid_t memDataSpace;
-          if (dit.ok())
-            {
-              const T& data = a_data[dit];
-              unsigned globalIdx = a_data.boxLayout().index(dit());
-              Box rbox = a_data.box(dit());  // Read box
-              rbox.grow(m_outputGhost);
-              {       
-                CH_TIMELEAF("linearize");
-                data.linearOut(linearBuffer, rbox, a_intvMem);
-              }
-              const hsize_t dpnts = rbox.numPts();  // Points per comp
-              // Create the dataspace in memory
-              memCount[0] = dpnts*a_intvMem.size();
-              memDataSpace = H5Screate_simple(1, memCount, NULL);
-              // Create the hyperslab in the file dataspace
-              fileOffset[0] = m_offsets[0][globalIdx];
-              fileCount[0] = m_offsets[0][globalIdx + 1] - fileOffset[0];
-              if (fileCount[0] > 0)  // Else catches more processes than boxes
-                {
-                  // Revise offsets based on selection of interval
-                  fileOffset[0] += dpnts*a_intvFile.begin();
-                  fileCount[0] = dpnts*a_intvFile.size();
-                  CH_assert(fileOffset[0] + fileCount[0] <=
-                            m_offsets[0][globalIdx+1]);
-                  err = H5Sselect_hyperslab(fileDataSpace, H5S_SELECT_SET,
-                                            fileOffset, NULL, fileCount, NULL);
-                  CH_assert(err >= 0);
-                }
-              else  // More processes than boxes
-                {
-                  H5Sselect_none(memDataSpace);
-                  H5Sselect_none(fileDataSpace);
-                }
-              ++dit;
-            }
-          else  // Does not have a box to participate in collective :(
-            {
-              memCount[0] = 0;
-              memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
-              H5Sselect_none(memDataSpace);
-              H5Sselect_none(fileDataSpace);
-            }
-          // Collective write
-          err = H5Dwrite(m_dataSet, m_types[0], memDataSpace, fileDataSpace,
-                         DXPL, linearBuffer);
-          CH_assert(err >= 0);
-          H5Sclose(memDataSpace);
-          if (err < 0)
-            {
-              ret = err;
-              freeMT(linearBuffer);
-              goto cleanup;
-            }
+          const long long allIntvSize =
+            (m_offsets[0][globalIdx + 1] - m_offsets[0][globalIdx]);
+          CH_assert(allIntvSize >= 0);
+          if (allIntvSize > bufferSize)
+          {
+            bufferSize = allIntvSize;
+          }
         }
-      freeMT(linearBuffer);
+      }
+      // Get buffer size in bytes, and adjusted for write interval
+      bufferSize = ((bufferSize/m_allIntvFile.size())*a_intvMem.size())*
+        H5Tget_size(m_types[0]);
+      linearBuffer = mallocMT(bufferSize);
+      if (linearBuffer == NULL)
+      {
+        pout() << " bufferCapacity = " << (int)bufferSize << endl;
+        MayDay::Error("Memory error in buffer allocation write");
+      }
     }
 
-  cleanup: ;
+    // Step 2: linearize the data and then write to file
+    DataIterator dit = a_data.dataIterator();
+    for (int iBox = 0; iBox != m_maxBoxPerProc; ++iBox)
+    {
+      hid_t memDataSpace;
+      if (dit.ok())
+      {
+        const T& data = a_data[dit];
+        unsigned globalIdx = a_data.boxLayout().index(dit());
+        Box rbox = a_data.box(dit());  // Read box
+        rbox.grow(m_outputGhost);
+        {       
+          CH_TIMELEAF("linearize");
+          data.linearOut(linearBuffer, rbox, a_intvMem);
+        }
+        const hsize_t dpnts = rbox.numPts();  // Points per comp
+        // Create the dataspace in memory
+        memCount[0] = dpnts*a_intvMem.size();
+        memDataSpace = H5Screate_simple(1, memCount, NULL);
+        // Create the hyperslab in the file dataspace
+        fileOffset[0] = m_offsets[0][globalIdx];
+        fileCount[0] = m_offsets[0][globalIdx + 1] - fileOffset[0];
+        if (fileCount[0] > 0)  // Else catches more processes than boxes
+        {
+          // Revise offsets based on selection of interval
+          fileOffset[0] += dpnts*a_intvFile.begin();
+          fileCount[0] = dpnts*a_intvFile.size();
+          CH_assert(fileOffset[0] + fileCount[0] <=
+                    m_offsets[0][globalIdx+1]);
+          err = H5Sselect_hyperslab(fileDataSpace, H5S_SELECT_SET,
+                                    fileOffset, NULL, fileCount, NULL);
+          CH_assert(err >= 0);
+        }
+        else  // More processes than boxes
+        {
+          H5Sselect_none(memDataSpace);
+          H5Sselect_none(fileDataSpace);
+        }
+        ++dit;
+      }
+      else  // Does not have a box to participate in collective :(
+      {
+        memCount[0] = 0;
+        memDataSpace = H5Screate_simple(SpaceDim+1, memCount, NULL);
+        H5Sselect_none(memDataSpace);
+        H5Sselect_none(fileDataSpace);
+      }
+      // Collective write
+      err = H5Dwrite(m_dataSet, m_types[0], memDataSpace, fileDataSpace,
+                     DXPL, linearBuffer);
+      CH_assert(err >= 0);
+      H5Sclose(memDataSpace);
+      if (err < 0)
+      {
+        ret = err;
+        freeMT(linearBuffer);
+        goto cleanup;
+      }
+    }
+    freeMT(linearBuffer);
+  }
+
+cleanup: ;
   H5Pclose(DXPL);
   H5Sclose(fileDataSpace);
   // m_dataSet closed in destructor

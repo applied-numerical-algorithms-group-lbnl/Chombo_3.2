@@ -113,25 +113,29 @@ Copier& Copier::operator= (const Copier& b)
 {
   clear();
 
-  m_localMotionPlan.resize(b.m_localMotionPlan.size());
-  for (int i = 0; i < m_localMotionPlan.size(); ++i)
+  // only do any of this if the source is defined
+  if (b.isDefined() )
     {
-      m_localMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_localMotionPlan[i]));
+      m_localMotionPlan.resize(b.m_localMotionPlan.size());
+      for (int i = 0; i < m_localMotionPlan.size(); ++i)
+        {
+          m_localMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_localMotionPlan[i]));
+        }
+      
+      m_fromMotionPlan.resize(b.m_fromMotionPlan.size());
+      for (int i = 0; i < m_fromMotionPlan.size(); ++i)
+        {
+          m_fromMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_fromMotionPlan[i]));
+        }
+      
+      m_toMotionPlan.resize(b.m_toMotionPlan.size());
+      for (int i = 0; i < m_toMotionPlan.size(); ++i)
+        {
+          m_toMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_toMotionPlan[i]));
+        }
+      
+      m_isDefined = true;
     }
-
-  m_fromMotionPlan.resize(b.m_fromMotionPlan.size());
-  for (int i = 0; i < m_fromMotionPlan.size(); ++i)
-    {
-      m_fromMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_fromMotionPlan[i]));
-    }
-
-  m_toMotionPlan.resize(b.m_toMotionPlan.size());
-  for (int i = 0; i < m_toMotionPlan.size(); ++i)
-    {
-      m_toMotionPlan[i] = new (s_motionItemPool.getPtr()) MotionItem(*(b.m_toMotionPlan[i]));
-    }
-
-  m_isDefined = true;
   return *this;
 }
 
@@ -163,6 +167,8 @@ void Copier::trimEdges(const DisjointBoxLayout& a_exchangedLayout, const IntVect
   Copier oldCopier = *this;
   clear();
 
+  m_isDefined = oldCopier.m_isDefined;
+  
   trimMotion(a_exchangedLayout, a_ghost, oldCopier.m_localMotionPlan, m_localMotionPlan);
   //   pout() << "old Copy operations:" << oldCopier.m_localMotionPlan.size() << "  "
   //         << "new Copy operations:" << m_localMotionPlan.size() << "\n";
@@ -981,6 +987,7 @@ void Copier::define(const BoxLayout& a_level,
                       if ((destBox.bigEnd(dir) > singleWrapHi) ||
                           (destBox.smallEnd(dir) < singleWrapLo))
                         {
+                          MayDay::Warning("Copier::define -- multiple wraps required for valid-region copying");
                           multipleWraps = true;
                         } // end if box doesn't fit in single-wrapped domain
                     } // end loop over dest boxes
@@ -1459,6 +1466,7 @@ void Copier::exchangeDefine(const DisjointBoxLayout& a_grids,
 {
   CH_TIME("Copier::exchangeDefine");
   clear();
+  m_isDefined=true;  
   DataIterator dit = a_grids.dataIterator();
   NeighborIterator nit(a_grids);
   int myprocID = procID();
@@ -1602,6 +1610,7 @@ int Copier::numToCellsToCopy() const
 
 ostream& operator<< (ostream& os, const Copier& copier)
 {
+#ifdef CH_MPI  
   os << "local(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::LOCAL); it.ok(); ++it)
     {
@@ -1621,6 +1630,7 @@ ostream& operator<< (ostream& os, const Copier& copier)
          << "       ";
     }
   os << "\n";
+#endif  
   return os;
 }
 

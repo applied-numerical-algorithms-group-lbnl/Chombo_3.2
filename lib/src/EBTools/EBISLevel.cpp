@@ -30,6 +30,9 @@
 #include "PolyGeom.H"
 #include "EBLevelDataOps.H"
 #include "FaceIterator.H"
+#include "memusage.H"
+#include "memtrack.H"
+
 #include "NamespaceHeader.H"
 
 
@@ -404,48 +407,96 @@ EBISLevel::defineGraphFromGeo(LevelData<EBGraph>             & a_graph,
 {
   CH_TIME("EBISLevel::defineGraphFromGeo");
   //define the graph stuff
+#if 0  
   for (DataIterator dit = a_grids.dataIterator(); dit.ok(); ++dit)
+  {
+    Box region = a_grids.get(dit());
+    region.grow(1);
+    Box ghostRegion = grow(region,1);
+    ghostRegion &= a_domain;
+    region &= a_domain;
+
+    EBGraph& ebgraph = a_graph[dit()];
+    GeometryService::InOut inout;
+  
+    inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit());
+  
+    if (inout == GeometryService::Regular)
     {
-      Box region = a_grids.get(dit());
-      region.grow(1);
-      Box ghostRegion = grow(region,1);
-      ghostRegion &= a_domain;
-      region &= a_domain;
-
-      EBGraph& ebgraph = a_graph[dit()];
-      GeometryService::InOut inout;
-  
-      inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit());
-  
-      if (inout == GeometryService::Regular)
-        {
-          ebgraph.setToAllRegular();
-        }
-      else if (inout == GeometryService::Covered)
-        {
-          ebgraph.setToAllCovered();
-        }
-      else
-        {
-          BaseFab<int>       regIrregCovered(ghostRegion, 1);
-          Vector<IrregNode>&  nodes = a_allNodes[dit()];
-
-          // if (!a_distributedData)
-          //   {
-          //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
-          //                           ghostRegion, a_domain,
-          //                           a_origin, a_dx);
-          //   }
-          // else
-          //   {
-          a_geoserver.fillGraph(regIrregCovered, nodes, region,
-                                ghostRegion, a_domain,
-                                a_origin, a_dx, dit());
-          // }
-          ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
-          
-        }
+      ebgraph.setToAllRegular();
     }
+    else if (inout == GeometryService::Covered)
+    {
+      ebgraph.setToAllCovered();
+    }
+    else
+    {
+      BaseFab<int>       regIrregCovered(ghostRegion, 1);
+      Vector<IrregNode>&  nodes = a_allNodes[dit()];
+
+      // if (!a_distributedData)
+      //   {
+      //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
+      //                           ghostRegion, a_domain,
+      //                           a_origin, a_dx);
+      //   }
+      // else
+      //   {
+      a_geoserver.fillGraph(regIrregCovered, nodes, region,
+                            ghostRegion, a_domain,
+                            a_origin, a_dx, dit());
+      // }
+      ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
+          
+    }
+  }
+#else
+  DataIterator dit = a_grids.dataIterator();
+
+#pragma omp parallel for
+  for (unsigned int ibox = 0; ibox < dit.size(); ibox++)
+  {
+    Box region = a_grids.get(dit[ibox]);
+    region.grow(1);
+    Box ghostRegion = grow(region,1);
+    ghostRegion &= a_domain;
+    region &= a_domain;
+
+    EBGraph& ebgraph = a_graph[dit[ibox]];
+    GeometryService::InOut inout;
+  
+    inout = a_geoserver.InsideOutside(region, a_domain, a_origin, a_dx, dit[ibox]);
+  
+    if (inout == GeometryService::Regular)
+    {
+      ebgraph.setToAllRegular();
+    }
+    else if (inout == GeometryService::Covered)
+    {
+      ebgraph.setToAllCovered();
+    }
+    else
+    {
+      BaseFab<int>       regIrregCovered(ghostRegion, 1);
+      Vector<IrregNode>&  nodes = a_allNodes[dit[ibox]];
+
+      // if (!a_distributedData)
+      //   {
+      //     a_geoserver.fillGraph(regIrregCovered, nodes, region,
+      //                           ghostRegion, a_domain,
+      //                           a_origin, a_dx);
+      //   }
+      // else
+      //   {
+      a_geoserver.fillGraph(regIrregCovered, nodes, region,
+                            ghostRegion, a_domain,
+                            a_origin, a_dx, dit[ibox]);
+      // }
+      ebgraph.buildGraph(regIrregCovered, nodes, region, a_domain);
+          
+    }
+  }
+#endif  
 }
 
 EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
@@ -500,7 +551,7 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
     CH_TIME("EBISLevel::EBISLevel_makegrids");
     // permit the geometry service to construct a layout, or accept an already defined layout from EBIndexSpace
 
-    (const_cast<GeometryService*>(&a_geoserver))->makeGrids(a_domain, m_grids, a_nCellMax, 15);
+    (const_cast<GeometryService*>(&a_geoserver))->makeGrids(a_domain, m_grids, a_nCellMax, a_nCellMax);
   }
 
   RealVect dx2D;
@@ -965,7 +1016,7 @@ EBISLevel::EBISLevel(EBISLevel             & a_fineEBIS,
 
    
  
-  (const_cast<GeometryService*>(&a_geoserver))->makeGrids(m_domain, m_grids, a_nCellMax, 15);
+  (const_cast<GeometryService*>(&a_geoserver))->makeGrids(m_domain, m_grids, a_nCellMax, a_nCellMax);
   
 
   EBGraphFactory ebgraphfact(m_domain);

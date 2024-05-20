@@ -641,7 +641,12 @@ void PatchGodunov::PPMNormalPred(FArrayBox&       a_WMinus,
   // for 4th order, need extra faces in all the directions
   if (m_util.useHighOrderLimiter()) faceBox.grow(1);
   faceBox.surroundingNodes(a_dir);
-  FArrayBox WFace(faceBox,numprim);
+
+  // (DFM 11/18/22) added by slc to avoid '2 cells from the boundary' crash
+  Box wfaceBox = a_box;
+  wfaceBox.grow(1);
+  wfaceBox.surroundingNodes(a_dir);
+  FArrayBox WFace(wfaceBox,numprim);
 
   // Return WFace on face-centered faceBox.
   m_util.PPMFaceValues(WFace,a_W,numprim,

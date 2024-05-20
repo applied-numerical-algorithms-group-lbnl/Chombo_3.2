@@ -60,11 +60,11 @@ public:
      Returns -1 for Lo Side, +1 for Hi Side.
   */
   friend
-  int sign(const Side::LoHiSide& a_side);
+  int sign(const CH_XD::Side::LoHiSide& a_side);
 };
 
 // needs a declaration outside the class (Stroustrup 11.5.1)
-int sign(const Side::LoHiSide& a_side);
+int sign(const CH_XD::Side::LoHiSide& a_side);
 
 /// Iterator for low and high side.
 /**
@@ -130,7 +130,7 @@ public:
   /**
      Returns the value of the side for the current iteration.
   */
-  Side::LoHiSide operator () () const;
+  CH_XD::Side::LoHiSide operator () () const;
 
   ///
   /**

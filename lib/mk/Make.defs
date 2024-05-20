@@ -342,6 +342,15 @@ petsclibflags = $(PETSC_KSP_LIB)
 
 endif
 
+# For including the SUNDIALS time integrator library
+ifeq ($(USE_SUNDIALS),TRUE)
+
+sundialsincflags = -I$(SUNDIALS_DIR)/include
+sundialslibflags = -L$(SUNDIALS_DIR)/lib -lsundials_nvecparallel
+
+endif
+
+
 # This variable is used to run programs in Make.rules
 ifeq ($(RUN),)
   ifeq ($(MPI),TRUE)

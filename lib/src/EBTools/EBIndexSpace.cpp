@@ -789,10 +789,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   IntVect ghostCells = nGhosts * IntVect::Unit;
 
   // Fill all the EBISLayouts and allocate/define all the local data holders
-  pout() << "    EBIndexSpace::connectedComponents-loop1" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop1" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop1");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop1");
     pout() << "      Level " << ilev << endl;
 
     EBISLevel* curEBISLevel = m_ebisLevel[ilev];
@@ -841,7 +841,7 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   {
     pout() << "Number of coarsest grids: " << numGrids << endl;
     pout() << "Grids: " << coarGrids << endl;
-    MayDay::Error("EBIndexSpace::connectedComponents - algorithm currently only works if there is only one box at the coarsest geometry level");
+    MayDay::Error("EBIndexSpace::findConnectedComponents - algorithm currently only works if there is only one box at the coarsest geometry level");
   }
 
   // For counting the new EBIndexspace's and remember the number assigned to
@@ -854,10 +854,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   int biggestEBIS = -1;
 
   // Go through all (one) boxes (see comments and MayDay above).
-  pout() << "    EBIndexSpace::connectedComponents-loop2" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop2" << endl;
   for (DataIterator dit = coarGrids.dataIterator(); dit.ok(); ++dit)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop2");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop2");
 
     // Get a bunch of local references
     int boxIndex = coarGrids.index(dit());
@@ -892,7 +892,7 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
           // numbering can be incremented and then increment it.
           if (curNum + numGrids < curNum)
           {
-            MayDay::Error("EBIndexSpace::connectedComponents - Component index overflow");
+            MayDay::Error("EBIndexSpace::findConnectedComponents - Component index overflow");
           }
 
           // Remember the component number and increment the number of
@@ -999,10 +999,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   int nRef = 2;
 
   // Pass the numbering for connected components from coarse to fine levels.
-  pout() << "    EBIndexSpace::connectedComponents-loop3" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop3" << endl;
   for (int ilev = m_nlevels-2; ilev >= 0; ilev--)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop3");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop3");
     pout() << "      Level " << ilev << endl;
 
     // Get a lot of local references to get things ready to go
@@ -1051,10 +1051,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   Vector<RefCountedPtr<EBIndexSpace> > connectedEBIS(numEBIS);
 
   // Make copies of the main EBIndexSpace for each connected component.
-  pout() << "    EBIndexSpace::connectedComponents-loop4" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop4" << endl;
   for (int iEBIS = minEBIS; iEBIS <= maxEBIS; iEBIS++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop4");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop4");
     pout() << "      EBIS #" << iEBIS << endl;
 
     // Make a new, empty EBIndexSpace for the current component
@@ -1114,10 +1114,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   // First pass to correct the EBIndexSpace for each conneceted component -
   // Remove AllRegular patches and regular cells that are in other connected
   // components, and mark all multiVoFs that are in other connected components
-  pout() << "    EBIndexSpace::connectedComponents-loop5" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop5" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop5");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop5");
     pout() << "      Level " << ilev << endl;
 
     // The original EBISLevel
@@ -1243,10 +1243,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   // multiVoF in each connected component.  These can coexist in one (old)
   // data holder because the connected components are disjoint subsets of
   // the old graph.
-  pout() << "    EBIndexSpace::connectedComponents-loop6" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop6" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop6");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop6");
     pout() << "      Level " << ilev << endl;
 
     // Data holder for the new numbering on this level
@@ -1319,10 +1319,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   // references in the connected component using the map created in the second
   // pass.  Then prune away all parts of the graph that are not needed for
   // this connected component.
-  pout() << "    EBIndexSpace::connectedComponents-loop7" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop7" << endl;
   for (int iEBIS = minEBIS; iEBIS <= maxEBIS; iEBIS++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop7");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop7");
     pout() << "      EBIS #" << iEBIS << endl;
 
     EBIndexSpace& curEBIS = *(connectedEBIS[iEBIS]);
@@ -1484,10 +1484,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   // To do this it is necessary to make a coarsened version of the current
   // (fine) level to place the data from the next coarser level (which may
   // have an incompatible DisjointBoxLayout).
-  pout() << "    EBIndexSpace::connectedComponents-loop8" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop8" << endl;
   for (int ilev = 0; ilev < m_nlevels-1; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop8");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop8");
     pout() << "      Level " << ilev << endl;
 
     // Get the new numberings for the parents of the current (fine) level
@@ -1562,10 +1562,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
   // To do this it is necessary to make a refined version of the current
   // (coarse) level to place the data from the next finer level (which may
   // have an incompatible DisjointBoxLayout).
-  pout() << "    EBIndexSpace::connectedComponents-loop9" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop9" << endl;
   for (int ilev = 1; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop9");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop9");
     pout() << "      Level " << ilev << endl;
 
     // Get the new numberings for the children of the current (coarse) level
@@ -1644,10 +1644,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
 
   // Sixth pass to copy all the relevant EBData into the new EBIndexSpace's.
   // Go from the coarsest level to the finest level.
-  pout() << "    EBIndexSpace::connectedComponents-loop10" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop10" << endl;
   for (int ilev = m_nlevels-1; ilev >= 0; ilev--)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop10");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop10");
     pout() << "      Level " << ilev << endl;
 
     // For each connected component, initialize the volume data and face data
@@ -1793,10 +1793,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
 
   // Clean up the temporary data holders defined using the original
   // EBIndexSpace
-  pout() << "    EBIndexSpace::connectedComponents-loop11" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponents-loop11" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponents-loop11");
+    CH_TIME("EBIndexSpace::findConnectedComponents-loop11");
     pout() << "      Level " << ilev << endl;
 
     delete numberedComponentses[ilev];
@@ -1878,10 +1878,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   IntVect ghostCells = nGhosts * IntVect::Unit;
 
   // Fill all the EBISLayouts and allocate/define all the local data holders
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop1" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop1" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop1");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop1");
     pout() << "      Level " << ilev << endl;
 
     EBISLevel* curEBISLevel = m_ebisLevel[ilev];
@@ -1962,10 +1962,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   int numCompsLocal = 0;
 
   // Go through all boxes.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop2" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop2" << endl;
   for (DataIterator dit = coarGrids.dataIterator(); dit.ok(); ++dit)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop2");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop2");
 
     int curBoxClassIndex = compClasses.size();
     boxClassIndex.push_back(curBoxClassIndex);
@@ -2080,10 +2080,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   coarNumberedComponents.exchange();
   coarComponentInfo.exchange();
 
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop2.5" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop2.5" << endl;
   for (DataIterator dit = coarGrids.dataIterator(); dit.ok(); ++dit)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop2.5");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop2.5");
 
     // Get a bunch of local references
     const Box& curBox = coarGrids.get(dit());
@@ -2617,10 +2617,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   pout() << "Number of components: " << a_numComponents << endl;
   pout() << endl;
 
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop2.75" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop2.75" << endl;
   for (DataIterator dit = coarGrids.dataIterator(); dit.ok(); ++dit)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop2.75");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop2.75");
 
     int curBoxClassIndex = compClasses.size();
     boxClassIndex.push_back(curBoxClassIndex);
@@ -2700,10 +2700,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   int nRef = 2;
 
   // Pass the numbering for connected components from coarse to fine levels.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop3" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop3" << endl;
   for (int ilev = m_nlevels-2; ilev >= 0; ilev--)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop3");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop3");
     pout() << "      Level " << ilev << endl;
 
     // Get a lot of local references to get things ready to go
@@ -2752,10 +2752,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   Vector<RefCountedPtr<EBIndexSpace> > connectedEBIS(numEBIS);
 
   // Make copies of the main EBIndexSpace for each connected component.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop4" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop4" << endl;
   for (int iEBIS = minEBIS; iEBIS <= maxEBIS; iEBIS++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop4");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop4");
     pout() << "      EBIS #" << iEBIS << endl;
 
     // Make a new, empty EBIndexSpace for the current component
@@ -2815,10 +2815,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   // First pass to correct the EBIndexSpace for each conneceted component -
   // Remove AllRegular patches and regular cells that are in other connected
   // components, and mark all multiVoFs that are in other connected components
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop5" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop5" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop5");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop5");
     pout() << "      Level " << ilev << endl;
 
     // The original EBISLevel
@@ -2944,10 +2944,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   // multiVoF in each connected component.  These can coexist in one (old)
   // data holder because the connected components are disjoint subsets of
   // the old graph.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop6" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop6" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop6");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop6");
     pout() << "      Level " << ilev << endl;
 
     // Data holder for the new numbering on this level
@@ -3020,10 +3020,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   // references in the connected component using the map created in the second
   // pass.  Then prune away all parts of the graph that are not needed for
   // this connected component.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop7" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop7" << endl;
   for (int iEBIS = minEBIS; iEBIS <= maxEBIS; iEBIS++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop7");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop7");
     pout() << "      EBIS #" << iEBIS << endl;
 
     EBIndexSpace& curEBIS = *(connectedEBIS[iEBIS]);
@@ -3185,10 +3185,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   // To do this it is necessary to make a coarsened version of the current
   // (fine) level to place the data from the next coarser level (which may
   // have an incompatible DisjointBoxLayout).
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop8" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop8" << endl;
   for (int ilev = 0; ilev < m_nlevels-1; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop8");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop8");
     pout() << "      Level " << ilev << endl;
 
     // Get the new numberings for the parents of the current (fine) level
@@ -3263,10 +3263,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
   // To do this it is necessary to make a refined version of the current
   // (coarse) level to place the data from the next finer level (which may
   // have an incompatible DisjointBoxLayout).
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop9" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop9" << endl;
   for (int ilev = 1; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop9");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop9");
     pout() << "      Level " << ilev << endl;
 
     // Get the new numberings for the children of the current (coarse) level
@@ -3345,10 +3345,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
 
   // Sixth pass to copy all the relevant EBData into the new EBIndexSpace's.
   // Go from the coarsest level to the finest level.
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop10" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop10" << endl;
   for (int ilev = m_nlevels-1; ilev >= 0; ilev--)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop10");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop10");
     pout() << "      Level " << ilev << endl;
 
     // For each connected component, initialize the volume data and face data
@@ -3494,10 +3494,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
 
   // Clean up the temporary data holders defined using the original
   // EBIndexSpace
-  pout() << "    EBIndexSpace::connectedComponentsNew-loop11" << endl;
+  pout() << "    EBIndexSpace::findConnectedComponentsNew-loop11" << endl;
   for (int ilev = 0; ilev < m_nlevels; ilev++)
   {
-    CH_TIME("EBIndexSpace::connectedComponentsNew-loop11");
+    CH_TIME("EBIndexSpace::findConnectedComponentsNew-loop11");
     pout() << "      Level " << ilev << endl;
 
     delete numberedComponentses[ilev];
@@ -3570,7 +3570,7 @@ RefCountedPtr<EBIndexSpace> EBIndexSpace::biggestConnectedComponent(int & a_numC
 
   if (biggest.size() != 1)
   {
-    MayDay::Error("EBIndexSpace::connectedComponents didn't return one EBIndexSpace when asked for only the biggest component");
+    MayDay::Error("EBIndexSpace::biggestConnectedComponents didn't return one EBIndexSpace when asked for only the biggest component");
   }
 
   return biggest[0];
@@ -3588,7 +3588,7 @@ RefCountedPtr<EBIndexSpace> EBIndexSpace::biggestConnectedComponentNew(int & a_n
 
   if (biggest.size() != 1)
   {
-    MayDay::Error("EBIndexSpace::connectedComponents didn't return one EBIndexSpace when asked for only the biggest component");
+    MayDay::Error("EBIndexSpace::biggestConnectedComponents didn't return one EBIndexSpace when asked for only the biggest component");
   }
 
   return biggest[0];
