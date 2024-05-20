@@ -222,7 +222,7 @@ public:
   */
   virtual void define(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
+                      ,MPI_Comm a_comm = Chombo_MPI::comm
 #endif            
     );
 

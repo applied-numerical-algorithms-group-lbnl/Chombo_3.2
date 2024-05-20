@@ -14,7 +14,6 @@
 #include "MayDay.H"
 #include "IntVectSet.H"
 #include "parstream.H"
-#include "SPMD.H"
 #include "DebugOut.H"
 #include "SPMD.H"
 #include "NamespaceHeader.H"

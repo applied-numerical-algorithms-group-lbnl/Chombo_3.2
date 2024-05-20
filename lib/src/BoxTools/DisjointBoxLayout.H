@@ -144,9 +144,7 @@ public:
       the problem domain).
   */
   virtual void
-  define(const BoxLayout& a_layout,
-         const ProblemDomain& a_physDomain
-    );
+  define(const BoxLayout& a_layout, const ProblemDomain& a_physDomain);
 
   ///
   /** Define this DisjointBoxLayout from a Vector of Boxes.  This is a

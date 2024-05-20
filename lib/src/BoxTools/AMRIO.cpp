@@ -75,15 +75,14 @@ WriteAMRHierarchyHDF5(const string& filename,
     MPI_Barrier(comm);
   }
 #endif
-  pout() <<"WriteAMRHierarchy:  about to hopen handle for file " << filename << endl;
   CH_START(createFile);
-  HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global"
+  HDF5Handle handle(filename.c_str(),
+                    HDF5Handle::CREATE, "Chombo_global"
 #ifdef CH_MPI
-  , comm
+                    , comm
 #endif
-      );
+                    );
   CH_STOP(createFile);
-  pout() <<"WriteAMRHierarchy:  finished opening file " << filename << endl;
 
   CH_START(writeFile);
   WriteAMRHierarchyHDF5(handle, a_vectGrids, a_vectData, a_vectNames,
@@ -170,7 +169,6 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
   HDF5HeaderData header;
   int nComp = a_vectNames.size();
 
-
   string filedescriptor("VanillaAMRFileType");
   header.m_string ["filetype"]      = filedescriptor;
   header.m_int ["num_levels"]       = a_numLevels;
@@ -189,31 +187,31 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
   Real dtLevel = a_dt;
   Real dxLevel = a_dx;
   for (int ilev = 0; ilev < a_numLevels; ilev++)
-  {
-    int refLevel = 1;
-    if (ilev != a_numLevels -1)
     {
-      refLevel = a_refRatio[ilev];
+      int refLevel = 1;
+      if (ilev != a_numLevels -1)
+        {
+          refLevel = a_refRatio[ilev];
+        }
+      if (ilev != 0)
+        {
+          domainLevel.refine(a_refRatio[ilev-1]);
+          dtLevel /= a_refRatio[ilev-1];
+          dxLevel /= a_refRatio[ilev-1];
+        }
+      CH_assert(a_vectData[ilev] != NULL);
+      const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
+      CH_assert(dataLevel.nComp() == nComp);
+      Interval comps(0,nComp-1);
+      IntVect ghostVect = a_vectData[0]->ghostVect();
+      int eek = writeLevel(handle, ilev, dataLevel,
+                           dxLevel, dtLevel, a_time,
+                           domainLevel, refLevel, ghostVect, comps);
+      if (eek != 0)
+        {
+          MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
+        }
     }
-    if (ilev != 0)
-    {
-      domainLevel.refine(a_refRatio[ilev-1]);
-      dtLevel /= a_refRatio[ilev-1];
-      dxLevel /= a_refRatio[ilev-1];
-    }
-    CH_assert(a_vectData[ilev] != NULL);
-    const LevelData<FArrayBox>& dataLevel = *a_vectData[ilev];
-    CH_assert(dataLevel.nComp() == nComp);
-    Interval comps(0,nComp-1);
-    IntVect ghostVect = a_vectData[0]->ghostVect();
-    int eek = writeLevel(handle, ilev, dataLevel,
-                         dxLevel, dtLevel, a_time,
-                         domainLevel, refLevel, ghostVect, comps);
-    if (eek != 0)
-    {
-      MayDay::Error("WriteAMRHierarchyHDF5: Error in writeLevel");
-    }
-  }
 }
 
 void
@@ -401,7 +399,7 @@ ReadAMRHierarchyHDF5(const string& filename,
 #ifdef CH_MPI                     
                      ,MPI_Comm a_comm
 #endif                     
-  )
+                     )
 {
   CH_TIME("ReadAMRHierarchyHDF5 long with filename");
 #ifdef CH_MPI

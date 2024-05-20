@@ -107,8 +107,16 @@ void AttachDebugger(int a_sig)
       {
         sprintf(title, "'%s %d'", binaryName+s-a, procID());
 
-        ///the emacs version never works right
+        /// the emacs version never works right
+#define useemacs 1
+#if useemacs
+        sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (gdb \" gdb -i=mi -q -f %s --pid %d\") )'",
+                title, display, binaryName, proc);
+        //sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (lldb \" lldb -p %d\") )'",
+        //title, display, proc);
+#else
         sprintf(buf,"xterm -bg white -fg black -fa Monospace -fs 14 -e \"gdb -q -f %s --pid %d\" ", binaryName, proc);
+#endif
         printf("%s\n",buf);
         f = popen(buf,"w");
       }
