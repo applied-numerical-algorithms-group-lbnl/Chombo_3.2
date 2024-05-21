@@ -1153,7 +1153,7 @@ relax(LevelData<FArrayBox>&       a_phi,
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
   int whichIter = 0;
   bool done = false;
-  
+
   while (whichIter < a_iterations && !done)
     {
       if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)

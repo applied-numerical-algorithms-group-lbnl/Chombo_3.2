@@ -68,9 +68,13 @@ bool              GlobalBCRS::s_trigParsed= false;
 void ParseValue(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   a_values[0]=0.;
+  b_values[0]=0.;
+  c_values[0]=0.;
 }
 
 void ParseBC(FArrayBox& a_state,
@@ -557,7 +561,7 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
 
   // solving poisson problem here
   Real alpha =0.0;
-  Real beta = -1.0;
+  Real beta = 1.0;
 
   opFactory.define(a_amrDomains[0],
                    a_amrGrids,
@@ -634,7 +638,7 @@ int runSolver()
    setRHS(rhs, amrDomains, refRatios, amrDx, finestLevel );
 
    // do solve
-   int iterations = 3;
+   int iterations = 1;
    ppMain.get("iterations", iterations);
 
    for (int iiter = 0; iiter < iterations; iiter++)
@@ -697,17 +701,14 @@ int runSolver()
 
        Real bogusVal = 1.0;
 
-       //WriteAnisotropicAMRHierarchyHDF5(fname,
        WriteAMRHierarchyHDF5(fname,
                              amrGrids,
                              plotData,
                              varNames,
                              amrDomains[0].domainBox(),
-                             //amrDx[0],
                              amrDx[0][0],
                              bogusVal,
                              bogusVal,
-                             //refRatios_anys,
                              refRatios,
                              numLevels);
 

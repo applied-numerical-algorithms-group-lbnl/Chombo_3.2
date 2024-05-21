@@ -28,17 +28,16 @@ BoxLayout::
 transform(BaseTransform& a_transform)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    Box fullBox = (*m_boxes)[ivec].box;
-    (*m_boxes)[ivec].box = a_transform(fullBox);
-  }
+    {
+      Box fullBox = (*m_boxes)[ivec].box;
+      (*m_boxes)[ivec].box = a_transform(fullBox);
+    }
 }
 
 //need at least one non-inlined function, otherwise
 //some compilers don't build a class description in the
 //object file.
-Box
-BoxLayout::get(const LayoutIterator& it) const
+Box BoxLayout::get(const LayoutIterator& it) const
 {
   return get(it());
 }
@@ -46,25 +45,23 @@ Box BoxLayout::get(const DataIterator& it) const
 {
   return get(it());
 }
-///
+
 Box
-BoxLayout::
-operator[](const LayoutIterator& index) const
+BoxLayout::operator[](const LayoutIterator& index) const
 {
   return this->operator[](index());
 }
-///
+
 Box
-BoxLayout::
-operator[](const DataIterator& index) const
+BoxLayout::operator[](const DataIterator& index) const
 {
   return this->operator[](index());
 }
-///
+
 BoxLayout::~BoxLayout()
 {
 }
-///
+
 BoxLayout::BoxLayout()
   :m_boxes(new Vector<Entry>()),
    m_layout(new int),
@@ -74,10 +71,8 @@ BoxLayout::BoxLayout()
    m_indicies(new Vector<LayoutIndex>())
 {
 }
-///
-BoxLayout&
-BoxLayout::
-operator=(const BoxLayout& a_rhs)
+
+BoxLayout& BoxLayout::operator=(const BoxLayout& a_rhs)
 {
   if (this == &a_rhs) return *this;
   m_boxes = a_rhs.m_boxes;
@@ -89,51 +84,42 @@ operator=(const BoxLayout& a_rhs)
   m_dataIndex = a_rhs.m_dataIndex;
   m_comm      = a_rhs.m_comm;
 #endif
-
   return *this;
 }
-///
-void
-BoxLayout::
-sort()
+
+void BoxLayout::sort()
 {
   if (!*m_closed)
-  {
-    m_boxes->sort();
-    *m_sorted = true;
-  }
+    {
+      m_boxes->sort();
+      *m_sorted = true;
+    }
 }
-///
-void
-BoxLayout::
-closeNoSort()
+
+void BoxLayout::closeNoSort()
 {
   if (!*m_closed)
-  {
-    //sort();  there, no sort.   The sort is a lie.
-    *m_sorted = false;
-    *m_closed = true;
-    buildDataIndex();
-    m_dataIterator = RefCountedPtr<DataIterator>(new DataIterator(*this, m_layout));
-  }
+    {
+      //sort();  there, no sort.   The sort is a lie.
+      *m_sorted = false;
+      *m_closed = true;
+      buildDataIndex();
+      m_dataIterator = RefCountedPtr<DataIterator>(new DataIterator(*this, m_layout));
+    }
 }
-///
-void
-BoxLayout::
-close()
+
+void BoxLayout::close()
 {
   if (!*m_closed)
-  {
-    sort();
-    *m_closed = true;
-    buildDataIndex();
-    m_dataIterator = RefCountedPtr<DataIterator>(new DataIterator(*this, m_layout));
-  }
+    {
+      sort();
+      *m_closed = true;
+      buildDataIndex();
+      m_dataIterator = RefCountedPtr<DataIterator>(new DataIterator(*this, m_layout));
+    }
 }
-///
-void
-BoxLayout::
-buildDataIndex()
+
+void BoxLayout::buildDataIndex()
 {
 #ifdef CH_MPI
   std::list<DataIndex> dlist;
@@ -144,40 +130,38 @@ buildDataIndex()
   const Entry* box;
 
   while (index < size())
-  {
-    box = &(*(m_boxes))[index];
-    if (box->m_procID == p)
     {
-      DataIndex current(index, datIn, m_layout);
-      dlist.push_back(current);
-      count++;
-      datIn++;
+      box = &(*(m_boxes))[index];
+      if (box->m_procID == p)
+        {
+          DataIndex current(index, datIn, m_layout);
+          dlist.push_back(current);
+          count++;
+          datIn++;
+        }
+      ++index;
     }
-    ++index;
-  }
 
   m_dataIndex = RefCountedPtr<Vector<DataIndex> >(new Vector<DataIndex>(count));
   std::list<DataIndex>::iterator b=dlist.begin();
   for (int i=0; i<count; ++i, ++b)
-  {
-    m_dataIndex->operator[](i) = *b;
-  }
+    {
+      m_dataIndex->operator[](i) = *b;
+    }
 #endif
 }
-///
-bool
-BoxLayout::
-coarsenable(int refRatio) const
+
+bool BoxLayout::coarsenable(int refRatio) const
 {
   // if (size() == 0) return false;
   for (int i=0; i<size(); i++)
-  {
-    Box b =  m_boxes->operator[](i).box;
-    b.coarsen(refRatio);
-    b.refine(refRatio);
-    if (b !=  m_boxes->operator[](i).box)
-      return false;
-  }
+    {
+      Box b =  m_boxes->operator[](i).box;
+      b.coarsen(refRatio);
+      b.refine(refRatio);
+      if (b !=  m_boxes->operator[](i).box)
+        return false;
+    }
   return true;
 }
 
@@ -198,50 +182,40 @@ bool BoxLayout::coarsenable(IntVect refRatio) const
 // Constructors and such
 // =====================
 
-DataIterator
-BoxLayout::
-dataIterator() const
+DataIterator BoxLayout::dataIterator() const
 {
   CH_assert(*m_closed);
   //DataIterator rtn(*this, m_layout);
   return *m_dataIterator;
   //return rtn;
 }
-///
-TimedDataIterator
-BoxLayout::
-timedDataIterator() const
+
+TimedDataIterator BoxLayout::timedDataIterator() const
 {
   CH_assert(*m_closed);
   TimedDataIterator rtn(*this, m_layout);
   return rtn;
 }
-///
-LayoutIterator
-BoxLayout::
-layoutIterator() const
+
+LayoutIterator BoxLayout::layoutIterator() const
 {
   return LayoutIterator(*this, m_layout);
 }
-///
-BoxLayout::
-BoxLayout(const Vector<Box>& a_boxes,
-          const Vector<int>& a_assignments
+
+BoxLayout::BoxLayout(const Vector<Box>& a_boxes, const Vector<int>& a_assignments
 #ifdef CH_MPI            
           ,MPI_Comm          a_comm
 #endif            
   )
 {
-  define( a_boxes
-          ,a_assignments
+  define(a_boxes, a_assignments
 #ifdef CH_MPI         
-          ,a_comm
+        ,a_comm
 #endif         
     );
 }
-///
-BoxLayout::
-BoxLayout(const LayoutData<Box>& a_newLayout
+
+BoxLayout::BoxLayout(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI
           ,MPI_Comm a_comm
 #endif
@@ -253,37 +227,32 @@ BoxLayout(const LayoutData<Box>& a_newLayout
 #endif         
     );
 }
-///
-void
-BoxLayout::
-checkDefine(const Vector<Box>& a_boxes,
-            const Vector<int>& a_procIDs)
+
+void BoxLayout::checkDefine(const Vector<Box>& a_boxes, const Vector<int>& a_procIDs)
 {
 
   if (*m_closed)
-  {
-    MayDay::Error("attempt to define(..) a closed BoxLayout");
-  }
+    {
+      MayDay::Error("attempt to define(..) a closed BoxLayout");
+    }
   const int num_boxes = a_boxes.size();
   const int num_procs = a_procIDs.size();
   if ( (numProc() > 1) && (num_boxes != num_procs ))
-  {
-    MayDay::Error("BoxLayout::define(): vector of processor assignments is different length from vector of boxes");
-  }
+    {
+      MayDay::Error("BoxLayout::define(): vector of processor assignments is different length from vector of boxes");
+    }
   // Check for negative proc ID's and ID's larger than total number of procs.
   for (unsigned int i = 0; i < num_procs; ++i)
-  {
-    if (a_procIDs[i] < 0)
     {
-      MayDay::Error("BoxLayout::define(): Negative processor assignments not allowed");
+      if (a_procIDs[i] < 0)
+        {
+          MayDay::Error("BoxLayout::define(): Negative processor assignments not allowed");
+        }
     }
-  }
 }
-///
+
 void
-BoxLayout::
-define(const Vector<Box>& a_boxes,
-       const Vector<int>& a_procs
+BoxLayout::define(const Vector<Box>& a_boxes, const Vector<int>& a_procs
 #ifdef CH_MPI            
        ,MPI_Comm          a_comm
 #endif            
@@ -309,20 +278,20 @@ define(const Vector<Box>& a_boxes,
   }
   m_boxes->resize(num_boxes);
   for (unsigned int i = 0; i < num_boxes; ++i)
-  {
-    m_boxes->operator[](i) = a_boxes[i];
-    if ( numProc() > 1 )
     {
-      m_boxes->operator[](i).m_procID = a_procs[i];
+      m_boxes->operator[](i) = a_boxes[i];
+      if ( numProc() > 1 )
+        {
+          m_boxes->operator[](i).m_procID = a_procs[i];
+        }
+      else
+        {
+          m_boxes->operator[](i).m_procID = 0;
+        }
     }
-    else
-    {
-      m_boxes->operator[](i).m_procID = 0;
-    }
-  }
   close();
 }
-///
+
 void
 BoxLayout::define(const LayoutData<Box>& a_newLayout
 #ifdef CH_MPI
@@ -410,18 +379,16 @@ BoxLayout::
 deepCopy(const BoxLayout& a_source)
 {
   m_boxes =  RefCountedPtr<Vector<Entry> >(
-    new Vector<Entry>(*(a_source.m_boxes)));
+                new Vector<Entry>(*(a_source.m_boxes)));
   m_layout = a_source.m_layout;
 #ifdef CH_MPI
   m_dataIndex = a_source.m_dataIndex;
 #endif
   *m_closed = false;
 }
-///
+
 //checks equality of the vector of boxes inside m_boxes
-bool
-BoxLayout::
-sameBoxes(const BoxLayout& a_layout) const
+bool BoxLayout::sameBoxes(const BoxLayout& a_layout) const
 {
   bool retval;
   if (size() == a_layout.size())

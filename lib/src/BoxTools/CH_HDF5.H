@@ -911,29 +911,6 @@ inline void dataSize(const NodeFArrayBox& item, Vector<int>& a_sizes,
 }
 
 
-template <>
-inline void dataSize(const EdgeDataBox& item, Vector<int>& a_sizes,
-                     const Box& box, const Interval& comps)
-{
-  int& t = a_sizes[0];
-  t = 0;
-  for (int dir =0; dir<CH_SPACEDIM; dir++)
-    {
-      Box edgeBox(surroundingNodes(box));
-      edgeBox.enclosedCells(dir);
-      t += edgeBox.numPts()*comps.size();
-    }
-}
-
-
-template <>
-inline void dataSize(const NodeFArrayBox& item, Vector<int>& a_sizes,
-                     const Box& box, const Interval& comps)
-{
-  Box boxNodes = surroundingNodes(box);
-  a_sizes[0] = boxNodes.numPts() * comps.size();
-}
-
 
 template <>
 inline const char* name(const FArrayBox& a_dummySpecializationArg)

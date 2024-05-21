@@ -591,7 +591,7 @@ void GodunovUtilities::PPMFaceValues(FArrayBox&            a_WFace,
       int ghostbox1 = 1;
       box1cells.grow(a_dir, ghostbox1);
       box1cells.enclosedCells();
-      
+
       FArrayBox dW(box1cells, a_numSlopes);
       vanLeerSlopes(dW, a_W, a_numSlopes, a_useLimiting, a_dir, box1cells);
 

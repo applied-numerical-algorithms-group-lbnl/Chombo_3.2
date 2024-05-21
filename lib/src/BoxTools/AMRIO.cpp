@@ -75,7 +75,6 @@ WriteAMRHierarchyHDF5(const string& filename,
     MPI_Barrier(comm);
   }
 #endif
-  pout() <<"WriteAMRHierarchy:  about to hopen handle for file " << filename << endl;
   CH_START(createFile);
   HDF5Handle handle(filename.c_str(),  HDF5Handle::CREATE, "Chombo_global"
 #ifdef CH_MPI
@@ -169,7 +168,6 @@ WriteAMRHierarchyHDF5(HDF5Handle& handle,
 
   HDF5HeaderData header;
   int nComp = a_vectNames.size();
-
 
   string filedescriptor("VanillaAMRFileType");
   header.m_string ["filetype"]      = filedescriptor;
@@ -828,9 +826,9 @@ VisualizeFile(const char *fname)
 {
   const char *use_chombovis = getenv("CHOMBO_USE_CHOMBOVIS");
   if (use_chombovis)
-    ChomboVisVisualizeFile(fname);
+      ChomboVisVisualizeFile(fname);
   else
-    VisItVisualizeFile(fname);
+      VisItVisualizeFile(fname);
 }
 
 static void
@@ -838,9 +836,9 @@ BrowseFile(const char *fname)
 {
   const char *use_chombovis = getenv("CHOMBO_USE_CHOMBOVIS");
   if (use_chombovis)
-    ChomboBrowserBrowseFile(fname);
+      ChomboBrowserBrowseFile(fname);
   else
-    VisItBrowseFile(fname);
+      VisItBrowseFile(fname);
 }
 
 void
@@ -880,13 +878,13 @@ viewBFI(const BaseFab<int>* a_dataPtr)
   FArrayBox fab(a_dataPtr->box(), a_dataPtr->nComp());
   BoxIterator bit(fab.box());
   for (bit.begin(); bit.ok(); bit.next())
-  {
-    const IntVect& iv = bit();
-    for (int ivar = 0; ivar < fab.nComp(); ivar++)
     {
-      fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
+      const IntVect& iv = bit();
+      for (int ivar = 0; ivar < fab.nComp(); ivar++)
+        {
+          fab(iv, ivar) = a_dataPtr->operator()(iv, ivar);
+        }
     }
-  }
 
   const char* fname = tmpnam(NULL);
   writeFABname(&fab, fname);
@@ -1201,7 +1199,7 @@ writeCFABname(const CFArrayBox      * a_dataPtr,
 {
   if (a_dataPtr == NULL)
   {
-    return;
+      return;
   }
   FArrayBox out(a_dataPtr->box(),2);
   Vector<string> names(2);
@@ -1212,8 +1210,8 @@ writeCFABname(const CFArrayBox      * a_dataPtr,
   const Complex* cptr=a_dataPtr->dataPtr();
   for(size_t i=0; i<a_dataPtr->box().numPts(); ++i)
   {
-    rptr[i] = cptr[i].re();
-    iptr[i] = cptr[i].im();
+      rptr[i] = cptr[i].re();
+      iptr[i] = cptr[i].im();
   }
   writeFABname(&out, a_filename, names);
 }
@@ -1253,7 +1251,7 @@ writeFABname(const FArrayBox      * a_dataPtr,
     string label(labelChSt);
     if ( a_compNames.size() > ivar )
     {
-      header.m_string[label] = a_compNames[ivar] ;
+        header.m_string[label] = a_compNames[ivar] ;
     }
     else
     {

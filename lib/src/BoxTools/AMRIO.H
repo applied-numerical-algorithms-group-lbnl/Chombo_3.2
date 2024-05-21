@@ -529,7 +529,7 @@ void viewFAB(const FArrayBox* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewBFI(const BaseFab<int>* a_dataPtr);
 
 ///
@@ -540,37 +540,37 @@ void writeBFCname(const BaseFab<char>* a_dataPtr,
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewBFIV(const BaseFab<IntVect>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewBFRV(const BaseFab<RealVect>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewIVSFAB(const IVSFAB<Real>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewIVSFABI(const IVSFAB<int>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewIVSFABIV(const IVSFAB<IntVect>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewIVSFABRV(const IVSFAB<RealVect>* a_dataPtr);
 
 ///
 /** Make a copy of *a_dataPtr as FArrayBox, then call viewFAB on FArrayBox.
- */
+*/
 void viewCFAB(const CFArrayBox* a_dataPtr);
 
 ///

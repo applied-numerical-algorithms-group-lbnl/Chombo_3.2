@@ -18,13 +18,13 @@
 #include <list>
 #include "CH_Timer.H"
 #include "NamespaceHeader.H"
-///
+
 DisjointBoxLayout::
 DisjointBoxLayout()
   :BoxLayout()
 {
 }
-///
+
 unsigned long long int 
 DisjointBoxLayout::
 numPointsThisProc() const
@@ -38,7 +38,7 @@ numPointsThisProc() const
   }
   return retval;
 }
-///
+
 DisjointBoxLayout::
 DisjointBoxLayout(const Vector<Box>& a_boxes,
                   const Vector<int>& a_procs
@@ -56,7 +56,7 @@ DisjointBoxLayout(const Vector<Box>& a_boxes,
     );
 
 }
-///
+
 DisjointBoxLayout::
 DisjointBoxLayout(const Vector<Box>&   a_boxes,
                   const Vector<int>&   a_procIDs,
@@ -73,14 +73,14 @@ DisjointBoxLayout(const Vector<Box>&   a_boxes,
 #endif
     );
 }
-///
+
 DisjointBoxLayout::
 DisjointBoxLayout(const LayoutData<Box>& a_newLayout)
   : BoxLayout(a_newLayout)
 {
   define(a_newLayout);
 }
-///                                     
+                                     
 void
 DisjointBoxLayout::
 define(const Vector<Box>& a_boxes,
@@ -99,7 +99,7 @@ define(const Vector<Box>& a_boxes,
                     
   CH_assert(isDisjoint());
 }
-///
+
 void
 DisjointBoxLayout::
 define(const Vector<Box>&   a_boxes,
@@ -120,7 +120,7 @@ define(const Vector<Box>&   a_boxes,
   
   CH_assert(isDisjoint());
 }
-///
+
 void
 DisjointBoxLayout::
 define(const BoxLayout& a_layout)
@@ -132,7 +132,7 @@ define(const BoxLayout& a_layout)
   }
 
 }
-///
+
 void
 DisjointBoxLayout::
 define(const BoxLayout&     a_layout,
@@ -150,7 +150,7 @@ define(const BoxLayout&     a_layout,
     }
   }
 }
-///
+
 void
 DisjointBoxLayout::
 close()
@@ -166,6 +166,7 @@ close()
     computeNeighbors();
   }
 }
+
 /// rural dbl (no neighbors)
 void
 DisjointBoxLayout::
@@ -181,7 +182,7 @@ closeNO()
     //computeNeighbors(); don't build neighbors
   }
 }
-///
+
 void
 DisjointBoxLayout::
 closeNoSort()
@@ -197,7 +198,7 @@ closeNoSort()
     //computeNeighbors(); don't build neighbors
   }
 }
-///
+
 void
 DisjointBoxLayout::
 closeN(RefCountedPtr<Vector<Vector<std::pair<int, LayoutIndex> > > > neighbors)
@@ -213,7 +214,7 @@ closeN(RefCountedPtr<Vector<Vector<std::pair<int, LayoutIndex> > > > neighbors)
     m_neighbors = neighbors;
   }
 }
-///
+
 void
 DisjointBoxLayout::
 computeNeighbors()
@@ -326,7 +327,7 @@ deepCopy(const BoxLayout& a_layout)
   CH_assert(isDisjoint());
 
 }
-///
+
 void
 DisjointBoxLayout::
 deepCopy(const DisjointBoxLayout& a_layout)
@@ -337,7 +338,7 @@ deepCopy(const DisjointBoxLayout& a_layout)
     sort();
   CH_assert(isDisjoint());
 }
-///
+
 void
 DisjointBoxLayout::
 deepCopy(const BoxLayout&     a_layout,
@@ -350,7 +351,7 @@ deepCopy(const BoxLayout&     a_layout,
 
   CH_assert(isDisjoint());
 }
-///
+
 void
 DisjointBoxLayout::
 degenerate( DisjointBoxLayout& a_to,
@@ -384,7 +385,7 @@ degenerate( DisjointBoxLayout& a_to,
   
   a_to.close(); // Do we really need this?
 }
-///
+
 void
 DisjointBoxLayout::
 defineAndLoadBalance(const Vector<Box>& a_boxes,
@@ -394,6 +395,7 @@ defineAndLoadBalance(const Vector<Box>& a_boxes,
   defineAndLoadBalance(a_boxes, a_procIDs, bogusProbDomain);
 
 }
+
 /// I'll take null_ptr as an API choice for 4586, Alex.
 void
 DisjointBoxLayout::
@@ -412,7 +414,7 @@ defineAndLoadBalance(const Vector<Box>&   a_boxes,
   }
   this->define( a_boxes, procIDs, a_physDomain );
 }
-///
+
 bool
 DisjointBoxLayout::
 isDisjoint() const
@@ -553,7 +555,7 @@ DisjointBoxLayout::checkPeriodic(const ProblemDomain& a_domain) const
 
   return goodMatch;
 }
-///
+
 bool
 DisjointBoxLayout::
 checkDomains(const DisjointBoxLayout& a_dbl) const

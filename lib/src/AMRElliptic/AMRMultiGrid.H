@@ -984,6 +984,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
+
   if (m_verbosity > 4) {
       pout() << "AMRMultiGrid::solveNoInitResid " << endl;
   }

@@ -74,7 +74,7 @@ Real FArrayBox::norm(const Box& a_subbox,
   Real nrm = 0;
 #ifdef CH_COUNT_FLOPS      
   unsigned long long int np=a_subbox.numPts()*a_numcomp;
-#endif  
+#endif
   if (a_p == 0)
     {
       // here begins a normed fab function piece
