@@ -243,7 +243,7 @@ void outputData(const Vector<LevelData<FArrayBox>* >&   a_phi,
     WriteAMRHierarchyHDF5(fileName, a_grids,
                           tempData, phiNames,
                           a_params.coarsestDomain.domainBox(),
-                          a_params.coarsestDx,
+                          a_params.coarsestDx[0], // this will write down a HOMO mesh
                           fakeDt, fakeTime,
                           a_params.refRatio,
                           a_params.numLevels);

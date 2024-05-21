@@ -35,12 +35,16 @@ bool              GlobalBCRS::s_trigParsed= false;
 void ParseValue(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   ParmParse pp;
   Real bcVal;
   pp.get("bc_value",bcVal);
   a_values[0]=bcVal;
+  b_values[0]=0.;
+  c_values[0]=0.;
 }
 
 
@@ -48,7 +52,7 @@ void ParseValue(Real* pos,
 void ParseBC(FArrayBox& a_state,
              const Box& a_valid,
              const ProblemDomain& a_domain,
-             Real a_dx,
+             RealVect a_dx,
              bool a_homogeneous)
 {
   if (!a_domain.domainBox().contains(a_state.box()))
@@ -317,21 +321,23 @@ void getPoissonParameters(VCPoissonParameters&  a_params)
   pp.get("max_grid_size",a_params.maxGridSize);
 
   //derived stuff
-  a_params.coarsestDx = a_params.domainLength[0]/a_params.nCells[0];
+  a_params.coarsestDx[0] = a_params.domainLength[0]/a_params.nCells[0];
+  a_params.coarsestDx[1] = a_params.domainLength[1]/a_params.nCells[1];
+  if (CH_SPACEDIM == 3) {
+      a_params.coarsestDx[2] = a_params.domainLength[2]/a_params.nCells[2];
+  }   
 
   a_params.probLo = RealVect::Zero;
   a_params.probHi = RealVect::Zero;
   a_params.probHi += a_params.domainLength;
-
-
 }
 
 
 int setGrids(Vector<DisjointBoxLayout>& vectGrids,
-             VCPoissonParameters&         a_params)
+             VCPoissonParameters&       a_params)
 {
   Vector<ProblemDomain>     vectDomain;
-  Vector<Real>              vectDx;
+  Vector<RealVect>          vectDx;
   getDomainsAndDxes(vectDomain, vectDx, a_params);
 
   int numlevels = a_params.numLevels;
@@ -393,7 +399,6 @@ int setGrids(Vector<DisjointBoxLayout>& vectGrids,
           vectGrids[ilev] = DisjointBoxLayout(boxes, proc, levDomain);
           levDomain.refine(a_params.refRatio[ilev]);
         }
-
     }
   else
     {
@@ -443,7 +448,7 @@ int setGrids(Vector<DisjointBoxLayout>& vectGrids,
 
           for (int level=0; level<=topLevel; level++)
             {
-              RealVect dxLevel = vectDx[level]*RealVect::Unit;
+              RealVect dxLevel = vectDx[level];
               setRHS(*vectRHS[level], dxLevel, a_params);
             }
 
@@ -456,7 +461,6 @@ int setGrids(Vector<DisjointBoxLayout>& vectGrids,
           int new_finest = meshrefine.regrid(newBoxes, tagVect,
                                              baseLevel,
                                              topLevel, oldBoxes);
-
           if (new_finest > topLevel)
             {
               topLevel++;
@@ -518,7 +522,6 @@ void setRHS(LevelData<FArrayBox>&    a_rhs,
                      CHF_CONST_REAL(a_params.alpha),
                      CHF_CONST_REAL(a_params.beta),
                      CHF_BOX(thisBox));
-
     }
 }
 
@@ -526,10 +529,10 @@ void setRHS(LevelData<FArrayBox>&    a_rhs,
 extern
 AMRLevelOpFactory<LevelData<FArrayBox> >*
 defineOperatorFactory(
-                      const Vector<DisjointBoxLayout>&             a_grids,
-                      const Vector<ProblemDomain>&                 a_vectDomain,
+                      const Vector<DisjointBoxLayout>&               a_grids,
+                      const Vector<ProblemDomain>&                   a_vectDomain,
                       Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
-                      Vector<RefCountedPtr<LevelData<FluxBox> > >& a_bCoef,
+                      Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
                       const VCPoissonParameters&                     a_params)
 {
   ParmParse pp2;
@@ -559,18 +562,25 @@ defineOperatorFactory(
   Set grid hierarchy from input file
  */
 void getDomainsAndDxes(  Vector<ProblemDomain>&     vectDomain,
-                         Vector<Real>&              vectDx,
-                         VCPoissonParameters&         a_params)
+                         Vector<RealVect>&          vectDx,
+                         VCPoissonParameters&       a_params)
 {
 
   vectDomain.resize(a_params.numLevels);
   vectDx.resize(    a_params.numLevels);
-  vectDx[0] = a_params.coarsestDx;
+  vectDx[0][0] = a_params.coarsestDx[0];
+  vectDx[0][1] = a_params.coarsestDx[1]; // should be Dy
+  if (CH_SPACEDIM == 3) {
+      vectDx[0][2] = a_params.coarsestDx[2]; // should be Dz etc.
+  }
   for (int ilev = 1; ilev < a_params.numLevels; ilev++)
     {
-      vectDx[ilev] = vectDx[ilev-1]/a_params.refRatio[ilev-1];
+      vectDx[ilev][0] = vectDx[ilev-1][0]/a_params.refRatio[ilev-1];
+      vectDx[ilev][1] = vectDx[ilev-1][1]/a_params.refRatio[ilev-1];
+      if (CH_SPACEDIM == 3) {
+          vectDx[ilev][2] = vectDx[ilev-1][2]/a_params.refRatio[ilev-1];
+      }
     }
-
 
   vectDomain[0] = a_params.coarsestDomain;
   for (int ilev = 1;ilev < a_params.numLevels; ilev++)
@@ -586,7 +596,7 @@ void getDomainsAndDxes(  Vector<ProblemDomain>&     vectDomain,
 void
 tagCells(Vector<LevelData<FArrayBox>* >& vectRHS,
          Vector<IntVectSet>& tagVect,
-         Vector<Real>& vectDx,
+         Vector<RealVect>& vectDx,
          Vector<ProblemDomain>& vectDomain,
          const Real refine_thresh,
          const int tags_grow,
@@ -634,7 +644,9 @@ tagCells(Vector<LevelData<FArrayBox>* >& vectRHS,
 void TrigValueNeum(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,
-                   Real* a_values)
+                   Real* a_values,
+                   Real* b_values,
+                   Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -648,11 +660,15 @@ void TrigValueNeum(Real* pos,
                        CHF_CONST_REALVECT(xval));
 
   a_values[0] = gradPhi[*dir];
+  b_values[0] = 0.0;
+  c_values[0] = 0.0;
 }
 void TrigValueDiri(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,
-                   Real* a_values)
+                   Real* a_values,
+                   Real* b_values,
+                   Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -665,4 +681,6 @@ void TrigValueDiri(Real* pos,
                    CHF_CONST_REALVECT(trig),
                    CHF_CONST_REALVECT(xval));
   a_values[0] = value;
+  b_values[0] = 0.0;
+  c_values[0] = 0.0;
 }
