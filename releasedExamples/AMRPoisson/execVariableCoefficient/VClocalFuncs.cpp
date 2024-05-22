@@ -47,8 +47,6 @@ void ParseValue(Real* pos,
   c_values[0]=0.;
 }
 
-
-
 void ParseBC(FArrayBox& a_state,
              const Box& a_valid,
              const ProblemDomain& a_domain,
@@ -525,7 +523,6 @@ void setRHS(LevelData<FArrayBox>&    a_rhs,
     }
 }
 
-
 extern
 AMRLevelOpFactory<LevelData<FArrayBox> >*
 defineOperatorFactory(
@@ -589,7 +586,6 @@ void getDomainsAndDxes(  Vector<ProblemDomain>&     vectDomain,
     }
 }
 
-
 /*
   tag cells for refinement based on magnitude(RHS)
 */
@@ -639,8 +635,6 @@ tagCells(Vector<LevelData<FArrayBox>* >& vectRHS,
     } // end loop over levels
 }
 
-
-
 void TrigValueNeum(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,
@@ -663,6 +657,7 @@ void TrigValueNeum(Real* pos,
   b_values[0] = 0.0;
   c_values[0] = 0.0;
 }
+
 void TrigValueDiri(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,

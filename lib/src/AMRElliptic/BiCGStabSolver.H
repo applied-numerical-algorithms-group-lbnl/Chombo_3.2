@@ -385,8 +385,12 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
         }
 
       m_op->preCond(p_tilde, p);
-      m_op->setToZero(v); // added by petermc, 27 Nov 2013, to zero out ghosts
-      m_op->applyOp(v, p_tilde, m_homogeneous);
+      if (!m_use_FAS) {
+          m_op->setToZero(v); // added by petermc, 27 Nov 2013, to zero out ghosts
+          m_op->applyOp(v, p_tilde, true);
+      } else {
+          m_op->applyOp(v, p_tilde, m_homogeneous);
+      }
       Real m = m_op->dotProduct(r_tilde, v);
       alpha[0] = rho[1]/m;
 
@@ -421,8 +425,12 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
       if (norm[0] > m_eps*initial_norm && norm[0] > m_reps*m_initial_residual)
         {
           m_op->preCond(s_tilde, r);
-          m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
-          m_op->applyOp(t, s_tilde, m_homogeneous);
+          if (!m_use_FAS) {
+              m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
+              m_op->applyOp(t, s_tilde, true);
+          } else {
+              m_op->applyOp(t, s_tilde, m_homogeneous);
+          }
           omega[0] = m_op->dotProduct(t, r)/m_op->dotProduct(t, t);
           m_op->incr(e, s_tilde, omega[0]);
           m_op->incr(r, t,      -omega[0]);
