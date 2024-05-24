@@ -341,35 +341,29 @@ public:
   /**
      Solve L(phi) = rho from l_base to l_max.  To solve over all levels,
      l_base = 0 and l_max = max_level = numLevels-1.
-     AF: making a_print obsolete in the hopes that someone removes it. There is a m_verbosity for these things.
    */
   virtual void solve( Vector<T*>            & a_phi,
                       const Vector<T*>      & a_rhs,
                       int l_max, int l_base,
                       bool a_zeroInitialPhi = true,
-                      bool forceHomogeneous = false,
-                      bool a_print          = false);
+                      bool forceHomogeneous = false);
 
   ///
   /** same as "solve" except user has taken the reponsibility of having previously
       called "init" so solver can allocate temporary holders.
-      AF: making a_print obsolete in the hopes that someone removes it. There is a m_verbosity for these things.
   */
   virtual void solveNoInit(Vector<T*>&       a_phi,
                            const Vector<T*>& a_rhs,
                            int l_max, int l_base,
                            bool a_zeroInitialPhi = true,
-                           bool forceHomogeneous = false,
-                           bool a_print          = false);
+                           bool forceHomogeneous = false);
 
   /** use if you want final residual
-      AF: making a_print obsolete in the hopes that someone removes it. There is a m_verbosity for these things.
   */
   virtual void solveNoInitResid(Vector<T*>& a_phi, Vector<T*>& a_finalResid,
                                 const Vector<T*>& a_rhs,
                                 int l_max, int l_base, bool a_zeroPhi=true,
-                                bool forceHomogeneous = false,
-                                bool a_print          = false);
+                                bool forceHomogeneous = false);
 
   void relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             int l_max, int l_base);
@@ -923,7 +917,7 @@ void AMRMultiGrid<T>::computeAMRResidualLevel(Vector<T*>&       a_resid,
 template<class T>
 void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             int l_max, int l_base, bool a_zeroPhi,
-                            bool a_forceHomogeneous, bool a_print)
+                            bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solve");
   if (m_verbosity > 4) {
@@ -933,7 +927,7 @@ void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
   if (m_verbosity > 5) {
       pout() << "AMRMultiGrid::solve: calling solveNoInit" << endl;
   }
-  solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous, a_print);
+  solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
   //puts multigrid depth back where it started so the solver can be reused
   if (m_verbosity > 5) {
       pout() << "AMRMultiGrid::solve: calling revert" << endl;
@@ -948,7 +942,7 @@ template<class T>
 void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
                                   const Vector<T*>& a_rhs,
                                   int l_max, int l_base, bool a_zeroPhi,
-                                  bool a_forceHomogeneous, bool a_print)
+                                  bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
 
@@ -968,7 +962,7 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
           m_op[ilev]->create(*uberResidual[ilev], *a_rhs[ilev]);
         }
     }
-  solveNoInitResid(a_phi, uberResidual, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous, a_print);
+  solveNoInitResid(a_phi, uberResidual, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
   for (int i = lowlim; i <= l_max; i++)
     {
       m_op[i]->clear(*uberResidual[i]);
@@ -980,7 +974,7 @@ template<class T>
 void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResidual,
                                        const Vector<T*>& a_rhs,
                                        int l_max, int l_base, bool a_zeroPhi,
-                                       bool a_forceHomogeneous, bool a_print)
+                                       bool a_forceHomogeneous)
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);

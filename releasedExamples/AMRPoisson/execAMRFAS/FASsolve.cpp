@@ -107,9 +107,13 @@ setBCoef(LevelData<FluxBox>& a_bCoef)
 void ParseValue(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   a_values[0]=0.;
+  b_values[0]=0.;
+  c_values[0]=0.;
 }
 
 void ParseBC(FArrayBox& a_state,
