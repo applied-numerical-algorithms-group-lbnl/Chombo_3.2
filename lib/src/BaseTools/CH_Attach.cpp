@@ -57,7 +57,7 @@ void AttachDebugger(int a_sig)
   if (alreadyAttached) return;
 
   alreadyAttached = true;
-  char buf[1200];
+  char buf[4586];
   char* display;
   FILE *f;
   int proc = getpid();
