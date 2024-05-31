@@ -8,14 +8,19 @@
  */
 #endif
 
+//
+// These are the inevitable functions that people
+// can't avoid using when writing a SPMD program.
+// It is a minimal set from which more elaborate
+// functionality can be generated.  As always, a
+// user is free to utilize the entire MPI programming
+// on their own platform.  The functions are
+// assured to work on all machines supported.
+//
+
 #ifndef _SPMD_H_
 #define _SPMD_H_
-///
-/**
-  This is a grab bag of useful stuff used in Chombo MPI code.
-  This includes utilities for Chombo serialization routines used in more advanced 
-  parallel data structures.
-*/
+
 #include "REAL.H"
 #include <string>
 #include "Vector.H"
@@ -26,80 +31,48 @@
 #include "mpi.h"
 #endif
 
-#include "memtrack.H"
 #include "BaseNamespaceHeader.H"
 
+#ifdef CH_MPI
 struct Chombo_MPI
 {
-  
-#ifdef CH_MPI
   static MPI_Comm comm;
-#endif
-  
 };
 
+#else
+// this can be changed for debugging parallel code in serial
+extern int num_procs ;
+#endif
 
 extern unsigned long long CH_MAX_MPI_MESSAGE_SIZE;
+
 extern unsigned long long CH_MaxMPISendSize;
 extern unsigned long long CH_MaxMPIRecvSize;
+
+int reportMPIStats();
 
 /// local process ID
 /**
     Returns the ID of the locally running process in the range 0 <=
     procID() < numProc().  This has no relation to the operating system
     pid.  There is always a procID() == 0.  */
-inline int
-procID(
-#ifdef CH_MPI  
-  MPI_Comm a_comm = Chombo_MPI::comm
-#endif  
-  )
+int procID();
+
+inline int CHprocID()
 {
-#ifdef CH_MPI  
-  int iproc =  4586;
-  MPI_Comm_rank(a_comm,  &iproc);
-  return iproc;
-#else
-  return 0;
-#endif  
+  return procID();
 }
 
 /// number of parallel processes
 /**
     Returns the number of parallel processes running.
     Always returns at least 1. */
-inline unsigned int
-numProc(
-#ifdef CH_MPI  
-  MPI_Comm a_comm = Chombo_MPI::comm
-#endif  
-  )
-{
-#ifdef CH_MPI
-  static int ret = -1;
-  if (ret == -1)
-  {
-    MPI_Comm_size(a_comm, &ret);
-  }
-  return ret;
-#else
-  return 1;
-#endif  
-}
+unsigned int numProc();
 
 ///all ranks wait here to sync-up
 /**
    All MPI ranks wait here to sync-up.  Calls MPI_Barrier(comm)  */
-inline void barrier(
-#ifdef CH_MPI            
-       MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-  )
-{
-#ifdef CH_MPI            
-  MPI_Barrier(a_comm);
-#endif
-}
+void barrier(void);
 
 template <class T>
 int linearSize(const T& inputT);
@@ -110,6 +83,7 @@ void linearIn(T& a_outputT, const void* const inBuf);
 template <class T>
 void linearOut(void* const a_outBuf, const T& inputT);
 
+#ifdef CH_MPI
 ///gather from multiple processes
 /**
   Gathers a_input of every process onto Vector<T> a_outVec on process
@@ -126,102 +100,9 @@ T must have have the following functions:
 
 */
 template <class T>
-inline void
-gather(Vector<T>& a_outVec,
-       const T  & a_input,
-       int        a_dest
-#ifdef CH_MPI
-            ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif            
-  )
-{
-#ifndef CH_MPI
-  a_outVec.resize(1);
-  a_outVec[0] = a_input;
-#else
-  CH_assert (a_dest >= 0);
-  CH_assert(a_dest <  numProc());
-  //now THIS size lives on THIS processor
-  int isize = linearSize(a_input);
+void gather(Vector<T>& a_outVec, const T& a_input, int a_dest);
 
-  //make stuff for linearout
-  void* loclBuf = mallocMT(isize);
-  if (loclBuf == NULL)
-    MayDay::Error("out of memory in gather 1");
-
-  //put linearized T into its proper buffer
-  linearOut(loclBuf, a_input);
-
-  int nProcess = numProc();
-  int sendCount = 1;
-  int recdCount = 1;
-
-  //need to gather isizes onto processor a_dest
-  int* vectSize = NULL;
-  int* vectDisp = NULL;
-  void* sendBuf = static_cast<void*>(&isize);
-  //allocate received buffer
-  if (procID(a_comm) == a_dest)
-    {
-      vectSize = new int[nProcess];
-      vectDisp = new int[nProcess];
-    }
-
-  int result1 = MPI_Gather(sendBuf, sendCount, MPI_INT,
-                           vectSize,recdCount, MPI_INT,
-                           a_dest,  a_comm);
-
-  if (result1 != MPI_SUCCESS)
-    MayDay::Error("Gather<T> failed in MPI_Gather 1");
-
-  //make memory for gather, linearin
-  void* recdBuf = NULL;
-  if (procID(a_comm) == a_dest)
-    {
-      size_t itotsize=0;
-      for (int iproc = 0; iproc < nProcess; iproc++)
-        {
-          vectDisp[iproc] = itotsize;
-          itotsize += vectSize[iproc];
-        }
-      recdBuf = mallocMT(itotsize);
-      if (recdBuf == NULL)
-        {
-          MayDay::Error("out of memory in gather 2");
-        }
-    }
-
-  //gather data
-  int result2 = MPI_Gatherv(loclBuf, isize, MPI_BYTE,
-                            recdBuf, vectSize, vectDisp, MPI_BYTE,
-                            a_dest, a_comm);
-  if (result2 != MPI_SUCCESS)
-    MayDay::Error("Gather<T> failed in MPI_Gather 2");
-
-  if (procID(a_comm) == a_dest)
-    {
-      //calculate offset into array for current processor
-      int ioffset = 0;
-      a_outVec.resize(nProcess);
-      //need to cast to char* to do pointer arithmetic
-      char* arithPtr = (char*)recdBuf;
-      for (int iproc = 0; iproc < nProcess; iproc++)
-        {
-          ioffset = vectDisp[iproc];
-          char* thisProcBuf = arithPtr + ioffset;
-          linearIn(a_outVec[iproc], thisProcBuf);
-        }
-
-      //delete memory for dest-specific arrays
-      delete[] vectSize;
-      delete[] vectDisp;
-      freeMT(recdBuf);
-    }
-
-  //delete memory for local buffer
-  freeMT(loclBuf);
-#endif  
-}
+#endif
 
 ///broadcast to every process
 /**
@@ -234,60 +115,8 @@ gather(Vector<T>& a_outVec,
   void linearIn<T>(T& a_outputT, const void* const inBuf); \\
   void linearOut<T>(void* a_outBuf, const T& inputT); \\ */
 template <class T>
-inline void
-broadcast(T& a_inAndOut,
-          int a_src
-#ifdef CH_MPI               
-          ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-  )
-{
-  //only does anything if in parallel 
-#ifdef CH_MPI
-  CH_assert (a_src >= 0);
-  CH_assert(a_src <  numProc());
-  int isize;
-  if (procID(a_comm) == a_src)
-  {
-    isize = linearSize(a_inAndOut);
-  }
+void broadcast(T& a_inAndOut,  int a_src);
 
-  MPI_Bcast(&isize, 1, MPI_INT, a_src, a_comm);
-
-  void* broadBuf = mallocMT(isize);
-
-  if (broadBuf == NULL)
-  {
-    MayDay::Error("out of memory in broadcast");
-  }
-
-  //take inAndOut from src and put it into broadBuf
-  if (procID(a_comm) == a_src)
-  {
-    linearOut(broadBuf, a_inAndOut);
-  }
-
-  //broadcast broadBuf to all procs
-  MPI_Bcast(broadBuf, isize, MPI_BYTE, a_src, a_comm);
-
-  if (procID(a_comm)==a_src)
-  {
-    CH_MaxMPISendSize = Max<long long>(CH_MaxMPISendSize, isize);
-  }
-  else
-  {
-    CH_MaxMPIRecvSize = Max<long long>(CH_MaxMPIRecvSize, isize);
-  }
-  //take broadBuf and put back into inAndOut if not src
-  if (procID(a_comm) != a_src)
-  {
-    linearIn(a_inAndOut, broadBuf);
-  }
-
-  //delete memory for buffer
-  freeMT(broadBuf);
-#endif  
-}
 //u l l specialization of linearSize
 template < >
 int linearSize(const long long& a_input);

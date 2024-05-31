@@ -82,7 +82,6 @@ BoxLayout& BoxLayout::operator=(const BoxLayout& a_rhs)
   m_dataIterator = a_rhs.m_dataIterator;
 #ifdef CH_MPI
   m_dataIndex = a_rhs.m_dataIndex;
-  m_comm      = a_rhs.m_comm;
 #endif
   return *this;
 }
@@ -125,7 +124,7 @@ void BoxLayout::buildDataIndex()
   std::list<DataIndex> dlist;
   unsigned int index = 0;
   unsigned int datIn = 0;
-  unsigned int p = ::procID(Chombo_MPI::comm);
+  unsigned int p = CHprocID();
   int count=0;
   const Entry* box;
 
@@ -188,37 +187,27 @@ LayoutIterator BoxLayout::layoutIterator() const
   return LayoutIterator(*this, m_layout);
 }
 
-BoxLayout::BoxLayout(const Vector<Box>& a_boxes,
-                     const Vector<int>& a_assignments
-#ifdef CH_MPI            
-                     ,MPI_Comm          a_comm
-#endif            
-                     )
+BoxLayout::BoxLayout(const Vector<Box>& a_boxes, const Vector<int>& assignments)
+  :m_boxes( new Vector<Entry>()),
+   m_layout(new int),
+   m_closed(new bool(false)),
+   m_sorted(new bool(false)),
+   m_indicies(new Vector<LayoutIndex>())
 {
-  define( a_boxes
-          ,a_assignments
-#ifdef CH_MPI         
-          ,a_comm
-#endif         
-    );
+  define(a_boxes, assignments);
 }
 
-BoxLayout::BoxLayout(const LayoutData<Box>& a_newLayout
-#ifdef CH_MPI
-                     ,MPI_Comm a_comm
-#endif
-                     )
+BoxLayout::BoxLayout(const LayoutData<Box>& a_newLayout)
+  :m_boxes( new Vector<Entry>()),
+   m_layout(new int),
+   m_closed(new bool(false)),
+   m_sorted(new bool(false)),
+   m_indicies(new Vector<LayoutIndex>())
 {
-  define(a_newLayout
-#ifdef CH_MPI
-         ,a_comm
-#endif         
-    );
+  define(a_newLayout);
 }
 
-void
-BoxLayout::checkDefine(const Vector<Box>& a_boxes,
-                       const Vector<int>& a_procIDs)
+void BoxLayout::checkDefine(const Vector<Box>& a_boxes, const Vector<int>& a_procIDs)
 {
 
   if (*m_closed)
@@ -238,42 +227,26 @@ BoxLayout::checkDefine(const Vector<Box>& a_boxes,
         {
           MayDay::Error("BoxLayout::define(): Negative processor assignments not allowed");
         }
+   //    if (a_procIDs[i] >= numProc())
+//         {
+//           MayDay::Error("BoxLayout::define(): Attempting to assign data to processor ID larger than total number of processors available");
+//         }
     }
 }
 
 void
-BoxLayout::define(const Vector<Box>& a_boxes,
-                  const Vector<int>& a_procs
-#ifdef CH_MPI            
-                  ,MPI_Comm          a_comm
-#endif            
-                  )
+BoxLayout::define(const Vector<Box>& a_boxes, const Vector<int>& a_procIDs)
 {
-  checkDefine(a_boxes, a_procs);
-#ifdef CH_MPI            
-  m_comm = a_comm;
-#endif    
-
-  m_boxes    = RefCountedPtr<Vector<Entry>>( new Vector<Entry>());
-  m_layout   = RefCountedPtr<int          >(new int);
-  m_closed   = RefCountedPtr<bool         >(new bool(false));
-  m_sorted   = RefCountedPtr<bool         >(new bool(false));
-  m_indicies = RefCountedPtr< Vector<LayoutIndex> >(new Vector<LayoutIndex>());
-
-  const int num_procs = a_procs.size();
+  checkDefine(a_boxes, a_procIDs);
   const int num_boxes = a_boxes.size();
-  if(num_procs != num_boxes)
-  {
-    pout() << "BoxLayout::define:box and proc sizes do not match." << endl;
-    MayDay::Error("Doh!");
-  }
+  //const int num_procs = a_procIDs.size();
   m_boxes->resize(num_boxes);
   for (unsigned int i = 0; i < num_boxes; ++i)
     {
       m_boxes->operator[](i) = a_boxes[i];
       if ( numProc() > 1 )
         {
-          m_boxes->operator[](i).m_procID = a_procs[i];
+          m_boxes->operator[](i).m_procID = a_procIDs[i];
         }
       else
         {
@@ -284,15 +257,8 @@ BoxLayout::define(const Vector<Box>& a_boxes,
 }
 
 void
-BoxLayout::define(const LayoutData<Box>& a_newLayout
-#ifdef CH_MPI
-                  ,MPI_Comm a_comm
-#endif                  
-                  )
+BoxLayout::define(const LayoutData<Box>& a_newLayout)
 {
-#ifdef CH_MPI  
-  m_comm = a_comm;
-#endif  
   const BoxLayout& baseLayout = a_newLayout.boxLayout();
 
   // First copy from the base layout.
@@ -324,7 +290,7 @@ BoxLayout::define(const LayoutData<Box>& a_newLayout
   // but we have to do it one Vector<Box> at a time.
   Vector< Vector<Box> > allNewBoxes;
   allNewBoxes.resize(numProc());
-  if (::procID(Chombo_MPI::comm) == iprocdest)
+  if (CHprocID() == iprocdest)
     {
       for (int iproc = 0; iproc < numProc(); iproc++)
         {
@@ -378,8 +344,7 @@ BoxLayout::deepCopy(const BoxLayout& a_source)
 }
 
 //checks equality of the vector of boxes inside m_boxes
-bool
-BoxLayout::sameBoxes(const BoxLayout& a_layout) const
+bool BoxLayout::sameBoxes(const BoxLayout& a_layout) const
 {
   bool retval;
   if (size() == a_layout.size())
@@ -460,7 +425,8 @@ coarsen(BoxLayout& a_output, const BoxLayout& a_input, const IntVect& a_refineme
 }
 
 void
-BoxLayout::operator&= (const Box& a_box)
+BoxLayout::
+operator&= (const Box& a_box)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
     {
@@ -469,7 +435,8 @@ BoxLayout::operator&= (const Box& a_box)
 }
 
 void
-BoxLayout::operator&= (const ProblemDomain& a_domain)
+BoxLayout::
+operator&= (const ProblemDomain& a_domain)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
     {
@@ -478,7 +445,8 @@ BoxLayout::operator&= (const ProblemDomain& a_domain)
 }
 
 void
-BoxLayout::adjCellSide(int a_idir, int a_length, Side::LoHiSide a_side)
+BoxLayout::
+adjCellSide(int a_idir, int a_length, Side::LoHiSide a_side)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
     {
@@ -495,127 +463,139 @@ BoxLayout::adjCellSide(int a_idir, int a_length, Side::LoHiSide a_side)
 }
 
 void
-BoxLayout::growSide(int a_idir, int a_length, Side::LoHiSide a_side)
+BoxLayout::
+growSide(int a_idir, int a_length, Side::LoHiSide a_side)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    if (a_side == Side::Lo)
-      {
-        (*m_boxes)[ivec].box.growLo(a_idir, a_length);
-      }
-    else
-      {
-        (*m_boxes)[ivec].box.growHi(a_idir, a_length);
-      }
-  }
+    {
+      if (a_side == Side::Lo)
+        {
+          (*m_boxes)[ivec].box.growLo(a_idir, a_length);
+        }
+      else
+        {
+          (*m_boxes)[ivec].box.growHi(a_idir, a_length);
+        }
+    }
 }
 //////////////
 void
-BoxLayout::surroundingNodes()
+BoxLayout::
+surroundingNodes()
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.surroundingNodes();
-  }
+    {
+      (*m_boxes)[ivec].box.surroundingNodes();
+    }
 }
 
 //////////////
 void
-BoxLayout::convertNewToOld(const IntVect& a_permutation,
-                           const IntVect& a_sign,
-                           const IntVect& a_translation)
+BoxLayout::
+convertNewToOld(const IntVect& a_permutation,
+                const IntVect& a_sign,
+                const IntVect& a_translation)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.convertNewToOld(a_permutation, a_sign, a_translation);
-  }
+    {
+      (*m_boxes)[ivec].box.convertNewToOld(a_permutation, a_sign, a_translation);
+    }
 }
 //////////////
 void
-BoxLayout::convertOldToNew(const IntVect& a_permutation,
-                           const IntVect& a_sign,
-                           const IntVect& a_translation)
+BoxLayout::
+convertOldToNew(const IntVect& a_permutation,
+                const IntVect& a_sign,
+                const IntVect& a_translation)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.convertOldToNew(a_permutation, a_sign, a_translation);
-  }
+    {
+      (*m_boxes)[ivec].box.convertOldToNew(a_permutation, a_sign, a_translation);
+    }
 }
 ///////////
 void
-BoxLayout::enclosedCells()
+BoxLayout::
+enclosedCells()
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.enclosedCells();
-  }
-}
-
-///////////
-void
-BoxLayout::grow(int a_growth)
-{
-  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.grow(a_growth);
-  }
-}
-///////////
-void
-BoxLayout::grow(int a_idir, int a_growth)
-{
-  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.grow(a_idir, a_growth);
-  }
-}
-///////////
-void
-BoxLayout::grow(IntVect a_growth)
-{
-  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.grow(a_growth);
-  }
+    {
+      (*m_boxes)[ivec].box.enclosedCells();
+    }
 }
 
 ///////////
 void
-BoxLayout::coarsen(int a_ref)
+BoxLayout::
+grow(int a_growth)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.coarsen(a_ref);
-  }
+    {
+      (*m_boxes)[ivec].box.grow(a_growth);
+    }
 }
 ///////////
 void
-BoxLayout::refine(int a_ref)
+BoxLayout::
+grow(int a_idir, int a_growth)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.refine(a_ref);
-  }
+    {
+      (*m_boxes)[ivec].box.grow(a_idir, a_growth);
+    }
+}
+///////////
+void
+BoxLayout::
+grow(IntVect a_growth)
+{
+  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
+    {
+      (*m_boxes)[ivec].box.grow(a_growth);
+    }
 }
 
 ///////////
 void
-BoxLayout::shift(const IntVect& a_iv)
+BoxLayout::
+coarsen(int a_ref)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.shift(a_iv);
-  }
+    {
+      (*m_boxes)[ivec].box.coarsen(a_ref);
+    }
+}
+///////////
+void
+BoxLayout::
+refine(int a_ref)
+{
+  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
+    {
+      (*m_boxes)[ivec].box.refine(a_ref);
+    }
 }
 
 ///////////
 void
-BoxLayout::shiftHalf(const IntVect& a_iv)
+BoxLayout::
+shift(const IntVect& a_iv)
 {
   for (int ivec = 0; ivec < m_boxes->size(); ivec++)
-  {
-    (*m_boxes)[ivec].box.shiftHalf(a_iv);
-  }
+    {
+      (*m_boxes)[ivec].box.shift(a_iv);
+    }
+}
+
+///////////
+void
+BoxLayout::
+shiftHalf(const IntVect& a_iv)
+{
+  for (int ivec = 0; ivec < m_boxes->size(); ivec++)
+    {
+      (*m_boxes)[ivec].box.shiftHalf(a_iv);
+    }
 }
 
 
@@ -626,38 +606,38 @@ BoxLayout::shiftHalf(const IntVect& a_iv)
 void refine(BoxLayout& a_output, const BoxLayout& a_input, int a_refinement)
 {
   if (!a_input.isClosed())
-  {
-    MayDay::Error("input to refine must be called with closed BoxLayout");
-  }
+    {
+      MayDay::Error("input to refine must be called with closed BoxLayout");
+    }
   if (a_output.isClosed())
-  {
-    MayDay::Error("output of refine must be called on open BoxLayout");
-  }
+    {
+      MayDay::Error("output of refine must be called on open BoxLayout");
+    }
   a_output.deepCopy(a_input);
 
   for (int ivec = 0; ivec < a_output.m_boxes->size(); ivec++)
-  {
-    (*a_output.m_boxes)[ivec].box.refine(a_refinement);
-  }
+    {
+      (*a_output.m_boxes)[ivec].box.refine(a_refinement);
+    }
   a_output.close();
 }
 
 void refine(BoxLayout& a_output, const BoxLayout& a_input, const IntVect& a_refinement)
 {
   if (!a_input.isClosed())
-  {
-    MayDay::Error("input to refine must be called with closed BoxLayout");
-  }
+    {
+      MayDay::Error("input to refine must be called with closed BoxLayout");
+    }
   if (a_output.isClosed())
-  {
-    MayDay::Error("output of refine must be called on open BoxLayout");
-  }
+    {
+      MayDay::Error("output of refine must be called on open BoxLayout");
+    }
   a_output.deepCopy(a_input);
 
   for (int ivec = 0; ivec < a_output.m_boxes->size(); ivec++)
-  {
-    (*a_output.m_boxes)[ivec].box.refine(a_refinement);
-  }
+    {
+      (*a_output.m_boxes)[ivec].box.refine(a_refinement);
+    }
   a_output.close();
 }
 
@@ -665,18 +645,18 @@ ostream& operator<<(ostream& os, const BoxLayout& a_layout)
 {
   int i=0;
   for (LayoutIterator it(a_layout.layoutIterator()); it.ok(); ++it)
-  {
-    os << a_layout.get(it())<<"["<<a_layout.procID(it())<<"]";
-    ++i;
-    if (i==4)
     {
-      os <<"\n"; i=0;
+      os << a_layout.get(it())<<"["<<a_layout.procID(it())<<"]";
+      ++i;
+      if (i==4)
+      {
+        os <<"\n"; i=0;
+      }
+      else
+      {
+        os <<" # ";
+      }
     }
-    else
-    {
-      os <<" # ";
-    }
-  }
 
   os <<"\n";
   return os;
@@ -691,9 +671,9 @@ int BoxLayout::numBoxes(const int procID) const
 {
   int num = 0;
   for (int i=0; i<m_boxes->size(); ++i)
-  {
-    if (m_boxes->operator[](i).m_procID == procID) ++num;
-  }
+    {
+      if (m_boxes->operator[](i).m_procID == procID) ++num;
+    }
   return num;
 }
 
@@ -702,9 +682,9 @@ long long  BoxLayout::numCells() const
   long long rtn = 0;
   const std::vector<Entry>& v = m_boxes->constStdVector();
   for (std::vector<Entry>::const_iterator i=v.begin(); i!=v.end(); ++i)
-  {
-    rtn += (*i).box.numPts();
-  }
+    {
+      rtn += (*i).box.numPts();
+    }
   return rtn;
 }
 
@@ -787,11 +767,11 @@ int maxBits(std::vector<Box>::iterator a_first, std::vector<Box>::iterator a_las
     }
   int bits;
   for (bits=8*sizeof(int)-2; bits>0; bits--)
-  {
-    const int N = (1<<bits);
-    int rem = maxSize/N;
-    if (rem > 0) break;
-  }
+    {
+      const int N = (1<<bits);
+      int rem = maxSize/N;
+      if (rem > 0) break;
+    }
   bits++;
   return bits;
 }
@@ -809,10 +789,10 @@ void parallelMortonOrdering(std::vector<Box>::iterator a_first, std::vector<Box>
   MPI_Comm_rank ( comm, &rank  );
 
   if (size < 2000 || procs == 1)
-  {
-    a_maxBits = maxBits(a_first, a_last);
-    std::sort(a_first, a_last, MortonOrdering(a_maxBits));
-  }
+    {
+      a_maxBits = maxBits(a_first, a_last);
+      std::sort(a_first, a_last, MortonOrdering(a_maxBits));
+    }
   else
     {
       MPI_Comm split_comm;
@@ -820,95 +800,95 @@ void parallelMortonOrdering(std::vector<Box>::iterator a_first, std::vector<Box>
       int color;
       std::vector<Box>::iterator first, last, middle = a_first + size/2;
       if ( newversion )
-        {
+      {
           color = rank%2;
           if (color == 0)
-            {
+          {
               first = a_first;
               last  = middle;
-            }
+          }
           else
-            {
+          {
               first = middle;
               last  = a_last;
-            }
-        }
+          }
+      }
       else
-        {
+      {
           if (rank < middleRank)
-            {
+          {
               color = 0;
               first = a_first;
               last  = middle;
-            }
+          }
           else
-            {
+          {
               color = 1;
               first = middle;
               last  = a_last;
-            }
-        }
-      
+          }
+      }
+
       MPI_Comm_split(comm, color, rank, &split_comm);
       int maxBits;
       parallelMortonOrdering(first, last, maxBits, split_comm);
-      
+
       MPI_Comm_free(&split_comm);
-      
+
       int countLo = (middle - a_first )*sizeof(Box);
       int countHi = (a_last - middle )*sizeof(Box);
       MPI_Status status;
-      
+
       if ( !newversion )
+      {
+        if (color == 0)
         {
-          if (color == 0)
-            {
-              MPI_Send(&(*a_first), countLo, MPI_CHAR, rank+middleRank, 0, comm);
-              MPI_Recv(&(*middle),countHi, MPI_CHAR, rank+middleRank, 0, comm, &status);
-            }
-          else
-            {
-              MPI_Recv(&(*a_first),  countLo, MPI_CHAR, rank-middleRank, 0, comm, &status);
-              MPI_Send(&(*middle), countHi, MPI_CHAR, rank-middleRank, 0, comm);
-            }
-          // middle sends to end of ragged edge
-          if (middleRank*2 != procs && rank == middleRank)
-            {
-              MPI_Send(&(*a_first),  countLo, MPI_CHAR, procs-1, 0, comm);
-              MPI_Recv(&(*middle), countHi, MPI_CHAR, procs-1, 0, comm, &status);
-            }
+            MPI_Send(&(*a_first), countLo, MPI_CHAR, rank+middleRank, 0, comm);
+            MPI_Recv(&(*middle),countHi, MPI_CHAR, rank+middleRank, 0, comm, &status);
         }
+        else
+        {
+            MPI_Recv(&(*a_first),  countLo, MPI_CHAR, rank-middleRank, 0, comm, &status);
+            MPI_Send(&(*middle), countHi, MPI_CHAR, rank-middleRank, 0, comm);
+        }
+        // middle sends to end of ragged edge
+        if (middleRank*2 != procs && rank == middleRank)
+        {
+            MPI_Send(&(*a_first),  countLo, MPI_CHAR, procs-1, 0, comm);
+            MPI_Recv(&(*middle), countHi, MPI_CHAR, procs-1, 0, comm, &status);
+        }
+      }
       else
+      {
+        if (color == 0)
         {
-          if (color == 0)
-            {
-              // last proc of ragged edge -- s/r back
-              if (procs%2 != 0 && rank == procs-1)
-                {
-                  MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank-1, 0,
-                               &(*middle),  countHi, MPI_CHAR, rank-1, 0, comm, &status);
-                }
-              else
-                {
-                  // normal s/r up
-                  MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank+1, 0,
-                               &(*middle),  countHi, MPI_CHAR, rank+1, 0, comm, &status);
-                }
-            }
+          // last proc of ragged edge -- s/r back
+          if (procs%2 != 0 && rank == procs-1)
+          {
+            MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank-1, 0,
+                         &(*middle),  countHi, MPI_CHAR, rank-1, 0, comm, &status);
+          }
           else
-            {
-              // normal s/r back
-              MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank-1, 0,
-                           &(*a_first),countLo, MPI_CHAR, rank-1, 0, comm, &status);
-              // special r/s forward
-              if (procs%2 != 0 && rank == procs-2)
-                {
-                  MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank+1, 0,
-                               &(*a_first),countLo, MPI_CHAR, rank+1, 0, comm, &status);
-                  
-                }
-            }
+          {
+            // normal s/r up
+            MPI_Sendrecv(&(*a_first), countLo, MPI_CHAR, rank+1, 0,
+                         &(*middle),  countHi, MPI_CHAR, rank+1, 0, comm, &status);
+          }
         }
+        else
+        {
+          // normal s/r back
+          MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank-1, 0,
+                       &(*a_first),countLo, MPI_CHAR, rank-1, 0, comm, &status);
+          // special r/s forward
+          if (procs%2 != 0 && rank == procs-2)
+          {
+            MPI_Sendrecv(&(*middle), countHi, MPI_CHAR, rank+1, 0,
+                         &(*a_first),countLo, MPI_CHAR, rank+1, 0, comm, &status);
+
+          }
+        }
+      }
       MPI_Allreduce (&maxBits, &a_maxBits, 1, MPI_INT, MPI_MAX, comm );
       std::inplace_merge(a_first, middle, a_last, MortonOrdering(a_maxBits));
     }

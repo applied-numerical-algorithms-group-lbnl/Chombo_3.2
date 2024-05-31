@@ -342,11 +342,8 @@ public:
      Solve L(phi) = rho from l_base to l_max.  To solve over all levels,
      l_base = 0 and l_max = max_level = numLevels-1.
    */
-  virtual void solve( Vector<T*>& a_phi,
-                      const Vector<T*>& a_rhs,
-                      int l_max,
-                      int l_base,
-                      bool a_zeroInitialPhi=true,
+  virtual void solve( Vector<T*>& a_phi, const Vector<T*>& a_rhs,
+                      int l_max, int l_base, bool a_zeroPhi=true,
                       bool forceHomogeneous = false );
 
   ///
@@ -354,7 +351,7 @@ public:
       called "init" so solver can allocate temporary holders.
   */
   virtual void solveNoInit(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
-                           int l_max, int l_base, bool a_zeroInitialPhi=true,
+                           int l_max, int l_base, bool a_zeroPhi=true,
                            bool forceHomogeneous = false);
 
   ///use if you want final residual

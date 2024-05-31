@@ -30,11 +30,7 @@
 #include "PolyGeom.H"
 #include "EBLevelDataOps.H"
 #include "FaceIterator.H"
-#include "memusage.H"
-#include "memtrack.H"
-
 #include "NamespaceHeader.H"
-
 
 
 EBIndexSpace* Chombo_EBIS::s_instance = NULL;
@@ -541,7 +537,7 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
   Vector<unsigned long long> irregCount;
 
   {
-    CH_TIME("EBISLevel::EBISLevel_makeboxes");
+    CH_TIME("EBISLevel::EBISLevel_makeboxe");
     makeBoxes(vbox,
               irregCount,
               a_domain.domainBox(),
@@ -602,8 +598,6 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
           fixRegularNextToMultiValued();
         }
     }
-  //print_memory_line("EBISLevel data post");
-  //UnfreedMemory();
   pout() << "Exiting EBISLevel::EBISLevel called by EBIndexSpace::buildFirstLevel..." << endl;
 }
 
@@ -1041,7 +1035,7 @@ EBISLevel::EBISLevel(EBISLevel             & a_fineEBIS,
 
    
  
-  (const_cast<GeometryService*>(&a_geoserver))->makeGrids(m_domain, m_grids, a_nCellMax, a_nCellMax);
+  (const_cast<GeometryService*>(&a_geoserver))->makeGrids(m_domain, m_grids, a_nCellMax, 15);
   
 
   EBGraphFactory ebgraphfact(m_domain);
@@ -1051,12 +1045,10 @@ EBISLevel::EBISLevel(EBISLevel             & a_fineEBIS,
   EBDataFactory ebdatafact;
   m_data.define(m_grids, 1, IntVect::Zero, ebdatafact);
   
-//  pout() << "before coarsenVoFs " << endl;
+
   //create coarsened vofs from fine.
   coarsenVoFs(a_fineEBIS);
 
-//  pout() << "before coarsenFacess " << endl;
-  //overallMemoryUsage();
   //create coarse faces from fine
   coarsenFaces(a_fineEBIS);
   //overallMemoryUsage();

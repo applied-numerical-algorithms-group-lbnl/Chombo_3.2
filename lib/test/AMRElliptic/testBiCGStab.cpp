@@ -349,6 +349,11 @@ testBiCGStab()
 
         correction.setVal(0.0);
         solver.solve(correction, residual);
+
+        pout()<<indent<<"solver iterations = " << solver.m_iter
+              << " solver initial rnorm = "<< solver.m_initial_residual
+              <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
+        
         op.incr(phi, correction, 1);
         op.residual(residual, phi, rhs);
         rnorm = residual.norm();
@@ -368,6 +373,11 @@ testBiCGStab()
     for (int i=0; i<iter; ++i)
       {
         solver.solve(phi, rhs);
+
+        pout()<<indent<<"solver iterations = " << solver.m_iter
+              << " solver initial rnorm = "<< solver.m_initial_residual
+              <<"  solver final rnorm = "<< solver.m_residual  <<std::endl;
+        
         op.residual(residual, phi, rhs);
         rnorm = residual.norm();
         op.axby(error, phi, phi_exact, 1, -1);
@@ -429,6 +439,11 @@ testBiCGStab()
       {
         amrop.scale(correction, 0.0);
         bsolver.solve(correction, residual);
+
+        pout()<<indent<<"solver iterations = " << bsolver.m_iter
+              << " solver initial rnorm = "<< bsolver.m_initial_residual
+              <<"  solver final rnorm = "<< bsolver.m_residual  <<std::endl;
+        
         amrop.incr(phi, correction, 1.0);
         amrop.axby(error, phi, phi_exact, 1, -1);
         amrop.residual(residual, phi, rhs, false);
@@ -463,6 +478,11 @@ testBiCGStab()
     for (int i=0; i<iter; ++i)
       {
         bsolver.solve(phi, rhs);
+
+        pout()<<indent<<"solver iterations = " << bsolver.m_iter
+              << " solver initial rnorm = "<< bsolver.m_initial_residual
+              <<"  solver final rnorm = "<< bsolver.m_residual  <<std::endl;
+        
         amrop.axby(error, phi, phi_exact, 1, -1);
         amrop.residual(residual, phi, rhs, false);
         rnorm = amrop.norm(residual, 2);

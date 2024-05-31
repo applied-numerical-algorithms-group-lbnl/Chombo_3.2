@@ -57,7 +57,7 @@ void AttachDebugger(int a_sig)
   if (alreadyAttached) return;
 
   alreadyAttached = true;
-  char buf[4586];
+  char buf[1200];
   char* display;
   FILE *f;
   int proc = getpid();
@@ -107,7 +107,6 @@ void AttachDebugger(int a_sig)
       {
         sprintf(title, "'%s %d'", binaryName+s-a, procID());
 
-        /// the emacs version never works right
 #define useemacs 1
 #if useemacs
         sprintf(buf,"emacs -geometry 80x27 -title %s -display %s --eval '(progn (gdb \" gdb -i=mi -q -f %s --pid %d\") )'",

@@ -9,7 +9,7 @@ CHOMBO_HOME := $(shell pwd)/../..
 makefiles+=lib_test_amrelliptic
 
 ebase := testAMRPoissonOp testVCAMRPoissonOp2 testBiCGStab testMultiGrid \
-         testNewPoissonOp testNewPoissonOp4th 
+         testNewPoissonOp testNewPoissonOp4th testGMRES
 
 LibNames := AMRElliptic AMRTools BoxTools
 

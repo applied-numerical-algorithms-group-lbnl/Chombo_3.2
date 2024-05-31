@@ -52,11 +52,7 @@ public:
       as the Box Vector.  On exit, the DisjointBoxLayout will be closed.
   */
   DisjointBoxLayout(const Vector<Box>& a_boxes,
-                    const Vector<int>& a_procIDs
-#ifdef CH_MPI            
-                    ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-                    );
+                    const Vector<int>& a_procIDs);
 
   ///
   /** Construct from a Vector of Boxes and optionally a Vector of
@@ -66,11 +62,7 @@ public:
   */
   DisjointBoxLayout(const Vector<Box>& a_boxes,
                     const Vector<int>& a_procIDs,
-                    const ProblemDomain& a_physDomain
-#ifdef CH_MPI            
-                    ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-                    );
+                    const ProblemDomain& a_physDomain);
 
   ///
   /** Construct from a LayoutData<Box>.
@@ -99,11 +91,7 @@ public:
   */
   virtual void
   define(const Vector<Box>& a_boxes,
-         const Vector<int>& a_procIDs
-#ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-    );
+         const Vector<int>& a_procIDs);
 
   ///
   /**
@@ -155,11 +143,7 @@ public:
   virtual void
   define(const Vector<Box>& a_boxes,
          const Vector<int>& a_procIDs,
-         const ProblemDomain& a_physDomain
-#ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-    );
+         const ProblemDomain& a_physDomain);
 
   ///
   /** Define this DisjointBoxLayout from a Vector of Boxes.
@@ -168,19 +152,8 @@ public:
   virtual void
   define_pd(const Vector<Box>& a_boxes,
             const Vector<int>& a_procIDs,
-            const ProblemDomain& a_physDomain
-#ifdef CH_MPI            
-         ,MPI_Comm a_comm = Chombo_MPI::comm
-#endif
-    )
-  {
-    define(a_boxes, a_procIDs,  a_physDomain
-           
-#ifdef CH_MPI            
-           , a_comm
-#endif           
-      );
-  }
+            const ProblemDomain& a_physDomain)
+  {define(a_boxes, a_procIDs,  a_physDomain);}
 
   /*@}*/
 

@@ -21,7 +21,7 @@ while ("$dim" != "2d" && "$dim" != "3d" && "$dim" != "4d")
            | awk '/^[0-9][0-9]*$/  { printf("%dd",$0); next; }  \
                   /^[0-9][0-9]*d$/ { print $0;         next; }'`
 end
-set compare=(~dmartin/code/Chombo/lib/util/ChomboCompare/compare$dim.*.ex)
+set compare=(~${HOME}/code/Chombo/lib/util/ChomboCompare/compare$dim.*.ex)
 if ($#compare > 1) then
   echo "Multiple 'compare's found, using $compare[1]"
 endif
@@ -29,7 +29,7 @@ set tmp=/tmp/chdiff$$
 set file1=$1
 set file2=$2
 sed -e "s@EXACTROOT@$file1@" -e "s@COMPUTEDROOT@$file2@" \
-  < ~dmartin/bin/chdiff.template                         \
+  < ~${HOME}/bin/chdiff.template                         \
   > $tmp
 $compare[1] $tmp
 if ($status == 0) then

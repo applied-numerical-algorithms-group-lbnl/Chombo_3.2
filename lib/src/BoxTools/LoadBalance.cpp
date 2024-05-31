@@ -165,7 +165,7 @@ int LoadBalance(Vector<int>&             a_procAssignments,
 // Boxes are also included, but only used if SWAP_SAME_SIZES_BOXES
 // is enabled
 ///
-#ifdef  SWAP_SAME_SIZES_BOXES
+
 static unsigned int mylog2 (unsigned int val) {
     if (val == 0) return std::numeric_limits<unsigned int>::max();
     if (val == 1) return 0;
@@ -176,7 +176,6 @@ static unsigned int mylog2 (unsigned int val) {
     }
     return ret;
 }
-#endif
 
 void split_load(Vector<int>& procs, Vector<long long>& loads,
                 Vector<long long>& sum, int p0, int p1, int start, int end)

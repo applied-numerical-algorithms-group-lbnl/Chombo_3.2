@@ -263,7 +263,7 @@ void AMRPoissonOp::residualI(LevelData<FArrayBox>&       a_lhs,
                              bool                        a_homogeneous)
 {
   CH_TIME("AMRPoissonOp::residualI");
-  
+
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
   if (s_exchangeMode == 0)
     phi.exchange(phi.interval(), m_exchangeCopier);

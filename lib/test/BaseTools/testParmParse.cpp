@@ -111,6 +111,9 @@ testGet();
 void
 testPrefix();
 
+void
+testContains(ParmParse& a_rootPP);
+
 /// Global variables for handling output:
 
 static const char *pgmname = "testParmParse" ;
@@ -186,6 +189,8 @@ testParmParse(int argc, char* argv[])
 
   testPrefix();
 
+  testContains(pp);
+  
   // if there were any errors, the program would have aborted
   pout() << indent << pgmname
        << ": ParmParse tests passed." << endl ;
@@ -359,6 +364,68 @@ testPrefix()
     {
       MayDay::Error( "Prefix test failed" ,1 );
     }
+}
+
+void
+testContains(ParmParse& a_rootPP)
+{
+
+  ParmParse ppBC("BC");
+  bool status = 0;
+  bool itsThere = false;
+
+  
+  // test with a prefix
+  if (ppBC.looseContains("potential") )
+    {
+      itsThere = true;
+    }
+  if (!itsThere)
+    {
+      status = 1;
+    }
+  
+  itsThere = false;
+  if (ppBC.looseContains("potential1") )
+    {
+      itsThere = true;
+    }
+  
+  if (itsThere)
+    {
+      status = 2;
+    }
+
+  // test without a prefix
+  itsThere = false;
+  if (a_rootPP.looseContains("BC.potential"))
+    {
+      itsThere = true;
+    }
+  if (!itsThere)
+    {
+      status = 3;
+    }
+  
+  
+  itsThere = false;
+  if (a_rootPP.looseContains("BC.potential1"))
+    {
+      itsThere = true;
+    }      
+  
+  if (itsThere)
+    {
+      status = 4;
+    }
+  
+  
+  if ( !(status == 0))
+    {
+      MayDay::Error( "Contains test failed" ,1 );
+    }
+  
+
 }
 
 

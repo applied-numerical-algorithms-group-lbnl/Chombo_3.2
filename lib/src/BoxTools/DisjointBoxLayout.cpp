@@ -39,80 +39,48 @@ numPointsThisProc() const
 }
 
 DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
-                                     const Vector<int>& a_procs
-#ifdef CH_MPI            
-                                     ,MPI_Comm a_comm
-#endif
-                                     )
-  :BoxLayout()
+                                     const Vector<int>& a_procIDs)
+  :BoxLayout(a_boxes,a_procIDs)
 {
-  define(a_boxes,
-         a_procs
-#ifdef CH_MPI            
-         ,a_comm
-#endif
-    );
+  CH_assert(isDisjoint());
+  computeNeighbors();
 
 }
 
-DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>&   a_boxes,
-                                     const Vector<int>&   a_procIDs,
-                                     const ProblemDomain& a_physDomain
-#ifdef CH_MPI            
-                                     ,MPI_Comm            a_comm
-#endif
-                                     )
-  :BoxLayout()
+DisjointBoxLayout::DisjointBoxLayout(const Vector<Box>& a_boxes,
+                                     const Vector<int>& a_procIDs,
+                                     const ProblemDomain& a_physDomain)
+  :BoxLayout(a_boxes,a_procIDs), m_physDomain(a_physDomain)
 {
-  define(a_boxes, a_procIDs, a_physDomain
-#ifdef CH_MPI            
-         ,a_comm
-#endif
-    );
+  CH_assert(isDisjoint());
+  computeNeighbors(); // even though BoxLayout::close is virtual, virtual dispatch does not
+                      // happen in constructors.
 }
 
 DisjointBoxLayout::DisjointBoxLayout(const LayoutData<Box>& a_newLayout)
   : BoxLayout(a_newLayout)
 {
-  define(a_newLayout);
+  CH_assert(isDisjoint());
+  computeNeighbors(); // even though BoxLayout::close is virtual, virtual dispatch does not
+                      // happen in constructors.
 }
                                      
 void
 DisjointBoxLayout::define(const Vector<Box>& a_boxes,
-                          const Vector<int>& a_procIDs
-#ifdef CH_MPI            
-                          ,MPI_Comm          a_comm
-#endif
-                          )
+                          const Vector<int>& a_procIDs)
 {
-  BoxLayout::define(a_boxes,
-                    a_procIDs
-#ifdef CH_MPI            
-                    ,a_comm
-#endif
-                    );
-  
+  BoxLayout::define(a_boxes,a_procIDs);
   CH_assert(isDisjoint());
 
 }
 
 void
-DisjointBoxLayout::define(const Vector<Box>&   a_boxes,
-                          const Vector<int>&   a_procIDs,
-                          const ProblemDomain& a_physDomain
-#ifdef CH_MPI            
-                          ,MPI_Comm            a_comm
-#endif
-                          )
+DisjointBoxLayout::define(const Vector<Box>& a_boxes,
+                          const Vector<int>& a_procIDs,
+                          const ProblemDomain& a_physDomain)
 {
-  BoxLayout::define(a_boxes,
-                    a_procIDs
-#ifdef CH_MPI            
-                    ,a_comm
-#endif
-    );
   m_physDomain = a_physDomain;
-  
+  BoxLayout::define(a_boxes,a_procIDs);
   CH_assert(isDisjoint());
 
 }
@@ -129,7 +97,7 @@ DisjointBoxLayout::define(const BoxLayout& a_layout)
 }
 
 void
-DisjointBoxLayout::define(const BoxLayout&     a_layout,
+DisjointBoxLayout::define(const BoxLayout& a_layout,
                           const ProblemDomain& a_physDomain)
 {
   m_physDomain = a_physDomain;
@@ -159,7 +127,6 @@ DisjointBoxLayout::close()
       computeNeighbors();
     }
 }
-/// rural dbl (no neighbors)
 void
 DisjointBoxLayout::closeNO()
 {
@@ -325,7 +292,7 @@ DisjointBoxLayout::deepCopy(const DisjointBoxLayout& a_layout)
 }
 
 void
-DisjointBoxLayout::deepCopy(const BoxLayout&     a_layout,
+DisjointBoxLayout::deepCopy(const BoxLayout& a_layout,
                             const ProblemDomain& a_physDomain)
 {
   m_physDomain = a_physDomain;
@@ -338,8 +305,8 @@ DisjointBoxLayout::deepCopy(const BoxLayout&     a_layout,
 
 void
 DisjointBoxLayout::degenerate( DisjointBoxLayout& a_to,
-                               const SliceSpec&   a_sliceSpec,
-                               bool               a_maintainProcAssign) const
+                               const SliceSpec& a_sliceSpec,
+                               bool a_maintainProcAssign) const
 {
   Vector<Box> boxes;
   Vector<int> procAssign;
@@ -356,7 +323,7 @@ DisjointBoxLayout::degenerate( DisjointBoxLayout& a_to,
         }
     }
 
-  // What happens now if boxes.size()==0?
+    // What happens now if boxes.size()==0?
   if (!a_maintainProcAssign)
     {
       a_to.defineAndLoadBalance( boxes, 0 );
@@ -377,22 +344,22 @@ DisjointBoxLayout::defineAndLoadBalance(const Vector<Box>& a_boxes,
   defineAndLoadBalance(a_boxes, a_procIDs, bogusProbDomain);
 
 }
-/// I'll take null_ptr as an API choice for 4586, Alex.
+
 void
-DisjointBoxLayout::defineAndLoadBalance(const Vector<Box>&   a_boxes,
-                                        Vector<int> *        a_procIDs,  //null if you do not want it back.
+DisjointBoxLayout::defineAndLoadBalance(const Vector<Box>& a_boxes,
+                                        Vector<int> * a_procIDs,
                                         const ProblemDomain& a_physDomain)
 {
-  CH_assert( (!a_procIDs) || (a_procIDs->size() == 0) );
-  
-  Vector<int> procIDs;
-  procIDs.reserve( a_boxes.size() );
-  LoadBalance( procIDs, a_boxes );
-  if ( a_procIDs )
-    {
-      *a_procIDs = procIDs; // Could this ever be a performance bottleneck?
-    }
-  this->define( a_boxes, procIDs, a_physDomain );
+    CH_assert( (!a_procIDs) || (a_procIDs->size() == 0) );
+
+    Vector<int> procIDs;
+    procIDs.reserve( a_boxes.size() );
+    LoadBalance( procIDs, a_boxes );
+    if ( a_procIDs )
+      {
+        *a_procIDs = procIDs; // Could this ever be a performance bottleneck?
+      }
+    this->define( a_boxes, procIDs, a_physDomain );
 }
 
 bool

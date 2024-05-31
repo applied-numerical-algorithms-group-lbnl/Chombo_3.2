@@ -35,7 +35,7 @@ public:
   /**
      Constructor.
   */
-  AmrAdaptor() : ChomboSundialsAdaptor(), m_finestLevel(-1)  {};
+  AmrAdaptor() : ChomboSundialsAdaptor() {};
 
   /// 
   /**
@@ -64,13 +64,12 @@ public:
      <ul>
        <li> amrData: vector of pointers to all the %LevelData<FArrayBox> in the hierarchy
        <li> refRatio: vector of integer refinement ratios between levels
-       <li> finestLevel: finest active AMR level (may not be using all available levels)
        <li> ownData: (true) delete pointers in destructor
      </ul>
      Redefines and calculates masks. Calls delete on amrData and masks pointers in destructor.
   */
   void define(Vector<LevelData<FArrayBox>*> amrData, Vector<int> refRatio,
-              int finestLevel, bool ownData);
+              bool ownData);
 
   /// 
   /**
@@ -84,12 +83,6 @@ public:
   */
   Vector<int> getRefRatio() { return this->m_refRatio; };
 
-  ///
-  /**
-     Get the finest active AMR level
-  */
-  size_t getFinestLevel() {return this->m_finestLevel;}
-  
   /// 
   /**
      Get the flag for owning data deallocation
@@ -237,8 +230,6 @@ public:
   Vector<LevelData<FArrayBox>*> m_amrData;
   //! %AMR hierarchy refinement ratios between levels
   Vector<int> m_refRatio;
-  //! finest active AMR level
-  size_t m_finestLevel;
   //! %AMR mask, 1 for uncovered values, 0 for covered values
   Vector<LevelData<FArrayBox>*> m_amrMask; // To help with efficient ops
   //! Cached nvector length, sum of all unmasked values, across all ranks

@@ -359,6 +359,7 @@ int main(int    a_argc,
         domainHi[iDir] = nCell[iDir]- 1;
       }
     Box domainBox(domainLo,domainHi);
+    //domainBox.shift(-20*BASISV(0));
     ProblemDomain domain(domainBox);
 
     //Vector<Box> boxVec = makeBoxes(domainBox);
@@ -382,9 +383,9 @@ int main(int    a_argc,
     int sumDir = 0;
 
     CH_assert(sumDir < SpaceDim && sumDir >= 0);
-  
-    reducedDomainBox.setSmall(sumDir,0);
+
     reducedDomainBox.setBig  (sumDir,0);
+    reducedDomainBox.setSmall(sumDir,0);
     ProblemDomain reducedDomain                 (reducedDomainBox);
     Vector<Box> reducedBoxVec = makeReducedBoxes(reducedDomainBox);
   

@@ -17,75 +17,60 @@
 
 // Define AMR data and masks for doing multi-level operations
 void AmrAdaptor::define(Vector<LevelData<FArrayBox>*> amrData, 
-                        Vector<int> refRatio, int finestLevel,
-                        bool ownData)
+    Vector<int> refRatio, bool ownData)
 {
   CH_TIME("AmrAdaptor::define");
   this->m_ownData = ownData;
-  this->m_finestLevel = finestLevel;
-  size_t numlvl = amrData.size();
-  CH_assert(numlvl > 0);
-  CH_assert(numlvl > finestLevel);
+  size_t nlvl = amrData.size();
+  CH_assert(nlvl > 0);
   // TODO more checks if paranoid
   m_amrData = amrData;
-  CH_assert(refRatio.size() >= numlvl-1);
+  CH_assert(refRatio.size() >= nlvl-1);
   m_refRatio = refRatio;
   m_comp = m_amrData[0]->nComp();
 
   // Build the mask
-  m_amrMask = Vector<LevelData<FArrayBox>*>(numlvl,NULL);
+  m_amrMask = Vector<LevelData<FArrayBox>*>(nlvl,NULL);
   unsigned long masksum = 0;
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
-    // quick check if amrData[lvl] is actually defined
-    if (m_amrData[lvl] != NULL)
-      {
-        LevelData<FArrayBox>& ldf = *m_amrData[lvl];
-        DisjointBoxLayout dbl = ldf.disjointBoxLayout();
-        if (dbl.isDisjoint())
+    LevelData<FArrayBox>& ldf = *m_amrData[lvl];
+    DisjointBoxLayout dbl = ldf.disjointBoxLayout();
+    m_amrMask[lvl] = new LevelData<FArrayBox>(dbl, 1, IntVect::Zero);
+    LevelData<FArrayBox>& mask = *m_amrMask[lvl];
+
+    // Loop over coarse dbl to set masks
+    for (DataIterator dit=dbl.dataIterator(); dit.ok(); ++dit) {
+      // initialize this level mask to 1
+      const Box& box = dbl[dit()];
+      FArrayBox& fab = mask[dit()];
+      fab.setVal(1.0);
+      size_t boxsum = box.numPts();
+
+      // For each box in this dbl, mask=0 on each coarsened fine dbl box
+      if (lvl < nlvl-1) { // if there is a finer level
+        // loop over ALL finer level boxes, processes -> layout iterator
+        DisjointBoxLayout fdbl = m_amrData[lvl+1]->disjointBoxLayout();
+        for (LayoutIterator flit= fdbl.layoutIterator(); flit.ok(); ++flit) {
+          // set mask to 0 in intersection of any of coarse fine boxes
+          Box maskb(fdbl[flit()]);
+          maskb.coarsen(m_refRatio[lvl]);
+          maskb &= box;
+          if (!maskb.isEmpty())
           {
-            m_amrMask[lvl] = new LevelData<FArrayBox>(dbl, 1, IntVect::Zero);
-            LevelData<FArrayBox>& mask = *m_amrMask[lvl];
-            
-            // Loop over coarse dbl to set masks
-            for (DataIterator dit=dbl.dataIterator(); dit.ok(); ++dit) {
-              // initialize this level mask to 1
-              const Box& box = dbl[dit()];
-              FArrayBox& fab = mask[dit()];
-              fab.setVal(1.0);
-              size_t boxsum = box.numPts();
-              
-              // For each box in this dbl, mask=0 on each coarsened fine dbl box
-              if (lvl < m_finestLevel) { // if there is a finer level
-                // loop over ALL finer level boxes, processes -> layout iterator
-                // there are two conventions for an empty level -- first, check if pointer is NULL
-                // then check if the level is defined
-                if ((m_amrData[lvl+1] != NULL) && (m_amrData[lvl+1]->isDefined() ) )        
-                  {
-                    DisjointBoxLayout fdbl = m_amrData[lvl+1]->disjointBoxLayout();
-                    for (LayoutIterator flit= fdbl.layoutIterator(); flit.ok(); ++flit) {
-                      // set mask to 0 in intersection of any of coarse fine boxes
-                      Box maskb(fdbl[flit()]);
-                      maskb.coarsen(m_refRatio[lvl]);
-                      maskb &= box;
-                      if (!maskb.isEmpty())
-                        {
-                          fab.setVal(0.0, maskb, 0);
-                          boxsum -= maskb.numPts();
-                        }
-                    } 
-                  }  // end if finer level is defined
-              } // end if n < nlvl
-              // Check with mask sum vs. length
-              CH_assert(boxsum == fab.sum(0));
-              pout() << "  Level " << lvl << ", box " << dbl[dit()] <<
-                ", sum of mask: " << boxsum << endl;
-              masksum += boxsum;
-            } // end loop over boxes on this level 
-          } // end if grids on this level are defined
-      } // end if levelData pointer isn't NULL
-  } // end loop over levels
-  
+            fab.setVal(0.0, maskb, 0);
+            boxsum -= maskb.numPts();
+          }
+        }
+      }
+      // Check with mask sum vs. length
+      CH_assert(boxsum == fab.sum(0));
+      pout() << "  Level " << lvl << ", box " << dbl[dit()] <<
+        ", sum of mask: " << boxsum << endl;
+      masksum += boxsum;
+    }
+  }
+
 #ifdef CH_MPI
   MPI_Allreduce(MPI_IN_PLACE, &masksum, 1, MPI_UNSIGNED_LONG, MPI_SUM, Chombo_MPI::comm);
 #endif
@@ -112,12 +97,11 @@ ChomboSundialsAdaptor* AmrAdaptor::newAdaptor()
   CH_assert(nlvl > 0);
   retval->m_amrData = Vector<LevelData<FArrayBox>*>(nlvl,NULL);
   retval->m_amrMask = Vector<LevelData<FArrayBox>*>(nlvl,NULL);
-  retval->m_finestLevel = m_finestLevel;
   retval->m_refRatio = m_refRatio;
   retval->m_length = m_length;
   retval->m_comp = m_comp;
   retval->m_ownData = true; // will be responsible for deleting memory
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     DisjointBoxLayout dbl = ldf.disjointBoxLayout();
@@ -149,12 +133,13 @@ void AmrAdaptor::linearSum(ChomboSundialsAdaptor& ax,
   AmrAdaptor* y = dynamic_cast<AmrAdaptor*>(&ay);
   CH_assert(y != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
-  CH_assert(y->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
+  CH_assert(y->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   CH_assert(m_length == y->m_length);
   // Add scale input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -175,7 +160,8 @@ void AmrAdaptor::setConst(Real c)
 {
   CH_TIME("AmrAdaptor::setConst");
   // Just set all the un/covered/ghost cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  size_t maxlvl = m_amrData.size();
+  for (size_t lvl=0; lvl < maxlvl; lvl++)
   {
     DataIterator dit = (*m_amrData[lvl]).dataIterator();
     for (dit.reset(); dit.ok(); ++dit) {
@@ -194,13 +180,14 @@ void AmrAdaptor::prod(ChomboSundialsAdaptor& ax,
   AmrAdaptor* y = dynamic_cast<AmrAdaptor*>(&ay);
   CH_assert(y != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
-  CH_assert(y->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
+  CH_assert(y->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   CH_assert(m_length == y->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add scale input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -228,13 +215,14 @@ void AmrAdaptor::div(ChomboSundialsAdaptor& ax,
   AmrAdaptor* y = dynamic_cast<AmrAdaptor*>(&ay);
   CH_assert(y != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
-  CH_assert(y->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
+  CH_assert(y->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   CH_assert(m_length == y->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add scale input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -259,11 +247,12 @@ void AmrAdaptor::scale(ChomboSundialsAdaptor& ax, Real c)
   AmrAdaptor* x = dynamic_cast<AmrAdaptor*>(&ax);
   CH_assert(x != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add scale input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -286,11 +275,12 @@ void AmrAdaptor::abs(ChomboSundialsAdaptor& ax)
   AmrAdaptor* x = dynamic_cast<AmrAdaptor*>(&ax);
   CH_assert(x != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add abs input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -313,11 +303,12 @@ void AmrAdaptor::inv(ChomboSundialsAdaptor& ax)
   AmrAdaptor* x = dynamic_cast<AmrAdaptor*>(&ax);
   CH_assert(x != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add 1 / input in all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -340,11 +331,12 @@ void AmrAdaptor::addConst(ChomboSundialsAdaptor& ax, Real b)
   AmrAdaptor* x = dynamic_cast<AmrAdaptor*>(&ax);
   CH_assert(x != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   bool inplace=(x == this); // check if ax pointed to this 
   // Add input + constant to all valid boxes, including covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -369,10 +361,11 @@ Real AmrAdaptor::dotProd(ChomboSundialsAdaptor& ax)
   AmrAdaptor* x = dynamic_cast<AmrAdaptor*>(&ax);
   CH_assert(x != NULL);
   // quick check on length, number of levels
-  CH_assert(x->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(x->m_amrData.size() == nlvl);
   CH_assert(m_length == x->m_length);
   // Add dot this and input in all valid boxes, mask covered cells
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& xldf = *(x->m_amrData[lvl]);
@@ -399,7 +392,8 @@ Real AmrAdaptor::maxNorm()
 {
   CH_TIME("AmrAdaptor::maxNorm");
   Real maxNorm = 0;
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  size_t maxlvl = m_amrData.size();
+  for (size_t lvl=0; lvl < maxlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& mldf = *m_amrMask[lvl];
@@ -427,9 +421,10 @@ Real AmrAdaptor::wRMSNorm(ChomboSundialsAdaptor& aw)
   AmrAdaptor* w = dynamic_cast<AmrAdaptor*>(&aw);
   CH_assert(w != NULL);
   // quick check on length, number of levels
-  CH_assert(w->m_finestLevel == m_finestLevel);
+  size_t nlvl = m_amrData.size();
+  CH_assert(w->m_amrData.size() == nlvl);
   CH_assert(m_length == w->m_length);
-   for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+   for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& wldf = *(w->m_amrData[lvl]);
@@ -464,7 +459,8 @@ Real AmrAdaptor::min()
 {
   CH_TIME("AmrAdaptor::min");
   Real minVal = BASEFAB_REAL_SETVAL;
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  size_t nlvl = m_amrData.size();
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& mldf = *m_amrMask[lvl];
@@ -498,7 +494,8 @@ Real AmrAdaptor::l1Norm()
 {
   CH_TIME("AmrAdaptor::l1Norm");
   Real sumxp = 0;
-  for (size_t lvl=0; lvl <= m_finestLevel; lvl++)
+  size_t nlvl = m_amrData.size();
+  for (size_t lvl=0; lvl < nlvl; lvl++)
   {
     LevelData<FArrayBox>& ldf = *m_amrData[lvl];
     LevelData<FArrayBox>& mldf = *m_amrMask[lvl];

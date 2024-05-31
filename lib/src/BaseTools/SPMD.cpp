@@ -39,6 +39,14 @@ Vector<int> pids;
 
 #ifndef CH_MPI
 
+int procID()
+{
+  return 0;
+}
+
+// reset this to fool serial code into thinking its parallel
+int num_procs = 1 ;
+
 int GetRank(int pid)
 {
   return 0;
@@ -48,6 +56,11 @@ int GetPID(int rank)
 {
   CH_assert(rank == 0);
   return getpid();
+}
+
+unsigned int numProc()
+{
+  return num_procs;
 }
 
 #else // CH_MPI version
@@ -72,6 +85,37 @@ int GetRank(int pid)
       if (pids[i]== pid) return i;
     }
   return -1;
+}
+
+// this is a global variable which indicates whether
+// or not an MPI command should be used to deduce rank.
+// needed for applications which switch communicators.
+// set g_resetProcID=true to force next procID() call to 
+// querry MPI_Comm_rank
+bool g_resetProcID;
+
+int procID()
+{
+  static bool firstCall = true;
+  static int lastProcID = 0;
+  if (firstCall || g_resetProcID )
+  {
+    g_resetProcID = false;
+    firstCall = false;
+
+    MPI_Comm_rank(Chombo_MPI::comm, &lastProcID);
+  }
+  return lastProcID;
+}
+
+unsigned int numProc()
+{
+  static int ret = -1;
+  if (ret == -1)
+  {
+    MPI_Comm_size(Chombo_MPI::comm, &ret);
+  }
+  return ret;
 }
 
 // hopefully static copy of opaque handles
