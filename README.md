@@ -1,7 +1,8 @@
 # Chombo_3.2
 
 ##  Branches
-####  master -> current relase
+####  master -> current working copy (different from the svn release version)
+####  Chombo_3.2-patch9: current svn release (mirror of svn)
 ####  dev    -> community working branch
 ####  anything else    -> something someone is working on
 
