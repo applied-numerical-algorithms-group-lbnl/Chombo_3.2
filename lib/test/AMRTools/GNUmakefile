@@ -12,7 +12,8 @@ ebase :=  testPWL quadCFInterpTest testPeriodic fluxRegisterTest \
           testRegionGather testCoarseAverage testPeriodicFillPatch \
 	testComputeSum  FineInterpEdgeTest refluxEdgeTest testPeriodicFR \
 	testFourthOrderFineInterp testFineInterp  fourthOrderCFInterpTest\
-	nwoQuadCFInterpTest CoDimCopierTest
+	nwoQuadCFInterpTest CoDimCopierTest testFourthOrderTensorFineInterp\
+
 
 LibNames := AMRTools BoxTools
 

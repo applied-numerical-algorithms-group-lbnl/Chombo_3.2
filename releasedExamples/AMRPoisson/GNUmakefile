@@ -16,12 +16,14 @@ exec_dirs = execCell          \
             execNode          \
             execVariableCoefficient   \
             execViscousTensor \
+            execAMRFAS \
             execPETSc
 else 
 exec_dirs = execCell          \
             execNode          \
             execVariableCoefficient   \
-            execViscousTensor 
+            execViscousTensor \
+            execAMRFAS 
 endif
 
 # the shared code for building in example subdirectories

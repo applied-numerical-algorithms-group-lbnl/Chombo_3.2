@@ -167,6 +167,8 @@ void Copier::trimEdges(const DisjointBoxLayout& a_exchangedLayout, const IntVect
   Copier oldCopier = *this;
   clear();
 
+  m_isDefined = oldCopier.m_isDefined;
+  
   trimMotion(a_exchangedLayout, a_ghost, oldCopier.m_localMotionPlan, m_localMotionPlan);
   //   pout() << "old Copy operations:" << oldCopier.m_localMotionPlan.size() << "  "
   //         << "new Copy operations:" << m_localMotionPlan.size() << "\n";
@@ -1464,6 +1466,7 @@ void Copier::exchangeDefine(const DisjointBoxLayout& a_grids,
 {
   CH_TIME("Copier::exchangeDefine");
   clear();
+  m_isDefined=true;  
   DataIterator dit = a_grids.dataIterator();
   NeighborIterator nit(a_grids);
   int myprocID = procID();

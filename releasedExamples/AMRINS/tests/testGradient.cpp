@@ -68,13 +68,13 @@ initializePhi(LevelData<FArrayBox>& a_phi,
           x += offset;
           x *= a_dx;
 
-          if (probType = cubic)
+          if (probType == cubic)
             {
               thisPhi(iv,0) = D_TERM(x[0]*x[0]*x[0],
                                      +x[1]*x[1]*x[1],
                                      +x[2]*x[2]*x[2]);
             }
-          else if (probType = sinusoidal)
+          else if (probType == sinusoidal)
             {
               thisPhi(iv,0) = D_TERM(sin(2.0*Pi*x[0]),
                                      +sin(2.0*Pi*x[1]),

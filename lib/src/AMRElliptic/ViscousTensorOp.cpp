@@ -27,9 +27,9 @@
 int ViscousTensorOpFactory::s_coefficientAverageType = 1;
 //int ViscousTensorOp::s_prolongType = piecewiseConstant;
 int ViscousTensorOp::s_prolongType = linearInterp;
-// true -- only do exchange once per multicolored smooth cycle,
-// false (default) -- do exchange before each multicolored pass (4x per cycle)
-bool ViscousTensorOp::s_lazy_gsrb = false;
+// true (default) -- only do exchange once per multicolored smooth cycle,
+// false -- do exchange before each multicolored pass (4x per cycle)
+bool ViscousTensorOp::s_lazy_gsrb = true;
 
 
 void

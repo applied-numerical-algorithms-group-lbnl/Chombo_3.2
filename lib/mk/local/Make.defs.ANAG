@@ -82,6 +82,11 @@ ifeq ($(OPENMPCC),TRUE)
   USE_MT = FALSE
 endif
 
+cxxdbgflags   = -fPIC -g -ggdb
+cxxoptflags   = -fPIC
+fdbgflags     = -fPIC -g -ggdb
+foptflags     = -fPIC -O3
+
 # set default for 64bit mode based on system architecture
 #ifeq ($(findstring 64,$(arch)),64)
 #  USE_64 = TRUE
@@ -89,8 +94,8 @@ endif
 #  USE_64 = FALSE
 #endif
 
-syslibflags =  -llapack_atlas -lblas -llapack
-LAPACKLIBS =  -llapack_atlas -lblas -llapack
+syslibflags =  -llapack_atlas -llapack -lblas 
+LAPACKLIBS =  -llapack_atlas -llapack -lblas 
 
 ifneq ($(USE_HDF),FALSE)
   # if an ANAG HDF5 module is loaded, use its variables
@@ -115,9 +120,9 @@ ifneq ($(USE_HDF),FALSE)
     endif
 
     HDFINCFLAGS=-I$(_hdf_root)/include 
-    HDFLIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz 
+    HDFLIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz  -ldl -lm
     HDFMPIINCFLAGS=-I$(_hdf_root)/include 
-    HDFMPILIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz 
+    HDFMPILIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz  -ldl -lm
   else
     $(error No HDF5 module is loaded.)
   endif
@@ -227,6 +232,6 @@ ifneq ($(ANAG_OPENMPI_DIR),)
 endif
 
 ifeq ($(USE_PROTO),TRUE)
- XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1
+ XTRACPPFLAGS += -I$(PROTO_HOME)/include -DDIM=$(DIM) -DUSE_PROTO=1 -DPR_TURN_OFF_TIMERS=1
 endif
 

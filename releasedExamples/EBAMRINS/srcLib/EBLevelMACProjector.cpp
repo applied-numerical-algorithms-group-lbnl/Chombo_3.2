@@ -20,7 +20,7 @@
 #include <cmath>
 #include <cstdio>
 #include <string>
-
+#include "ParmParse.H"
 #include "NamespaceHeader.H"
 
 bool EBLevelMACProjector::s_verbose  = false;
@@ -103,6 +103,8 @@ EBLevelMACProjector(const DisjointBoxLayout&                        a_grids,
 
   int numPreCondIters = 4;
   int mgRelaxType = 1;
+  ParmParse pp;
+  pp.query("mg_relax_type", mgRelaxType);
   Vector<EBLevelGrid> gridsVec(1, EBLevelGrid(m_grids, m_ebisl, m_domain));
   Vector<int> refRat(1,2);
   Real alpha = 0.0;
@@ -350,6 +352,13 @@ macKappaDivergence(LevelData<EBCellFAB>&        a_divVel,
 
       ibox++;
     }
+  static bool printed = false;
+  if(!printed)
+  {
+    printed = true;
+    writeEBLevelName(a_divVel, string("divu.hdf5"));
+  }
+
 }
 /*****/
 void
@@ -366,61 +375,51 @@ macKappaDivergence(EBCellFAB&             a_divVel,
   //then loop through directions and increment the divergence
   //with each directions flux difference.
   a_divVel.setVal(0.0);
-  BaseFab<Real>&       regDivF = a_divVel.getSingleValuedFAB();
-  regDivF.setVal(0.);
-  for (int idir = 0; idir < SpaceDim; idir++)
-    {
-      /* do the regular vofs */
-      const EBFaceFAB& veloDir = a_velo[idir];
-      const BaseFab<Real>& regVeloDir = veloDir.getSingleValuedFAB();
-      int ncons = 1;
-      FORT_MACDIVERGEF( CHF_BOX(a_box),
-                        CHF_FRA(regDivF),
-                        CHF_CONST_FRA(regVeloDir),
-                        CHF_CONST_INT(idir),
-                        CHF_CONST_INT(ncons),
-                        CHF_CONST_REAL(a_dx[idir]));
-    }
+  EBCellFAB updateFAB(a_ebisBox, a_divVel.box(), 1);
 
-  //update the irregular vofs using conservative diff
-  IntVectSet ivsIrreg = a_ebisBox.getIrregIVS(a_box);
-  for (VoFIterator vofit(ivsIrreg, a_ebisBox.getEBGraph()); vofit.ok(); ++vofit)
+  for (int idir = 0; idir < SpaceDim; idir++)
+  {
+    updateFAB.setVal(0.);
+    BaseFab<Real>&       regDivF = updateFAB.getSingleValuedFAB();
+    /* do the regular vofs */
+    const EBFaceFAB& veloDir = a_velo[idir];
+    const BaseFab<Real>& regVeloDir = veloDir.getSingleValuedFAB();
+    int ncons = 1;
+    FORT_MACDIVERGEF( CHF_BOX(a_box),
+                      CHF_FRA(regDivF),
+                      CHF_CONST_FRA(regVeloDir),
+                      CHF_CONST_INT(idir),
+                      CHF_CONST_INT(ncons),
+                      CHF_CONST_REAL(a_dx[idir]));
+
+    //update the irregular vofs using conservative diff
+    IntVectSet ivsIrreg = a_ebisBox.getIrregIVS(a_box);
+    for (VoFIterator vofit(ivsIrreg, a_ebisBox.getEBGraph()); vofit.ok(); ++vofit)
     {
       const VolIndex& vof = vofit();
-      Real update = 0.;
-      for ( int idir = 0; idir < SpaceDim; idir++)
-        {
-          const EBFaceFAB& veloDir = a_velo[idir];
-          for (SideIterator sit; sit.ok(); ++sit)
-            {
-              int isign = sign(sit());
-              Vector<FaceIndex> faces =
-                a_ebisBox.getFaces(vof, idir, sit());
-              for (int iface = 0; iface < faces.size(); iface++)
-                {
-                  const FaceIndex& face = faces[iface];
-                  Real areaFrac = a_ebisBox.areaFrac(face);
-                  Real faceVelo = veloDir(face, 0);
-                  update += isign*areaFrac*faceVelo/a_dx[idir];
-                }
-            }
-        }
-      //EB Flux assumed zero if (a_boundaryVel == NULL)
-      if (a_boundaryVel != NULL)
-        {
-          RealVect normal = a_ebisBox.normal(vof);
-          Real boundaryArea = a_ebisBox.bndryArea(vof);
-          Real boundaryFlux = 0.0;
-          for (int idir = 0; idir < SpaceDim; idir++)
-            {
-              Real boundaryVel = (*a_boundaryVel)(vof, idir);
-              boundaryFlux += boundaryArea*normal[idir]*boundaryVel/a_dx[idir];
-            }
-          update -= boundaryFlux;
-        }
 
-      a_divVel(vof, 0) = update;
+      Real update = 0.;
+
+      const EBFaceFAB& veloDir = a_velo[idir];
+      for (SideIterator sit; sit.ok(); ++sit)
+      {
+        int isign = sign(sit());
+        Vector<FaceIndex> faces =
+          a_ebisBox.getFaces(vof, idir, sit());
+        for (int iface = 0; iface < faces.size(); iface++)
+        {
+          const FaceIndex& face = faces[iface];
+          Real areaFrac = a_ebisBox.areaFrac(face);
+          Real faceVelo = veloDir(face, 0);
+          update += isign*areaFrac*faceVelo/a_dx[idir];
+        }
+      }
+      
+      updateFAB(vof, 0) = update;
+      
     }
+    a_divVel += updateFAB;
+  }
   a_divVel.setCoveredCellVal(0.0, 0);
 }
 void
