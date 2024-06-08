@@ -144,6 +144,10 @@ export USE_PYTHON
 export USE_PETSC
 export PETSC_DIR
 export PETSC_ARCH
+
+export USE_SUNDIALS
+export SUNDIALS_DIR
+
 export OPENMPCC
 export OPENMPFC
 export USE_PROTO
@@ -283,6 +287,7 @@ $(cxxcppflags) $(fcppflags) $(appcppflags)\
 $(subst FALSE,,$(subst TRUE,$(fftincflags),$(USE_FFTW)))\
 $(subst FALSE,,$(subst TRUE, -DCH_PAPI $(PAPIINCFLAGS),$(USE_PAPI)))\
 $(subst FALSE,,$(subst TRUE, -DCH_USE_PETSC $(petscincflags),$(USE_PETSC)))\
+$(subst FALSE,,$(subst TRUE, -DCH_USE_SUNDIALS $(sundialsincflags),$(USE_SUNDIALS)))\
 $(subst FALSE,,$(subst TRUE, -DCH_USE_LAPACK $(lapackincflags),$(USE_LAPACK)))\
 $(subst FALSE,,$(subst TRUE, -DCH_USE_PYTHON ,$(USE_PYTHON)))\
 $(subst EXEC,,$(subst LIB,-DCH_MAKE_LIB,$(OUTPUT)))\
@@ -317,6 +322,7 @@ $(subst FALSE,,$(subst TRUE,$(subst FALSE,$(HDFLIBFLAGS),$(subst TRUE,$(HDFMPILI
 $(subst FALSE,,$(subst TRUE,$(fftlibflags),$(USE_FFTW)))\
 $(subst FALSE,,$(subst TRUE,$(PAPILIBDIR) -lpapi,$(USE_PAPI)))\
 $(subst FALSE,,$(subst TRUE,$(petsclibflags),$(USE_PETSC)))\
+$(subst FALSE,,$(subst TRUE,$(sundialslibflags),$(USE_SUNDIALS)))\
 $(flibflags) $(syslibflags)
 
 ##

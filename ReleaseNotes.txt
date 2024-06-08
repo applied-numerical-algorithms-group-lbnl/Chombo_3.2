@@ -1,4 +1,44 @@
-Release Notes for Chombo version 3.2           March 2014 (patch 6, April 2019)
+Release Notes for Chombo version 3.2   May 2023 (patch 8)
+
+As always, you can contact the Chombo development team at <chombo@lbl.gov> and
+the Chombo users e-mail group at <chombousers@lbl.gov>
+
+It has been some time since we updated our release.  This is more of an update than a major release, and is primarily bugfixes and minor capability improvements and expansions. For those who are currently looking to run on accelerator-based architectures, there are a few options:
+1. If your application relies heavily on linear solvers (the BISICLES ice sheet model is a good example here), one can use the PETSc interface and let PETSc manage the solvers on GPUs. For many applications, this is a good approach, which involves minimal porting effort.
+2. The Chombo approach to performance-portability and accelerator-based architectures is based on the ECP-supported Proto library, available here: 
+https://github.com/applied-numerical-algorithms-group-lbnl/proto
+
+- HDF5 compatibility: Added "-DH5_USE_110_API" to the HDF5 include flags so HDF5 1.12.x and higher will use the 1.10.x API compiling Chombo...
+
+
+- We have implemented an interface with the SUNDIALS time-integration and solver library. This includes the addition of a new ("Sundials") library in Chombo/lib/src, a few unit tests in Chombo/lib/test/Sundials, an example in Chombo/releasedExamples/Sundials, and some basic documentation in the Chombo Design Document in Chombo/doc
+
+- Minor change (For efficiency) to how LevelData handles its exchange Copiers to help users manage when and if exchange Copiers are defined:
+1. m_exchangeCopier is now defined the first time exchange is called
+2. One can pass in a predefined Copier at define time
+3. One can set (or reset) a LevelData's exchangeCopier at any time using the new
+ setExchangeCopier function
+
+- Minor addition to ParmParse: added a "looseContains" function to ParmParse -- if the ParmParse table includes "foo.bar.whatever = 1", then looseContains("foo.bar") will return true (useful for checking if classes of entries are present)
+
+- AMRFAS bugfix: use inhomogeneous C/F BCs when computing the operator
+
+- FaceSumOp bugfix: upgraded FaceSumOp to work when domain and destination box boundaries coincide.
+
+- fix to GSRB ordering to do the right thing for boxes with negative indices.
+
+- EdgeDataBox-related fixes: 
+1. Add specialization for HDF5 dataSize function so that we get the right data s
+ize
+2. Fix bug in linearIn/linearOut
+
+- FineInterp: added  limitTangentialOnly BoundaryLimitType --- this option will limit slopes in the coordinate directions tangential to the boundary, while not limiting in the normal direction. This is useful when you don't have reasonable ghost-cell values but still need limiting. 
+
+- Added a CoDimCopier class, which generalizes the CornerCopier (which was initially designed for 2D) to any dimension (except for DIM=1, where it doesn't make any  sense).   A CoDimCopier computes the intersection list for filling CoDim N ghost cells fro m CoDim N-1 ghost cells. To use this, you need to iterate through CoDimensions, starting with CoDim=2, then CoDim=3 (in Dim>2), ending with CoDim=SpaceDim. CoDimCopyManager is designed to manage that process (and to create and store the needed CoDimCopiers)
+
+- Cleaned up the lib/mk/local directory by moving Make.defs.local files associated with older, retired machines to an "oldMachines" subdirectory.
+
+March 2014 (patch 6, April 2019)
 
 You can contact the Chombo development team at <chombo@lbl.gov> and
 the Chombo users e-mail group at <chombousers@lbl.gov>

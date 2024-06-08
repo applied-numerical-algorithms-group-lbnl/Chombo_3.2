@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # 
-# At this point, all this script does is to generate ExternCMangler.H 
+# This script is used to generate ExternCMangler.H 
 # files which are needed for multidimensional builds.
 #
 

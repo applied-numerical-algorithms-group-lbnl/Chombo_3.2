@@ -1,0 +1,48 @@
+USE_HDF=TRUE
+MPI=TRUE
+USE_TIMER=TRUE
+
+DEPXX=CC
+CXX=CC
+MPICXX=CC
+FC=ftn
+
+XTRACPPFLAGS:= -std=c++11
+#XTRAFFLAGS += -ffree-form
+#XTRALIBFLAGS:= -L$(OLCF_NETLIB_LAPACK_ROOT)/lib64 -llapack -lblas
+
+#mpich stuff for cray build
+#MVAPICH2_DIR=/opt/cray/pe/mpich/8.1.10/ofi/gnu/9.1
+#XTRACXXFLAGS +=-I$(MVAPICH2_DIR)/include
+#XTRACPPFLAGS +=-I$(MVAPICH2_DIR)/include
+#XTRALIBFLAGS +=-L$(MVAPICH2_DIR)/lib -lmpi
+##XTRALIBFLAGS +=-L/opt/cray/pe/mpich/8.1.10/gtl/lib/ -lmpi_gtl_cuda
+#XTRALIBFLAGS +=-L/opt/cray/pe/mpich/8.1.10/gtl/lib/ -lmpi_gtl_hsa
+
+HDFINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
+HDFLIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
+
+HDFMPIINCFLAGS=-I$(HDF5_ROOT)/include -DH5_USE_110_API
+HDFMPILIBFLAGS=-L$(HDF5_ROOT)/lib -lhdf5 -lz
+
+#PETSC_DIR=/gpfs/alpine/world-shared/geo127/petsc/arch-crusher-opt-cray-int64
+#PETSC_DIR=/gpfs/alpine/world-shared/geo127/petsc/arch-crusher-opt-cray-int64-ftn
+#PETSC_DIR=/gpfs/alpine/world-shared/geo127/petsc/arch-cray-opt-amd
+#PETSC_DIR=/gpfs/alpine/world-shared/geo127/petsc_treb/arch-frontier-amd-opt-int64-master-2023
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_treb/arch-frontier-cray-opt-int64-master-2023-04-17
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_rocm5.4.3/arch-frontier-cray-opt-int64-master
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_rocm5.4.3/arch-frontier-cray-opt-int64-master-dbg
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_fromAlpine/arch-frontier-cray-opt-int64-master-2023
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-opt-int64-master
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-opt-int64-816
+##works
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-petsc-3.18.4-hypre-2.27-opt-int64
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-petsc-3.18.4-hypre-2.27-dbg-int64
+##scaling test works
+PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-petsc-3.18.4-hypre-2.27b-opt-int64
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_2023-04-19/arch-frontier-cray-petsc-3.18.4-hypre-2.27b-dbg-int64
+##fails
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_treb/arch-frontier-cray-petsc-3.19.0-hypre-2.27b-opt-int64
+##fails
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_release/arch-frontier-cray-opt-int64-master
+#PETSC_DIR=/lustre/orion/geo127/world-shared/petsc_release/arch-frontier-cray-dbg-int64-master

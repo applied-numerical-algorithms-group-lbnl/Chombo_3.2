@@ -481,6 +481,13 @@ public:
   */
   static int s_prolongType;
 
+
+  /// if true, only do exchange once per GSRB pass, rather than for each color
+  /** make this public/static to make it easy to change, while
+      also ensuring that it remains constent across all instances
+  */
+  static bool s_lazy_gsrb;
+  
   /// access function
   
   RefCountedPtr<LevelData<FluxBox> > getEta() const {return m_eta;}

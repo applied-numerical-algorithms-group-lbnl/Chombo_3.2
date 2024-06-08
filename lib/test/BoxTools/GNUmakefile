@@ -22,3 +22,5 @@ ebase = transformTest ldIVSFABCopyTest ldIVSFABCopyTestInt interiorExchangeTest 
 LibNames = BoxTools
 
 include $(CHOMBO_HOME)/mk/Make.test
+
+LIBFLAGS += $(LAPACKLIBS)

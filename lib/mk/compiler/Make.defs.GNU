@@ -72,7 +72,7 @@ else ifeq ($(CXXSTD),17)
 else
   _cxxbaseflags := -std=c++11
 endif
-_cxxbaseflags += -march=native -Wno-unused-but-set-variable -Wno-long-long -Wno-sign-compare -Wno-deprecated -ftemplate-depth-99 -Wno-unused-local-typedefs -Wno-literal-suffix
+_cxxbaseflags += -Wno-unused-but-set-variable -Wno-long-long -Wno-sign-compare -Wno-deprecated -ftemplate-depth-99 -Wno-unused-local-typedefs -Wno-literal-suffix
 
   # g++ v3.4.0 started objecting to some uses of HOFFSET()
   # TJL - Changed moving from csh to sh...

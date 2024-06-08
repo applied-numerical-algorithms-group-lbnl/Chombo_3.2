@@ -49,11 +49,24 @@ public:
             const IntVect& ghost = IntVect::Zero,
             const DataFactory<T>& a_factory = DefaultDataFactory<T>());
 
+
+  /// constructor which also takes a copier for use in exchanges.
+  LevelData(const DisjointBoxLayout& dp, int comps,
+            const Copier& a_exchangeCopier,
+            const IntVect& ghost = IntVect::Zero,
+            const DataFactory<T>& a_factory = DefaultDataFactory<T>());
+
   ///
   virtual ~LevelData();
 
   ///
   virtual void define(const DisjointBoxLayout& dp, int comps,
+                      const IntVect& ghost = IntVect::Zero,
+                      const DataFactory<T>& a_factory = DefaultDataFactory<T>());
+
+  ///
+  virtual void define(const DisjointBoxLayout& dp, int comps,
+                      const Copier& a_exchangeCopier,
                       const IntVect& ghost = IntVect::Zero,
                       const DataFactory<T>& a_factory = DefaultDataFactory<T>());
 
@@ -166,6 +179,9 @@ public:
 
   virtual void exchangeNoOverlap(const Copier& copier);
 
+  /// allows one to set the default copier for all exchanges going forward.
+  virtual void setExchangeCopier(const Copier& copier);
+  
   ///
   const IntVect& ghostVect() const
   {

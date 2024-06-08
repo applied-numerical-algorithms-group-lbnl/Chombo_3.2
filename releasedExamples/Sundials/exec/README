@@ -1,0 +1,17 @@
+This is a simple test of the Chombo-SUNDIALS interface.
+
+Chombo contains an interface to the SUite of Nonlinear and DIfferential/ALgebraic Equation Solvers (SUNDIALS), which contains implementations of a number of sophisticated time-integration schemes which may be useful for Chombo applications.
+
+For more information: https://computing.llnl.gov/projects/sundials
+
+To build this example with SUNDIALS,
+1. Obtain the SUNDIALS source code and follow the SUNDIALS installation instructions: https://sundials.readthedocs.io/en/latest/Install_link.html. We recommend using SUNDIALS version 6.3.0 which is compatible with C++11. If you are compiling Chombo with C++14, newer SUNDIALS versions can be used. Ensure the SUNDIALS_PRECISION CMake flag is consistent with the Chombo PRECISION.
+2. Set the SUNDIALS_DIR environment variable to point to your SUNDIALS installation location.
+3. Ensure the SUNDIALS libraries are in your LD_LIBRARY_PATH.
+4. build the testSundials example:
+   make all USE_SUNDIALS=TRUE (MPI=<TRUE,FALSE> HDF5=<TRUE,FALSE> DIM=<1,2,3>)
+5. run the executable:
+   ./testSundialsPDE<DIM>d.<config-string>.ex
+6. output:
+   (a) directs to stdout if serial, pout files if compiled with MPI
+   (b) produces "file.<dim>d.hdf5" Chombo HDF5 file output.

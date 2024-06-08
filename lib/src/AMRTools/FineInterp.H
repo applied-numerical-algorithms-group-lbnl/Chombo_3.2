@@ -202,8 +202,8 @@ public:
   /** 
       This allows the user to define the default limiting behavior near 
       domain boundaries.
-      Near non-periodic domain boundaries, there are three options when 
-      computing interpolated values, corresponding to the three possible 
+      Near non-periodic domain boundaries, there are four options when 
+      computing interpolated values, corresponding to the four possible 
       values in the BoundaryLimitType enum:
       limitSlopes -- normal piecewise-linear interpolation, with the standard
                      vanLeer limiting of slopes to prevent new maxima. This

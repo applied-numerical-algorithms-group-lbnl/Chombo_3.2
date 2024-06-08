@@ -27,6 +27,10 @@
 int ViscousTensorOpFactory::s_coefficientAverageType = 1;
 //int ViscousTensorOp::s_prolongType = piecewiseConstant;
 int ViscousTensorOp::s_prolongType = linearInterp;
+// true (default) -- only do exchange once per multicolored smooth cycle,
+// false -- do exchange before each multicolored pass (4x per cycle)
+bool ViscousTensorOp::s_lazy_gsrb = false;
+
 
 void
 vtogetMultiColors(Vector<IntVect>& a_colors)
@@ -1155,13 +1159,26 @@ relax(LevelData<FArrayBox>&       a_phi,
       if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
         assignLocal(prevPhi,a_phi); // no point doing this if we aren't testing
 
+      // "lazy" = call once/iteration. "not lazy" = call every color
+      if (s_lazy_gsrb)
+        {
+          // this calls exchange whether or not there is a coarse level
+          homogeneousCFInterp(a_phi);
+        }
+      
       // Loop over all possibilities (in all dimensions)
       for (int icolor = 0; icolor < m_colors.size(); icolor++)
         {
           const IntVect& color= m_colors[icolor];
-          // this calls exchange whether or not there is a coarse level
-          homogeneousCFInterp(a_phi);
 
+
+          // "lazy" = call once/iteration. "not lazy" = call every color
+          if (!s_lazy_gsrb)
+            {
+              // this calls exchange whether or not there is a coarse level
+              homogeneousCFInterp(a_phi);
+            }
+          
           //after this lphi = L(phi)
           //this call contains bcs but no exchange
           applyOpNoExchange(lphi, a_phi, true);

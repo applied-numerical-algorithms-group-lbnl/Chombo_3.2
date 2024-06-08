@@ -50,12 +50,7 @@ LevelData<T>::LevelData(const DisjointBoxLayout& dp, int comps, const IntVect& g
   this->m_boxLayout = dp;
   this->m_comps = comps;
   this->m_isdefined = true;
-  //no need for exchange copier if no ghost
-  if(m_ghost != IntVect::Zero)
-    {
-      m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
-    }
-
+  
   if (!dp.isClosed())
     {
       MayDay::Error("non-disjoint DisjointBoxLayout: LevelData<T>::LevelData(const DisjointBoxLayout& dp, int comps)");
@@ -68,6 +63,21 @@ LevelData<T>::LevelData(const DisjointBoxLayout& dp, int comps, const IntVect& g
   this->allocateGhostVector(a_factory, ghost);
   this->setVector(*this, interval, interval); // Does nothing.
 }
+
+
+//-----------------------------------------------------------------------
+template<class T>
+LevelData<T>::LevelData(const DisjointBoxLayout& dp, int comps,
+                        const Copier& a_exchangeCopier,
+                        const IntVect& ghost,
+                        const DataFactory<T>& a_factory)
+  : m_disjointBoxLayout(dp), m_ghost(ghost)
+{
+
+  define(dp, comps, a_exchangeCopier, ghost, a_factory);
+
+}
+
 //-----------------------------------------------------------------------
 
 // Since I need to thwart the user from invoking the
@@ -82,7 +92,7 @@ void LevelData<T>::define(const DisjointBoxLayout& dp, int comps, const IntVect&
 {
   CH_TIME("LevelData<T>::define(dbl,comps,ghost,factory)");
   // clear exchange copier if it's already been defined
-  if (this->m_isdefined)
+  if (this->m_exchangeCopier.isDefined())
     {
       m_exchangeCopier.clear();
     }
@@ -104,19 +114,31 @@ void LevelData<T>::define(const DisjointBoxLayout& dp, int comps, const IntVect&
 
   m_disjointBoxLayout = dp;
   m_ghost = ghost;
-  //no need for exchange copier if no ghost
-  //do not do this if it is periodic because bad things can happen
-  //with large number of ghost cells.
-  bool periodic = m_disjointBoxLayout.physDomain().isPeriodic();
-  if((m_ghost != IntVect::Zero) && !periodic)
-    {
-      m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
-    }
+  // don't define exchange copier until it's needed
 
   // Interval interval(0, comps-1);
   this->allocateGhostVector(a_factory, ghost);
   //  this->setVector(*this, interval, interval);
 }
+
+
+// Since I need to thwart the user from invoking the
+// 'define' methods that use a general BoxLayout, I cannot
+// get at said functions myself now. Ha!  So, I have to recode
+// them here.
+
+//-----------------------------------------------------------------------
+template<class T>
+void LevelData<T>::define(const DisjointBoxLayout& dp, int comps,
+                          const Copier& a_exchangeCopier, const IntVect& ghost,
+                          const DataFactory<T> & a_factory)
+{
+  CH_TIME("LevelData<T>::define(dbl,comps,copier,ghost,factory)");
+
+  define(dp, comps, a_exchangeCopier, ghost, a_factory);
+                          
+}
+
 //-----------------------------------------------------------------------
 
 //-----------------------------------------------------------------------
@@ -125,7 +147,7 @@ void LevelData<T>::define(const LevelData<T>& da,  const DataFactory<T> & a_fact
 {
   CH_TIME("LevelData<T>::define(LevelData<T>,factory)");
   // clear exchange copier if it's already been defined
-  if (this->m_isdefined)
+  if (this->m_exchangeCopier.isDefined() )
     {
       m_exchangeCopier.clear();
     }
@@ -139,11 +161,8 @@ void LevelData<T>::define(const LevelData<T>& da,  const DataFactory<T> & a_fact
 
   m_ghost     = da.m_ghost;
 
-  //no need for exchange copier if no ghost
-  if(m_ghost != IntVect::Zero)
-    {
-      m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
-    }
+  m_exchangeCopier = da.m_exchangeCopier;
+  
   this->allocateGhostVector(a_factory, m_ghost);
   da.copyTo(*this);
 }
@@ -160,7 +179,7 @@ void LevelData<T>::define(const LevelData<T>& da, const Interval& comps,
   CH_TIME("LevelData<T>::define(LevelData<T>,comps,factory)");
 #endif
   // clear exchange copier if it's already been defined
-  if (this->m_isdefined)
+  if (this->m_exchangeCopier.isDefined() )
     {
       m_exchangeCopier.clear();
     }
@@ -182,12 +201,9 @@ void LevelData<T>::define(const LevelData<T>& da, const Interval& comps,
   this->m_comps = comps.size();
 
   m_ghost = da.m_ghost;
-  //no need for exchange copier if no ghost
-  if(m_ghost != IntVect::Zero)
-    {
-      m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
-    }
 
+  m_exchangeCopier = da.m_exchangeCopier;
+  
   Interval dest(0, this->m_comps-1);
 
   this->allocateGhostVector(a_factory, m_ghost);
@@ -493,6 +509,21 @@ void LevelData<T>::exchangeNoOverlap(const Copier& copier)
   this->makeItSoLocalCopy(this->interval(), *this, *this, this->interval(), copier);
 }
 //-----------------------------------------------------------------------
+
+template<class T>
+void LevelData<T>::setExchangeCopier(const Copier& a_exchangeCopier)
+{
+
+  if (m_exchangeCopier.isDefined())
+    {
+      m_exchangeCopier.clear();
+    }
+  
+  m_exchangeCopier = a_exchangeCopier;
+
+}
+
+
 
 //-----------------------------------------------------------------------
 template<class T>
