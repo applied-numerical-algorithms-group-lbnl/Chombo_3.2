@@ -15,7 +15,7 @@ c fine      => fine data -- note that boundary data must be filled
 c lap       =  scratch space for Laplacian
 c lapBox    => box over which Laplacian may be computed
 c coarseBox => extents of coarse gridbox
-c nref      => refinement ratio
+c nref      => refinement ratio (multidim)
 c fineRefBox=> box indexing the fine cells overlying a coarse cell
 c              (0,nRef-1) in each dimension
 c doHO      => if 0, don't do higher-order averaging
@@ -23,7 +23,7 @@ c ---------------------------------------------------------------
       subroutine AVERAGEHO(CHF_FRA1[coarse], CHF_CONST_FRA1[fine],
      &                     CHF_FRA1[lap], CHF_BOX[b],
      &                     CHF_BOX[lapBox],
-     &                     CHF_CONST_INT[nref],
+     &                     CHF_CONST_INTVECT[nref],
      &                     CHF_BOX[fineRefBox],
      &                     CHF_INT[doHO],
      &                     CHF_INT[doAverage])
@@ -33,18 +33,18 @@ c ---------------------------------------------------------------
       integer CHF_AUTODECL[ifine]
       integer CHF_AUTODECL[ifinecell]
       integer dir
-      REAL_T weight
+      REAL_T weight,nrefmult
 
 c     fineRefBox is the fine cells overlying a coarse cell
 c      CHF_LBOUND[fineRefBox;0] = 0
-c      CHF_UBOUND[fineRefBox;0] = nref-1
+c      CHF_UBOUND[fineRefBox;0] = nref(0)-1
 #if (CH_SPACEDIM > 1)
 c      CHF_LBOUND[fineRefBox;1] = 0
-c      CHF_UBOUND[fineRefBox;1] = nref-1
+c      CHF_UBOUND[fineRefBox;1] = nref(1)-1
 #endif
 #if (CH_SPACEDIM > 2)
 c      CHF_LBOUND[fineRefBox;2] = 0
-c      CHF_UBOUND[fineRefBox;2] = nref-1
+c      CHF_UBOUND[fineRefBox;2] = nref(2)-1
 #endif
 
 c  set coarse to zero
@@ -53,17 +53,21 @@ c  set coarse to zero
       CHF_ENDDO
 
 c  now compute the higher-order correction
+c  amf let us skip this in ani cases for now
       CHF_AUTOMULTIDO[lapBox; ifine]
         if ((CH_SPACEDIM.eq.2).and.(doHO.ne.0)) then
 #if (CH_SPACEDIM == 2)
-           weight = (nref+1)*nref/eight/four
+           weight = (nref(0)+1)*nref(0)/eight/four
 
            lap(CHF_AUTOIX[ifine]) = -weight
-     &                               *(-four*fine(CHF_IX[ifine0;ifine1])
-     &                                +fine(CHF_IX[ifine0+1;ifine1])
-     &                                +fine(CHF_IX[ifine0-1;ifine1])
-     &                                +fine(CHF_IX[ifine0;ifine1+1])
-     &                                +fine(CHF_IX[ifine0;ifine1-1]))
+     &                                * ( ( fine(CHF_IX[ifine0+1;ifine1])
+     &                                     -fine(CHF_IX[ifine0;ifine1]) )
+     &                                  + ( fine(CHF_IX[ifine0-1;ifine1])
+     &                                     -fine(CHF_IX[ifine0;ifine1]) ) 
+     &                                  + ( fine(CHF_IX[ifine0;ifine1+1])
+     &                                     -fine(CHF_IX[ifine0;ifine1]) ) 
+     &                                  + ( fine(CHF_IX[ifine0;ifine1-1])
+     &                                     -fine(CHF_IX[ifine0;ifine1]) ) )
 #endif
         else
 c           call MAYDAY_ERROR()
@@ -77,7 +81,11 @@ c ::: now loop over coarse cells and compute averaged fine solution
 
 c ::: Choose between averaging and summing
       if (doAverage .eq.1) then
-         weight = one/(nref**CH_SPACEDIM)
+         nrefmult = 1.0
+         do dir = 0, CH_SPACEDIM - 1 
+             nrefmult =  nrefmult * nref(dir)
+         enddo
+         weight = one/nrefmult
       else
          weight = one
       endif
@@ -87,12 +95,12 @@ c ::: Choose between averaging and summing
         CHF_AUTOMULTIDO[fineRefBox;ifinecell]
 
         CHF_DTERM[
-          ifine0 = nref*ic0 + ifinecell0;
-          ifine1 = nref*ic1 + ifinecell1;
-          ifine2 = nref*ic2 + ifinecell2;
-          ifine3 = nref*ic3 + ifinecell3;
-          ifine4 = nref*ic4 + ifinecell4;
-          ifine5 = nref*ic5 + ifinecell5]
+          ifine0 = nref(0)*ic0 + ifinecell0;
+          ifine1 = nref(1)*ic1 + ifinecell1;
+          ifine2 = nref(2)*ic2 + ifinecell2;
+          ifine3 = nref(3)*ic3 + ifinecell3;
+          ifine4 = nref(4)*ic4 + ifinecell4;
+          ifine5 = nref(5)*ic5 + ifinecell5]
 
 
           coarse(CHF_AUTOIX[ic]) = coarse(CHF_AUTOIX[ic])

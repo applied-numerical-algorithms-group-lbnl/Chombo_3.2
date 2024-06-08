@@ -46,6 +46,16 @@ public:
    */
   virtual void preCond(   T& a_cor, const T& a_residual)       = 0;
 
+  virtual void preCond(   T& a_cor, T& a_residual, const T& a_rhs) {
+      // default to first one
+      preCond(a_cor, a_residual);
+  }
+
+  virtual void preCond(   T& a_cor, T& a_residual, const T& a_rhs, int iter) {
+      // default to first one
+      preCond(a_cor, a_residual);
+  }
+
   ///
   /**
      In the context of solving L(phi) = rhs, set a_lhs = L(a_phi).  If a_homogeneous is true,
@@ -165,6 +175,8 @@ public:
      reset whether the solver is homogeneous.
    */
   virtual void setHomogeneous(bool a_homogeneous) = 0;
+
+  virtual void setUseFas(bool a_use_FAS) = 0;
 
   ///
   /**

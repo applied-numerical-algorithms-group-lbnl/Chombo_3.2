@@ -157,6 +157,108 @@ void ConstBCFunction::operator()(FArrayBox&           a_state,
   } // end loop over directions
 }
 
+void ConstBCFunction::operator()(FArrayBox&           a_state,
+                                 const Box&           a_valid,
+                                 const ProblemDomain& a_domain,
+                                 RealVect             a_dx,
+                                 bool                 a_homogeneous)
+{
+  const Box& domainBox = a_domain.domainBox();
+
+  for (int idir = 0; idir < SpaceDim; idir++)
+  {
+    if (!a_domain.isPeriodic(idir))
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+      {
+        Side::LoHiSide side = sit();
+
+        if (a_valid.sideEnd(side)[idir] == domainBox.sideEnd(side)[idir])
+        {
+          int  bcType;
+          Real bcValue;
+
+          if (side == Side::Lo)
+          {
+            bcType  = m_loSideType [idir];
+            bcValue = m_loSideValue[idir];
+          }
+          else
+          {
+            bcType  = m_hiSideType [idir];
+            bcValue = m_hiSideValue[idir];
+          }
+
+          if (bcType == 0)
+          {
+            // Neumann BC
+            int isign = sign(side);
+
+            Box toRegion = adjCellBox(a_valid, idir, side, 1);
+            toRegion &= a_state.box();
+
+            Box fromRegion = toRegion;
+            fromRegion.shift(idir, -isign);
+
+            a_state.copy(a_state, fromRegion, 0, toRegion, 0, a_state.nComp());
+
+            if (!a_homogeneous)
+            {
+              for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+              {
+                const IntVect& ivTo = bit();
+                // IntVect ivClose = ivTo - isign*BASISV(idir);
+
+                for (int icomp = 0; icomp < a_state.nComp(); icomp++)
+                {
+                  a_state(ivTo, icomp) += Real(isign)*a_dx[idir]*bcValue;
+                }
+              }
+            }
+          }
+          else if (bcType == 1)
+          {
+            // Dirichlet BC
+            int isign = sign(side);
+
+            Box toRegion = adjCellBox(a_valid, idir, side, 1);
+            toRegion &= a_state.box();
+
+            for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+            {
+              const IntVect& ivTo = bit();
+
+              IntVect ivClose = ivTo -   isign*BASISV(idir);
+              // IntVect ivFar   = ivTo - 2*isign*BASISV(idir);
+
+              Real inhomogVal = 0.0;
+
+              if (!a_homogeneous)
+              {
+                inhomogVal = bcValue;
+              }
+
+              for (int icomp = 0; icomp < a_state.nComp(); icomp++)
+              {
+                Real nearVal = a_state(ivClose, icomp);
+                // Real farVal  = a_state(ivFar,   icomp);
+
+                Real ghostVal = linearInterp(inhomogVal, nearVal);
+
+                a_state(ivTo, icomp) = ghostVal;
+              }
+            }
+          }
+          else
+          {
+            MayDay::Abort("ConstBCFunction::operator() - unknown BC type");
+          }
+        } // if ends match
+      } // end loop over sides
+    } // if not periodic in this direction
+  } // end loop over directions
+}
+
 RefCountedPtr<BCFunction> ConstDiriNeumBC(const IntVect&  a_loSideType,
                                           const RealVect& a_loSideValue,
                                           const IntVect&  a_hiSideType,
@@ -185,6 +287,21 @@ void NeumBC(FArrayBox&      a_state,
     }
 }
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value)
+{
+  for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+        {
+          NeumBC(a_state, a_valid, a_dx, a_homogeneous, a_value, idir,sit());
+        }
+    }
+}
+
 static void getDomainFacePosition(RealVect&             a_retval,
                                   const IntVect&        a_validIV,
                                   const Real&           a_dx,
@@ -201,9 +318,38 @@ static void getDomainFacePosition(RealVect&             a_retval,
   dataPtr[a_dir] += 0.5*Real(isign)*a_dx;
 }
 
+static void getDomainFacePosition(RealVect&             a_retval,
+                                  const IntVect&        a_validIV,
+                                  const RealVect&       a_dx,
+                                  const int&            a_dir,
+                                  const Side::LoHiSide& a_side)
+{
+  Real* dataPtr = a_retval.dataPtr();
+
+  D_TERM( dataPtr[0] = a_dx[0]*(a_validIV[0] + 0.5);,\
+          dataPtr[1] = a_dx[1]*(a_validIV[1] + 0.5);,\
+          dataPtr[2] = a_dx[2]*(a_validIV[2] + 0.5);)
+
+  int isign = sign(a_side);
+  dataPtr[a_dir] += 0.5*Real(isign)*a_dx[a_dir];
+}
+
 void NeumBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_valueA,
+            int             a_dir,
+            Side::LoHiSide  a_side)
+{
+  Interval stateInterval = a_state.interval();
+  NeumBC(a_state, a_valid, a_dx, a_homogeneous,
+         a_valueA, a_dir,a_side, stateInterval);
+}
+
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             const BCValueHolder&   a_valueA,
             int             a_dir,
@@ -237,7 +383,9 @@ void NeumBC(FArrayBox&      a_state,
 
   if (!a_homogeneous)
     {
-      Real* value = new Real[a_state.nComp()];
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
 
       for (BoxIterator bit(toRegion); bit.ok(); ++bit)
         {
@@ -246,20 +394,264 @@ void NeumBC(FArrayBox&      a_state,
 
           getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
 
-          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
           for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
             {
-              a_state(ivTo, icomp) += Real(isign)*a_dx*value[icomp];
+              a_state(ivTo, icomp) += Real(isign)*a_dx*valA[icomp];
             }
         }
 
-      delete[] value;
+      delete[] valA;
+      delete[] valB;
+      delete[] valC;
+    }
+}
+
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_valueA,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&        a_interval)
+{
+  BCValueHolder& a_value = (BCValueHolder&)a_valueA;
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  Box fromRegion = toRegion;
+  fromRegion.shift(a_dir, -isign);
+
+  a_state.copy(a_state, fromRegion, 0, toRegion, 0, a_state.nComp());
+
+  if (!a_homogeneous)
+    {
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              a_state(ivTo, icomp) += Real(isign)*a_dx[a_dir]*valA[icomp];
+            }
+        }
+
+      delete[] valA;
+      delete[] valB;
+      delete[] valC;
+    }
+}
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side)
+{
+  Interval stateInterval = a_state.interval();
+  RobinBC(a_state,a_valid, a_dx, a_homogeneous,
+          a_value,a_dir, a_side, stateInterval);
+}
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side)
+{
+  Interval stateInterval = a_state.interval();
+  RobinBC(a_state,a_valid, a_dx, a_homogeneous,
+          a_value,a_dir, a_side, stateInterval);
+}
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_vals,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval)
+{
+  BCValueHolder& a_value = (BCValueHolder&)a_vals;
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  if (!a_homogeneous) // homogeneous has no meaning here, just put either A B or C to 0 in your input file
+    {
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              Real nearVal = a_state(ivClose, icomp);
+              Real denom = (valA[icomp]/2.0 - Real(isign)*valB[icomp]/a_dx);
+              Real nom   = valC[icomp] - nearVal * (valA[icomp]/2.0 + Real(isign)*valB[icomp]/a_dx);
+
+              a_state(ivTo, icomp) = nom / denom;
+            }
+        }
+
+      delete[] valA;
+      delete[] valB;
+      delete[] valC;
+    }
+  else 
+   {
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              Real nearVal = a_state(ivClose, icomp);
+              Real denom = (valA[icomp]/2.0 - Real(isign)*valB[icomp]/a_dx);
+              Real nom   = - nearVal * (valA[icomp]/2.0 + Real(isign)*valB[icomp]/a_dx);
+
+              a_state(ivTo, icomp) = nom / denom;
+            }
+        }
+
+      delete[] valA;
+      delete[] valB;
+      delete[] valC;
+   }
+}
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_vals,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval)
+{
+  BCValueHolder& a_value = (BCValueHolder&)a_vals;
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  if (!a_homogeneous) // homogeneous has no meaning here, just put either A B or C to 0 in your input file
+    {
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+
+
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              Real nearVal = a_state(ivClose, icomp);
+              Real denom = (valA[icomp]/2.0 - Real(isign)*valB[icomp]/a_dx[a_dir]);
+              Real nom   = valC[icomp] - nearVal * (valA[icomp]/2.0 + Real(isign)*valB[icomp]/a_dx[a_dir]);
+
+              a_state(ivTo, icomp) = nom / denom;
+            }
+        }
+
+      delete[] valA;
+      delete[] valB;
+      delete[] valC; 
+    }
+  else
+    {
+      Real* valA = new Real[a_state.nComp()];
+      Real* valB = new Real[a_state.nComp()];
+      Real* valC = new Real[a_state.nComp()];
+
+      for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+        {
+          const IntVect& ivTo = bit();
+          IntVect ivClose = ivTo - isign*BASISV(a_dir);
+
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+
+
+          for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+            {
+              Real nearVal = a_state(ivClose, icomp);
+              Real denom = (valA[icomp]/2.0 - Real(isign)*valB[icomp]/a_dx[a_dir]);
+              Real nom   = - nearVal * (valA[icomp]/2.0 + Real(isign)*valB[icomp]/a_dx[a_dir]);
+
+              a_state(ivTo, icomp) = nom / denom;
+            }
+        }
+
+      delete[] valA;
+      delete[] valB;
+      delete[] valC; 
+    }
+}
+
+
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_order)
+{
+  for (int idir = 0; idir < SpaceDim; idir++)
+    {
+      for (SideIterator sit; sit.ok(); ++sit)
+        {
+
+          DiriBC(a_state, a_valid, a_dx, a_homogeneous, a_value, idir, sit(), a_order);
+        }
     }
 }
 
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
-            Real            a_dx,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_order)
@@ -290,6 +682,20 @@ void DiriBC(FArrayBox&      a_state,
 
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            int             a_order)
+{
+  Interval stateInterval = a_state.interval();
+  DiriBC(a_state,a_valid, a_dx, a_homogeneous,
+         a_value,a_dir, a_side, stateInterval, a_order);
+}
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
             Real            a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
@@ -304,7 +710,9 @@ void DiriBC(FArrayBox&      a_state,
   Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
   toRegion &= a_state.box();
 
-  Real* value = new Real[a_state.nComp()];
+  Real* valA = new Real[a_state.nComp()];
+  Real* valB = new Real[a_state.nComp()];
+  Real* valC = new Real[a_state.nComp()];
 
   for (BoxIterator bit(toRegion); bit.ok(); ++bit)
     {
@@ -316,7 +724,7 @@ void DiriBC(FArrayBox&      a_state,
       if (!a_homogeneous)
         {
           getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
-          a_value(facePos.dataPtr(), &a_dir, &a_side, value);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
         }
 
       for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
@@ -328,7 +736,7 @@ void DiriBC(FArrayBox&      a_state,
 
           if (!a_homogeneous)
             {
-              inhomogVal = value[icomp];
+              inhomogVal = valA[icomp];
             }
 
           Real ghostVal=0;
@@ -350,9 +758,80 @@ void DiriBC(FArrayBox&      a_state,
         }
     }
 
-  delete[] value;
+  delete[] valA;
+  delete[] valB;
+  delete[] valC;
 }
 
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&       a_interval,
+            int             a_order)
+{
+  int isign = sign(a_side);
+  RealVect facePos;
+
+  Box toRegion = adjCellBox(a_valid, a_dir, a_side, 1);
+  toRegion &= a_state.box();
+
+  Real* valA = new Real[a_state.nComp()];
+  Real* valB = new Real[a_state.nComp()];
+  Real* valC = new Real[a_state.nComp()];
+
+  for (BoxIterator bit(toRegion); bit.ok(); ++bit)
+    {
+      const IntVect& ivTo = bit();
+
+      IntVect ivClose = ivTo -   isign*BASISV(a_dir);
+      IntVect ivFar   = ivTo - 2*isign*BASISV(a_dir);
+
+      if (!a_homogeneous)
+        {
+          getDomainFacePosition(facePos, ivClose, a_dx, a_dir, a_side);
+          a_value(facePos.dataPtr(), &a_dir, &a_side, valA, valB, valC);
+        }
+
+      for (int icomp = a_interval.begin(); icomp <= a_interval.end(); icomp++)
+        {
+          Real nearVal = a_state(ivClose, icomp);
+          Real farVal  = a_state(ivFar,   icomp);
+
+          Real inhomogVal = 0.0;
+
+          if (!a_homogeneous)
+            {
+              inhomogVal = valA[icomp];
+            }
+
+          Real ghostVal=0;
+
+          if (a_order == 1)
+            {
+              ghostVal = linearInterp(inhomogVal, nearVal);
+            }
+          else if (a_order == 2)
+            {
+              ghostVal = quadraticInterp(inhomogVal, nearVal, farVal);
+            }
+          else
+            {
+              MayDay::Error("bogus order argument");
+            }
+
+          a_state(ivTo, icomp) = ghostVal;
+        }
+    }
+
+  delete[] valA;
+  delete[] valB;
+  delete[] valC;
+}
 void NoSlipVectorBC(FArrayBox&     a_state,
                     const Box&     a_valid,
                     Real           a_dx,

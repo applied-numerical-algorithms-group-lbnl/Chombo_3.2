@@ -36,7 +36,6 @@
 #include "NamespaceHeader.H"
 
 
-
 EBIndexSpace* Chombo_EBIS::s_instance = NULL;
 bool          Chombo_EBIS::s_aliased  = false;
 int EBISLevel::s_ebislGhost = 6;
@@ -568,11 +567,7 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
     CH_TIME("EBISLevel::EBISLevel_makegrids");
     // permit the geometry service to construct a layout, or accept an already defined layout from EBIndexSpace
 
-    //print_memory_line("EBISLevel makeGrids pre");
-    //UnfreedMemory();
     (const_cast<GeometryService*>(&a_geoserver))->makeGrids(a_domain, m_grids, a_nCellMax, a_nCellMax);
-    //print_memory_line("EBISLevel makeGrids post");
-    //UnfreedMemory();
   }
 
   RealVect dx2D;
@@ -585,8 +580,6 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
   LayoutData<Vector<IrregNode> > allNodes(m_grids);
 
   EBGraphFactory graphfact(a_domain);
-  //print_memory_line("EBISLevel graph pre");
-  //UnfreedMemory();
   m_graph.define(m_grids, 1, IntVect::Unit, graphfact);
 
   defineGraphFromGeo(m_graph, allNodes, a_geoserver, m_grids,
@@ -596,8 +589,6 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
 
   checkGraph();
 
-  //print_memory_line("EBISLevel data pre");
-  //UnfreedMemory();
   EBDataFactory dataFact;
   m_data.define(m_grids, 1, IntVect::Zero, dataFact);
   for (DataIterator dit = m_grids.dataIterator(); dit.ok(); ++dit)
@@ -612,8 +603,6 @@ EBISLevel::EBISLevel(const ProblemDomain   & a_domain,
           fixRegularNextToMultiValued();
         }
     }
-  //print_memory_line("EBISLevel data post");
-  //UnfreedMemory();
   pout() << "Exiting EBISLevel::EBISLevel called by EBIndexSpace::buildFirstLevel..." << endl;
 }
 

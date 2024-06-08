@@ -54,6 +54,16 @@ FineInterp::FineInterp(const DisjointBoxLayout& a_fine_domain,
   define(a_fine_domain, a_numcomps, a_ref_ratio, a_fine_problem_domain);
 }
 
+FineInterp::FineInterp(const DisjointBoxLayout& a_fine_domain,
+                       const int&  a_numcomps,
+                       const IntVect& a_ref_ratio,
+                       const ProblemDomain& a_fine_problem_domain)
+  :
+  is_defined(false)
+{
+  define(a_fine_domain, a_numcomps, a_ref_ratio, a_fine_problem_domain);
+}
+
 void
 FineInterp::define(const DisjointBoxLayout& a_fine_domain,
                    const int& a_numcomps,
@@ -85,6 +95,34 @@ FineInterp::define(const DisjointBoxLayout& a_fine_domain,
   coarsen ( coarsened_fine_domain,
             a_fine_domain,
             m_ref_ratio );
+  m_coarsened_fine_data.define ( coarsened_fine_domain,
+                                 a_numcomps,
+                                 IntVect::Unit );
+  is_defined = true;
+}
+
+void
+FineInterp::define(const DisjointBoxLayout& a_fine_domain,
+                   const int& a_numcomps,
+                   const IntVect& a_ref_ratio,
+                   const ProblemDomain& a_fine_problem_domain)
+{
+  CH_TIME("FineInterp::define");
+  
+  // set boundary limit type to default value
+  m_boundary_limit_type = s_default_boundary_limit_type;
+
+  // check for consistency
+  CH_assert (a_fine_domain.checkPeriodic(a_fine_problem_domain));
+  m_ref_ratio = a_ref_ratio[0];
+  m_ref_ratio_vect = a_ref_ratio;
+  m_coarse_problem_domain = coarsen(a_fine_problem_domain, m_ref_ratio_vect);
+  //
+  // create the work array
+  DisjointBoxLayout coarsened_fine_domain;
+  coarsen ( coarsened_fine_domain,
+            a_fine_domain,
+            m_ref_ratio_vect );
   m_coarsened_fine_data.define ( coarsened_fine_domain,
                                  a_numcomps,
                                  IntVect::Unit );
@@ -159,6 +197,7 @@ FineInterp::interpToFine(LevelData<FArrayBox>& a_fine_data,
                      m_ref_ratio);
     }
 }
+
 void
 FineInterp::pwcinterpToFine(LevelData<FArrayBox>& a_fine_data,
                             const LevelData<FArrayBox>& a_coarse_data,
@@ -212,6 +251,58 @@ FineInterp::pwcinterpToFine(LevelData<FArrayBox>& a_fine_data,
 }
 
 void
+FineInterp::pwcinterpToFineAni(LevelData<FArrayBox>& a_fine_data,
+                               const LevelData<FArrayBox>& a_coarse_data,
+                               bool a_averageFromDest)
+{
+  CH_TIME("FineInterp::pwcinterpToFine");
+  CH_assert(is_defined);
+
+  if (a_averageFromDest)
+    {
+      // average down fine data -- this is a local operation
+      DataIterator dit = a_fine_data.dataIterator();
+      for (dit.begin(); dit.ok(); ++dit)
+        {
+          FArrayBox& fineFab = a_fine_data[dit];
+          FArrayBox& crseFab = m_coarsened_fine_data[dit];
+          const Box& crseBox = m_coarsened_fine_data.getBoxes()[dit];
+
+          Box refbox(IntVect::Zero,
+                     (m_ref_ratio_vect-IntVect::Unit));
+          FORT_AVERAGEANI(CHF_FRA(crseFab),
+                       CHF_CONST_FRA(fineFab),
+                       CHF_BOX(crseBox),
+                       CHF_CONST_INTVECT(m_ref_ratio_vect),
+                       CHF_BOX(refbox));
+        }
+    }
+
+
+  // this should handle all the periodic BCs as well,
+  // by filling in the ghost cells in an appropriate way
+  a_coarse_data.copyTo(a_coarse_data.interval(),
+                       m_coarsened_fine_data,
+                       m_coarsened_fine_data.interval() );
+
+  const BoxLayout fine_domain = a_fine_data.boxLayout();
+  DataIterator dit = fine_domain.dataIterator();
+
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      const BaseFab<Real>& coarsened_fine = m_coarsened_fine_data[dit()];
+      const Box& coarsened_fine_box = m_coarsened_fine_data.getBoxes()[dit()];
+      BaseFab<Real>& fine = a_fine_data[dit()];
+      // interpGridData interpolates from an entire coarse grid onto an
+      // entire fine grid.
+      pwcinterpGridData(fine,
+                        coarsened_fine,
+                        coarsened_fine_box,
+                        m_ref_ratio);
+    }
+}
+
+void
 FineInterp::pwcinterpGridData(BaseFab<Real>& a_fine,
                            const BaseFab<Real>& a_coarse,
                            const Box& a_coarsened_fine_box,
@@ -227,6 +318,26 @@ FineInterp::pwcinterpGridData(BaseFab<Real>& a_fine,
                         CHF_CONST_FRA(a_coarse),
                         CHF_BOX(b),
                         CHF_CONST_INT(a_ref_ratio),
+                        CHF_BOX(refbox)
+                        );
+}
+
+void
+FineInterp::pwcinterpGridData(BaseFab<Real>& a_fine,
+                           const BaseFab<Real>& a_coarse,
+                           const Box& a_coarsened_fine_box,
+                           IntVect a_ref_ratio) const
+{
+  CH_TIME("FineInterp::pwcinterpGridData");
+  // fill fine data with piecewise constant coarse data
+  const Box& b = a_coarsened_fine_box;
+  Box refbox(IntVect::Zero,
+             a_ref_ratio-IntVect::Unit);
+
+  FORT_INTERPCONSTANTANI ( CHF_FRA(a_fine),
+                        CHF_CONST_FRA(a_coarse),
+                        CHF_BOX(b),
+                        CHF_CONST_INTVECT(a_ref_ratio),
                         CHF_BOX(refbox)
                         );
 }

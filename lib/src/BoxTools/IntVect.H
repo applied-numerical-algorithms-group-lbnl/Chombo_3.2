@@ -23,6 +23,10 @@
 #include "Misc.H"
 #include <functional>
 
+#ifdef USE_PROTO
+#include "Proto.H"
+#endif
+
 namespace BLfacade
 {
   class IntVect;
@@ -669,6 +673,21 @@ public:
 
   inline uint64_t hash(const IntVect& origin, const IntVect& blockingFactor) const; 
 
+#ifdef USE_PROTO
+    IntVect(Proto::Point a_pt)
+    {
+        for (int ii = 0; ii < DIM; ii++)
+        {
+            vect[ii] = a_pt[ii];
+        }
+    }
+
+    operator Proto::Point() const
+    {
+        return Proto::Point(vect);
+    }
+#endif
+
 protected:
   //
   // Box is a friend of ours.
@@ -696,8 +715,7 @@ protected:
 };
 #include "NamespaceFooter.H"
 
-
-namespace std { template <> inline  bool less<CH_XD::IntVect>::operator()(const CH_XD::IntVect& a, const CH_XD::IntVect& b) const { return a.lexLT(b);}
+namespace std { template <> inline bool less<CH_XD::IntVect>::operator()(const CH_XD::IntVect& a, const CH_XD::IntVect& b) const { return a.lexLT(b);}
 }
 
 // C++14 version

@@ -342,19 +342,24 @@ public:
      Solve L(phi) = rho from l_base to l_max.  To solve over all levels,
      l_base = 0 and l_max = max_level = numLevels-1.
    */
-  virtual void solve( Vector<T*>& a_phi, const Vector<T*>& a_rhs,
-                      int l_max, int l_base, bool a_zeroPhi=true,
-                      bool forceHomogeneous = false );
+  virtual void solve( Vector<T*>            & a_phi,
+                      const Vector<T*>      & a_rhs,
+                      int l_max, int l_base,
+                      bool a_zeroInitialPhi = true,
+                      bool forceHomogeneous = false);
 
   ///
   /** same as "solve" except user has taken the reponsibility of having previously
       called "init" so solver can allocate temporary holders.
   */
-  virtual void solveNoInit(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
-                           int l_max, int l_base, bool a_zeroPhi=true,
+  virtual void solveNoInit(Vector<T*>&       a_phi,
+                           const Vector<T*>& a_rhs,
+                           int l_max, int l_base,
+                           bool a_zeroInitialPhi = true,
                            bool forceHomogeneous = false);
 
-  ///use if you want final residual
+  /** use if you want final residual
+  */
   virtual void solveNoInitResid(Vector<T*>& a_phi, Vector<T*>& a_finalResid,
                                 const Vector<T*>& a_rhs,
                                 int l_max, int l_base, bool a_zeroPhi=true,
@@ -365,7 +370,8 @@ public:
 
   virtual void AMRVCycle(Vector<T*>& a_correction,
                          Vector<T*>& a_residual,
-                         int l, int l_max, int l_base);
+                         int l, int l_max, int l_base,
+                         int a_AMRMGiter);
 
   void setMGCycle(int a_numMG);
 
@@ -374,6 +380,8 @@ public:
   //init messes with multigrid depth.  this puts it back
   void revert(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
             int l_max, int l_base);
+
+  void setVerbose(int a_verbose);
 
   Real m_eps, m_hang, m_normThresh;
   bool   m_solverParamsSet;
@@ -455,7 +463,8 @@ public:
                            const int&   a_iterMax,
                            const Real&  a_eps,
                            const Real&  a_hang,
-                           const Real&  a_normThresh);
+                           const Real&  a_normThresh,
+                           bool         a_homogeneousBC=true);
 
   /// set up bottom solver for internal MG solver
   /**
@@ -463,7 +472,7 @@ public:
      However, it must be called if solve will not be called (in particular,
      if only the V-cycle is being used)
   */
-  void setBottomSolver(int l_max, int l_base);
+  virtual void setBottomSolver(int l_max, int l_base);
 
   void setBottomSolverEpsCushion(Real a_bottomSolverEpsCushion);
 
@@ -481,17 +490,17 @@ protected:
 
   Vector<AMRLevelOp<T>*>          m_op;
   Vector<MultiGrid<T> *>          m_mg;
-  Vector<T*>  m_correction;
-  Vector<T*>  m_residual;
-  Vector<T*>  m_resC;
-  Vector<Copier> m_resCopier;
-  Vector<Copier> m_reverseCopier;
+  Vector<T*>                      m_correction;
+  Vector<T*>                      m_residual;
+  Vector<T*>                      m_resC;
+  Vector<Copier>                  m_resCopier;
+  Vector<Copier>                  m_reverseCopier;
 
-  NoOpSolver<T>    m_nosolve;
+  NoOpSolver<T>                   m_nosolve;
 
-  LinearSolver<T>* m_bottomSolver;
+  LinearSolver<T>*                m_bottomSolver;
 
-  Vector<char> m_hasInitBeenCalled;
+  Vector<char>                    m_hasInitBeenCalled;
 
   void clear();
 
@@ -532,7 +541,8 @@ AMRMultiGrid<T>::setSolverParameters(const int&   a_pre,
                                      const int&   a_iterMax,
                                      const Real&  a_eps,
                                      const Real&  a_hang,
-                                     const Real&  a_normThresh)
+                                     const Real&  a_normThresh,
+                                     bool a_homogeneous)
 {
   m_solverParamsSet = true;
   m_pre        =    a_pre;
@@ -544,13 +554,16 @@ AMRMultiGrid<T>::setSolverParameters(const int&   a_pre,
   m_iterMax    =    a_iterMax;
   for (int img = 0; img < m_mg.size(); img++)
     {
-      m_mg[img]->m_pre    = a_pre;
-      m_mg[img]->m_post   = a_post;
-      m_mg[img]->m_bottom   = a_bottom;
+      m_mg[img]->m_pre           = a_pre;
+      m_mg[img]->m_post          = a_post;
+      m_mg[img]->m_bottom        = a_bottom;
+      m_mg[img]->m_homogeneous   = a_homogeneous;
+      m_mg[img]->m_verbosity     = m_verbosity;
     }
   setMGCycle(a_numMG);
   m_bottomSolverEpsCushion = 1.0;
 }
+
 template <class T>
 Vector< MGLevelOp<T> * >
 AMRMultiGrid<T>::getAllOperators()
@@ -603,14 +616,15 @@ AMRMultiGrid<T>::AMRMultiGrid()
   m_normThresh(1E-30),
   m_imin(5),
   m_iterMax(20),
-  m_iterMin(-1),
+  m_iterMin(5),
   m_verbosity(3),
   m_pre(2),
   m_post(2),
   m_bottom(2),
   m_numMG(1),
-  m_maxDepth(-1),
-  m_convergenceMetric(0.),
+  m_maxDepth(-1), // AF
+  m_convergenceMetric(0),
+  m_initial_rnorm(1E-10),
   m_bottomSolverEpsCushion(1.0),
   m_bottomSolver(NULL),
   m_inspectors()
@@ -630,6 +644,7 @@ void AMRMultiGrid<T>::setMGCycle(int a_numMG)
     }
   m_numMG = a_numMG;
 }
+
 template <class T>
 void AMRMultiGrid<T>::relax(T& a_correction, T& a_residual, int depth, int a_numSmooth)
 {
@@ -653,14 +668,15 @@ void AMRMultiGrid<T>::relax(T& a_correction, T& a_residual, int depth, int a_num
       // not an AMR level.  We use regular MultiGrid smoothing algorithm for this.
       // note that MultiGrid::cycle handles relaxation on this level
       // as well, so there's no need to call the LinearOp's relax function.
-      m_mg[depth]->cycle(0, a_correction, a_residual);
+      m_mg[depth]->cycle(0, a_correction, a_residual, 0);
       m_mg[depth]->m_depth = tmp;
     }
   else
     {
       // no intermediate multigrid levels between AMR levels, so
       // just call relax on this level and be done with it.
-      m_op[depth]->relax(a_correction, a_residual, a_numSmooth);  //numSmoothDown
+      int dummyiter=0;
+      m_op[depth]->relax(a_correction, a_residual, a_numSmooth, dummyiter, depth);  //numSmoothDown
     }
 
 }
@@ -689,6 +705,9 @@ Real AMRMultiGrid<T>::computeAMRResidual(Vector<T*>&       a_resid,
                                          bool              a_computeNorm)
 {
   CH_TIME("AMRMultiGrid::computeAMRResidual");
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid::computeAMRResidual\n"; 
+  }
 
   Real rnorm = 0;
   Real localNorm = 0;
@@ -880,6 +899,10 @@ void AMRMultiGrid<T>::computeAMRResidualLevel(Vector<T*>&       a_resid,
       if (l_base == 0)
         {
           m_op[l_max]->residual(*a_resid[l_max], *a_phi[l_max], *a_rhs[l_max],a_homogeneousBC);
+          //T dummy_data; 
+          //m_op[l_max]->AMRResidualNF(*(a_resid[l_max]), *(a_phi[l_max]),
+          //                             dummy_data, *(a_rhs[l_max]),
+          //                            a_homogeneousBC);
         }
       else
         {
@@ -897,10 +920,23 @@ void AMRMultiGrid<T>::solve(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solve");
+
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid::solve: calling init" << endl;
+  }
   init(a_phi, a_rhs, l_max, l_base);
+  if (m_verbosity > 5) {
+      pout() << "AMRMultiGrid::solve: calling solveNoInit" << endl;
+  }
   solveNoInit(a_phi, a_rhs, l_max, l_base, a_zeroPhi, a_forceHomogeneous);
   //puts multigrid depth back where it started so the solver can be reused
+  if (m_verbosity > 5) {
+      pout() << "AMRMultiGrid::solve: calling revert" << endl;
+  }
   revert(a_phi, a_rhs, l_max, l_base);
+  if (m_verbosity > 5) {
+      pout() << "AMRMultiGrid::solve: leaving" << endl;
+  }
 }
 
 template<class T>
@@ -910,6 +946,10 @@ void AMRMultiGrid<T>::solveNoInit(Vector<T*>& a_phi,
                                   bool a_forceHomogeneous)
 {
   CH_TIME("AMRMultiGrid::solveNoInit");
+
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid:solveNoInit, l_max, l_base = " << l_max << " " << l_base << endl;
+  }
   Vector<T*> uberResidual(a_rhs.size());
   int lowlim = l_base;
   if (l_base > 0)  // we need an ubercorrection one level lower than l_base
@@ -939,6 +979,11 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 {
   CH_TIMERS("AMRMultiGrid::solveNo-InitResid");
   CH_TIMER("AMRMultiGrid::AMRVcycle", vtimer);
+
+  if (m_verbosity > 4) {
+      pout() << "AMRMultiGrid::solveNoInitResid " << endl;
+  }
+
   setBottomSolver(l_max, l_base);
 
   CH_assert(l_base <= l_max);
@@ -1005,6 +1050,10 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
   bool goIter = iter < m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//iterate if we didn't hang
   bool goMin = iter < m_iterMin ; // iterate if iter < min
+  //if (m_verbosity >= 2) ////
+  //  {
+  //     pout() << "      .. (norms are " << m_normThresh << " " << m_eps*m_initial_rnorm << ")" << endl;
+  //  }
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
 
@@ -1024,7 +1073,7 @@ void AMRMultiGrid<T>::solveNoInitResid(Vector<T*>& a_phi,  Vector<T*>& uberResid
 
       //this generates a correction from the current residual
       CH_START(vtimer);
-      AMRVCycle(uberCorrection, uberResidual, l_max, l_max, l_base);
+      AMRVCycle(uberCorrection, uberResidual, l_max, l_max, l_base, iter);
       CH_STOP(vtimer);
 
       char charname[100];
@@ -1160,7 +1209,7 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
   while (goIter && goRedu && goHang && goNorm)
     {
       norm_last = rnorm;
-      m_op[0]->relax(*a_phi[0], *a_rhs[0], 1);
+      m_op[0]->relax(*a_phi[0], *a_rhs[0], 1, iter, 0);
 
       iter++;
       //recompute residual
@@ -1263,9 +1312,20 @@ void AMRMultiGrid<T>::revert(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
 }
 
 template <class T>
+void AMRMultiGrid<T>::setVerbose(int a_verbose)
+{
+  CH_TIME("AMRMultiGrid::setVerbose");
+  m_verbosity = a_verbose;
+  for (int img = 0; img < m_mg.size(); img++)
+    {
+      m_mg[img]->m_verbosity     = a_verbose;
+    }
+}
+
+template <class T>
 void AMRMultiGrid<T>::setBottomSolver(int l_max, int l_base)
 {
-  //  for (int ilev = 0; ilev <= m_mg.size(); ilev++)
+  
   for (int ilev = l_base; ilev <= l_max; ilev++)
     {
       // only do this if we haven't already set these
@@ -1341,8 +1401,13 @@ void AMRMultiGrid<T>::getInfo() const
 template<class T>
 void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
                                 Vector<T*>& a_uberResidual,
-                                int ilev, int l_max, int l_base)
+                                int ilev, int l_max, int l_base,
+                                int a_AMRMGiter)
 {
+  if (m_verbosity > 4) {
+      pout() << "    xxx  AMRVCycle ilev, l_max, l_base = " << ilev << " " << l_max << " " << l_base << endl;
+  }
+
   if (ilev == l_max)
     {
       for (int level = l_base; level <= l_max; level++)
@@ -1355,11 +1420,11 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
   if (l_max == l_base)
     {
       CH_assert(ilev == l_base);
-      m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]));
+      m_mg[l_base]->oneCycle(*(a_uberCorrection[ilev]), *(a_uberResidual[ilev]), a_AMRMGiter);
     }
   else if (ilev == l_base)
     {
-      m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]));
+      m_mg[l_base]->oneCycle(*(m_correction[ilev]), *(m_residual[ilev]), a_AMRMGiter);
       m_op[ilev]->incr(*(a_uberCorrection[ilev]), *(m_correction[ilev]), 1.0);
     }
   else
@@ -1395,7 +1460,7 @@ void AMRMultiGrid<T>::AMRVCycle(Vector<T*>& a_uberCorrection,
 
       for (int img = 0; img < m_numMG; img++)
         {
-          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base);
+          AMRVCycle(a_uberCorrection, a_uberResidual, ilev-1, l_max, l_base, a_AMRMGiter);
         }
 
       //================= Upsweep ======================

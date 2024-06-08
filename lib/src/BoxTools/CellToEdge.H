@@ -21,9 +21,15 @@
 void CellToEdge(const LevelData<FArrayBox>& a_cellData,
                 LevelData<FluxBox>& a_edgeData);
 
+void CellToEdgeHarm(const LevelData<FArrayBox>& a_cellData,
+                    LevelData<FluxBox>& a_edgeData);
+
 ///
 void CellToEdge(const FArrayBox& a_cellData,
                 FluxBox& a_edgeData);
+
+void CellToEdgeHarm(const FArrayBox& a_cellData,
+                    FluxBox& a_edgeData);
 
 /// this one does a single direction
 void CellToEdge(const FArrayBox& a_cellData,
@@ -34,6 +40,15 @@ void CellToEdge(const FArrayBox& a_cellData, const int a_cellComp,
                 FArrayBox& a_edgeData, const int a_edgeComp,
                 const int a_dir);
 
+#ifdef USE_PROTO
+void ProtoCellToEdgePatch(BaseFab<Real>      & a_edgeData, 
+                          const int          & a_edgeComp,
+                          const BaseFab<Real>& a_cellData, 
+                          const int          & a_cellComp, 
+                          const Box          & a_edgeBox, 
+                          const int          & a_idir);
+
+#endif
 #include "NamespaceFooter.H"
 
 #endif

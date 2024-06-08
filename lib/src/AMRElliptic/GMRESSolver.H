@@ -41,6 +41,11 @@ public:
     m_homogeneous = a_homogeneous;
   }
 
+  virtual void setUseFas(bool a_use_FAS) 
+  {
+    m_use_FAS = a_use_FAS;
+  }
+
   ///
   virtual void setConvergenceMetrics(Real a_metric,
                                      Real a_tolerance);
@@ -62,6 +67,8 @@ public:
      homogeneous boundary conditions
    */
   bool m_homogeneous;
+
+  bool m_use_FAS;
 
   ///
   /**
@@ -212,6 +219,7 @@ void GMRESSolver<T>::setRestartLen(int mm)
 template <class T>
 GMRESSolver<T>::GMRESSolver()
   :m_homogeneous(false),
+   m_use_FAS(false),
    m_iter(-1),
    m_residual(-1e300),
    m_initial_residual(-1e300),   

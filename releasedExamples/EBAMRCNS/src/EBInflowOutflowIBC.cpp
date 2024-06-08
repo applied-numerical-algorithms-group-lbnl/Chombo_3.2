@@ -18,7 +18,6 @@
 #include "EBLGIntegrator.H"
 #include "EBInflowOutflowF_F.H"
 #include "EBPatchPolytropicF_F.H"
-#include "UsingNamespace.H"
 /****************************/
 /****************************/
 EBInflowOutflowIBC::

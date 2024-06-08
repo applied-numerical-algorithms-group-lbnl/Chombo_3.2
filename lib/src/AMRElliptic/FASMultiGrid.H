@@ -58,16 +58,14 @@ public:
        See solve() or AMRFASMultiGrid::solve for a more automatic solve() function.
    */
   virtual void oneCycle(T& a_e, const T& a_res);
-  void oneCycle(T& a_e, const T& a_res, T* a_phiCoarse);
+  void oneCycle(T& a_e, const T& a_res, T* a_phiCoarse, int iter);
 
   //internal function
-  virtual void cycle(int a_depth, T& a_correction, const T& a_residual);
+  virtual void cycle(int a_depth, T& a_phi, const T& a_rhs, int Citer, int MGiter =  0);
 
 protected:
 
   Vector< T* >   m_phiCoarse;
-
-
 
 };
 
@@ -93,7 +91,7 @@ void FASMultiGrid<T>::define(MGLevelOpFactory<T>& a_factory,
                              const ProblemDomain& a_domain,
                              int                  a_maxDepth,
                              MGLevelOp<T>*        a_finestOp)
-                             {
+{
   MultiGrid<T>::define(a_factory,a_bottomSolver,a_domain, a_maxDepth, a_finestOp);
 
   // Should never be homogeneous in the FAS case, as we're solving the full problem
@@ -135,7 +133,7 @@ void FASMultiGrid<T>::solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_ma
       pout() << "FASMultigrid::solve iter = " << iter <<  ",  residual = " << error << std::endl;
     }
 
-    this->cycle(0, correction, residual);
+    this->cycle(0, correction, residual, 0);
     this->m_op[0]->incr(a_phi, correction, 1.0);
 
     iter++;
@@ -152,7 +150,6 @@ void FASMultiGrid<T>::solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_ma
 // Do one cycle
 // in FAS we solve the full problem, so instead of having the
 // error and residual, we have phi and the rhs
-
 template <class T>
 void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs)
 {
@@ -161,22 +158,34 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs)
 }
 
 template <class T>
-void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
+void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse, int iter)
 {
   CH_TIME("FASMultigrid::oneCycle");
+  if (this->m_verbosity > 4) {
+      pout() << "FASMultigrid::oneCycle ( n_depth = "<< this->m_depth <<")\n";
+  }
 
   // First need to create coarser versions of phiCoarse at all MG depths
   m_phiCoarse.resize(this->m_depth);
   m_phiCoarse[0] = a_phiCoarse;
 
+  // Update the Bcoef on finer grid then average down
+  if (this->m_op[0]->m_update_operator) {
+      this->m_op[0]->UpdateOperator(a_phi, m_phiCoarse[0], 0, iter, false); 
+  }
   for (int depth = 1; depth < this->m_depth; depth++)
   {
-    if (m_phiCoarse[depth-1] == NULL)
-    {
-      m_phiCoarse[depth] = NULL;
+    // Update Bcoeff on subsequent depth
+    if (this->m_op[0]->m_update_operator) {
+        this->m_op[depth]->AverageOperator(*(this->m_op[0]), depth);
     }
-    else
-    {
+
+    if (m_phiCoarse[depth-1] == NULL) {
+      m_phiCoarse[depth] = NULL;
+    } else {
+      if (this->m_verbosity > 4) {
+          pout() << " ... depth ? " << depth <<"\n";
+      }
       const T& phiCoarseGridFiner = *m_phiCoarse[depth-1];
 
       m_phiCoarse[depth] = new T();
@@ -201,7 +210,7 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
   }
 
   // We pass in a_phi and a_rhs here
-  this->cycle(0, a_phi, a_rhs);
+  this->cycle(0, a_phi, a_rhs, 0, iter);
 
   //Cleanup
   // Note that m_phiCoarse[0] = a_phiCoarse, so we start the loop from i=1
@@ -218,29 +227,54 @@ void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs, T* a_phiCoarse)
 
 //-----------------------------------------------------------------------
 template <class T>
-void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
+void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs, int Citer, int MGiter)
 {
   CH_TIME("FASMultigrid::cycle");
+
+  if (this->m_verbosity > 4) {
+      pout() << "xxx ("<< this->m_pre << ", " << this->m_post << ") FASMultigrid::cycle, depth = "<< depth;
+  }
 
   // currently I can't drop a timer in this function because it is recursive.  doh
   if (depth == this->m_depth-1)
   {
     CH_TIME("FASMultigrid::cycle:bottom-solve");
+    if (this->m_verbosity > 4) {
+        pout() << "  ... bottom solve !! \n";
+    }
 
-    // Store the original phi so we can compute the 'correction' later
-    this->m_op[0]->setToZero(*this->m_correction[depth]);
+    /* Store initial guess at phi on this level */
+    // Note this is negative, as the eventual 'correction' = u_new - u_old (and this is u_old)
+    if (Citer == 0) {
+        this->m_op[0]->setToZero(*this->m_correction[depth]);
+    }
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, -1.0);
 
-    // On the coarsest level, just do loads of relaxing as the bottom solve
-    this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom);
+    /* Relax phi towards actual phi -- on the coarsest level, do loads of relaxing */
+    this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_bottom, MGiter, depth, false);
+
+    /* DEBUG */
+    //T r_tmp;
+    //this->m_op[depth  ]->create(r_tmp, a_rhs);
+    //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+    //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+    //if (this->m_verbosity > 6) {
+    //    pout() << depth << " Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+    //}
+    /* END DEBUG */
+
+    /* BOTTOM SOLVE */
+    //this->m_bottomSolver->solve(a_phi, a_rhs);
 
     // Subtract off new phi to get actual correction from this level
     this->m_op[0]->incr(*this->m_correction[depth], a_phi, 1.0);
 
-
   }
   else
   {
+    if (this->m_verbosity > 4) {
+        pout() << "  ... " << endl;
+    }
     int cycles = this->m_cycle;
     if ( cycles < 0 )
     {
@@ -254,54 +288,95 @@ void FASMultiGrid<T>::cycle(int depth, T& a_phi, const T& a_rhs)
       this->m_op[depth+1]->create(phi_coarse,  *(this->m_correction[depth+1]));
       this->m_op[depth+1]->setToZero(phi_coarse);
 
-
       this->m_op[depth+1]->create(op_coarse,  *(this->m_correction[depth+1]));
       this->m_op[depth+1]->setToZero(op_coarse);
 
-      // Store initial guess at phi on this level
-      // Note this is negative, as the eventual correction = u_new - u_old (and this is u_old)
-      this->m_op[depth]->setToZero( *(this->m_correction[depth]));
+      /* Store initial guess at phi on this level */
+      // Note this is negative, as the eventual 'correction' = u_new - u_old (and this is u_old)
+      if (Citer == 0) {
+          this->m_op[depth]->setToZero( *(this->m_correction[depth]));
+      }
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, -1.0);
 
-      // Relax phi towards actual phi
-      this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre );
+      /* Relax phi towards actual phi */
+      this->m_op[depth  ]->relaxNF( a_phi, m_phiCoarse[depth], a_rhs, this->m_pre, MGiter, depth, false );
 
+      /* DEBUG */
+      //T r_tmp;
+      //this->m_op[depth  ]->create(r_tmp, a_rhs);
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //Real norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //if (this->m_verbosity > 6) {
+      //    pout() << depth << " Going DOWN (after relax) - Residual norm = " << norm_tmp << endl;
+      //}
+      /* END DEBUG */
 
-      // restrict this new phi to a coarser grid and store it in 'm_correction'
-
-      T scratch;
+      /* Restrict this new phi to a coarser grid */
+      T scratch;  // not sure what this is for
       this->m_op[depth]->create(scratch,  a_phi);
       this->m_op[depth]->setToZero(scratch);
-
-      this->m_op[depth]->createCoarser(phi_coarse, a_phi, true); // create coarser grids for phi
-
+      //create coarser grids for phi
+      this->m_op[depth]->createCoarser(phi_coarse, a_phi, true);
+      // restrict phi to coarser grids
       this->m_op[depth  ]->restrictR(phi_coarse, a_phi);
+      /* End restrict this new phi to a coarser grid */
 
-      // Construct modified RHS
-
-      // Calculate Op(Restrict(phi_fine))
+      /* Construct modified RHS */
+      // Calculate Op(Restrict(phi_fine)) put in op_coarse
       this->m_op[depth+1]->applyOpMg(op_coarse, phi_coarse, m_phiCoarse[depth+1], false); // false - not homogeneous
-
-      // This sets rhs = Restrict(residual fine)
+      // This sets rhs = Restrict(residual fine) put in m_residual
       this->m_op[depth  ]->restrictResidual(*(this->m_residual[depth+1]), a_phi, m_phiCoarse[depth], a_rhs, false); // false - not homogeneous
-
       // This sets rhs = Restrict(residual fine) + Op(Restrict(phi fine))
       this->m_op[depth+1]->incr(*(this->m_residual[depth+1]), op_coarse, 1.0);
+      /* End construct modified RHS */
 
       for (int img = 0; img < cycles; img++)
       {
-        cycle(depth+1, phi_coarse, *(this->m_residual[depth+1]));
+        /* so m_residual contains FAS RHS */
+        cycle(depth+1, phi_coarse, *(this->m_residual[depth+1]), img, MGiter);
       }
 
-      // Interpolate the correction from the coarser level and add to phi on this level
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //if (this->m_verbosity > 6) {
+      //    pout() << depth << " Going UP - Initial Residual norm = " << norm_tmp << endl;
+      //}
+      /* END DEBUG */
+
+      /* Interpolate the correction from the coarser level and add to phi on this level */
+      // phi now contains phi_old + I (e_coarse) 
       this->m_op[depth  ]->prolongIncrement(a_phi, *(this->m_correction[depth+1]));
 
-      // Do some more smoothing of phi on this level
-      this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post);
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //if (this->m_verbosity > 6) {
+      //    pout() << depth << " Going UP (before relax, after incr) - Residual norm = " << norm_tmp << endl;
+      //char iter_str[100];
+      //sprintf(iter_str, "%s%02d.hdf5", "UP_res_after_incr_", depth); 
+      //this->m_op[depth  ]->write(&r_tmp, iter_str);
+      //}
+      /* END DEBUG */
 
-      // Finally, compute the 'correction' (initial phi on this level - current phi on this level)
-      // so we can interpolate it when we get back to  finer levels
+      /* Relax phi some more on this level */
+      this->m_op[depth  ]->relaxNF(a_phi, m_phiCoarse[depth], a_rhs, this->m_post, MGiter, depth);
+
+      /* Finally, compute the 'correction' which here is the error */
+      // (current phi on this level - phi old on this level)
       this->m_op[depth]->incr(*(this->m_correction[depth]), a_phi, 1.0);
+
+      /* DEBUG */
+      //this->m_op[depth  ]->residual(r_tmp, a_phi, a_rhs, false); 
+      //norm_tmp = this->m_op[depth  ]->norm(r_tmp, 0);
+      //if (this->m_verbosity > 6) {
+      //    pout() << depth << " Going UP (after relax) - Residual norm = " << norm_tmp << endl;
+      //}
+      //sprintf(iter_str, "%s%02d.hdf5", "UP_res_after_relax_", depth); 
+      //this->m_op[depth  ]->write(&r_tmp, iter_str);
+      //MayDay::Error("FASMultigrid::cycle - non-V cycle options not implemented");
+      /* END DEBUG */
+
 
       // Clear temporary data objects
       this->m_op[depth+1]->clear(phi_coarse);

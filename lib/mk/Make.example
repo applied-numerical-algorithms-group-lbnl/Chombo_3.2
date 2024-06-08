@@ -62,7 +62,7 @@ endif
 # get all the source files in this application
 #[NOTE: src_extensions and vpath should match $(src_wildcard) in Make.rules;
 #       they are defined here explicitly because Make.rules isn't loaded. <dbs>]
-src_extensions := .cpp .F90 .f90 .ChF .f .F  .c
+src_extensions := .ChF .cpp .F90 .f90 .f .F  .c
 vpath %.ChF $(src_dirs) $(base_dir)
 vpath %.cpp $(src_dirs) $(base_dir)
 vpath %.F   $(src_dirs) $(base_dir)
@@ -99,6 +99,7 @@ ifeq ($(words $(ebase)),1)
   # space characters which may have infiltrated ebase. This protects against 
   # a class of _really_ hard to find make problems (DFM 10-9-09)
   objects += $(filter-out $(patsubst %,o/$(config)/%,$(ebase)).o,$(_base_objs))
+  ebaseobject = $(filter $(patsubst %,o/$(config)/%,$(ebase)).o,$(_base_objs))
 endif
 
 # tell Make.rules to search source directories for include files
@@ -126,6 +127,7 @@ run: run-only
 vars:
 	@echo "CHOMBO_HOME=$(CHOMBO_HOME)"
 	@echo "ebase=$(ebase)"
+	@echo "ebaseobject=$(ebaseobject)"
 	@echo "LibNames=$(LibNames)"
 	@echo "base_dir=$(base_dir)"
 	@echo "src_dirs = $(src_dirs)"

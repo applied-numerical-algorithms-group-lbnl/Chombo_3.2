@@ -77,6 +77,10 @@ public:
              const int& a_ref_ratio,
              const ProblemDomain& a_fine_problem_domain);
 
+  FineInterp(const DisjointBoxLayout& a_fine_domain,
+             const int& a_numcomps,
+             const IntVect& a_ref_ratio,
+             const ProblemDomain& a_fine_problem_domain);
   ///
   /**
      Defines this object.  Existing information is overriden.
@@ -115,6 +119,12 @@ public:
   define(const DisjointBoxLayout& a_fine_domain, // the fine level domain
          const int& a_numcomps,                   // the number of components
          const int& a_ref_ratio,                  // the refinement ratio
+         const ProblemDomain& a_fine_problem_domain);
+
+  void
+  define(const DisjointBoxLayout& a_fine_domain, // the fine level domain
+         const int& a_numcomps,                   // the number of components
+         const IntVect& a_ref_ratio,                  // the refinement ratio
          const ProblemDomain& a_fine_problem_domain);
 
   ///
@@ -164,6 +174,11 @@ public:
   pwcinterpToFine(LevelData<FArrayBox>& a_fine_data,
                   const LevelData<FArrayBox>& a_coarse_data,
                   bool a_averageFromDest = false);
+
+  void
+  pwcinterpToFineAni(LevelData<FArrayBox>& a_fine_data,
+                     const LevelData<FArrayBox>& a_coarse_data,
+                     bool a_averageFromDest = false);
 
   
   /// enumeration of the different ways we can handle interpolation near domain boundaries
@@ -229,16 +244,24 @@ protected:
                  const Box& a_coarsened_fine_box,
                  int a_ref_ratio)
     const;
+
   void
   pwcinterpGridData(BaseFab<Real>& a_fine,
                     const BaseFab<Real>& a_coarse,
                     const Box& a_coarsened_fine_box,
                     int a_ref_ratio) const;
 
+  void
+  pwcinterpGridData(BaseFab<Real>& a_fine,
+                    const BaseFab<Real>& a_coarse,
+                    const Box& a_coarsened_fine_box,
+                    IntVect a_ref_ratio) const;
+
 protected:
   bool is_defined;
   // the refinement ratio
   int m_ref_ratio;
+  IntVect m_ref_ratio_vect;
   // work array for the coarse level data in a domain that is the
   // outline of the fine level domain on the coarse level
   LevelData<FArrayBox> m_coarsened_fine_data;

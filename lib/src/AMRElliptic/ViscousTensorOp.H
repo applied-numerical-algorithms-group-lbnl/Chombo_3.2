@@ -174,7 +174,11 @@ public:
                                     bool a_homogeneous = false);  
   
   virtual void preCond(   LevelData<FArrayBox>& a_correction,
-                          const LevelData<FArrayBox>& a_residual);
+                          const LevelData<FArrayBox>& a_rhs);
+
+  virtual void preCond(   LevelData<FArrayBox>& a_correction,
+                          const LevelData<FArrayBox>& a_res,
+                          const LevelData<FArrayBox>& a_rhs);
 
   virtual void applyOp(   LevelData<FArrayBox>& a_lhs,
                           const LevelData<FArrayBox>& a_phi,
@@ -270,9 +274,7 @@ public:
      \name MGLevelOp functions */
   /*@{*/
 
-  virtual void relax(LevelData<FArrayBox>& a_e,
-                     const LevelData<FArrayBox>& a_residual,
-                     int iterations);
+  virtual void relax(LevelData<FArrayBox>& a_e, const LevelData<FArrayBox>& a_residual, int iterations, int a_AMRFASMGiter, int depth = 0);
 
   virtual void createCoarser(LevelData<FArrayBox>& a_coarse,
                              const LevelData<FArrayBox>& a_fine,

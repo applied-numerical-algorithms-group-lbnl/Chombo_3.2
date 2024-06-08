@@ -43,6 +43,8 @@ public:
                            int l_max, int l_base, bool a_zeroPhi=true,
                            bool forceHomogeneous = false);
 
+  virtual void setBottomSolver(int l_max, int l_base);
+
   void setCycleType( OLD_FASMG_type a_type )
   {
     m_type = a_type;
@@ -66,7 +68,8 @@ private:
   
   virtual void VCycle(Vector<T*>& a_phi,
                       const Vector<T*>& a_rhs,
-                      int l, int l_max, int l_base);
+                      int l, int l_max, int l_base,
+                      int a_AMRFASMGiter);
 
   virtual void init(const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                     int l_max, int l_base);
@@ -120,7 +123,6 @@ void AMRFASMultiGrid<T>::define( const ProblemDomain& a_coarseDomain,
                                  int a_maxAMRLevels )
 {
   CH_TIME("AMRFASMultiGrid::define");
-
   AMRMultiGrid<T>::define( a_coarseDomain,a_factory,a_bottomSolver,a_maxAMRLevels);
 
   m_HOCopier.resize( a_maxAMRLevels );
@@ -187,6 +189,25 @@ void AMRFASMultiGrid<T>::init( const Vector<T*>& a_phi, const Vector<T*>& a_rhs,
     }
 }
 
+template <class T>
+void AMRFASMultiGrid<T>::setBottomSolver(int l_max, int l_base)
+{
+  
+  for (int ilev = l_base; ilev <= l_max; ilev++)
+    {
+      // only do this if we haven't already set these
+      if (!this->m_solverParamsSet)
+        {
+          this->m_mg[ilev]->m_pre = this->m_pre;
+          this->m_mg[ilev]->m_post = this->m_post;
+          this->m_mg[ilev]->m_bottom = this->m_bottom;
+        }
+      this->m_mg[ilev]->m_bottomSolver = &this->m_nosolve;
+    }
+
+  this->m_mg[l_base]->setBottomSolverFAS(this->m_bottomSolver);
+}
+
 ////////////////////////////////////////////////////////////////////////
 // AMRFASMultiGrid<T>::clear_private
 ////////////////////////////////////////////////////////////////////////
@@ -225,36 +246,37 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
         this->m_op[ilev]->setToZero(*(a_phi[ilev]));
       }
 
-  Real initial_rnorm = 0;
+  Real m_initial_rnorm = 0;
   if ( !m_avoid_norms )
     {
       CH_TIME("Initial AMR Residual");
-      initial_rnorm = this->computeAMRResidual( a_phi, a_rhs, l_max, l_base );
+      m_initial_rnorm = this->computeAMRResidual( a_phi, a_rhs, l_max, l_base );
     }
 
   if (this->m_convergenceMetric != 0.)
     {
-      initial_rnorm = this->m_convergenceMetric;
+      m_initial_rnorm = this->m_convergenceMetric;
     }
 
   // set bottom solver convergence norm and solver tolerance
-  this->m_bottomSolver->setConvergenceMetrics(initial_rnorm, this->m_bottomSolverEpsCushion*this->m_eps);
+  this->m_bottomSolver->setConvergenceMetrics(m_initial_rnorm, this->m_bottomSolverEpsCushion*this->m_eps);
 
-  Real rnorm = initial_rnorm;
-  Real norm_last = 2*initial_rnorm;
+  Real rnorm = m_initial_rnorm;
+  Real norm_last = 2*m_initial_rnorm;
 
   int iter=0;
   if (this->m_verbosity >= 2 && !m_avoid_norms )
     {
     // indentation in the output is to ensure that the :: lines up with the output from AMRMultigrid
-      pout() << " AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm << std::endl;
+      pout() << "\n AMRFASMultiGrid:: (first) iteration = " << iter << ", residual norm = " << rnorm << std::endl;
     }
 
   bool goNorm = rnorm > this->m_normThresh || m_avoid_norms;       //iterate if norm is not small enough
-  bool goRedu = rnorm > this->m_eps*initial_rnorm || m_avoid_norms;//iterate if initial norm is not reduced enough
+  bool goRedu = rnorm > this->m_eps*m_initial_rnorm || m_avoid_norms;//iterate if initial norm is not reduced enough
   bool goIter = iter < this->m_iterMax;                            //iterate if iter < max iteration count
   bool goHang = iter < this->m_imin || rnorm <(1-this->m_hang)*norm_last; //iterate if we didn't hang
   bool goMin = iter < this->m_iterMin ; // iterate if iter < min
+  //pout() << "norms are " << this->m_normThresh << " " << this->m_eps*m_initial_rnorm << endl;
   while (goMin || (goIter && goRedu && goHang && goNorm))
     {
       norm_last = rnorm;
@@ -269,7 +291,19 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
         {
           // Set m_residual[l_max] = a_rhs[l_max]
           this->m_op[l_max]->assignLocal( *(this->m_residual[l_max]), *(a_rhs[l_max]) );
-          VCycle( a_phi, a_rhs, l_max, l_max, l_base);
+          // Update the Bcoef on AMR grids
+          if (this->m_op[l_max]->m_update_operator) {
+              this->m_op[l_base]->UpdateOperator(*(a_phi[l_base]),  nullptr, l_base, iter, false); 
+              for (int kk = l_base+1; kk < l_max+1; kk++) {
+                  this->m_op[kk]->UpdateOperator(*(a_phi[kk]), a_phi[kk-1], kk, iter, false);
+              }
+              // correction
+              //for (int kk = l_max-1; kk > l_base-1; kk--) {
+              //    pout() << "in AMRFASMultigrid AverageAMROperator " << kk << endl;
+              //    this->m_op[kk]->AverageAMROperator(*(this->m_op[l_max]), 1);
+              //}
+          }
+          VCycle( a_phi, a_rhs, l_max, l_max, l_base, iter);
         }
       else 
         {
@@ -306,7 +340,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
 
           if (this->m_verbosity >= 2)
             {
-              pout() << " AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
+              pout() << "\n AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm;
               if (rnorm > 0.0)
                 {
                   pout() << ", rate = " << norm_last/rnorm;
@@ -315,8 +349,10 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
             }
 
           goNorm = rnorm > this->m_normThresh;                        //keep iterating if norm is not small enough
-          goRedu = rnorm > this->m_eps*initial_rnorm;                 //keep iterating if initial norm is not reduced enough
+          goRedu = rnorm > this->m_eps*m_initial_rnorm;                 //keep iterating if initial norm is not reduced enough
           goHang = iter < this->m_imin || rnorm <(1-this->m_hang)*norm_last;//keep iterating if we didn't hang
+          //pout() << "goIter goRedu goHang goNorm "<< goIter << " " << goRedu << " " << goHang << " " << goNorm << endl;
+          //pout() << "goAll "<< (goIter && goRedu && goHang && goNorm) << endl;
         }
       goIter = iter < this->m_iterMax;                            //keep iterating if iter < max iteration count
       goMin = iter < this->m_iterMin ; // keep iterating if iter < min
@@ -325,7 +361,7 @@ void AMRFASMultiGrid<T>::solveNoInit( Vector<T*>& a_phi,
   this->m_exitStatus = int(!goRedu) + int(!goIter)*2 + int(!goHang)*4 + int(!goNorm)*8;
   if (this->m_verbosity >= 2 && !m_avoid_norms)
     {
-      pout() << "    AMRFASMultiGrid:: iteration = " << iter << ", residual norm = " << rnorm << std::endl;
+      pout() << "    AMRFASMultiGrid:: (last) iteration = " << iter << ", residual norm = " << rnorm << std::endl;
     }
   if (this->m_verbosity > 1)
     {
@@ -358,7 +394,7 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
 {
   // coarse grid
   this->m_op[l_base]->assignLocal( *(this->m_residual[l_base]), *(a_rhs[l_base]) );
-  this->m_mg[l_base]->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]) );
+  this->m_mg[l_base]->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]));
 
   for ( int ilev = l_base+1 ; ilev <= l_max ; ilev++ )
     {
@@ -370,7 +406,7 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
       this->m_op[ilev]->assignLocal( *(this->m_residual[ilev]), *(a_rhs[ilev]) );
       for (int i=0;i<m_numVcycles;i++)
         {
-          VCycle( a_phi, a_rhs, ilev, l_max, l_base );
+          VCycle( a_phi, a_rhs, ilev, l_max, l_base, 0 );
         }
     }
 }
@@ -384,8 +420,13 @@ void AMRFASMultiGrid<T>::FMG( Vector<T*>& a_phi,
 template<class T>
 void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
                                  const Vector<T*>& a_rhs_dummy,
-                                 int ilev, int l_max, int l_base )
+                                 int ilev, int l_max, int l_base,
+                                 int iter )
 {
+  if (this->m_verbosity > 4 ) {
+      pout() << "AMRFASMultiGrid<T>::VCycle (ilev, lmax, lbase = " << ilev << " " << l_max << " " << l_base <<")" << endl; 
+  }
+
   if (ilev == l_base)
     {
       CH_TIME("AMRFASMultiGrid::VCycle:coarse_grid_solver");
@@ -408,7 +449,7 @@ void AMRFASMultiGrid<T>::VCycle( Vector<T*>& a_phi,
 
       // This gives us back the full solution (NOT a correction)
       // m_residual[l_base] is the full FAS right hand side (with tau correction)
-      fasMg->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]), phiCoarsePtr);
+      fasMg->oneCycle( *(a_phi[l_base]), *(this->m_residual[l_base]), phiCoarsePtr, iter);
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(a_phi[ilev],"zh_coarsest_phi_1.hdf5");
@@ -419,29 +460,29 @@ this->m_op[ilev]->write(a_phi[ilev],"zh_coarsest_phi_1.hdf5");
       //Note: this else clause is currently untested
       //============= Downsweep ========================
 
-    T* rhs = NULL;
+      T* rhs = NULL;
 
-    // on the finest level, the rhs is the full rhs
-    // on coarser levels, it is whatever we calculate and put in m_residual
-    // need to be careful about this, as the fine level m_residual get's overwritten
-    // whenever we compute the AMR residual (e.g. at the end of each V-cycle)
-    if (ilev == l_max)
-    {
-      rhs = a_rhs_dummy[ilev];
-    }
-    else
-    {
-      rhs = this->m_residual[ilev];
-    }
+      // on the finest level, the rhs is the full rhs
+      // on coarser levels, it is whatever we calculate and put in m_residual
+      // need to be careful about this, as the fine level m_residual get's overwritten
+      // whenever we compute the AMR residual (e.g. at the end of each V-cycle)
+      if (ilev == l_max)
+      {
+        rhs = a_rhs_dummy[ilev];
+      }
+      else
+      {
+        rhs = this->m_residual[ilev];
+      }
 
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(this->m_residual[ilev],"za_fine_res_0.hdf5");
 this->m_op[ilev]->write(a_phi[ilev],"zb_fine_phi_0.hdf5");
 #endif
-                // Replacing relax with relaxNF
- //     this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_pre );
-                this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre );
+      // Replacing relax with relaxNF
+      //     this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_pre );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]), (a_phi[ilev-1]), *rhs, this->m_pre, iter, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(this->m_residual[ilev],"za_fine_res_1.hdf5");
@@ -451,11 +492,11 @@ this->m_op[ilev]->write(this->m_correction[ilev],"zz_fine_res_0.hdf5");
 #endif
 
 
-     // Compute residual on next coarser level
-     //  for the valid region NOT covered by this level.
-     // includes reflux corrections
-    // do this before we fill a_phi[ilev-1] with junk
-     this->computeAMRResidualLevel(this->m_residual,
+      // Compute residual on next coarser level
+      //  for the valid region NOT covered by this level.
+      // includes reflux corrections
+      // do this before we fill a_phi[ilev-1] with junk
+      this->computeAMRResidualLevel(this->m_residual,
                                    a_phi,
                                    a_rhs_dummy,
                                    l_max, l_base, ilev-1,
@@ -463,7 +504,7 @@ this->m_op[ilev]->write(this->m_correction[ilev],"zz_fine_res_0.hdf5");
 
 
       // Compute the restriction of the solution to the coarser level phiC -- R(u_f) 
-     // Need this so that later we can compute L_c(R(u_f))
+      // Need this so that later we can compute L_c(R(u_f))
       // This just restricts a_phi[ilev] to m_resC[ilev] (due to the skip residuals flag)
       this->m_op[ilev]->AMRRestrictS(*(this->m_resC[ilev]),      // output
                                      *(a_phi[ilev]),             // input
@@ -477,12 +518,13 @@ this->m_op[ilev]->write(a_phi[ilev],"zb_fine_phi_2.hdf5");
 this->m_op[ilev-1]->write(this->m_resC[ilev],"zb_coarse_phi_1.hdf5");
 #endif
       // Overwrite R(u_f) on the valid region of the next coarser level a_phi[ilev-1]
-      //this->m_op[ilev-1]->assignCopier( *(a_phi[ilev-1]), *(m_phiC[ilev]), m_phiCopier[ilev] );
+      // this->m_op[ilev-1]->assignCopier( *(a_phi[ilev-1]), *(m_phiC[ilev]), m_phiCopier[ilev] );
+      // TRY
       this->m_resC[ilev]->copyTo(this->m_resC[ilev]->interval(), *(a_phi[ilev-1]), a_phi[ilev-1]->interval(), this->m_resCopier[ilev]);
 
 
       // Compute the restriction of the _residual_ to the coarser level
-      //  for the valid region covered by this level
+      // for the valid region covered by this level
       // resC -- R(f - L_f(u_f))
       this->m_op[ilev]->AMRRestrictS(*(this->m_resC[ilev]),      // output
                                      *rhs,  // const input
@@ -498,8 +540,8 @@ this->m_op[ilev]->write(this->m_residual[ilev],"za_fine_res_2.hdf5");
 #endif
 
       // Overwrite residual on the valid region of the next coarser level
-      //  with coarsened residual from this level
-      //this->m_op[ilev-1]->assignCopier( *(this->m_residual[ilev-1]), *(this->m_resC[ilev]), this->m_resCopier[ilev]);
+      // with coarsened residual from this level
+      // this->m_op[ilev-1]->assignCopier( *(this->m_residual[ilev-1]), *(this->m_resC[ilev]), this->m_resCopier[ilev]);
       this->m_resC[ilev]->copyTo(this->m_resC[ilev]->interval(), *(this->m_residual[ilev-1]), this->m_residual[ilev-1]->interval(), this->m_resCopier[ilev] );
 
 #ifdef FAS_PRINT
@@ -507,10 +549,10 @@ this->m_op[ilev-1]->write(this->m_residual[ilev-1],"zf_coarse_res_1.hdf5");
 #endif
 
       // Compute the tau correction on the covered region, L_c (R(u_f)), and put it in m_correction[ilev-1]
-       // Do not pass in fine level here - we've already done refluxing
-//      this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), *(a_phi[ilev]), *(a_phi[ilev-1]), true, this->m_op[ilev]);
+      // Do not pass in fine level here - we've already done refluxing
+      // this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), *(a_phi[ilev]), *(a_phi[ilev-1]), true, this->m_op[ilev]);
       T undefined;
-      this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), undefined, *(a_phi[ilev-1]), true, this->m_op[ilev]);
+      this->m_op[ilev-1]->AMROperatorNC( *(this->m_correction[ilev-1]), undefined, *(a_phi[ilev-1]), false, this->m_op[ilev]);
 
 #ifdef FAS_PRINT
 this->m_op[ilev-1]->write(this->m_correction[ilev-1],"zf_coarse_Lu.hdf5");
@@ -532,7 +574,7 @@ this->m_op[ilev-1]->write(this->m_residual[ilev-1],"zf_coarse_res_3.hdf5");
         //============finish Compute residual for the next coarser level======
         for (int img = 0; img < this->m_numMG; img++)
           {
-            VCycle( a_phi, a_rhs_dummy, ilev-1, l_max, l_base );
+            VCycle( a_phi, a_rhs_dummy, ilev-1, l_max, l_base, iter );
           }
 
 #ifdef FAS_PRINT
@@ -552,15 +594,16 @@ this->m_op[ilev-1]->write(this->m_correction[ilev-1],"zz_coarse_res.hdf5");
       //================= Upsweep ======================
       // increment the correction with coarser version
 
-// There's a bug with the copiers and AMRProlongS_2, so doing this the old way for now
-//      this->m_op[ilev]->AMRProlongS_2( *(a_phi[ilev]), *(a_phi[ilev-1]),
-//                                       *(this->m_resC[ilev]), this->m_HOCopier[ilev],
-//                                       this->m_HOCornerCopier[ilev], this->m_op[ilev-1] );
+      // There's a bug with the copiers and AMRProlongS_2, so doing this the old way for now
+      //      this->m_op[ilev]->AMRProlongS_2( *(a_phi[ilev]), *(a_phi[ilev-1]),
+      //                                       *(this->m_resC[ilev]), this->m_HOCopier[ilev],
+      //                                       this->m_HOCornerCopier[ilev], this->m_op[ilev-1] );
 
 
-      this->m_op[ilev]->AMRProlongS( *(a_phi[ilev]), *(this->m_correction[ilev-1]),
-                                            *(this->m_resC[ilev]),
-                                            this->m_reverseCopier[ilev]  );
+      this->m_op[ilev]->AMRProlongS( *(a_phi[ilev]), 
+                                     *(this->m_correction[ilev-1]),
+                                     *(this->m_resC[ilev]),
+                                       this->m_reverseCopier[ilev]  );
 
 
 #ifdef FAS_PRINT 
@@ -568,9 +611,9 @@ this->m_op[ilev]->write(a_phi[ilev],"zl_fine_phi_1.hdf5");
 this->m_op[ilev]->residual( *(this->m_correction[ilev]),  *a_phi[ilev], *(this->m_residual[ilev]), false);
 this->m_op[ilev]->write(this->m_correction[ilev],"zz_fine_res_1.hdf5");
 #endif
-                // Replacing relax with relaxNF
-//      this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_post );
-                this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post );
+      // Replacing relax with relaxNF
+      // this->m_op[ilev]->relax( *(a_phi[ilev]), *(this->m_residual[ilev]), this->m_post );
+      this->m_op[ilev]->relaxNF( *(a_phi[ilev]),  (a_phi[ilev-1]), *rhs, this->m_post, iter, -ilev );
 
 #ifdef FAS_PRINT
 this->m_op[ilev]->write(a_phi[ilev],"zl_fine_phi_2.hdf5");

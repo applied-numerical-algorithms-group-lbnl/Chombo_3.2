@@ -1,0 +1,41 @@
+
+C      _______              __
+C     / ___/ /  ___  __ _  / /  ___
+C    / /__/ _ \/ _ \/  V \/ _ \/ _ \
+C    \___/_//_/\___/_/_/_/_.__/\___/
+C    Please refer to Copyright.txt, in Chombo's root directory.
+
+#include "CONSTANTS.H"
+
+C     --------------------------------------------------------------
+
+C     -----------------------------------------------------------------
+C     subroutine COMPUTENONLINEARTERMS
+C     computes the NL and dNL pieces
+C
+C     INPUTS/OUTPUTS:
+C     phi       =>  phi
+C     gamma     =>  parameter for NL piece
+C     NL        =>  NL piece
+C     dNL       =>  derivative of NL piece
+C     ------------------------------------------------------------------
+      subroutine COMPUTENONLINEARTERMS(
+     &     CHF_CONST_FRA[phi],
+     &     CHF_CONST_REAL[gamma],
+     &     CHF_BOX[region],
+     &     CHF_CONST_FRA[nlfunc],
+     &     CHF_CONST_FRA[dnlfunc]) 
+
+      integer CHF_DDECL[i;j;k]
+
+      CHF_MULTIDO[region; i; j; k]
+
+        nlfunc(CHF_IX[i;j;k],0) = gamma * phi(CHF_IX[i;j  ;k  ],0) * exp(phi(CHF_IX[i;j  ;k  ],0) )
+
+        dnlfunc(CHF_IX[i;j;k],0) = gamma * (1 + phi(CHF_IX[i;j  ;k  ],0)) * exp(phi(CHF_IX[i;j  ;k  ],0) )
+
+       CHF_ENDDO
+
+      return
+
+      end

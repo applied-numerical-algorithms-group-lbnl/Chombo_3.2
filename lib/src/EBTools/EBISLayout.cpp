@@ -49,12 +49,10 @@ EBISLayout::define(const ProblemDomain& a_domain,
                    const DisjointBoxLayout& a_grids,
                    const int& a_nghost,
                    const LevelData<EBGraph>& a_graph,
-                   const LevelData<EBData> & a_data,
-                   const Real& a_dx,
-                   bool a_hasMoments)
+                   const LevelData<EBData> & a_data)
 {
   m_nghost = a_nghost;
-  m_implem->define(a_domain, a_grids, a_nghost, a_graph, a_data, a_dx, a_hasMoments);
+  m_implem->define(a_domain, a_grids, a_nghost, a_graph, a_data);
 }
 /****************/
 void
@@ -62,13 +60,11 @@ EBISLayoutImplem::define(const ProblemDomain& a_domain,
                          const DisjointBoxLayout& a_grids,
                          const int& a_nghost,
                          const LevelData<EBGraph>& a_graph,
-                         const LevelData<EBData> & a_data,
-                         const Real& a_dx,
-                         bool a_hasMoments)
+                         const LevelData<EBData> & a_data)
 {
   CH_TIME("EBISLayoutImplem::define");
 #ifdef CH_MPI
-  MPI_Barrier(Chombo_MPI::comm);
+    MPI_Barrier(Chombo_MPI::comm);
 #endif
   m_domain = a_domain;
   m_nghost = a_nghost;
@@ -85,10 +81,10 @@ EBISLayoutImplem::define(const ProblemDomain& a_domain,
   m_blGhostDom &= m_domain.domainBox();
   m_blGhostDom.close();
   if (s_verbose)
-  {
-    pout() << "in ebislayoutimplem::define" << endl;
-    pout() << "input ghost = " << a_nghost  << ", input grids = " << a_grids << endl;
-  }
+    {
+      pout() << "in ebislayoutimplem::define" << endl;
+      pout() << "input ghost = " << a_nghost  << ", input grids = " << a_grids << endl;
+    }
 
   EBGraphFactory graphFact(m_domain);
   //make graph ghost one bigger so we can define the data
@@ -100,14 +96,13 @@ EBISLayoutImplem::define(const ProblemDomain& a_domain,
     CH_TIME("LocalGraphDefine");
     localGraph.define(a_grids, 1, ivghostgraph, graphFact);
   }
-  // pout() << "ebisl: copying the graph" << endl;
   a_graph.copyTo(interv, localGraph, interv);
 
   if (s_verbose)
-  {
-    pout() << "ebislayoutimplem::define just copied graph " << endl;
-    BaseIVFAB<VolData>::setVerbose(true);
-  }
+    {
+      pout() << "ebislayoutimplem::define just copied graph " << endl;
+      BaseIVFAB<VolData>::setVerbose(true);
+    }
   EBDataFactory dataFact;
   LevelData<EBData> localData;
   {
@@ -116,35 +111,30 @@ EBISLayoutImplem::define(const ProblemDomain& a_domain,
   }
   {
     CH_TIME("EBDataCreate");
-    for (DataIterator dit= a_grids.dataIterator(); dit.ok(); ++dit)
+  for (DataIterator dit= a_grids.dataIterator(); dit.ok(); ++dit)
     {
       Box localBox = grow(a_grids.get(dit()), a_nghost);
       localBox &= m_domain;
-//      localData[dit()].defineVoFData(localGraph[dit()], localBox);
-//      localData[dit()].defineFaceData(localGraph[dit()],localBox);
-      localData[dit()].define(localGraph[dit()],localBox, a_dx, a_hasMoments);
-
+      localData[dit()].defineVoFData(localGraph[dit()], localBox);
+      localData[dit()].defineFaceData(localGraph[dit()],localBox);
     }
-    {
-      CH_TIME("ebdata copyto");
-//      pout() << "ebisl: copying the data" << endl;
-      a_data.copyTo(interv, localData, interv);
-//      barrier();
-    }
+  {
+    CH_TIME("ebdata copyto");
+  a_data.copyTo(interv, localData, interv);
+  }
   }
 
   if (s_verbose)
-  {
-    pout() << "EBISLayoutImplem::define just copied data " << endl;
-    BaseIVFAB<VolData>::setVerbose(false);
-  }
+    {
+      pout() << "EBISLayoutImplem::define just copied data " << endl;
+      BaseIVFAB<VolData>::setVerbose(false);
+    }
   {
     CH_TIME("EBISBoxesDefine");
-    //define the layouts data with the ghosted layout.  this includes
-    //the problem domain stuff
-//    pout() << "ebisl: weird final loop" << endl;
-    m_ebisBoxes.define(m_blGhostDom);
-    for (DataIterator dit= a_grids.dataIterator(); dit.ok(); ++dit)
+  //define the layouts data with the ghosted layout.  this includes
+  //the problem domain stuff
+  m_ebisBoxes.define(m_blGhostDom);
+  for (DataIterator dit= a_grids.dataIterator(); dit.ok(); ++dit)
     {
       const EBGraph& graphlocal = localGraph[dit()];
       Box graphregion=  graphlocal.getRegion();
@@ -152,7 +142,6 @@ EBISLayoutImplem::define(const ProblemDomain& a_domain,
     }
   }
   m_defined = true;
-//  pout() << "ebisl: leaving" << endl;
 }
 
 bool EBISLayout::isDefined() const

@@ -410,6 +410,8 @@ public:
   */
   bool coarsenable(int refRatio) const;
 
+  bool coarsenable(IntVect refRatio) const;
+
   ///
   /**
      Coarsen a BoxLayout:
@@ -476,11 +478,15 @@ public:
    */
   void coarsen(int a_ref);
 
+  void coarsen(IntVect a_ref);
+
   ///
   /**
      refine each box by a_ref
    */
   void refine(int a_ref);
+
+  void refine(IntVect a_ref);
 
   ///
   /**
@@ -678,6 +684,7 @@ void refine_bl(BoxLayout& output, const BoxLayout& input, int refinement)
 }
 
 void mortonOrdering(Vector<Box>& a_boxes);
+void serialMortonOrdering(Vector<Box>& a_boxes);
 
 //========================================================
 

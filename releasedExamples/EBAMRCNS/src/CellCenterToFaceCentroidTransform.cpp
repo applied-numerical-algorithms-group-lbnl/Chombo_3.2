@@ -20,7 +20,6 @@
 #include "NeumannConductivityDomainBC.H"
 #include "RegTransformF_F.H"
 #include "CellCenterToFaceCentroidTransform.H"
-#include "UsingNamespace.H"
 /////
 void
 CellCenterToFaceCentroidTransform::

@@ -228,9 +228,6 @@ private:
   ///
   LevelData<EBData>  m_data;
 
-  ///whether this has higher order moment info
-  bool m_hasMoments;
-
   Real m_tolerance; // used in Multifluid face matching algorithm.
 
   //mutable std::map<int, dmap> m_cache;
@@ -250,8 +247,7 @@ private:
                      const DisjointBoxLayout        &     a_grids,
                      const ProblemDomain            &     a_domain,
                      const RealVect                 &     a_origin,
-                     const Real                     &     a_dx,
-                     bool                                 a_hasMoments);
+                     const Real                     &     a_dx);
 
   //make grids for this level.
   static void makeBoxes(Vector<Box>&                a_boxes,
@@ -261,7 +257,6 @@ private:
                         const GeometryService&      a_geoserver,
                         const RealVect&             a_origin,
                         const Real&                 a_dx,
-                        bool                        a_hasMoments,
                         const int                   a_ncellmax);
 
   static 
@@ -272,7 +267,6 @@ private:
                  const GeometryService&      a_geoserver,
                  const RealVect&             a_origin,
                  const Real&                 a_dx,
-                 bool                        a_hasMoments,
                  const int                   a_ncellmax);
 
   static void makeBoxes(std::list<Box>&        a_boxes,
@@ -281,7 +275,6 @@ private:
                         const GeometryService& a_geoserver,
                         const RealVect&        a_origin,
                         const Real&            a_dx,
-                        bool                        a_hasMoments,
                         const int              a_ncellmax);
 
   //these are disallowed

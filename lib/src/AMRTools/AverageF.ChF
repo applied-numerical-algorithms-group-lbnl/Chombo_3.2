@@ -161,6 +161,47 @@ c     (dfm 5/25/08)
       return
       end
 
+      subroutine averageani(
+     &     CHF_FRA[coarse],
+     &     CHF_CONST_FRA[fine],
+     &     CHF_BOX[box],
+     &     CHF_CONST_INTVECT[refRatio],
+     &     CHF_BOX[bref])
+
+      integer var, idir
+      integer CHF_AUTODECL[ic]
+      integer CHF_AUTODECL[ip]
+      integer CHF_AUTODECL[ii]
+      real_t refScale,coarseSum,denom
+
+c     bref is a box that will go from (0,0,0) to (refRatio(0)-1,refRatio(1)-1,refRatio(2)-1)
+
+      denom = 1.0
+      do idir = 0, CH_SPACEDIM-1
+          denom = denom*refRatio(idir)
+      enddo
+      refScale = one / denom
+
+      do var = 0, CHF_NCOMP[coarse] - 1
+          CHF_AUTOMULTIDO[box;ic]
+            CHF_DTERM[
+            ip0 = ic0*refRatio(0);
+            ip1 = ic1*refRatio(1);
+            ip2 = ic2*refRatio(2)]
+
+            coarseSum = 0
+
+            CHF_AUTOMULTIDO[ bref; ii ]
+              coarseSum = coarseSum + fine( CHF_OFFSETIX[ip;+ii],var)
+            CHF_ENDDO
+
+            coarse(CHF_AUTOIX[ic],var) = coarseSum * refScale
+          CHF_ENDDO
+      enddo
+
+      return
+      end
+
 
       subroutine averageharmonic(
      &     CHF_FRA[coarse],

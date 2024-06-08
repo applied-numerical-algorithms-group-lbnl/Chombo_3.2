@@ -52,6 +52,8 @@ void init(string&         a_exactRoot,
           bool&           a_doPlots,
           bool&           a_isTimeDep,
           bool&           a_isSameSize,
+          bool&           a_isAniExact,
+          bool&           a_isAniMesh,
           Real&           a_bogusValue,
           bool&           a_computeRelativeError,
           bool&           a_removeMean,
@@ -75,6 +77,20 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
                      bool                                  a_HOaverage,
                      bool                                  a_computeRelativeError);
 
+void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
+                     const Vector<string>&                 a_errorVars,
+                     const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                     const Vector<string>&                 a_computedVars,
+                     const Vector<DisjointBoxLayout>&      a_computedGrids,
+                     const RealVect                        a_computedDx,
+                     const Vector<IntVect>&                a_computedRefRatio,
+                     const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                     const Vector<string>&                 a_exactVars,
+                     const RealVect                        a_exactDx,
+                     Real                                  a_bogus_value,
+                     bool                                  a_HOaverage,
+                     bool                                  a_computeRelativeError);
+
 void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
                           const Vector<string>&                 a_errorVars,
                           const Vector<LevelData<FArrayBox>* >& a_computedSoln,
@@ -82,6 +98,19 @@ void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
                           const Vector<DisjointBoxLayout>&      a_computedGrids,
                           const Real                            a_dx,
                           const Vector<int>&                    a_refRatio,
+                          const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                          const Vector<string>&                 a_exactVars,
+                          Real                                  a_bogus_value,
+                          bool                                  a_computeRelativeError,
+                          bool                                  a_doGhostCells=false);
+
+void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
+                          const Vector<string>&                 a_errorVars,
+                          const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                          const Vector<string>&                 a_computedVars,
+                          const Vector<DisjointBoxLayout>&      a_computedGrids,
+                          const RealVect                        a_dx,
+                          const Vector<IntVect>&                a_refRatio,
                           const Vector<LevelData<FArrayBox>* >& a_exactSoln,
                           const Vector<string>&                 a_exactVars,
                           Real                                  a_bogus_value,
@@ -132,6 +161,8 @@ int main(int argc, char* argv[])
   pout().precision(4);
 
   // set defaults
+  bool isAniExact = false;
+  bool isAniMesh = false;
   bool isSameSize = false;
   bool doGhostCells = false;
   bool doPlots = true;
@@ -154,11 +185,10 @@ int main(int argc, char* argv[])
 
   init(exactRoot, computedRoot, errorRoot, intFieldSize,
        numCrseStart, errorVars, numCrseFinish, crseStep,
-       crseMult, doPlots, isTimeDep, isSameSize, bogusValue,
+       crseMult, doPlots, isTimeDep, isSameSize, isAniExact, isAniMesh, bogusValue,
        computeRelativeError, removeMean, divideByDt, doGhostCells, 
        useUnitDomain, HOaverage,verbose);
        
-
 
   int nStep, exactStep;
 
@@ -213,7 +243,9 @@ int main(int argc, char* argv[])
     Vector<DisjointBoxLayout> exactGrids;
     Box exactDomain;
     Real exactDx, exactDt, exactTime;
+    RealVect exactDxVect;
     Vector<int> exactRefRatio;
+    Vector<IntVect> exactRefRatioVect;
     int exactNumLevels;
     IntVect ghostVect = IntVect::Unit;
     string exactFileName(exactFile.str());
@@ -224,21 +256,44 @@ int main(int argc, char* argv[])
       pout() << "read exact solution..." << endl;
     }
 
-    ReadAMRHierarchyHDF5(exactFileName,
-                         exactGrids,
-                         exactSoln,
-                         exactVars,
-                         exactDomain,
-                         exactDx,
-                         exactDt,
-                         exactTime,
-                         exactRefRatio,
-                         exactNumLevels);
-
-    if (verbose)
-    {
-      pout () << "done reading exact soln" << endl;
+    if (isAniExact) {
+        ReadAnisotropicAMRHierarchyHDF5(exactFileName,
+                                        exactGrids,
+                                        exactSoln,
+                                        exactVars,
+                                        exactDomain,
+                                        exactDxVect,
+                                        exactDt,
+                                        exactTime,
+                                        exactRefRatioVect,
+                                        exactNumLevels);
+        if (verbose)
+        {
+          pout () << "done reading exact soln "<< exactDxVect[0] << " " << exactDxVect[1] << endl;
+        }
+    } else {
+        ReadAMRHierarchyHDF5(exactFileName,
+                             exactGrids,
+                             exactSoln,
+                             exactVars,
+                             exactDomain,
+                             exactDx,
+                             exactDt,
+                             exactTime,
+                             exactRefRatio,
+                             exactNumLevels);
+        // In case !isAniExact  but isAniMesh
+        exactDxVect[0] = exactDx; 
+        exactDxVect[1] = exactDx; 
+        if (CH_SPACEDIM > 2) {
+            exactDxVect[2] = exactDx; 
+        }
+        if (verbose)
+        {
+          pout () << "done reading exact soln "<< exactDx << endl;
+        }
     }
+
 
     // we assume that exact soln is single-grid if we're doing averaging
     if (!isSameSize)
@@ -251,7 +306,9 @@ int main(int argc, char* argv[])
     Vector<DisjointBoxLayout> computedGrids;
     Box computedDomain;
     Real computedDx, computedDt, computedTime;
+    RealVect computedDxVect;
     Vector<int> computedRefRatio;
+    Vector<IntVect> computedRefRatioVect;
     int computedNumLevels;
     string computedFileName(computedFile.str());
 
@@ -261,17 +318,30 @@ int main(int argc, char* argv[])
     {
       pout() << "read computed solution..." << endl;
     }
-
-    ReadAMRHierarchyHDF5(computedFileName,
-                         computedGrids,
-                         computedSoln,
-                         computedVars,
-                         computedDomain,
-                         computedDx,
-                         computedDt,
-                         computedTime,
-                         computedRefRatio,
-                         computedNumLevels);
+    // if isAniExact then you should be isAniMesh
+    if (isAniMesh || isAniExact) {
+        ReadAnisotropicAMRHierarchyHDF5(computedFileName,
+                                        computedGrids,
+                                        computedSoln,
+                                        computedVars,
+                                        computedDomain,
+                                        computedDxVect,
+                                        computedDt,
+                                        computedTime,
+                                        computedRefRatioVect,
+                                        computedNumLevels);
+    } else {
+        ReadAMRHierarchyHDF5(computedFileName,
+                             computedGrids,
+                             computedSoln,
+                             computedVars,
+                             computedDomain,
+                             computedDx,
+                             computedDt,
+                             computedTime,
+                             computedRefRatio,
+                             computedNumLevels);
+    }
 
     if (verbose)
     {
@@ -348,7 +418,6 @@ int main(int argc, char* argv[])
         } // end loop over errorVars
     } // end if errorVars was specified in the inputs file
 
-
     Vector<string> errorNames;
     errorNames.resize(numError);
 
@@ -389,27 +458,45 @@ int main(int argc, char* argv[])
           aliasLevelData(*(weighting[level]), computedSoln[level], weightIntvl);
         }
     }
+      pout() << " issamesize " << isSameSize  << endl;
 
     if (!isSameSize)
     {
+      // Here if isAniMesh
       if (verbose)
       {
         pout () << "compute AMR error..." << endl;
       }
 
-      computeAMRError(error,
-                      errorVars,
-                      computedSoln,
-                      computedVars,
-                      computedGrids,
-                      computedDx,
-                      computedRefRatio,
-                      exactSoln,
-                      exactVars,
-                      exactDx,
-                      bogusValue,
-                      HOaverage,
-                      computeRelativeError);
+      if (isAniMesh || isAniExact) {
+          computeAMRError(error,
+                          errorVars,
+                          computedSoln,
+                          computedVars,
+                          computedGrids,
+                          computedDxVect,
+                          computedRefRatioVect,
+                          exactSoln,
+                          exactVars,
+                          exactDxVect,
+                          bogusValue,
+                          HOaverage,
+                          computeRelativeError);
+      } else {
+          computeAMRError(error,
+                          errorVars,
+                          computedSoln,
+                          computedVars,
+                          computedGrids,
+                          computedDx,
+                          computedRefRatio,
+                          exactSoln,
+                          exactVars,
+                          exactDx,
+                          bogusValue,
+                          HOaverage,
+                          computeRelativeError);
+      }
 
       if (verbose)
       {
@@ -418,31 +505,58 @@ int main(int argc, char* argv[])
     }
     else
     {
-      // first make sure refRatios are the same
-      for (int lev = 0; lev < computedRefRatio.size() - 1; lev++)
-      {
-        CH_assert(computedRefRatio[lev] == exactRefRatio[lev]);
-      }
-
-      CH_assert(exactDx == computedDx);
-
       if (verbose)
       {
-        pout () << "compute sameSize error..." << endl;
+        pout () << "compute sameSize error ..." << endl;
       }
 
-      computeSameSizeError(error,
-                           errorVars,
-                           computedSoln,
-                           computedVars,
-                           computedGrids,
-                           computedDx,
-                           computedRefRatio,
-                           exactSoln,
-                           exactVars,
-                           bogusValue,
-                           computeRelativeError,
-                           doGhostCells);
+      if (isAniMesh || isAniExact) {
+          // first make sure refRatios are the same
+          for (int lev = 0; lev < computedRefRatioVect.size() - 1; lev++) {
+              for (int dir = 0; dir < SpaceDim; dir++) {
+                  CH_assert(computedRefRatioVect[lev][dir] == exactRefRatioVect[lev][dir]);
+              }
+          }
+
+          for (int dir = 0; dir < SpaceDim; dir++) {
+              CH_assert(exactDxVect == computedDxVect);
+          }
+
+          computeSameSizeError(error,
+                               errorVars,
+                               computedSoln,
+                               computedVars,
+                               computedGrids,
+                               computedDxVect,
+                               computedRefRatioVect,
+                               exactSoln,
+                               exactVars,
+                               bogusValue,
+                               computeRelativeError,
+                               doGhostCells);
+      } else {
+          // first make sure refRatios are the same
+          for (int lev = 0; lev < computedRefRatio.size() - 1; lev++)
+          {
+            pout()  << "HERE , computedRefRatio, exactRefRatio "<< computedRefRatio[lev] << " "<< exactRefRatio[lev] << endl;
+            CH_assert(computedRefRatio[lev] == exactRefRatio[lev]);
+          }
+
+          CH_assert(exactDx == computedDx);
+
+          computeSameSizeError(error,
+                               errorVars,
+                               computedSoln,
+                               computedVars,
+                               computedGrids,
+                               computedDx,
+                               computedRefRatio,
+                               exactSoln,
+                               exactVars,
+                               bogusValue,
+                               computeRelativeError,
+                               doGhostCells);
+      }
 
       if (verbose)
       {
@@ -468,12 +582,21 @@ int main(int argc, char* argv[])
         }
 
         Real volume;
-        mean[err] = computeSum(volume,
-                               error,
-                               computedRefRatio,
-                               computedDx,
-                               errComps,
-                               lBase);
+        if (isAniMesh) {
+            mean[err] = computeSum(volume,
+                                   error,
+                                   computedRefRatioVect,
+                                   computedDxVect,
+                                   errComps,
+                                   lBase);
+       } else {
+            mean[err] = computeSum(volume,
+                                   error,
+                                   computedRefRatio,
+                                   computedDx,
+                                   errComps,
+                                   lBase);
+       }
 
         mean[err] /= volume;
 
@@ -550,65 +673,131 @@ int main(int argc, char* argv[])
 
       int lBase = 0;
       int normType = 0;
-      Real normDx = computedDx;
+      // amf anisotropy : Do not want to open can of worms of norm yet
+      Real normDx = 0.0;
+      //if (isAniMesh) {
+      //    normDx = computedDxVect[0];
+      //    computedRefRatio.resize(computedNumLevels); 
+      //    for (int level = 0; level < exactNumLevels; level++)
+      //        computedRefRatio[level] = computedRefRatioVect[level][0];
+      //    }
+      //} else {
+          normDx = computedDx;
+      //}
       if (useUnitDomain)
         {
           normDx = 1.0/computedDomain.size(0);
         }
-      L0 = computeNorm(error,
-                       computedRefRatio,
-                       normDx,
-                       errComps,
-                       normType,
-                       lBase);
+
+      if (isAniMesh) {
+          L0 = computeNorm(error,                 // Vector<LevelData<FArrayBox>* >
+                           computedRefRatioVect,  //  Vector<IntVect>
+                           computedDxVect,        // RealVect
+                           errComps,              //Interval
+                           normType,
+                           lBase);
+      } else {
+          L0 = computeNorm(error,                // Vector<LevelData<FArrayBox>* >
+                           computedRefRatio,     // Vector<int>
+                           normDx,               // Real
+                           errComps,
+                           normType,
+                           lBase);
+      }
 
       normType = 1;
       if (weighted)
         {
-          L1 = computeNormWeighted(error,
-                                   weighting,
-                                   computedRefRatio,
-                                   normDx,
-                                   errComps,
-                                   normType,
-                                   lBase);
+          if (isAniMesh) {
+              L1 = computeNormWeighted(error,
+                                       weighting,
+                                       computedRefRatioVect,
+                                       computedDxVect,
+                                       errComps,
+                                       normType,
+                                       lBase);
+          } else {
+              L1 = computeNormWeighted(error,
+                                       weighting,
+                                       computedRefRatio,
+                                       normDx,
+                                       errComps,
+                                       normType,
+                                       lBase);
+          }
         }
       else
         {
-          L1 = computeNorm(error,
-                           computedRefRatio,
-                           normDx,
-                           errComps,
-                           normType,
-                           lBase);
+          if (isAniMesh) {
+              L1 = computeNorm(error,
+                               computedRefRatioVect,
+                               computedDxVect,
+                               errComps,
+                               normType,
+                               lBase);
+          } else {
+              L1 = computeNorm(error,
+                               computedRefRatio,
+                               normDx,
+                               errComps,
+                               normType,
+                               lBase);
+          }
         }
 
       normType = 2;
       if (weighted)
         {
-          L2 = computeNormWeighted(error,
-                                   weighting,
-                                   computedRefRatio,
-                                   normDx,
-                                   errComps,
-                                   normType,
-                                   lBase);
+          if (isAniMesh) {
+              L2 = computeNormWeighted(error,
+                                       weighting,
+                                       computedRefRatioVect,
+                                       computedDxVect,
+                                       errComps,
+                                       normType,
+                                       lBase);
+          } else {
+              L2 = computeNormWeighted(error,
+                                       weighting,
+                                       computedRefRatio,
+                                       normDx,
+                                       errComps,
+                                       normType,
+                                       lBase);
+          }
         }
       else
         {
-          L2 = computeNorm(error,
-                           computedRefRatio,
-                           normDx,
-                           errComps,
-                           normType,
-                           lBase);
+          if (isAniMesh) {
+              L2 = computeNorm(error,
+                               computedRefRatioVect,
+                               computedDxVect,
+                               errComps,
+                               normType,
+                               lBase);
+          } else {
+              L2 = computeNorm(error,
+                               computedRefRatio,
+                               normDx,
+                               errComps,
+                               normType,
+                               lBase);
+          }
         }
       
-      sum = computeSum(error,
-                       computedRefRatio,
-                       normDx,
-                       errComps,
-                       lBase);
+      if (isAniMesh) {
+          sum  = computeSum(error,
+                                 computedRefRatioVect,
+                                 computedDxVect,
+                                 errComps,
+                                 lBase);
+      } else {
+          sum = computeSum(error,
+                                 computedRefRatio,
+                                 normDx,
+                                 errComps,
+                                 lBase);
+      } 
 
 
       pout() << errorNames[err] << ": "
@@ -632,16 +821,29 @@ int main(int argc, char* argv[])
         pout() << "begin writing hdf5 file..." << endl;
       }
 
-      WriteAMRHierarchyHDF5(errorFile.str(),
-                            computedGrids,
-                            error,
-                            errorNames,
-                            computedDomain,
-                            computedDx,
-                            computedDt,
-                            exactTime,
-                            computedRefRatio,
-                            computedNumLevels);
+      if (isAniMesh) {
+          WriteAnisotropicAMRHierarchyHDF5(errorFile.str(),
+                                           computedGrids,
+                                           error,
+                                           errorNames,
+                                           computedDomain,
+                                           computedDxVect,
+                                           computedDt,
+                                           exactTime,
+                                           computedRefRatioVect,
+                                           computedNumLevels);
+      } else {
+          WriteAMRHierarchyHDF5(errorFile.str(),
+                                computedGrids,
+                                error,
+                                errorNames,
+                                computedDomain,
+                                computedDx,
+                                computedDt,
+                                exactTime,
+                                computedRefRatio,
+                                computedNumLevels);
+      }
 
       if (verbose)
       {
@@ -810,6 +1012,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
        {
          nCoarsenExact = 1;
        }
+     IntVect nCoarsenExactVect = nRefExact * IntVect::Unit;
      coarsen(coarsenedFineGrids, fineGrids, nCoarsenExact);
 
      int numExact = a_exactVars.size();
@@ -864,7 +1067,7 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
                                     CHF_FRA1(fineTemp, 0),
                                     CHF_BOX(coarseBox),
                                     CHF_BOX(LapBox),
-                                    CHF_CONST_INT(nCoarsenExact),
+                                    CHF_CONST_INTVECT(nCoarsenExactVect),
                                     CHF_BOX(fineRefBox),
                                     CHF_INT(doHO),
                                     CHF_INT(doAverage));
@@ -1063,6 +1266,649 @@ void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
      }
 }
 
+// this function averages down the fine solution to the valid
+// regions of the computed solution, then subtracts ir from
+// the computed solution.  (error is exact-computed)
+void computeAMRError(Vector<LevelData<FArrayBox>* >&       a_error,
+                     const Vector<string>&                 a_errorVars,
+                     const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                     const Vector<string>&                 a_computedVars,
+                     const Vector<DisjointBoxLayout>&      a_computedGrids,
+                     const RealVect                        a_computedDx,
+                     const Vector<IntVect>&                a_computedRefRatio,
+                     const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                     const Vector<string>&                 a_exactVars,
+                     const RealVect                        a_exactDx,
+                     Real                                  a_bogus_value,
+                     bool                                  a_HOaverage,
+                     bool                                  a_computeRelativeError)
+{
+  int numLevels = a_computedSoln.size();
+
+  CH_assert(a_exactSoln.size() == 1);
+  CH_assert(a_error.size() == numLevels);
+  CH_assert(a_computedRefRatio.size() >= numLevels - 1);
+
+  // check whether input file selects "sum all variables"
+  bool sumAll = false;
+  ParmParse pp;
+  pp.query("sumAll",sumAll);
+  
+  // const DisjointBoxLayout& exactGrids = a_exactSoln[0]->getBoxes();
+
+  RealVect dxLevel = a_computedDx;
+
+  // do a bit of sleight-of-hand in the case where there are no
+  // ghost cells in the exact solution -- allocate a temporary which
+  // _has_ ghost cells, and do a copyTo
+  LevelData<FArrayBox>* exactSolnPtr = NULL;
+  bool allocatedMemory = false;
+  if (a_exactSoln[0]->ghostVect() == IntVect::Zero)
+    {
+      exactSolnPtr = new LevelData<FArrayBox>(a_exactSoln[0]->getBoxes(),
+                                              a_exactSoln[0]->nComp(),
+                                              IntVect::Unit);
+      a_exactSoln[0]->copyTo(*exactSolnPtr);
+
+      allocatedMemory = true;
+     }
+   else
+     {
+       // if there are ghost cells, we can use the exactSoln as-is
+       exactSolnPtr = a_exactSoln[0];
+     }
+   LevelData<FArrayBox>& exactSolnRef = *exactSolnPtr;
+
+   // first need to set boundary conditions on exactsoln
+   // this is for the Laplacian which is needed in AverageHO
+   DataIterator ditFine = exactSolnRef.dataIterator();
+   DomainGhostBC exactBC;
+   Interval exactComps(0, a_exactVars.size() - 1);
+   for (int dir = 0; dir < SpaceDim; dir++)
+   {
+     SideIterator sit;
+     for (sit.reset(); sit.ok(); ++sit)
+     {
+       // use HO extrapolation at physical boundaries
+       HOExtrapBC thisBC(dir, sit(), exactComps);
+       exactBC.setBoxGhostBC(thisBC);
+     }
+   }
+
+   for (ditFine.begin(); ditFine.ok(); ++ditFine)
+   {
+     FArrayBox& thisFineSoln = exactSolnRef[ditFine()];
+     const Box& fineBox = exactSolnRef.getBoxes()[ditFine()];
+     exactBC.applyInhomogeneousBCs(thisFineSoln, fineBox, a_exactDx[0]);  // let's not worry about this for now, looks like its only for HO
+   }
+   exactSolnRef.exchange(exactComps);
+
+   // outer loop is over levels
+   for (int level = 0; level < numLevels; level++)
+   {
+     LevelData<FArrayBox>& thisLevelError = *a_error[level];
+     LevelData<FArrayBox>& thisLevelComputed = *a_computedSoln[level];
+
+     // compute refinement ratio between solution at this level
+     // and exact solution
+     RealVect nRefTemp = dxLevel;
+     nRefTemp /= a_exactDx;   //  this is a_computedDx / a_exactDx
+     IntVect nRefExact;
+     nRefExact[0] = (int) nRefTemp[0];
+     nRefExact[1] = (int) nRefTemp[1];
+     if (CH_SPACEDIM > 2) {
+         nRefExact[2] = (int) nRefTemp[2];
+     }
+
+     pout() << "computeAMRError:: a_exactDx " << a_exactDx[0] << " " << a_exactDx[1];
+#if CH_SPACEDIM > 2
+     pout() << " " << a_exactDx[2] ;
+#endif
+     pout() << endl;
+     pout() << "computeAMRError:: dxLevel " << dxLevel[0] << " " << dxLevel[1];
+#if CH_SPACEDIM > 2
+     pout() << " " << dxLevel[2];
+#endif
+     pout() << endl;
+
+     for (int i=0; i<CH_SPACEDIM; i++) {
+         // this is to do rounding properly if necessary
+         if (nRefTemp[i] - nRefExact[i] > 0.5) nRefExact[i] += 1;
+         // make sure it's not zero
+         if (nRefExact[i] == 0) nRefExact[i] =1;
+     }
+
+     const DisjointBoxLayout levelGrids = a_error[level]->getBoxes();
+     const DisjointBoxLayout fineGrids = a_exactSoln[0]->getBoxes();
+     DisjointBoxLayout coarsenedFineGrids;
+
+     // petermc, 14 Jan 2014: Replace this because fineGrids might
+     // not be coarsenable by nRefExact.
+     // coarsen(coarsenedFineGrids, fineGrids, nRefExact);
+     IntVect nCoarsenExact = nRefExact;
+     while ( !fineGrids.coarsenable(nCoarsenExact) && (nCoarsenExact[0] > 0) && (nCoarsenExact[1] > 0)
+#if CH_SPACEDIM > 2
+             && (nCoarsenExact[2] > 0) 
+#endif
+     )
+       {
+         // Divide nCoarsenExact by 2 until fineGrids is coarsenable by it.
+         nCoarsenExact[0] /= 2;
+       }
+     if (nCoarsenExact[0] == 0) {
+         nCoarsenExact[0] = 1;
+     }
+     if (nCoarsenExact[1] == 0) {
+         nCoarsenExact[1] = 1;
+     }
+#if CH_SPACEDIM > 2
+     if (nCoarsenExact[2] == 0) {
+         nCoarsenExact[2] = 1;
+     }
+#endif
+     coarsen(coarsenedFineGrids, fineGrids, nCoarsenExact);
+
+     int numExact = a_exactVars.size();
+     LevelData<FArrayBox> averagedExact(coarsenedFineGrids, numExact);
+
+     Box fineRefBox(IntVect::Zero, (nCoarsenExact-1));
+
+     // average fine solution down to coarsened-fine level
+     // loop over grids and do HO averaging down
+     //DataIterator crseExactDit = coarsenedFineGrids.dataIterator();
+     for (ditFine.reset(); ditFine.ok(); ++ditFine) {
+         const Box fineBox = exactSolnRef.getBoxes()[ditFine()];
+         FArrayBox fineTemp(fineBox, 1);
+         Box coarsenedFineBox(fineBox);
+         coarsenedFineBox.coarsen(nCoarsenExact);
+         if ((a_computedDx[0] == a_exactDx[0]) && (a_computedDx[1] == a_exactDx[1])
+#if CH_SPACEDIM > 2
+         && (a_computedDx[2] == a_exactDx[2])
+#endif
+         ) {
+             // if cell sizes are the same, then copy
+             averagedExact[ditFine].copy(exactSolnRef[ditFine]);
+         } else {
+             // loop over components
+             for (int comp = 0; comp < numExact; comp++) {
+                 Box coarseBox(coarsenedFineGrids.get(ditFine()));
+                 coarseBox &= coarsenedFineBox;
+                 
+                 if (!coarseBox.isEmpty()) {
+                     // for now, this is a quick and dirty way to avoid
+                     // stepping out of bounds if there are no ghost cells.
+                     // LapBox will be the box over which we are
+                     // able to compute the Laplacian.
+                     Box LapBox = exactSolnRef[ditFine()].box();
+                     LapBox.grow(-1);
+                     LapBox &= fineBox;
+                     fineTemp.setVal(0.0);
+                     int doHO = 0;
+                     //if (a_HOaverage)
+                     //  { 
+                     //    doHO = 1;
+                     //  }
+                     
+                     // average by default
+                     int doAverage = 1;
+                     
+                     if (sumAll || sumVar(a_exactVars[comp]))
+                       {
+                         doAverage = 0;
+                       }
+                     
+                     // average or sum, based on booleans
+                     FORT_AVERAGEHO(CHF_FRA1(averagedExact[ditFine], comp),
+                                    CHF_CONST_FRA1(exactSolnRef[ditFine], comp),
+                                    CHF_FRA1(fineTemp, 0),
+                                    CHF_BOX(coarseBox),
+                                    CHF_BOX(LapBox),
+                                    CHF_CONST_INTVECT(nCoarsenExact),
+                                    CHF_BOX(fineRefBox),
+                                    CHF_INT(doHO),
+                                    CHF_INT(doAverage));
+                 } // end if crseBox not empty
+             } // end loop over comps
+         }
+     } // end loop over exact solution boxes
+     
+     IntVect nRefineComputed;
+     nRefineComputed[0] = nRefExact[0] / nCoarsenExact[0];
+     nRefineComputed[1] = nRefExact[1] / nCoarsenExact[1];
+     if (CH_SPACEDIM > 2) {
+         nRefineComputed[2] = nRefExact[2] / nCoarsenExact[2];
+     }
+     pout() << "nRefExact and nCoarsenExact ? " << nRefExact[0] << " " << nCoarsenExact[0] << endl;
+     pout() << "nRefExact and nCoarsenExact ? " << nRefExact[1] << " " << nCoarsenExact[1] << endl;
+#if CH_SPACEDIM > 2
+     pout() << "nRefExact and nCoarsenExact ? " << nRefExact[2] << " " << nCoarsenExact[2] << endl;
+#endif
+     LevelData<FArrayBox>* thisLevelComputedRefinedPtr = &thisLevelComputed;
+     LevelData<FArrayBox>* thisLevelErrorRefinedPtr = &thisLevelError;
+     if ((nRefineComputed[0] > 1) || (nRefineComputed[1] > 1)
+#if CH_SPACEDIM > 2
+         || (nRefineComputed[2] > 1)
+#endif
+     )
+       {
+         // Do piecewise constant interpolation (replication) by nRefineComputed
+         // on thisLevelComputed.
+         DisjointBoxLayout levelRefinedGrids;
+         refine(levelRefinedGrids, levelGrids, nRefineComputed);
+         int nCompComputed = thisLevelComputed.nComp();
+         IntVect ghostVectComputed ;
+         ghostVectComputed[0] = nRefineComputed[0] * thisLevelComputed.ghostVect()[0];
+         ghostVectComputed[1] = nRefineComputed[1] * thisLevelComputed.ghostVect()[1];
+         if (CH_SPACEDIM > 2) {
+             ghostVectComputed[2] = nRefineComputed[2] * thisLevelComputed.ghostVect()[2];
+         }
+         thisLevelComputedRefinedPtr =
+           new LevelData<FArrayBox>(levelRefinedGrids, nCompComputed, ghostVectComputed);
+         ProblemDomain levelDomain = levelRefinedGrids.physDomain();
+         FineInterp interpolator(levelRefinedGrids, nCompComputed, nRefineComputed,
+                                 levelDomain);
+         interpolator.pwcinterpToFine(*thisLevelComputedRefinedPtr, thisLevelComputed);
+
+         int nCompErr = thisLevelError.nComp();
+         IntVect ghostVectErr;
+         ghostVectErr[0] = nRefineComputed[0] * thisLevelError.ghostVect()[0];
+         ghostVectErr[1] = nRefineComputed[1] * thisLevelError.ghostVect()[1];
+         if (CH_SPACEDIM > 2) {
+             ghostVectErr[2] = nRefineComputed[2] * thisLevelError.ghostVect()[2];
+         }
+         thisLevelErrorRefinedPtr =
+           new LevelData<FArrayBox>(levelRefinedGrids, nCompErr, ghostVectErr);
+       }
+
+     // initialize error to 0
+     // also initialize error to a bogus value
+     DataIterator levelDit = thisLevelError.dataIterator();
+     for (levelDit.begin(); levelDit.ok(); ++levelDit)
+       {
+         (*thisLevelErrorRefinedPtr)[levelDit].setVal(a_bogus_value);
+       }
+
+     Box refComputedBox(IntVect::Zero, nRefineComputed-IntVect::Unit);
+     // loop over variables
+     for (int nErr = 0; nErr < a_errorVars.size(); nErr++)
+       {
+         string thisErrVar = a_errorVars[nErr];
+         bool done = false;
+
+         // first loop over exact variables
+         for (int exactComp = 0; exactComp < a_exactVars.size(); exactComp++)
+           {
+             string thisExactVar = a_exactVars[exactComp];
+             // check if this exact variable is "the one"
+             if ((thisExactVar == thisErrVar) || nonAverageVar(thisErrVar))
+               {
+                 int computedComp = 0;
+                 // now loop over computed variables
+                 while (!done && (computedComp < a_computedVars.size()))
+                   {
+                     if (a_computedVars[computedComp] == thisErrVar)
+                       {
+                         if (!nonAverageVar(thisErrVar))
+                           {
+                             // copy averaged exact solution -> error
+                             // and then subtract computed solution
+                             Interval exactInterval(exactComp, exactComp);
+                             Interval errorInterval(nErr, nErr);
+                             averagedExact.copyTo(exactInterval, *thisLevelErrorRefinedPtr,
+                                                  errorInterval);
+                           }
+                         
+                         DataIterator levelDit = thisLevelError.dataIterator();
+                         for (levelDit.reset(); levelDit.ok(); ++levelDit)
+                           {
+                             FArrayBox& thisComputedRefined = (*thisLevelComputedRefinedPtr)[levelDit];
+                             FArrayBox& thisErrorRefined = (*thisLevelErrorRefinedPtr)[levelDit];
+                             if (a_computeRelativeError)
+                               {
+                                 // do this a little strangely -- relative
+                                 // error is one - computed/exact.
+                                 thisErrorRefined.divide(thisComputedRefined, computedComp, nErr, 1);
+                                 thisErrorRefined.invert(-1.0, nErr, 1);
+                                 thisErrorRefined.plus(1.0, nErr, 1);
+                               }
+                             else
+                               {
+                                 thisErrorRefined.minus(thisComputedRefined, computedComp, nErr, 1);
+                               }
+                             if ((nRefineComputed[0] > 1) || (nRefineComputed[1] > 1)
+#if CH_SPACEDIM > 2
+                             || (nRefineComputed[2] > 1)
+#endif
+                             )
+                               {
+                                 FArrayBox& thisError = thisLevelError[levelDit];
+                                 Box coarseBox = thisError.box();
+                                 // Average thisErrorRefined to thisError.
+                                 int doHO = 0;
+                                 //if (a_HOaverage)
+                                 //  { 
+                                 //    doHO = 1;
+                                 //  }
+                                 //CH_assert(doHO == 0);
+
+                                 // for now, this is a quick and dirty way to avoid
+                                 // stepping out of bounds if there are no ghost cells.
+                                 // LapBox will be the box over which we are
+                                 // able to compute the Laplacian.
+                                 Box LapBox = thisErrorRefined.box();
+                                 LapBox.grow(-1);
+                                 // LapBox &= fineBox;
+                                 FArrayBox fineTemp(thisErrorRefined.box(), 1);
+                                 fineTemp.setVal(0.0);
+                                 
+                                 // average by default
+                                 int doAverage = 1;
+                                 // average or sum, based on booleans
+                                 FORT_AVERAGEHO(CHF_FRA1(thisError, nErr),
+                                                CHF_CONST_FRA1(thisErrorRefined, nErr),
+                                                CHF_FRA1(fineTemp, 0),
+                                                CHF_BOX(coarseBox),
+                                                CHF_BOX(LapBox),
+                                                CHF_CONST_INTVECT(nRefineComputed),
+                                                CHF_BOX(refComputedBox),
+                                                CHF_INT(doHO),
+                                                CHF_INT(doAverage));
+                                 
+                               }
+                           } // end loop over coarse grids
+                         
+                         done = true;
+                       } // if computedVar is a_errorVar
+                     
+                     computedComp += 1;
+                   } // end loop over a_computedVars
+                 
+                 if (!done)
+                   {
+                     pout() << "Variable " << thisErrVar  << " not found!!!" << endl;
+                     MayDay::Error();
+                   }
+               } // end if this exactVar is correct
+           } // end loop over exact variables
+       } // end loop over errors
+     
+     if ((nRefineComputed[0] > 1) || (nRefineComputed[1] > 1)
+#if CH_SPACEDIM > 2
+     || (nRefineComputed[2] > 1)
+#endif
+     )
+       {
+         delete thisLevelComputedRefinedPtr;
+         delete thisLevelErrorRefinedPtr;
+       }
+     
+     // now need to set covered regions to 0
+     if (level < numLevels - 1)
+       {
+         // will need to loop over all boxes in finer level, not just
+         // those on this processor...
+         const BoxLayout& finerGrids = a_computedSoln[level + 1]->boxLayout();
+         LayoutIterator fineLit = finerGrids.layoutIterator();
+         
+         // outer loop over this level's grids, since there are fewer of them
+         DataIterator levelDit = thisLevelError.dataIterator();
+         for (levelDit.reset(); levelDit.ok(); ++levelDit)
+           {
+             const Box& coarseBox = levelGrids[levelDit()];
+             FArrayBox& thisError = thisLevelError[levelDit()];
+             int numError = thisError.nComp();
+             
+             for (fineLit.reset(); fineLit.ok(); ++fineLit)
+               {
+                 Box fineBox(finerGrids[fineLit()]);
+                 // now coarsen box down to this level
+                 fineBox.coarsen(a_computedRefRatio[level]);
+                 // if coarsened fine box intersects error's box, set
+                 // overlap to 0
+                 fineBox &= coarseBox;
+                 if (!fineBox.isEmpty())
+                   {
+                     thisError.setVal(0.0, fineBox, 0, numError);
+                   }
+               } // end loop over finer-level grids
+           } // end loop over this-level grids
+         
+         // this is a good place to update dx as well
+         dxLevel = dxLevel / a_computedRefRatio[level];
+       } // end if there is a finer level
+     
+     thisLevelError.exchange();
+   } // end loop over levels
+   
+   // clean up if we need to
+   if (allocatedMemory)
+     {
+       delete exactSolnPtr;
+       exactSolnPtr = NULL;
+     }
+}
+
+
+// this function works on two solutions on equivalent grids.
+// It subtracts the computed solution from the exact solution
+// if a_doGhostCells == true, then does box-by-box comparison,
+// including ghost cells (boxes must be the same for each).
+// Otherwise, only does this for valid cells, but boxes don't
+// need to be the same.
+void computeSameSizeError(Vector<LevelData<FArrayBox>* >&       a_error,
+                          const Vector<string>&                 a_errorVars,
+                          const Vector<LevelData<FArrayBox>* >& a_computedSoln,
+                          const Vector<string>&                 a_computedVars,
+                          const Vector<DisjointBoxLayout>&      a_computedGrids,
+                          const RealVect                        a_dx,
+                          const Vector<IntVect>&                a_refRatio,
+                          const Vector<LevelData<FArrayBox>* >& a_exactSoln,
+                          const Vector<string>&                 a_exactVars,
+                          Real                                  a_bogus_value,
+                          bool                                  a_computeRelativeError,
+                          bool                                  a_doGhostCells)
+
+{
+  int numLevels = a_computedSoln.size();
+
+  CH_assert(a_exactSoln.size() == numLevels);
+  CH_assert(a_error.size() == numLevels);
+  CH_assert(a_refRatio.size() >= numLevels - 1);
+
+  RealVect dxLevel = a_dx;
+
+  // outer loop is over levels
+  for (int level = 0; level < numLevels; level++)
+  {
+    LevelData<FArrayBox>& thisLevelError = *a_error[level];
+    LevelData<FArrayBox>& thisLevelComputed = *a_computedSoln[level];
+    LevelData<FArrayBox>& thisLevelExact = *a_exactSoln[level];
+
+    const DisjointBoxLayout levelGrids = thisLevelComputed.getBoxes();
+    const DisjointBoxLayout exactGrids = thisLevelExact.getBoxes();
+
+    DataIterator levelDit = levelGrids.dataIterator();
+    for (levelDit.begin(); levelDit.ok(); ++levelDit)
+    {
+      // initialize error to a bogus value
+      thisLevelError[levelDit()].setVal(a_bogus_value);
+    }
+
+    // loop over variables
+    for (int nErr = 0; nErr < a_errorVars.size(); nErr++)
+    {
+      string thisErrVar = a_errorVars[nErr];
+      bool done = false;
+
+      // this is where things differ between the ghost-cell
+      // and non-ghost-cell approach.
+      if (a_doGhostCells)
+      {
+        // this is the older approach to things --
+        // do everything grid-by-grid
+
+        // first loop over exact variables
+        for (int exactComp = 0; exactComp < a_exactVars.size(); exactComp++)
+        {
+          string thisExactVar = a_exactVars[exactComp];
+          // check if this exact variable is "the one"
+          if ((thisExactVar == thisErrVar) || nonAverageVar(thisErrVar))
+          {
+            int computedComp = 0;
+
+            // now loop over computed variables
+            while (!done && (computedComp < a_computedVars.size()))
+            {
+              if (a_computedVars[computedComp] == thisErrVar)
+              {
+                // copy exact solution -> error
+                // and then subtract computed solution
+                DataIterator exactDit = thisLevelExact.dataIterator();
+                for (levelDit.reset(); levelDit.ok(); ++levelDit)
+                {
+                  FArrayBox& thisComputed = thisLevelComputed[levelDit()];
+                  FArrayBox& thisError = thisLevelError[levelDit()];
+                  const Box& thisBox = levelGrids[levelDit()];
+
+                  for (exactDit.begin(); exactDit.ok(); ++exactDit)
+                  {
+                    if (thisBox.contains(exactGrids[exactDit()]))
+                    {
+                      thisError.copy(thisLevelExact[exactDit()],
+                                     exactComp, nErr, 1);
+                    } // end if exact and computed boxes match
+                  } // end loop over exact grids
+
+                  if (a_computeRelativeError)
+                  {
+                    // do this a little strangely -- relative
+                    // error is one - computed/exact.
+                    thisError.divide(thisComputed, computedComp, nErr, 1);
+                    thisError.invert(-1.0, nErr, 1);
+                    thisError.plus(1.0, nErr, 1);
+                  }
+                  else if (!nonAverageVar(thisErrVar))
+                  {
+                    thisError.minus(thisComputed, computedComp, nErr, 1);
+                  }
+                } // end loop over grids
+
+                done = true;
+              } // if a_computedVar is a_errorVar
+
+              computedComp += 1;
+            } // end loop over a_computedVars
+
+            if (!done)
+            {
+              pout() << "Variable " << thisErrVar  << " not found!!!" << endl;
+              MayDay::Error();
+            }
+          } // end if this exactVar is correct
+        }  // end loop over exact variables
+      }
+      else
+        // non-ghost cell case; this is simpler:
+      {
+        // first loop over exact variables and copy into error
+        for (int exactComp=0; exactComp<a_exactVars.size(); ++exactComp)
+        {
+          string thisExactVar = a_exactVars[exactComp];
+
+          // check if this exact variable is "the one"
+          if (thisExactVar == thisErrVar)
+          {
+            // copy exact solution -> error
+            Interval exactInterval(exactComp, exactComp);
+            Interval errInterval(nErr, nErr);
+            thisLevelExact.copyTo(exactInterval,
+                                  thisLevelError,
+                                  errInterval);
+            done = true;
+          } // end if this exact var is the error var
+        } // end loop over exact comps
+
+        if (!done)
+        {
+          pout() << "Variable " << thisErrVar
+                 << " not found in exact solution!!!" << endl;
+          MayDay::Error();
+        }
+
+        done = false;
+        int computedComp = 0;
+        // now loop over computed variables and subtract computed solution
+        while (!done && (computedComp < a_computedVars.size()))
+        {
+          if (a_computedVars[computedComp] == thisErrVar)
+          {
+            if ( !nonAverageVar(thisErrVar) )
+              {
+            for (levelDit.reset(); levelDit.ok(); ++levelDit)
+            {
+              FArrayBox& thisComputed = thisLevelComputed[levelDit()];
+              FArrayBox& thisError = thisLevelError[levelDit()];
+
+              thisError.minus(thisComputed, computedComp, nErr, 1);
+            } // end loop over computed/error grids
+              }
+            done = true;
+          } // if a_computedVar is a_errorVar
+
+          computedComp += 1;
+        } // end loop over a_computedVars
+
+        if (!done)
+        {
+          pout() << "Variable " << thisErrVar  << " not found!!!" << endl;
+          MayDay::Error();
+        }
+      } // end non-ghost-cell case
+    } // end loop over errors
+
+    // now need to set covered regions to 0
+    if (level < numLevels - 1)
+    {
+      // will need to loop over all boxes in finer level, not just
+      // those on this processor...
+      const BoxLayout& finerGrids = a_computedSoln[level + 1]->boxLayout();
+      LayoutIterator fineLit = finerGrids.layoutIterator();
+
+      // outer loop over this level's grids, since there are fewer of them
+      DataIterator levelDit = thisLevelError.dataIterator();
+      for (levelDit.reset(); levelDit.ok(); ++levelDit)
+      {
+        const Box& coarseBox = levelGrids[levelDit()];
+        FArrayBox& thisError = thisLevelError[levelDit()];
+        int numError = thisError.nComp();
+
+        for (fineLit.reset(); fineLit.ok(); ++fineLit)
+        {
+          Box fineBox(finerGrids[fineLit()]);
+          // now coarsen box down to this level
+          fineBox.coarsen(a_refRatio[level]);
+          // if coarsened fine box intersects error's box, set
+          // overlap to 0
+          fineBox &= coarseBox;
+          if (!fineBox.isEmpty())
+          {
+            thisError.setVal(0.0, fineBox, 0, numError);
+          }
+        } // end loop over finer-level grids
+      } // end loop over this-level grids
+
+      // this is a good place to update dx as well
+      dxLevel = dxLevel / a_refRatio[level];
+    } // end if there is a finer level
+
+    // finally, if we're not doing ghost cells, do an exchange just
+    // to "prettify" the output
+    if (!a_doGhostCells)
+    {
+      thisLevelError.exchange(thisLevelError.interval());
+    }
+  } // end loop over levels
+}
 
 // this function works on two solutions on equivalent grids.
 // It subtracts the computed solution from the exact solution
@@ -1309,6 +2155,8 @@ void init(string&         a_exactRoot,
           bool&           a_doPlots,
           bool&           a_isTimeDep,
           bool&           a_isSameSize,
+          bool&           a_isAniExact,
+          bool&           a_isAniMesh,
           Real&           a_bogusValue,
           bool&           a_computeRelativeError,
           bool&           a_removeMean,
@@ -1345,6 +2193,19 @@ void init(string&         a_exactRoot,
   temp = a_divideByDt;
   ppCompare.query("divide_by_dt", temp);
   a_divideByDt = (temp == 1);
+
+  // ONLY COMPUTED SOL IS ALLOWED TO BE ANI RN
+  temp = a_isAniExact;
+  ppCompare.query("AniExact", temp);
+  a_isAniExact = (temp == 1);
+
+  if (a_isAniExact) {
+      a_isAniMesh = true;
+  } else {
+      temp = a_isAniMesh;
+      ppCompare.query("AniMesh", temp);
+      a_isAniMesh = (temp == 1);
+  }
 
   temp = a_isSameSize;
   ppCompare.query("sameSize", temp);

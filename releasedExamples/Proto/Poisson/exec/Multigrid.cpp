@@ -254,7 +254,7 @@ multigridSolve(const SolveParams& a_params)
 #pragma omp parallel
   for(int ibox = 0; ibox < dit.size(); ibox++)
   {
-    Bx patch = ProtoCh::getProtoBox(grids[dit[ibox]]);
+    Bx patch = grids[dit[ibox]];
     BoxData<double, 1> rhsbd;
     ProtoCh::aliasBoxData<double, 1>(rhsbd, rhs[dit[ibox]]);
     forallInPlace_p(setRHS, patch, rhsbd, params);

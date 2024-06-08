@@ -82,11 +82,6 @@ ifeq ($(OPENMPCC),TRUE)
   USE_MT = FALSE
 endif
 
-cxxdbgflags   = -fPIC -g -ggdb
-cxxoptflags   = -fPIC
-fdbgflags     = -fPIC -g -ggdb
-foptflags     = -fPIC -O3
-
 # set default for 64bit mode based on system architecture
 #ifeq ($(findstring 64,$(arch)),64)
 #  USE_64 = TRUE
@@ -94,8 +89,8 @@ foptflags     = -fPIC -O3
 #  USE_64 = FALSE
 #endif
 
-syslibflags =  -llapack_atlas -llapack -lblas 
-LAPACKLIBS =  -llapack_atlas -llapack -lblas 
+syslibflags =  -llapack_atlas -lblas -llapack
+LAPACKLIBS =  -llapack_atlas -lblas -llapack
 
 ifneq ($(USE_HDF),FALSE)
   # if an ANAG HDF5 module is loaded, use its variables
@@ -120,9 +115,9 @@ ifneq ($(USE_HDF),FALSE)
     endif
 
     HDFINCFLAGS=-I$(_hdf_root)/include 
-    HDFLIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz  -ldl -lm
+    HDFLIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz 
     HDFMPIINCFLAGS=-I$(_hdf_root)/include 
-    HDFMPILIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz  -ldl -lm
+    HDFMPILIBFLAGS=-L$(_hdf_root)/lib -lhdf5_hl -lhdf5 -lz 
   else
     $(error No HDF5 module is loaded.)
   endif

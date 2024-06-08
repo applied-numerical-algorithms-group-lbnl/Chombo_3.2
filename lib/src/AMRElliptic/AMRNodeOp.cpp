@@ -278,7 +278,7 @@ void AMRNodeOp::preCond(LevelData<NodeFArrayBox>&       a_phi,
       phiFab *= mult;
     }
   int nrelax = 4;
-  relax(a_phi, a_rhs, nrelax);
+  relax(a_phi, a_rhs, nrelax, 0);
 }
 
 void AMRNodeOp::applyOp(LevelData<NodeFArrayBox>&       a_LofPhi,
@@ -451,11 +451,11 @@ void AMRNodeOp::setToZero(LevelData<NodeFArrayBox>& a_lhs)
 
 void AMRNodeOp::relax(LevelData<NodeFArrayBox>& a_e,
                       const LevelData<NodeFArrayBox>& a_residual,
-                      int a_iterations)
+                      int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   for (int i=0; i<a_iterations; i++)
     {
-      levelGSRB(a_e, a_residual);
+      levelGSRB(a_e, a_residual, i, a_depth);
       //levelJacobi(a_e, a_residual);
     }
 }
@@ -534,7 +534,8 @@ void AMRNodeOp::prolongIncrement(LevelData<NodeFArrayBox>&       a_phiThisLevel,
 /***/
 void AMRNodeOp::
 levelGSRB(LevelData<NodeFArrayBox>&       a_phi,
-          const LevelData<NodeFArrayBox>& a_rhs)
+          const LevelData<NodeFArrayBox>& a_rhs, 
+          int a_ite, int a_depth)
 {
 
   DataIterator dit = a_phi.dataIterator();

@@ -290,6 +290,53 @@ Real computeNorm(const LevelData<FArrayBox>& a_phi,
   return normLevel;
 }
 
+Real computeMax(const Vector<RefCountedPtr<LevelData<FArrayBox>> >& a_phi,
+                const Vector<int>&                    a_nRefFine,
+                const Interval                        a_comps,
+                const int                             a_lBase,
+                int                                   a_numLevels)
+{
+
+  Real max;
+  Real maxOnLevel;
+
+  max = -HUGE_VAL;
+
+  // loop over levels
+  for (int lev = a_lBase; lev < a_numLevels; lev++)
+  {
+    //in case there are extra levels which are not defined
+    if (a_phi[lev] != nullptr)
+    {
+      LevelData<FArrayBox>& thisPhi = *(a_phi[lev]);
+      const DisjointBoxLayout* finerGridsPtr = NULL;
+
+      if (lev < a_numLevels-1)
+      {
+        finerGridsPtr = &(a_phi[lev+1]->getBoxes());
+
+        maxOnLevel = computeMax(thisPhi, finerGridsPtr, a_nRefFine[lev],
+                                a_comps);
+      }
+      else
+      {
+        int bogusRefRatio = 100000;
+        maxOnLevel = computeMax(thisPhi, finerGridsPtr, bogusRefRatio,
+                                a_comps);
+      }
+
+      if (maxOnLevel > max)
+      {
+        max = maxOnLevel;
+      }
+    }
+  }
+
+  // shouldn't need to do broadcast/gather thing
+  return max;
+}
+
+
 Real computeMax(const Vector<LevelData<FArrayBox>* >& a_phi,
                 const Vector<int>&                    a_nRefFine,
                 const Interval                        a_comps,
@@ -422,6 +469,70 @@ Real computeMax(const LevelData<FArrayBox>& a_phi,
 #endif
 
   return levelMax;
+}
+
+Real computeMin(const Vector<RefCountedPtr<LevelData<FArrayBox>> >& a_phi,
+                const Vector<int>&                    a_nRefFine,
+                const Interval                        a_comps,
+                const int                             a_lBase,
+                int                                   a_numLevels)
+{
+  //int numLevels = a_phi.size();
+
+  // it is often the case that while a_phi has many possible
+  // levels, only a subset of them are defined -- check that
+  // just to be sure
+  //if (a_phi[numLevels-1] == NULL)
+  //{
+  //  int lev = numLevels-1;
+
+  //  while (a_phi[lev] == NULL)
+  //  {
+  //    lev--;
+  //  }
+
+  //  numLevels = lev+1;
+  //}
+
+  Real min;
+  Real minOnLevel;
+
+  min = HUGE_VAL;
+
+  // loop over levels
+  for (int lev = a_lBase; lev < a_numLevels; lev++)
+  {
+    //in case there are extra levels which are not defined
+    if (a_phi[lev] != NULL)
+    {
+      CH_assert(a_phi[lev]->isDefined());
+
+      LevelData<FArrayBox>& thisPhi = *(a_phi[lev]);
+      const DisjointBoxLayout* finerGridsPtr = NULL;
+
+      if (lev < a_numLevels-1)
+      {
+        finerGridsPtr = &(a_phi[lev+1]->getBoxes());
+
+        minOnLevel = computeMin(thisPhi, finerGridsPtr, a_nRefFine[lev],
+                                a_comps);
+      }
+      else
+      {
+        int bogusRefRatio = 1000000;
+        minOnLevel = computeMin(thisPhi, finerGridsPtr, bogusRefRatio,
+                                a_comps);
+      }
+
+      if (minOnLevel < min)
+      {
+        min = minOnLevel;
+      }
+    }
+  }
+
+  // shouldn't need to do broadcast/gather thing
+  return min;
 }
 
 Real computeMin(const Vector<LevelData<FArrayBox>* >& a_phi,

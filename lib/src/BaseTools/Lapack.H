@@ -20,6 +20,9 @@ extern "C"
   /// Double General Solve
   void LAPACK(GESV,gesv)(int*, int*, Real*, int*, int*, Real*, int*, int*);
 
+  /// Double Tridiagonal Solve
+  void LAPACK(GTSV,gtsv)(int*, int*, Real*, Real*, Real*, Real*, int*, int*);
+
   /// Double Least Squares 
   void LAPACK(GELS,gels)(char* TRANS, int* M, int* N, int* NRHS, Real* A, 
               int* LDA, Real* B, int* LDB, 

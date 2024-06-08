@@ -70,7 +70,7 @@ void NeumannConductivityEBBC::applyEBFlux(EBCellFAB&                    a_lphi,
 //            {
 //              flux = 0.;
 //            }
-               flux = (*m_data)[a_dit](vof, 0);
+               flux = (*m_data)[a_dit](vof, s_comp);
         }
       else if (m_bc.m_isFunction)
         {

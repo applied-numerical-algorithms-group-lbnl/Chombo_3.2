@@ -40,7 +40,7 @@ public:
   int          numLevels;
   Vector<int>  refRatio;
   ProblemDomain coarsestDomain;
-  Real         coarsestDx;
+  RealVect     coarsestDx;
   RealVect     domainLength;
   RealVect     probLo;
   RealVect     probHi;
@@ -67,33 +67,33 @@ public:
 extern void getPoissonParameters (VCPoissonParameters&  a_params);
 
 extern int setGrids(Vector<DisjointBoxLayout>& vectGrids,
-                    VCPoissonParameters&         a_params);
+                    VCPoissonParameters&       a_params);
 
-extern void setRHS(LevelData<FArrayBox>&    a_rhs,
-                   const RealVect&          a_dx,
+extern void setRHS(LevelData<FArrayBox>&      a_rhs,
+                   const RealVect&            a_dx,
                    const VCPoissonParameters& a_params);
 
 
 extern
 AMRLevelOpFactory<LevelData<FArrayBox> >*
 defineOperatorFactory(
-                      const Vector<DisjointBoxLayout>&             a_grids,
-                      const Vector<ProblemDomain>&                 a_vectDom,
+                      const Vector<DisjointBoxLayout>&               a_grids,
+                      const Vector<ProblemDomain>&                   a_vectDom,
                       Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
-                      Vector<RefCountedPtr<LevelData<FluxBox> > >& a_bCoef,
+                      Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
                       const VCPoissonParameters&                     a_params);
 
 
 
 void getDomainsAndDxes(  Vector<ProblemDomain>&     vectDomain,
-                         Vector<Real>&              vectDx,
-                         VCPoissonParameters&         a_params);
+                         Vector<RealVect>&          vectDx,
+                         VCPoissonParameters&       a_params);
 
 
 extern void
 tagCells(Vector<LevelData<FArrayBox>* >& vectRHS,
          Vector<IntVectSet>& tagVect,
-         Vector<Real>& vectDx,
+         Vector<RealVect>& vectDx,
          Vector<ProblemDomain>& vectDomain,
          const Real refine_thresh,
          const int tags_grow,
@@ -104,22 +104,28 @@ tagCells(Vector<LevelData<FArrayBox>* >& vectRHS,
 extern void TrigValueNeum(Real* pos,
                           int* dir,
                           Side::LoHiSide* side,
-                          Real* a_values);
+                          Real* a_values,
+                          Real* b_values,
+                          Real* c_values);
+
 extern void TrigValueDiri(Real* pos,
                           int* dir,
                           Side::LoHiSide* side,
-                          Real* a_values);
+                          Real* a_values,
+                          Real* b_values,
+                          Real* c_values);
 
 extern void ParseValue(Real* pos,
                        int* dir,
                        Side::LoHiSide* side,
-                       Real* a_values);
+                       Real* a_values,
+                       Real* b_values,
+                       Real* c_values);
 
 extern void ParseBC(FArrayBox& a_state,
                     const Box& a_valid,
                     const ProblemDomain& a_domain,
-                    Real a_dx,
+                    RealVect a_dx,
                     bool a_homogeneous);
-
 
 #endif

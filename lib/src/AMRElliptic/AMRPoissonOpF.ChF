@@ -119,6 +119,83 @@ C     petermc, 26 april 2001
       return
       end
 
+      subroutine GSRBHELMHOLTZANI(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REALVECT[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_CONST_INT[redBlack])
+
+      REAL_T lambda, sum_b, lphi, helmop
+      integer CHF_DDECL[i;j;k]
+      integer n,ncomp,indtot,imin,imax
+      REAL_T CHF_DDECL[dxinv0;dxinv1;dxinv2]
+
+      CHF_DTERM[dxinv0 = one/(dx(0) * dx(0));
+                dxinv1 = one/(dx(1) * dx(1));
+                dxinv2 = one/(dx(2) * dx(2))]
+
+      sum_b = 0.0
+      sum_b = ( CHF_DTERM[ two*dxinv0;
+     &                  +  two*dxinv1;
+     &                  +  two*dxinv2 ]
+     &        ) 
+
+      lambda = -one/(alpha - beta*sum_b)
+
+      ncomp = CHF_NCOMP[phi]
+      if (ncomp .ne. CHF_NCOMP[rhs]) then
+C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
+         call MAYDAYERROR()
+      endif
+
+      do n = 0, ncomp - 1
+#if CH_SPACEDIM==3
+        do k=CHF_LBOUND[region; 2], CHF_UBOUND[region; 2]
+#endif
+#if CH_SPACEDIM > 1
+          do j=CHF_LBOUND[region; 1], CHF_UBOUND[region; 1]
+#endif
+            imin = CHF_LBOUND[region; 0]
+            CHF_DTERM[indtot = imin; + j ; + k ]
+C     add 0 or 1 to imin, so that imin+j+k has same parity as redBlack
+C     petermc, 26 april 2001
+            imin = imin + abs(mod(indtot + redBlack, 2))
+            imax = CHF_UBOUND[region; 0]
+            do i = imin, imax, 2
+
+              CHF_DTERM[
+              lphi =  ( (phi(CHF_IX[i+1;j;k],n)
+     &             +     phi(CHF_IX[i-1;j;k],n)
+     &             -     two*phi(CHF_IX[i;j;k],n))*dxinv0 ;
+     &             +    (phi(CHF_IX[i;j+1;k],n)
+     &             +     phi(CHF_IX[i;j-1;k],n)
+     &             -      two*phi(CHF_IX[i;j;k],n))*dxinv1;
+     &             +    (phi(CHF_IX[i;j;k+1],n)
+     &             +     phi(CHF_IX[i;j;k-1],n)
+     &             -     two*phi(CHF_IX[i;j;k],n))*dxinv2]
+     &             )
+
+              helmop = alpha*phi(CHF_IX[i;j;k],n) + beta*lphi
+
+              phi(CHF_IX[i;j;k],n) = phi(CHF_IX[i;j;k],n) +
+     &             lambda*(helmop - rhs(CHF_IX[i;j;k],n))
+
+            enddo
+#if CH_SPACEDIM > 1
+          enddo
+#endif
+#if CH_SPACEDIM==3
+        enddo
+#endif
+      enddo
+
+      return
+      end
+
+
       subroutine GSRBLAPLACIAN(
      &     CHF_FRA[phi],
      &     CHF_CONST_FRA[rhs],
@@ -197,6 +274,72 @@ C     petermc, 26 april 2001
       return
       end
 
+      subroutine GSRBLAPLACIANANI(
+     &     CHF_FRA[phi],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REALVECT[dx],
+     &     CHF_CONST_INT[redBlack])
+
+      REAL_T lambda, sum_b, lphi, lap
+      integer CHF_DDECL[i;j;k]
+      integer n,ncomp,indtot,imin,imax,counter
+      REAL_T CHF_DDECL[dxinv0;dxinv1;dxinv2]
+
+      CHF_DTERM[dxinv0 = one/(dx(0) * dx(0));
+                dxinv1 = one/(dx(1) * dx(1));
+                dxinv2 = one/(dx(2) * dx(2))]
+
+      sum_b = 0.0
+      sum_b = ( CHF_DTERM[ two*dxinv0;
+     &                  +  two*dxinv1;
+     &                  +  two*dxinv2 ]
+     &        ) 
+      lambda = -one/sum_b
+
+      ncomp = CHF_NCOMP[phi]
+      if (ncomp .ne. CHF_NCOMP[rhs]) then
+C         print*, 'GSRBLEVELHELM:phi and rhs incompatible'
+         call MAYDAYERROR()
+      endif
+
+      do n = 0, ncomp - 1
+#if CH_SPACEDIM==3
+        do k=CHF_LBOUND[region; 2], CHF_UBOUND[region; 2]
+#endif
+#if CH_SPACEDIM > 1
+          do j=CHF_LBOUND[region; 1], CHF_UBOUND[region; 1]
+#endif
+            imin = CHF_LBOUND[region; 0]
+            CHF_DTERM[indtot = imin; + j ; + k ]
+C     add 0 or 1 to imin, so that imin+j+k has same parity as redBlack
+C     petermc, 26 april 2001
+            imin = imin + abs(mod(indtot + redBlack, 2))
+            imax = CHF_UBOUND[region; 0]
+            do i = imin, imax, 2
+              lphi = ( CHF_DTERM[
+     &                 ( phi(CHF_IX[i+1;j;k],n)
+     &             +     phi(CHF_IX[i-1;j;k],n) ) * dxinv0 ;
+     &             +   ( phi(CHF_IX[i;j+1;k],n)
+     &             +     phi(CHF_IX[i;j-1;k],n) ) * dxinv1 ;
+     &             +   ( phi(CHF_IX[i;j;k+1],n)
+     &             +     phi(CHF_IX[i;j;k-1],n) ) * dxinv2 ]
+     &             ) 
+              phi(CHF_IX[i;j;k],n) = lambda*(rhs(CHF_IX[i;j;k],n)-lphi)
+
+            enddo
+#if CH_SPACEDIM > 1
+          enddo
+#endif
+#if CH_SPACEDIM==3
+        enddo
+#endif
+      enddo
+      i=CHF_POINTS[region]
+      ch_flops=ch_flops+ ncomp*i/2*(2*CH_SPACEDIM+3)
+      return
+      end
+
       subroutine gsrblazy(
      &     chf_fra1[phi],
      &     chf_const_fra1[lphi],
@@ -230,6 +373,7 @@ C     petermc, 26 april 2001
 
       return
       end
+
       subroutine amrpmulticolor(
      &     chf_fra1[phi],
      &     chf_const_fra1[rhs],
@@ -322,6 +466,67 @@ C         print*, 'OPERATORLAP:phi and lofphi incompatible'
       ch_flops=ch_flops+ ncomp*i*(2*CH_SPACEDIM+5)
       return
       end
+
+C     -----------------------------------------------------------------
+C     subroutine OPERATORLAPANI
+C     computes 5-point operator for the Helmholtz equation
+C
+C     INPUTS/OUTPUTS:
+C     phi       =>  phi
+C     lofphi   <=   laplacian
+C     dx        =>  cell spacing (realvect)
+C
+C     Warning: phi, lofphi must have the same number
+C     of components and span region.  Phi needs one more cell on
+C     all sides
+C
+C     amf, 2022
+C     ------------------------------------------------------------------
+      subroutine OPERATORLAPANI(
+     &     CHF_FRA[lofphi],
+     &     CHF_CONST_FRA[phi],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REALVECT[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_REAL[beta])
+
+      REAL_T lap
+      integer n,ncomp
+      integer CHF_DDECL[i;j;k]
+      integer idir
+      REAL_T dxinv(0:CH_SPACEDIM - 1)   
+
+      ncomp = CHF_NCOMP[phi]
+      if (ncomp .ne. CHF_NCOMP[lofphi]) then
+         call MAYDAYERROR()
+      endif
+
+      do idir = 0, CH_SPACEDIM - 1
+          dxinv(idir) = one/(dx(idir)*dx(idir))
+      enddo
+
+      do n = 0, ncomp-1
+        CHF_MULTIDO[region; i; j; k]
+
+          lap = ( CHF_DTERM[ ( phi(CHF_IX[i+1;j  ;k  ],n)
+     &                     + phi(CHF_IX[i-1;j  ;k  ],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(0) ;
+     &                     + ( phi(CHF_IX[i  ;j+1;k  ],n)
+     &                     + phi(CHF_IX[i  ;j-1;k  ],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(1) ;
+     &                     + ( phi(CHF_IX[i  ;j  ;k+1],n)
+     &                     + phi(CHF_IX[i  ;j  ;k-1],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(2) ]
+     &                     )
+
+          lofphi(CHF_IX[i;j;k],n) = alpha*phi(CHF_IX[i;j;k],n)+beta*lap
+        CHF_ENDDO
+      enddo
+      i=CHF_POINTS[region]
+      ch_flops=ch_flops+ ncomp*i*(2*CH_SPACEDIM+5)
+      return
+      end
+
 C     -----------------------------------------------------------------
 C     subroutine OPERATORLAPRES
 C     computes 5-point residual for the Helmholtz equation
@@ -377,6 +582,112 @@ C     ------------------------------------------------------------------
       end
 
 C     -----------------------------------------------------------------
+C     subroutine OPERATORLAPRESANI
+C     computes 5-point residual for the Helmholtz equation
+C
+C     INPUTS/OUTPUTS:
+C     phi       =>  phi
+C     rhs       =>
+C     lofphi   <=   helmholtz residual
+C     dx        =>  cell spacing (realvect)
+C
+C     Warning: phi, lofphi must have the same number
+C     of components and span region.  Phi needs one more cell on
+C     all sides
+C
+C     amf, 2022
+C     ------------------------------------------------------------------
+      subroutine OPERATORLAPRESANI(
+     &     CHF_FRA[r],
+     &     CHF_CONST_FRA[phi],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REALVECT[dx],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_REAL[beta])
+
+      REAL_T lap
+      integer n,ncomp
+      integer idir  
+      integer CHF_DDECL[i;j;k]
+      REAL_T dxinv(0:CH_SPACEDIM - 1)   
+
+      ncomp = CHF_NCOMP[phi]
+      
+      do idir = 0, CH_SPACEDIM - 1
+          dxinv(idir) = one/(dx(idir)*dx(idir))
+      enddo
+
+      do n = 0, ncomp-1
+         CHF_MULTIDO[region; i; j; k]
+
+          lap = ( CHF_DTERM[ ( phi(CHF_IX[i+1;j  ;k  ],n)
+     &                     + phi(CHF_IX[i-1;j  ;k  ],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(0) ;
+     &                     + ( phi(CHF_IX[i  ;j+1;k  ],n)
+     &                     + phi(CHF_IX[i  ;j-1;k  ],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(1) ;
+     &                     + ( phi(CHF_IX[i  ;j  ;k+1],n)
+     &                     + phi(CHF_IX[i  ;j  ;k-1],n) 
+     &                     - 2*phi(CHF_IX[i;j;k],n) ) * dxinv(2) ]
+     &                     )
+
+         r(CHF_IX[i;j;k],n) = -alpha*phi(CHF_IX[i;j;k],n) -beta*lap +
+     &       rhs(CHF_IX[i;j;k],n)
+
+         CHF_ENDDO
+     
+      enddo
+      ch_flops=ch_flops+CHF_POINTS[region]*ncomp*(2*CH_SPACEDIM+6)
+      return
+      end
+
+
+C     -----------------------------------------------------------------
+C     subroutine RESTRICT
+C     computes restriction of some field to a coarser multgrid level
+C        phiCoarse[2h] = I[h->2h] (phi[h])
+C     INPUTS/OUTPUTS:
+C     phiCoarse       <=  phiCoarse[2h]
+C     phiFine       =>  phiFine[h]
+C     region    =>  Box over which rhs is defined (in h index space)
+C     dx        =>  grid spacing in h
+C     ------------------------------------------------------------------
+
+      subroutine RESTRICT(
+     &     CHF_FRA[phiCoarse],
+     &     CHF_CONST_FRA[phiFine],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REAL[dx])
+
+
+      REAL_T denom,dxinv,lofphi
+      integer n,ncomp
+
+      integer CHF_DDECL[i;j;k]
+      integer CHF_DDECL[ii;jj;kk]
+
+      ncomp = CHF_NCOMP[phiFine]
+
+      denom = D_TERM(2, *2, *2)
+
+      do n = 0, ncomp-1
+        CHF_MULTIDO[region; i; j; k]
+          CHF_DTERM[
+          ii = i/2 ;
+          jj = j/2 ;
+          kk = k/2 ]
+
+          phiCoarse(CHF_IX[ii;jj;kk],n) = phiCoarse(CHF_IX[ii;jj;kk],n)
+     &                            + (phiFine(CHF_IX[i;j;k],n)) / denom
+        CHF_ENDDO
+      enddo
+
+      return
+      end
+
+
+C     -----------------------------------------------------------------
 C     subroutine RESTRICTRES
 C     computes restriction of residual to a coarser multgrid level
 C        res[2h] = I[h->2h] (rhs[h] - L(phi[h]))
@@ -428,6 +739,74 @@ C     ------------------------------------------------------------------
      &                        + phi(CHF_IX[i  ;j  ;k-1],n) ]
      &                        - phi(CHF_IX[i  ;j  ;k  ],n) * 2 * CH_SPACEDIM
      &              ) * dxinv
+
+          res(CHF_IX[ii;jj;kk],n) = res(CHF_IX[ii;jj;kk],n)
+     &                            + (rhs(CHF_IX[i;j;k],n) - lofphi) / denom
+        CHF_ENDDO
+      enddo
+      ch_flops=ch_flops+CHF_POINTS[region]*ncomp*(2*CH_SPACEDIM+6)
+      return
+      end
+
+C     -----------------------------------------------------------------
+C     subroutine RESTRICTRESANI
+C     computes restriction of residual to a coarser multgrid level
+C        res[2h] = I[h->2h] (rhs[h] - L(phi[h]))
+C     INPUTS/OUTPUTS:
+C     res       <=  res[2h]
+C     rhs       =>  rhs[h]
+C     phi       =>  phi[h]
+C     alpha     =>  Coefficient of the identity operator
+C     beta      =>  Coefficient of the laplacian operator
+C     region    =>  Box over which rhs is defined (in h index space)
+C     dx        =>  grid spacing in hi (realvect)
+C
+C     bvs  Wed Aug 20, 2003
+C     ------------------------------------------------------------------
+      subroutine RESTRICTRESANI(
+     &     CHF_FRA[res],
+     &     CHF_CONST_FRA[phi],
+     &     CHF_CONST_FRA[rhs],
+     &     CHF_CONST_REAL[alpha],
+     &     CHF_CONST_REAL[beta],
+     &     CHF_BOX[region],
+     &     CHF_CONST_REALVECT[dx])
+
+      REAL_T denom,lofphi
+      integer n,ncomp
+      integer idir
+      REAL_T dxinv(0:CH_SPACEDIM - 1)   
+
+      integer CHF_DDECL[i;j;k]
+      integer CHF_DDECL[ii;jj;kk]
+
+      ncomp = CHF_NCOMP[phi]
+
+      do idir = 0, CH_SPACEDIM - 1
+          dxinv(idir) = one/(dx(idir)*dx(idir))
+      enddo
+
+      denom = D_TERM(2, *2, *2)
+
+      do n = 0, ncomp-1
+        CHF_MULTIDO[region; i; j; k]
+          CHF_DTERM[
+          ii = i/2 ;
+          jj = j/2 ;
+          kk = k/2 ]
+
+          lofphi = alpha * phi(CHF_IX[i;j;k],n)
+     &           + beta  *
+     &              (CHF_DTERM[ ( phi(CHF_IX[i+1;j  ;k  ],n)
+     &                         + phi(CHF_IX[i-1;j  ;k  ],n)
+     &                         - 2*phi(CHF_IX[i  ;j  ;k  ],n) ) * dxinv(0) ;
+     &                         + ( phi(CHF_IX[i  ;j+1;k  ],n)
+     &                         + phi(CHF_IX[i  ;j-1;k  ],n)
+     &                         - 2*phi(CHF_IX[i  ;j  ;k  ],n) ) * dxinv(1) ;
+     &                         + ( phi(CHF_IX[i  ;j  ;k+1],n)
+     &                         + phi(CHF_IX[i  ;j  ;k-1],n)
+     &                         - 2*phi(CHF_IX[i  ;j  ;k  ],n) ) * dxinv(2) ]
+     &              ) 
 
           res(CHF_IX[ii;jj;kk],n) = res(CHF_IX[ii;jj;kk],n)
      &                            + (rhs(CHF_IX[i;j;k],n) - lofphi) / denom

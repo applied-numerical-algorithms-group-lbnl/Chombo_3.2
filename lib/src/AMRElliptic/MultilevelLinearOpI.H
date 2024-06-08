@@ -283,7 +283,7 @@ MultilevelLinearOp<T>::preCond(Vector<LevelData<T>* >& a_cor,
 
           m_preCondSolver.AMRVCycle(tempCorr, tempResid,
                                     finestLevel, finestLevel,
-                                    m_lBase);
+                                    m_lBase, 0);
 
           // now increment a_cor with local correction
           incr(a_cor, localCorr, 1.0);

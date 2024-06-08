@@ -1174,9 +1174,9 @@ writeCFABname(const CFArrayBox      * a_dataPtr,
              const char           * a_filename)
 {
   if (a_dataPtr == NULL)
-    {
+  {
       return;
-    }
+  }
   FArrayBox out(a_dataPtr->box(),2);
   Vector<string> names(2);
   names[0] = "real";
@@ -1185,10 +1185,10 @@ writeCFABname(const CFArrayBox      * a_dataPtr,
   Real* iptr=out.dataPtr(1);
   const Complex* cptr=a_dataPtr->dataPtr();
   for(size_t i=0; i<a_dataPtr->box().numPts(); ++i)
-    {
+  {
       rptr[i] = cptr[i].re();
       iptr[i] = cptr[i].im();
-    }
+  }
   writeFABname(&out, a_filename, names);
 }
 void

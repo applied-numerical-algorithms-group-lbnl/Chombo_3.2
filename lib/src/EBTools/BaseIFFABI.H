@@ -106,7 +106,9 @@ BaseIFFAB<T>::BaseIFFAB(const IntVectSet& a_ivsin,
 template <class T> Arena* BaseIFFAB<T>::s_Arena = NULL;
 
 /******************/
+#if defined(__ICC) || defined(__INTEL_COMPILER)
 #pragma intel optimization_level 0
+#endif
 template <class T> inline
 void
 BaseIFFAB<T>::define(const IntVectSet& a_ivsin,

@@ -33,6 +33,12 @@ typedef void(*BCFunc)(FArrayBox&           a_state,
                       Real                 a_dx,
                       bool                 a_homogeneous);
 
+typedef void(*BCFuncVect)(FArrayBox&       a_state,
+                      const Box&           a_valid,
+                      const ProblemDomain& a_domain,
+                      RealVect             a_dx,
+                      bool                 a_homogeneous);
+
 /// For use with pure periodic BC
 void doNothingBC(FArrayBox&           a_state,
                  const Box&           a_valid,
@@ -71,6 +77,12 @@ public:
                           Real                 a_dx,
                           bool                 a_homogeneous) = 0;
 
+  virtual void operator()(FArrayBox&           a_state,
+                          const Box&           a_valid,
+                          const ProblemDomain& a_domain,
+                          RealVect             a_dx,
+                          bool                 a_homogeneous) = 0;
+
   //! Computes the values of \f$\phi\f$ on ghost cells specifying a data index.
   //! By default, this calls the version of the method without a DataIndex.
   //! \param a_state The values of \f$\phi\f$ on the box given by \a a_valid.
@@ -84,6 +96,16 @@ public:
                           const Box&           a_valid,
                           const ProblemDomain& a_domain,
                           Real                 a_dx,
+                          const DataIndex&     a_index,
+                          bool                 a_homogeneous)
+  {
+    operator()(a_state, a_valid, a_domain, a_dx, a_homogeneous);
+  }
+
+  virtual void operator()(FArrayBox&           a_state,
+                          const Box&           a_valid,
+                          const ProblemDomain& a_domain,
+                          RealVect             a_dx,
                           const DataIndex&     a_index,
                           bool                 a_homogeneous)
   {
@@ -108,6 +130,15 @@ public:
       operator()(ph[dit], dbl[dit], dbl.physDomain(), dx, homogeneous);
   }
 
+  void fillGhostCells(const LevelData<FArrayBox>& phi, const RealVect dx,
+                      const bool homogeneous)
+  {
+    const DisjointBoxLayout& dbl = phi.disjointBoxLayout();
+    LevelData<FArrayBox>& ph = (LevelData<FArrayBox>&) phi;
+    for (DataIterator dit = ph.dataIterator(); dit.ok(); ++dit)
+      operator()(ph[dit], dbl[dit], dbl.physDomain(), dx, homogeneous);
+  }
+
   /// Fill the ghost cells for a Hierarchy of levels.
   void fillGhostCells(const Vector<LevelData<FArrayBox>*>& phi,
                       const Real dx0, const Vector<int>& refV,
@@ -121,6 +152,20 @@ public:
           dx /= refV[i];
       }
   }
+
+  void fillGhostCells(const Vector<LevelData<FArrayBox>*>& phi,
+                      const RealVect dx0, const Vector<int>& refV,
+                      const bool homogeneous)
+  {
+    RealVect dx = dx0;
+    for (int i=0; i<phi.size(); i++)
+      {
+        fillGhostCells(*phi[i], dx, homogeneous);
+        if (i<phi.size()-1)
+          dx /= refV[i];
+      }
+  }
+
 
 private:
 
@@ -140,19 +185,26 @@ public:
   //! Default constructor. Seems like this should be disallowed, since BCHolder
   //! isn't sub-classable, and there's no way to set the member pointer after
   //! creation.
-  BCHolder():m_funcptr(NULL)
+  BCHolder():m_funcptr(NULL),m_funcVectptr(NULL)
+  {
+  }
+
+  /* 3 constructors */
+  //! Creates a BCHolder using a function pointer.
+  BCHolder(BCFunc funcptr):m_funcptr(funcptr),m_funcVectptr(NULL)
   {
   }
 
   //! Creates a BCHolder using a function pointer.
-  BCHolder(BCFunc funcptr):m_funcptr(funcptr)
+  BCHolder(BCFuncVect funcptr):m_funcptr(NULL),m_funcVectptr(funcptr)
   {
   }
 
   //! Creates a BCHolder using a BCFunction instance.
-  BCHolder(RefCountedPtr<BCFunction> refptr):m_funcptr(NULL),m_bc(refptr)
+  BCHolder(RefCountedPtr<BCFunction> refptr):m_funcptr(NULL),m_funcVectptr(NULL),m_bc(refptr)
   {
   }
+  /* 3 constructors */
 
   //! Imposes a boundary condition on a solution whose state is described
   //! by the given FArrayBox. The signature for this method matches its
@@ -174,6 +226,24 @@ public:
     }
   }
 
+  void operator()(FArrayBox&           a_state,
+                  const Box&           a_valid,
+                  const ProblemDomain& a_domain,
+                  RealVect             a_dx,
+                  bool                 a_homogeneous,
+                  const DataIndex      a_index = DataIndex())
+  {
+    if (m_funcVectptr != NULL)
+    {
+      m_funcVectptr(a_state, a_valid, a_domain, a_dx, a_homogeneous);
+    }
+    else
+    {
+      m_bc->operator()(a_state, a_valid, a_domain, a_dx, a_index, a_homogeneous);
+    }
+  }
+
+
   //! Sets the time associated with the boundary condition, a la BCFunction::setTime.
   //! If this BCHolder holds a function pointer, this call does nothing.
   void setTime(Real a_time)
@@ -190,6 +260,7 @@ public:
 
 protected:
   BCFunc m_funcptr;
+  BCFuncVect m_funcVectptr;
   RefCountedPtr<BCFunction> m_bc;
 };
 
@@ -205,7 +276,9 @@ protected:
 typedef void(*BCValueFunc)(Real*           a_pos,
                            int*            a_dir,
                            Side::LoHiSide* a_side,
-                           Real*           a_value);
+                           Real*           a_Aval,
+                           Real*           a_Bval,
+                           Real*           a_Cval);
 
 class BCValueFunction
 {
@@ -214,10 +287,13 @@ public:
   {
   }
 
+  // For Robin BC where the BC is specified as A phi_ec + B grad phi_ec = C
   virtual void operator()(Real*           a_pos,
                           int*            a_dir,
                           Side::LoHiSide* a_side,
-                          Real*           a_value) = 0;
+                          Real*           a_Aval,
+                          Real*           a_Bval,
+                          Real*           a_Cval) = 0;
 };
 
 class BCValueHolder
@@ -242,15 +318,17 @@ public:
   virtual void operator()(Real*           a_pos,
                           int*            a_dir,
                           Side::LoHiSide* a_side,
-                          Real*           a_value)
+                          Real*           a_Aval,
+                          Real*           a_Bval,
+                          Real*           a_Cval)
   {
     if (m_funcptr != NULL)
     {
-      m_funcptr(a_pos, a_dir, a_side, a_value);
+      m_funcptr(a_pos, a_dir, a_side, a_Aval, a_Bval, a_Cval);
     }
     else
     {
-      m_bc->operator()(a_pos, a_dir, a_side, a_value);
+      m_bc->operator()(a_pos, a_dir, a_side, a_Aval, a_Bval, a_Cval);
     }
   }
 
@@ -263,11 +341,15 @@ protected:
 class BCFuncWrapper: public BCFunction
 {
 public:
-  BCFuncWrapper():m_funcptr(NULL) 
+  BCFuncWrapper():m_funcptr(NULL),m_funcVectptr(NULL) 
   {
   }
 
-  BCFuncWrapper(BCFunc funcptr):m_funcptr(funcptr)
+  BCFuncWrapper(BCFunc funcptr):m_funcptr(funcptr),m_funcVectptr(NULL) 
+  {
+  }
+
+  BCFuncWrapper(BCFuncVect funcptr):m_funcptr(NULL),m_funcVectptr(funcptr) 
   {
   }
 
@@ -286,21 +368,32 @@ public:
     CH_assert(m_funcptr != NULL);
     m_funcptr(a_state, a_valid, a_domain, a_dx, a_homogeneous);
   }
+
+  virtual void operator()(FArrayBox&           a_state,
+                          const Box&           a_valid,
+                          const ProblemDomain& a_domain,
+                          RealVect             a_dx,
+                          bool                 a_homogeneous)
+  {
+    CH_assert(m_funcptr != NULL);
+    m_funcVectptr(a_state, a_valid, a_domain, a_dx, a_homogeneous);
+  }
     
   //explictly allow copy and assignment operators
-  BCFuncWrapper(const BCFuncWrapper& src):m_funcptr(src.m_funcptr)
+  BCFuncWrapper(const BCFuncWrapper& src):m_funcptr(src.m_funcptr),m_funcVectptr(src.m_funcVectptr)
   {
   }
 
   virtual BCFuncWrapper& operator=(const BCFuncWrapper& src)
   {
     m_funcptr = src.m_funcptr;
+    m_funcVectptr = src.m_funcVectptr;
     return *this;
   }
 
   protected:
   BCFunc m_funcptr;
-
+  BCFuncVect m_funcVectptr;
 };
 
 
@@ -320,6 +413,12 @@ public:
                           const Box&           a_valid,
                           const ProblemDomain& a_domain,
                           Real                 a_dx,
+                          bool                 a_homogeneous);
+
+  virtual void operator()(FArrayBox&           a_state,
+                          const Box&           a_valid,
+                          const ProblemDomain& a_domain,
+                          RealVect             a_dx,
                           bool                 a_homogeneous);
 
 protected:
@@ -370,6 +469,15 @@ void NeumBC(FArrayBox&      a_state,
             Side::LoHiSide  a_side,
             Interval&       a_interval);
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&       a_interval);
+
 ///
 /**
    Neumann bc for a particular side, all components
@@ -378,6 +486,14 @@ void NeumBC(FArrayBox&      a_state,
 void NeumBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            const BCValueHolder&   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side);
+
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             const BCValueHolder&   a_value,
             int             a_dir,
@@ -394,6 +510,56 @@ void NeumBC(FArrayBox&      a_state,
             bool            a_homogeneous,
             BCValueHolder   a_value);
 
+void NeumBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value);
+
+///
+/**
+   Robin bc for a particular side, specified component interval
+   For use in AMRPoissonOp.
+ */
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval);
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             const BCValueHolder&   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side,
+             Interval&       a_interval);
+
+///
+/**
+   Robin boundary conditions for a side, all components.
+   For use in AMRPoissonOp.
+ */
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             Real            a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side);
+
+void RobinBC(FArrayBox&      a_state,
+             const Box&      a_valid,
+             RealVect        a_dx,
+             bool            a_homogeneous,
+             BCValueHolder   a_value,
+             int             a_dir,
+             Side::LoHiSide  a_side);
+
 ///
 /**
    Dirichlet boundary conditions for a side, specified component interval
@@ -402,6 +568,16 @@ void NeumBC(FArrayBox&      a_state,
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            Interval&       a_interval,
+            int             a_order = 1);
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_dir,
@@ -423,6 +599,15 @@ void DiriBC(FArrayBox&      a_state,
             Side::LoHiSide  a_side,
             int             a_order = 1);
 
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_dir,
+            Side::LoHiSide  a_side,
+            int             a_order = 1);
+
 ///
 /**
    Dirichlet boundary conditions for one side.
@@ -431,6 +616,13 @@ void DiriBC(FArrayBox&      a_state,
 void DiriBC(FArrayBox&      a_state,
             const Box&      a_valid,
             Real            a_dx,
+            bool            a_homogeneous,
+            BCValueHolder   a_value,
+            int             a_order = 1);
+
+void DiriBC(FArrayBox&      a_state,
+            const Box&      a_valid,
+            RealVect        a_dx,
             bool            a_homogeneous,
             BCValueHolder   a_value,
             int             a_order = 1);

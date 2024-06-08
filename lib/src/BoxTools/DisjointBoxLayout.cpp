@@ -25,8 +25,7 @@ DisjointBoxLayout::DisjointBoxLayout()
 }
 
 unsigned long long int 
-DisjointBoxLayout::
-numPointsThisProc() const
+DisjointBoxLayout::numPointsThisProc() const
 {
   const DisjointBoxLayout& dbl = *this;
   unsigned long long retval = 0;
@@ -127,6 +126,8 @@ DisjointBoxLayout::close()
       computeNeighbors();
     }
 }
+
+/// rural dbl (no neighbors)
 void
 DisjointBoxLayout::closeNO()
 {
@@ -171,7 +172,8 @@ DisjointBoxLayout::closeN(RefCountedPtr<Vector<Vector<std::pair<int, LayoutIndex
     }
 }
 
-void DisjointBoxLayout::computeNeighbors()
+void
+DisjointBoxLayout::computeNeighbors()
 {
   CH_TIME("DisjointBoxLayout::computeNeighbors");
   const Vector<Entry>& boxes = *m_boxes;
@@ -345,6 +347,7 @@ DisjointBoxLayout::defineAndLoadBalance(const Vector<Box>& a_boxes,
 
 }
 
+/// I'll take null_ptr as an API choice for 4586, Alex.
 void
 DisjointBoxLayout::defineAndLoadBalance(const Vector<Box>& a_boxes,
                                         Vector<int> * a_procIDs,
