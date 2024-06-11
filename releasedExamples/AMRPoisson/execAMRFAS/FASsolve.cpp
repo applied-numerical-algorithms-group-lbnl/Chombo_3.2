@@ -846,6 +846,13 @@ int runSolver()
    int iterations = 3;
    ppMain.get("iterations", iterations);
 
+   bool zeroInitialGuess = true;
+   ppSolver.query("zeroInitialGuess", zeroInitialGuess);
+   // if prob type is exact
+   if (s_probtype == exactPrb) {
+       setExact(phi, amrDomains, refRatios, amrDx, finestLevel);
+   }
+
    for (int iiter = 0; iiter < iterations; iiter++)
      {
          // initialize solver
@@ -860,16 +867,13 @@ int runSolver()
          setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
                      refRatios, amrDx, finestLevel);
 
-         bool zeroInitialGuess = true;
-         // if prob type is exact
-         //ppSolver.query("zeroInitialGuess", zeroInitialGuess);
-         //setExact(phi, amrDomains, refRatios, amrDx, finestLevel );
          amrSolver->solve(phi, rhs, finestLevel, 0, zeroInitialGuess);
 
          if (iiter == iterations-1) {
              pout() << "End iterations. norm=" << amrSolver->computeAMRResidual(resid,phi,rhs,finestLevel,0) << endl;
          }
 
+         zeroInitialGuess = false;
          delete amrSolver;
       }
 
