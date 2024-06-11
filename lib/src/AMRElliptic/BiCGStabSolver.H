@@ -235,6 +235,13 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   m_op->residual(r, a_phi, a_rhs, m_homogeneous);
 
   m_op->assignLocal(r_tilde, r);
+  if (!m_use_FAS) {
+      m_op->setToZero(e);
+      // (DFM 2/1/07) these next two need to be set to zero to prevent
+      // problems in the multilevel case
+      m_op->setToZero(p_tilde);
+      m_op->setToZero(s_tilde);
+  }
 
   m_iter = 0;
 
@@ -322,9 +329,7 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
       if (rho[1] == 0.0)
         {
           // we are finished, we will not converge anymore
-          if (!m_use_FAS) {
-              m_op->incr(a_phi, e, 1.0);
-          }
+          m_op->incr(a_phi, e, 1.0);
 
           if (m_verbosity >= 5)
             {
@@ -379,9 +384,10 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
       m_op->preCond(p_tilde, p);
       if (!m_use_FAS) {
           m_op->setToZero(v); // added by petermc, 27 Nov 2013, to zero out ghosts
+          m_op->applyOp(v, p_tilde, true);
       } else {
+          m_op->applyOp(v, p_tilde, m_homogeneous);
       }
-      m_op->applyOp(v, p_tilde, m_homogeneous);
       Real m = m_op->dotProduct(r_tilde, v);
       alpha[0] = rho[1]/m;
 
@@ -401,7 +407,9 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
         }
       else
         {
-          m_op->setToZero(r);
+          if (!m_use_FAS) {
+              m_op->setToZero(r);
+          }
           norm[0] = 0.0;
         }
 
@@ -418,9 +426,10 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
           m_op->preCond(s_tilde, r);
           if (!m_use_FAS) {
               m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
+              m_op->applyOp(t, s_tilde, true);
           } else {
+              m_op->applyOp(t, s_tilde, m_homogeneous);   
           }
-          m_op->applyOp(t, s_tilde, m_homogeneous);   
           omega[0] = m_op->dotProduct(t, r)/m_op->dotProduct(t, t);
           m_op->incr(e, s_tilde, omega[0]);
           m_op->incr(r, t,      -omega[0]);
