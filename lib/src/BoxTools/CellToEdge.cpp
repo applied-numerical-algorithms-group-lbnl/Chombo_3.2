@@ -15,7 +15,6 @@
 #include "DataIterator.H"
 #include "CellToEdge.H"
 #include "CellToEdgeF_F.H"
-#include "ProtoInterface.H"
 
 #include "NamespaceHeader.H"
 /// -----------------------------------------------------------

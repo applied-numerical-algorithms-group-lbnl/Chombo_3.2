@@ -24,10 +24,6 @@
 #include "ShapeArray.H"
 #include "NamespaceHeader.H"
 
-#ifdef USE_PROTO
-#include "Proto.H"
-#endif
-
 struct SliceSpec;
 
 /** A Fortran Array-like Container
@@ -146,38 +142,6 @@ public:
   */
   BaseFab(const Interval& a_comps,
           BaseFab<T>&     a_original);
-
-#ifdef USE_PROTO
-    template <unsigned int C>
-    void define(Proto::BoxData<T,C,1,1>&   a_original);
-
-    template<unsigned int C>
-    operator Proto::BoxData<T,C>()
-    {
-        Proto::BoxData<T,C> bd;
-        bd.define(this->dataPtr(0), this->box(), C);
-        return bd;
-    }   
-    
-    template<unsigned int C>
-    operator const Proto::BoxData<T,C>() const
-    {
-        Proto::BoxData<T,C> bd;
-        bd.define(this->dataPtr(0), this->box(), C);
-        return bd;
-    }
-    
-    template <unsigned int C>
-    inline BaseFab(const Proto::BoxData<T,C>& a_bd, const Proto::Point a_center = Proto::Point::Zeros())
-    {
-        m_domain = Box(a_bd.box().low(), a_bd.box().high(), a_center);
-        m_nvar = C;
-        m_numpts = a_bd.box().size();
-        m_truesize = a_bd.size();
-        m_dptr    = const_cast<T*>(a_bd.data(a_bd.box().low()));
-        m_aliased = true;
-    }
-#endif
 
   /// move constructor
   BaseFab(BaseFab<T>&& a_in) noexcept;

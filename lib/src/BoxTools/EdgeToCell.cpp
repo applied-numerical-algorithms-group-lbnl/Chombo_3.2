@@ -16,10 +16,7 @@
 #include "DataIterator.H"
 #include "EdgeToCell.H"
 #include "EdgeToCellF_F.H"
-#include "ProtoInterface.H"
-#ifdef USE_PROTO
-#include "Proto_Stencil.H"
-#endif
+
 #include "NamespaceHeader.H"
 
 #ifdef USE_PROTO

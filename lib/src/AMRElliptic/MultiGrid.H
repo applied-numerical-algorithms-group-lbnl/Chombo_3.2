@@ -308,7 +308,6 @@ class MGLevelOp : public LinearOp<T>, public MGLevelOpObserver<T>
   // Forbidden operations.
   MGLevelOp(const MGLevelOp&);
   MGLevelOp& operator=(const MGLevelOp&);
-
 };
 
 ///

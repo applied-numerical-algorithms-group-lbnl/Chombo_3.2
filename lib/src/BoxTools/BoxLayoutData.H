@@ -484,7 +484,7 @@ protected:
 #ifndef DOXYGEN
 
 #endif
-  // objects moved into Copier
+// objects moved into Copier
 //   mutable std::vector<bufEntry> m_fromMe;
 //   mutable std::vector<bufEntry> m_toMe;
 

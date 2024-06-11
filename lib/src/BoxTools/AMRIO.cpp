@@ -713,11 +713,11 @@ ReadAnisotropicAMRHierarchyHDF5(const string& filename,
 
 int
 ReadAnisotropicAMRHierarchyHDF5(HDF5Handle& handle,
-                     Vector<DisjointBoxLayout>& a_vectGrids,
-                     Vector<LevelData<FArrayBox>* > & a_vectData,
-                     Box& a_domain,
-                     Vector<IntVect>& a_refRatio,
-                     int& a_numLevels)
+                                Vector<DisjointBoxLayout>& a_vectGrids,
+                                Vector<LevelData<FArrayBox>* > & a_vectData,
+                                Box& a_domain,
+                                Vector<IntVect>& a_refRatio,
+                                int& a_numLevels)
 {
   HDF5HeaderData header;
   header.readFromFile(handle);

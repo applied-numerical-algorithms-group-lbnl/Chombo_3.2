@@ -123,6 +123,7 @@ void AMRFASMultiGrid<T>::define( const ProblemDomain& a_coarseDomain,
                                  int a_maxAMRLevels )
 {
   CH_TIME("AMRFASMultiGrid::define");
+
   AMRMultiGrid<T>::define( a_coarseDomain,a_factory,a_bottomSolver,a_maxAMRLevels);
 
   m_HOCopier.resize( a_maxAMRLevels );

@@ -67,6 +67,8 @@ protected:
 
   Vector< T* >   m_phiCoarse;
 
+
+
 };
 
 
@@ -150,6 +152,7 @@ void FASMultiGrid<T>::solve(T& a_phi, const T& a_rhs, Real a_tolerance, int a_ma
 // Do one cycle
 // in FAS we solve the full problem, so instead of having the
 // error and residual, we have phi and the rhs
+
 template <class T>
 void FASMultiGrid<T>::oneCycle(T& a_phi, const T& a_rhs)
 {

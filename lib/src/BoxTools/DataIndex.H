@@ -169,7 +169,5 @@ inline bool LayoutIndex::isNull() const
 }
 #endif
 
-//std::ostream& operator<<(std::ostream& os, const LayoutIndex& copier);
-
 #include "NamespaceFooter.H"
 #endif

@@ -27,10 +27,6 @@
 #include "SPMD.H"
 #include "NamespaceHeader.H"
 
-#ifdef USE_PROTO
-#include "Proto.H"
-#endif
-
 struct SliceSpec;
 
 /// Cell-Based or Node-Based Indices
@@ -1628,18 +1624,6 @@ public:
   /** Doesn't print the IndexType, and uses square outer brackets. */
   static void setTempestOutputFormat( bool );
 
-#ifdef USE_PROTO
-    Box(Proto::Box a_box)
-    {
-        define(a_box.low(), a_box.high());
-    }
-    
-    operator Proto::Box() const
-    {
-        return Proto::Box(smallend, bigend); //calls IntVect -> Proto::Point converter
-    }
-#endif
-
 protected:
   friend class HDF5Handle;
 
@@ -2396,7 +2380,6 @@ Box::operator& (const Box& rhs) const
   Box lhs(*this);
   return lhs &= rhs;
 }
-
 
 #endif /* WRAPPER */
 

@@ -618,7 +618,7 @@ writeFABname(const FArrayBox      * a_dataPtr,
 */
 void
 writeCFABname(const CFArrayBox      * a_dataPtr,
-              const char           * a_filename);
+              const char            * a_filename);
 ///
 /** View a modified version of *a_dataPtr where the data are set to zero
     on the grids of *a_dataFinePtr coarsened by a_refRatio.

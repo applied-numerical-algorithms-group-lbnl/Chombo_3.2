@@ -23,10 +23,6 @@
 #include "Misc.H"
 #include <functional>
 
-#ifdef USE_PROTO
-#include "Proto.H"
-#endif
-
 namespace BLfacade
 {
   class IntVect;
@@ -672,21 +668,6 @@ public:
   static size_t io_offset;
 
   inline uint64_t hash(const IntVect& origin, const IntVect& blockingFactor) const; 
-
-#ifdef USE_PROTO
-    IntVect(Proto::Point a_pt)
-    {
-        for (int ii = 0; ii < DIM; ii++)
-        {
-            vect[ii] = a_pt[ii];
-        }
-    }
-
-    operator Proto::Point() const
-    {
-        return Proto::Point(vect);
-    }
-#endif
 
 protected:
   //
