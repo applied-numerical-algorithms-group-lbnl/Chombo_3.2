@@ -26,6 +26,7 @@
 #include "AMRFASMultiGrid.H"
 #include "AMRMultiGrid.H"
 #include "BiCGStabSolver.H"
+#include "RelaxSolver.H"
 #include "BoxIterator.H"
 #include "CONSTANTS.H"
 #include "memusage.H"
@@ -767,24 +768,24 @@ setupSolver(AMRMultiGrid<LevelData<FArrayBox> > *a_amrSolver,
   }
 
   // multigrid solver parameters
-  int numSmooth, numMG, maxIter;
+  int numSmooth, numBottom, numMG, maxIter;
   Real eps, hang;
   ppSolver.get("num_smooth", numSmooth);
   ppSolver.get("num_mg",     numMG);
   ppSolver.get("max_iterations", maxIter);
   ppSolver.get("tolerance", eps);
   ppSolver.get("hang",      hang);
+  ppSolver.get("num_bottom", numBottom);
 
   Real normThresh = 1.0e-30;
  
-  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numSmooth,
+  a_amrSolver->setSolverParameters(numSmooth, numSmooth, numBottom,
                                numMG, maxIter, eps, hang, normThresh, !FASmultigrid);// last param is homogeneous BC
   a_amrSolver->m_verbosity = s_verbosity-1;
 
   // optional parameters
   ppSolver.query("num_pre", a_amrSolver->m_pre);
   ppSolver.query("num_post", a_amrSolver->m_post);
-  ppSolver.query("num_bottom", a_amrSolver->m_bottom);
 }
 
 
@@ -863,6 +864,7 @@ int runSolver()
              amrSolver = new AMRMultiGrid<LevelData<FArrayBox> >();
          }
          BiCGStabSolver<LevelData<FArrayBox> > bottomSolver;
+         //RelaxSolver<LevelData<FArrayBox> > bottomSolver;
          bottomSolver.m_verbosity = s_verbosity-2;
          setupSolver(amrSolver, bottomSolver, amrGrids, amrDomains,
                      refRatios, amrDx, finestLevel);
