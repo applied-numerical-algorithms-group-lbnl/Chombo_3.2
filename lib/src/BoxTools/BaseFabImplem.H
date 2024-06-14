@@ -230,24 +230,6 @@ template <class T> inline void BaseFab<T>::define(const Interval& a_comps,
   //        a_original.dataPtr(a_comps.begin()));
 }
 
-#ifdef USE_PROTO
-template < class T>
-template<unsigned int C>
-void BaseFab<T>::define(Proto::BoxData<T,C,1,1>&   a_original)
-{
-    undefine();
-    m_domain = getBox(a_original.box());
-    m_numpts = a_original.box().size();
-    m_truesize = a_original.size();
-    m_nvar = C;
-    m_dptr = &a_original(a_original.box().low());
-    m_aliased = true;
-#if CXXSTD>=14
-  T* mddata = isUsable() ? m_dptr + m_domain.index(IntVect::Zero) : nullptr;
-  m_mdarray.define(mddata, m_domain.size());
-#endif
-}
-#endif
 
 template <class T> inline void BaseFab<T>::clear()
 {
