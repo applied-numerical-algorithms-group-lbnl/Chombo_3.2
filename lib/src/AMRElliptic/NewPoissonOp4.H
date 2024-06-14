@@ -52,6 +52,7 @@ public:
                           bool a_homogeneous = false);
   virtual void preCond(   FArrayBox& a_correction,
                           const FArrayBox& a_residual);
+
   virtual void applyOp(   FArrayBox& a_lhs,
                           const FArrayBox& a_phi,
                           bool a_homogeneous = false);
@@ -79,9 +80,7 @@ public:
      \name MGLevelOp functions */
   /*@{*/
 
-  virtual void relax(FArrayBox& a_e,
-                     const FArrayBox& a_residual,
-                     int iterations);
+  virtual void relax(FArrayBox& a_e, const FArrayBox& a_residual, int iterations, int a_AMRFASMGiter, int depth = 0);
 
   virtual void createCoarser(FArrayBox& a_coarse,
                              const FArrayBox& a_fine,
@@ -111,7 +110,7 @@ protected:
   ProblemDomain           m_domain;
   BCFunc                  m_bc;
 
-  void levelGSRB(FArrayBox& a_e,  const FArrayBox& a_residual);
+  void levelGSRB(FArrayBox& a_e,  const FArrayBox& a_residual, int a_ite, int a_depth);
 
 };
 

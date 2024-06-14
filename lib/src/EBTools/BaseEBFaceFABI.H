@@ -79,8 +79,16 @@ BaseEBFaceFAB<T>::size(const Box& R, const Interval& comps) const
 {
 
   Box RFace = surroundingNodes(R, m_iDir);
-  int retval = m_regFAB.size(RFace, comps);
-  retval    += m_irrFAB.size(R,     comps);
+  int regsize = m_regFAB.size(RFace, comps);
+  int irrsize = m_irrFAB.size(R,     comps);
+  int retval = regsize + irrsize;
+
+  if(m_verbose) 
+  {
+    pout()  <<"baseebfacefab R = " << R << ", RFace = " << RFace << ", comps = " << comps;
+    pout() << ", regbox = " << m_regFAB.box() << ", regsize = " << regsize << ", irrsize = " << irrsize << ", total = " << retval << endl;
+  }
+  
   return retval;
 }
 

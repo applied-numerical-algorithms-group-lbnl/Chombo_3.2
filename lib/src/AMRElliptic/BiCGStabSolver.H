@@ -36,6 +36,11 @@ public:
     m_homogeneous = a_homogeneous;
   }
 
+  virtual void setUseFas(bool a_use_FAS)
+  {
+    m_use_FAS = a_use_FAS;
+  }
+
   ///
   /**
      define the solver.   a_op is the linear operator.
@@ -57,6 +62,8 @@ public:
      homogeneous boundary conditions
    */
   bool m_homogeneous;
+
+  bool m_use_FAS;
 
   ///
   /**
@@ -165,6 +172,7 @@ public:
 template <class T>
 BiCGStabSolver<T>::BiCGStabSolver()
   :m_homogeneous(false),
+   m_use_FAS(false),
    m_op(NULL),
    m_imax(80),
    m_verbosity(3),
@@ -220,16 +228,20 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
   int recount = 0;
 
   CH_assert(m_op != NULL);
-  m_op->setToZero(r); // added by petermc, 26 Nov 2013, to zero out ghosts
+  if (!m_use_FAS) {
+      m_op->setToZero(r); // added by petermc, 26 Nov 2013, to zero out ghosts
+  }
 
   m_op->residual(r, a_phi, a_rhs, m_homogeneous);
 
   m_op->assignLocal(r_tilde, r);
-  m_op->setToZero(e);
-  // (DFM 2/1/07) these next two need to be set to zero to prevent
-  // problems in the multilevel case
-  m_op->setToZero(p_tilde);
-  m_op->setToZero(s_tilde);
+  if (!m_use_FAS) {
+      m_op->setToZero(e);
+      // (DFM 2/1/07) these next two need to be set to zero to prevent
+      // problems in the multilevel case
+      m_op->setToZero(p_tilde);
+      m_op->setToZero(s_tilde);
+  }
 
   m_iter = 0;
 
@@ -370,8 +382,12 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
         }
 
       m_op->preCond(p_tilde, p);
-      m_op->setToZero(v); // added by petermc, 27 Nov 2013, to zero out ghosts
-      m_op->applyOp(v, p_tilde, true);
+      if (!m_use_FAS) {
+          m_op->setToZero(v); // added by petermc, 27 Nov 2013, to zero out ghosts
+          m_op->applyOp(v, p_tilde, true);
+      } else {
+          m_op->applyOp(v, p_tilde, m_homogeneous);
+      }
       Real m = m_op->dotProduct(r_tilde, v);
       alpha[0] = rho[1]/m;
 
@@ -391,7 +407,9 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
         }
       else
         {
-          m_op->setToZero(r);
+          if (!m_use_FAS) {
+              m_op->setToZero(r);
+          }
           norm[0] = 0.0;
         }
 
@@ -406,8 +424,12 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
       if (norm[0] > m_eps*initial_norm && norm[0] > m_reps*m_initial_residual)
         {
           m_op->preCond(s_tilde, r);
-          m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
-          m_op->applyOp(t, s_tilde, true);
+          if (!m_use_FAS) {
+              m_op->setToZero(t); // added by petermc, 27 Nov 2013, to zero out ghosts
+              m_op->applyOp(t, s_tilde, true);
+          } else {
+              m_op->applyOp(t, s_tilde, m_homogeneous);   
+          }
           omega[0] = m_op->dotProduct(t, r)/m_op->dotProduct(t, t);
           m_op->incr(e, s_tilde, omega[0]);
           m_op->incr(r, t,      -omega[0]);
@@ -478,7 +500,9 @@ void BiCGStabSolver<T>::solve(T& a_phi, const T& a_rhs)
                 rho[1]=0.0; rho[1]=0.0; rho[2]=0.0; rho[3]=0.0;
                 alpha[0]=0; beta[0]=0; omega[0]=0;
                 m_op->assignLocal(r_tilde, r);
-                m_op->setToZero(e);
+                if (!m_use_FAS) {
+                    m_op->setToZero(e);
+                }
 
                 restarts++;
               }

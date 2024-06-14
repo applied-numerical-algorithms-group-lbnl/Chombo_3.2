@@ -14,7 +14,6 @@ ebase :=  testPWL quadCFInterpTest testPeriodic fluxRegisterTest \
 	testFourthOrderFineInterp testFineInterp  fourthOrderCFInterpTest\
 	nwoQuadCFInterpTest CoDimCopierTest testFourthOrderTensorFineInterp\
 
-
 LibNames := AMRTools BoxTools
 
 include $(CHOMBO_HOME)/mk/Make.test

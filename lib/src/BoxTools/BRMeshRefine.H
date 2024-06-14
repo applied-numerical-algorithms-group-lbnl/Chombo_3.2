@@ -290,6 +290,10 @@ extern void domainSplit(const ProblemDomain& a_domain, Vector<Box>& a_vbox,
                         int a_maxSize, int a_blockfactor=1,
                         IntVect a_refineDirs=IntVect::Unit);
 
+extern void domainSplit(const ProblemDomain& a_domain, Vector<Box>& a_vbox,
+                        IntVect a_maxSize, int a_blockfactor=1,
+                        IntVect a_refineDirs=IntVect::Unit);
+
 ///
 /**
    Splits domain into a vector of disjoint boxes with
@@ -304,6 +308,10 @@ extern void domainSplit(const ProblemDomain& a_domain, Vector<Box>& a_vbox,
 */
 extern void domainSplit(const Box& a_domain, Vector<Box>& a_vbox,
                         int a_maxSize, int a_blockfactor=1,
+                        IntVect a_refineDirs=IntVect::Unit);
+
+extern void domainSplit(const Box& a_domain, Vector<Box>& a_vbox,
+                        IntVect a_maxSize, int a_blockfactor=1,
                         IntVect a_refineDirs=IntVect::Unit);
 
 ///

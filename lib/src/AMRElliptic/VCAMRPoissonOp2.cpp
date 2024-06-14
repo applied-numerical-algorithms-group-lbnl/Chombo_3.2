@@ -24,10 +24,11 @@
 #include "VCAMRPoissonOp2.H"
 #include "VCAMRPoissonOpF_F.H"
 #include "DebugOut.H"
+#include "VC2lineGSRB.H"
 
 #include "NamespaceHeader.H"
 
-void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
+void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&      a_lhs,
                                const LevelData<FArrayBox>& a_phi,
                                const LevelData<FArrayBox>& a_rhs,
                                bool                        a_homogeneous)
@@ -35,7 +36,7 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
   CH_TIME("VCAMRPoissonOp2::residualI");
 
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  Real dx = m_dx;
+  RealVect dx = m_dx_vect;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
   {
@@ -43,7 +44,11 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
 
     for (dit.begin(); dit.ok(); ++dit)
     {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      if (!m_use_FAS) {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      } else {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, false);
+      }
     }
   }
 
@@ -82,7 +87,7 @@ void VCAMRPoissonOp2::residualI(LevelData<FArrayBox>&       a_lhs,
                           This_will_not_compile!
 #endif
                           CHF_BOX(region),
-                          CHF_CONST_REAL(m_dx));
+                          CHF_CONST_REALVECT(m_dx_vect));
     } // end loop over boxes
 }
 
@@ -123,8 +128,53 @@ void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
       a_phi[dit].mult(m_lambda[dit], gridBox, 0, 0, ncomp);
     }
 
-  relax(a_phi, a_rhs, 2);
+  int dummyIt = 0;
+  relax(a_phi, a_rhs, 2, dummyIt);
 }
+
+void VCAMRPoissonOp2::preCond(LevelData<FArrayBox>&       a_phi,
+                              LevelData<FArrayBox>& a_res,
+                              const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("VCAMRPoissonOp2::preCond");
+
+  // diagonal term of this operator in:
+  //
+  //       alpha * a(i)
+  //     + beta  * sum_over_dir (b(i-1/2*e_dir) + b(i+1/2*e_dir)) / (dx*dx)
+  //
+  // The inverse of this is our initial multiplier.
+
+  int ncomp = a_phi.nComp();
+
+  CH_assert(m_lambda.isDefined());
+  CH_assert(a_rhs.nComp()    == ncomp);
+  CH_assert(m_bCoef->nComp() == ncomp);
+
+  // Recompute the relaxation coefficient if needed.
+  resetLambda();
+
+  //incr(a_phi, a_res, mult);
+  // don't need to use a Copier -- plain copy will do
+  DataIterator dit = a_phi.dataIterator();
+  for (dit.begin(); dit.ok(); ++dit)
+    {
+      FArrayBox&       phi = a_phi[dit];
+      FArrayBox&       res = a_res[dit];
+
+      FArrayBox&       lambda = m_lambda[dit];
+
+      BoxIterator bit(res.box());
+      for (bit.begin(); bit.ok(); ++bit) {
+          IntVect iv = bit();
+          phi(iv, 0) += lambda(iv, 0) * res(iv, 0);
+      }
+    }
+
+  int dummyIt = 0;
+  relax(a_phi, a_rhs, 2, dummyIt);
+}
+
 
 void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
                              const LevelData<FArrayBox>& a_phi,
@@ -132,13 +182,17 @@ void VCAMRPoissonOp2::applyOpI(LevelData<FArrayBox>&      a_lhs,
 {
   CH_TIME("VCAMRPoissonOp2::applyOpI");
   LevelData<FArrayBox>& phi = (LevelData<FArrayBox>&)a_phi;
-  Real dx = m_dx;
+  RealVect dx = m_dx_vect;
   const DisjointBoxLayout& dbl = a_lhs.disjointBoxLayout();
   DataIterator dit = phi.dataIterator();
 
   for (dit.begin(); dit.ok(); ++dit)
     {
-      m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      if (!m_use_FAS) {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, a_homogeneous);
+      } else {
+          m_bc(phi[dit], dbl[dit()],m_domain, dx, false);
+      }
     }
 
   applyOpNoBoundary(a_lhs, a_phi);
@@ -188,7 +242,7 @@ void VCAMRPoissonOp2::applyOpNoBoundary(LevelData<FArrayBox>&      a_lhs,
                          This_will_not_compile!
 #endif
                          CHF_BOX(region),
-                         CHF_CONST_REAL(m_dx));
+                         CHF_CONST_REALVECT(m_dx_vect));
     } // end loop over boxes
 }
 
@@ -198,12 +252,20 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
 {
   CH_TIME("VCAMRPoissonOp2::restrictResidual");
 
-  homogeneousCFInterp(a_phiFine);
+  // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+  if (!m_use_FAS) {
+      homogeneousCFInterp(a_phiFine);
+  }
+
   const DisjointBoxLayout& dblFine = a_phiFine.disjointBoxLayout();
   for (DataIterator dit = a_phiFine.dataIterator(); dit.ok(); ++dit)
     {
       FArrayBox& phi = a_phiFine[dit];
-      m_bc(phi, dblFine[dit()], m_domain, m_dx, true);
+      if (!m_use_FAS) {
+          m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, true);
+      } else {
+          m_bc(phi, dblFine[dit()], m_domain, m_dx_vect, false);
+      }
     }
 
   a_phiFine.exchange(a_phiFine.interval(), m_exchangeCopier);
@@ -251,7 +313,7 @@ void VCAMRPoissonOp2::restrictResidual(LevelData<FArrayBox>&       a_resCoarse,
                            This_will_not_compile!
 #endif
                            CHF_BOX_SHIFT(region, iv),
-                           CHF_CONST_REAL(m_dx));
+                           CHF_CONST_REALVECT(m_dx_vect));
     }
 }
 
@@ -264,6 +326,17 @@ void VCAMRPoissonOp2::setAlphaAndBeta(const Real& a_alpha,
   // Our relaxation parameter is officially out of date!
   m_lambdaNeedsResetting = true;
 }
+
+void VCAMRPoissonOp2::setPrint(bool a_print)
+{
+  m_print = a_print;
+}
+
+void VCAMRPoissonOp2::setRelaxMode(int a_relax_mode)
+{
+  m_relax_mode = a_relax_mode;
+}
+
 
 void VCAMRPoissonOp2::setCoefs(const RefCountedPtr<LevelData<FArrayBox> >& a_aCoef,
                                const RefCountedPtr<LevelData<FluxBox  > >& a_bCoef,
@@ -284,7 +357,6 @@ void VCAMRPoissonOp2::resetLambda()
 {
   if (m_lambdaNeedsResetting)
   {
-    Real scale = 1.0 / (m_dx*m_dx);
 
     // Compute it box by box, point by point
     for (DataIterator dit = m_lambda.dataIterator(); dit.ok(); ++dit)
@@ -300,12 +372,13 @@ void VCAMRPoissonOp2::resetLambda()
 
       for (int dir = 0; dir < SpaceDim; dir++)
       {
+        Real scale = 1.0 / (m_dx_vect[dir]*m_dx_vect[dir]);
         FORT_SUMFACES(CHF_FRA(lambdaFab),
-            CHF_CONST_REAL(m_beta),
-            CHF_CONST_FRA(bCoefFab[dir]),
-            CHF_BOX(curBox),
-            CHF_CONST_INT(dir),
-            CHF_CONST_REAL(scale));
+                      CHF_CONST_REAL(m_beta),
+                      CHF_CONST_FRA(bCoefFab[dir]),
+                      CHF_BOX(curBox),
+                      CHF_CONST_INT(dir),
+                      CHF_CONST_REAL(scale));
       }
 
       // Take its reciprocal
@@ -325,7 +398,7 @@ void VCAMRPoissonOp2::computeLambda()
   CH_assert(!m_lambda.isDefined());
 
   // Define lambda
-  m_lambda.define(m_aCoef->disjointBoxLayout(),m_aCoef->nComp());
+  m_lambda.define(m_aCoef->disjointBoxLayout(),m_aCoef->nComp(),m_aCoef->ghostVect());
   resetLambda();
 }
 
@@ -367,6 +440,11 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
         getFlux(coarflux, coarfab, coarBCoef, faceBox, idir);
 
         Real scale = 1.0;
+        for (int i=0; i<SpaceDim; ++i) {
+            if (idir != i) {
+              scale *= m_dx_vect[i];
+            }
+        }
         m_levfluxreg.incrementCoarse(coarflux, scale,dit(),
             interv, interv, idir);
       }
@@ -385,7 +463,7 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
   // I'm pretty sure this is not necessary. bvs -- flux calculations use
   // outer ghost cells, but not inner ones
   // phiFineRef.exchange(a_phiFine.interval());
-  IntVect phiGhost = phiFineRef.ghostVect();
+  // IntVect phiGhost = phiFineRef.ghostVect();
   int ncomps = a_phiFine.nComp();
 
   CH_START(t3);
@@ -414,6 +492,11 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
                           m_refToFiner);
 
                   Real scale = 1.0;
+                  for (int i=0; i<SpaceDim; ++i) {
+                      if (idir != i) {
+                        scale *= m_dx_vect[i];
+                      }
+                  }
                   m_levfluxreg.incrementFine(fineflux, scale, ditf(),
                                              interv, interv, idir, hiorlo);
                 }
@@ -423,13 +506,17 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
 
   CH_STOP(t3);
 
-  Real scale = 1.0/m_dx;
+  Real scale = 1.0;
+  for (int i=0; i<SpaceDim; ++i) {
+      scale *= m_dx_vect[i];
+  }
+  scale = 1.0/scale;
   m_levfluxreg.reflux(a_residual, scale);
 }
 
 #else
 
-void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
+void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&       a_phiFine,
                             const LevelData<FArrayBox>&        a_phi,
                             LevelData<FArrayBox>&              a_residual,
                             AMRLevelOp<LevelData<FArrayBox> >* a_finerOp)
@@ -461,6 +548,12 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
           getFlux(coarflux, coarfab, coarBCoef , faceBox, idir);
 
           Real scale = 1.0;
+          for (int i=0; i<SpaceDim; ++i) {
+              if (idir != i) {
+                scale *= m_dx_vect[i];
+              }
+          }
+
           levfluxreg.incrementCoarse(coarflux, scale,dit(),
                                      interv,interv,idir);
         }
@@ -532,22 +625,181 @@ void VCAMRPoissonOp2::reflux(const LevelData<FArrayBox>&        a_phiFine,
                       m_refToFiner);
 
               Real scale = 1.0;
+              for (int i=0; i<SpaceDim; ++i) {
+                  if (idir != i) {
+                    scale *= m_dx_vect[i];
+                  }
+              }
               levfluxreg.incrementFine(fineflux, scale, ditf(),
                                        interv, interv, idir, hiorlo);
             }
         }
     }
 
-  Real scale =  1.0/m_dx;
+  Real scale = 1.0;
+  for (int i=0; i<SpaceDim; ++i) {
+      scale *= m_dx_vect[i];
+  }
+  scale = 1.0/scale;
   levfluxreg.reflux(a_residual, scale);
 }
 
 #endif
 
+
+// Only for 3D with Z direction needing anisotropic line relaxation
+void VCAMRPoissonOp2::levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                                     const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("VCAMRPoissonOp2::levelZlineGSRB");
+#if CH_SPACEDIM == 3
+
+  CH_assert(a_phi.isDefined());
+  CH_assert(a_rhs.isDefined());
+  CH_assert(a_phi.ghostVect() >= IntVect::Unit);
+  CH_assert(a_phi.nComp() == a_rhs.nComp());
+
+  // Recompute the relaxation coefficient if needed.
+  // resetLambda();
+
+  const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
+
+  bool a_homo = false;
+
+  DataIterator dit = a_phi.dataIterator();
+
+  // do first red, then black passes
+  for (int whichPass = 0; whichPass <= 1; whichPass++)
+    {
+
+      // fill in intersection of ghostcells and a_phi's boxes
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+            a_homo = true;
+        }
+      }
+
+      // TODO - only 1 exchange neccesary for 1 R, 1 B sweep of GSRB?
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::exchange");
+        a_phi.exchange(a_phi.interval(), m_exchangeCopier);
+      }
+
+      {
+        CH_TIME("VCAMRPoissonOp2::levelGSRB::BCs");
+        // now step through grids...
+        for (dit.begin(); dit.ok(); ++dit)
+          {
+            // invoke physical BC's where necessary
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, a_homo);
+          }
+      }
+
+      for (dit.begin(); dit.ok(); ++dit)
+        {
+          const Box& region = dbl.get(dit());
+          const FluxBox& thisBCoef  = (*m_bCoef)[dit];
+
+          VC2lineGSRB zebra(region, m_dx_vect);
+          // Do a line relaxation step
+          const int d = 2; // only doing this in z direction
+          zebra.lineRelaxRB(d, a_phi[dit], a_rhs[dit], m_lambda[dit],
+                            m_alpha, (*m_aCoef)[dit],
+                            m_beta, thisBCoef, whichPass);
+
+          /*
+          FORT_GSRBHELMHOLTZVC3D(CHF_FRA(a_phi[dit]),
+                                 CHF_CONST_FRA(a_rhs[dit]),
+                                 CHF_BOX(region),
+                                 CHF_CONST_REALVECT(m_dx_vect),
+                                 CHF_CONST_REAL(m_alpha),
+                                 CHF_CONST_FRA((*m_aCoef)[dit]),
+                                 CHF_CONST_REAL(m_beta),
+                                 CHF_CONST_FRA(thisBCoef[0]),
+                                 CHF_CONST_FRA(thisBCoef[1]),
+                                 CHF_CONST_FRA(thisBCoef[2]),
+                                 CHF_CONST_FRA(m_lambda[dit]),
+                                 CHF_CONST_INT(whichPass));
+          */
+        } // end loop through grids
+    } // end loop through red-black
+
+    m_lambdaNeedsResetting = true;
+#endif
+}
+
+
 void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
-                               const LevelData<FArrayBox>& a_rhs)
+                               const LevelData<FArrayBox>& a_rhs,
+                               int MGiter, int a_ite, int a_depth )
 {
   CH_TIME("VCAMRPoissonOp2::levelGSRB");
+
+  if (m_print) {
+      char iter_str[100];
+      sprintf(iter_str, "%s_SOLVERIT%01d_DEPTH%01d_SMOOTH%01d", "GSRB", MGiter, a_depth, a_ite);
+      pout() << "       -printing ...IT/DEPTH/SMOOTH "<< MGiter << " " << a_depth << " " << a_ite  << " " << m_dx_vect[0] << endl;
+      //this->write(&a_rhs, iter_str);
+      const DisjointBoxLayout& levelGrids  = a_phi.disjointBoxLayout();
+      const ProblemDomain&     levelDomain = levelGrids.physDomain();
+      Vector<DisjointBoxLayout> grids;
+      grids.resize(1);
+      grids[0] = levelGrids;
+
+      Box domain = levelDomain.domainBox();
+
+      int numPlotComps = 2;
+
+      string headName("PHI");
+      string rhsName("RHS");
+      Vector<string> vectName(numPlotComps);
+      vectName[0] = headName;
+      vectName[1] = rhsName;
+
+
+      IntVect ghostVect(IntVect::Unit);
+      Vector<LevelData<FArrayBox>*> plotData(1, NULL);
+      plotData[0] = new LevelData<FArrayBox>(levelGrids, numPlotComps, ghostVect);
+
+      LevelData<FArrayBox>& plotDataLev      = *plotData[0];
+      DataIterator dit = levelGrids.dataIterator();
+      for (dit.begin(); dit.ok(); ++dit) {
+          FArrayBox& thisPlotData   = plotDataLev[dit];
+          const FArrayBox& thisHead       = a_phi[dit];
+          const FArrayBox& thisRHS        = a_rhs[dit];
+
+          int comp = 0;
+          thisPlotData.copy(thisHead, 0, comp, 1);
+          comp++;
+          thisPlotData.copy(thisRHS, 0, comp, 1);
+      }
+      // char iter_str[100];
+      // sprintf(iter_str, "%s%06d.", m_plot_prefix.c_str(), m_cur_step);
+      // sprintf(iter_str, "%s%06d_PI%03d_WFX-MG%01d_SMOOTH%01d_DEPTH%01d", "GSRB_", m_cur_step, m_cur_PicardIte, nbAMRFASMGiter, nbSmooth, nbDepth);
+
+      string filename(iter_str);
+
+      if (SpaceDim == 1) {
+          filename.append(".1d.hdf5");
+      }
+      else if (SpaceDim == 2) {
+          filename.append(".2d.hdf5");
+      }
+      else if (SpaceDim == 3) {
+          filename.append(".3d.hdf5");
+      }
+
+      Real dt = 1.;
+      WriteAMRHierarchyHDF5(
+          filename, grids, plotData, vectName, domain, m_dx_vect[0], dt, 0.0, 2, 1);
+
+      // // need to delete plotData
+      // delete plotData;
+      delete plotData[0];
+  }
 
   CH_assert(a_phi.isDefined());
   CH_assert(a_rhs.isDefined());
@@ -559,6 +811,8 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
 
   const DisjointBoxLayout& dbl = a_phi.disjointBoxLayout();
 
+  bool a_homo = false;
+
   DataIterator dit = a_phi.dataIterator();
 
   // do first red, then black passes
@@ -568,7 +822,11 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
       // fill in intersection of ghostcells and a_phi's boxes
       {
         CH_TIME("VCAMRPoissonOp2::levelGSRB::homogeneousCFInterp");
-        homogeneousCFInterp(a_phi);
+        // if you're not homogeneous and not FAS you should have done something to end up homogeneous
+        if (!m_use_FAS) {
+            homogeneousCFInterp(a_phi);
+            a_homo = true;
+        }
       }
 
       {
@@ -582,7 +840,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
         for (dit.begin(); dit.ok(); ++dit)
           {
             // invoke physical BC's where necessary
-            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx, true);
+            m_bc(a_phi[dit], dbl[dit()], m_domain, m_dx_vect, a_homo);
           }
       }
 
@@ -603,7 +861,7 @@ void VCAMRPoissonOp2::levelGSRB(LevelData<FArrayBox>&       a_phi,
                                 (CHF_FRA(a_phi[dit]),
                                  CHF_CONST_FRA(a_rhs[dit]),
                                  CHF_BOX(region),
-                                 CHF_CONST_REAL(m_dx),
+                                 CHF_CONST_REALVECT(m_dx_vect),
                                  CHF_CONST_REAL(m_alpha),
                                  CHF_CONST_FRA((*m_aCoef)[dit]),
                                  CHF_CONST_REAL(m_beta),
@@ -812,7 +1070,7 @@ void VCAMRPoissonOp2::getFlux(FArrayBox&       a_flux,
   a_flux.resize(a_facebox, a_data.nComp());
   BoxIterator bit(a_facebox);
 
-  Real scale = m_beta * a_ref / m_dx;
+  Real scale = m_beta * a_ref / m_dx_vect[a_dir];
 
   for ( bit.begin(); bit.ok(); bit.next())
     {
@@ -873,12 +1131,13 @@ VCAMRPoissonOp2Factory::VCAMRPoissonOp2Factory()
 void VCAMRPoissonOp2Factory::define(const ProblemDomain&                           a_coarseDomain,
                                    const Vector<DisjointBoxLayout>&               a_grids,
                                    const Vector<int>&                             a_refRatios,
-                                   const Real&                                    a_coarsedx,
+                                   const RealVect&                                a_coarsedx,
                                    BCHolder                                       a_bc,
                                    const Real&                                    a_alpha,
                                    Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
                                    const Real&                                    a_beta,
-                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef)
+                                   Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+                                   bool                                           a_use_FAS)
 {
   CH_TIME("VCAMRPoissonOp2Factory::define");
 
@@ -891,7 +1150,7 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
   m_bc = a_bc;
 
   m_dx.resize(a_grids.size());
-  m_dx[0] = a_coarsedx;
+  D_TERM(m_dx[0][0] = a_coarsedx[0];, m_dx[0][1] = a_coarsedx[1];, m_dx[0][2] = a_coarsedx[2];)
 
   m_domains.resize(a_grids.size());
   m_domains[0] = a_coarseDomain;
@@ -905,15 +1164,19 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   for (int i = 1; i < a_grids.size(); i++)
     {
-      m_dx[i] = m_dx[i-1] / m_refRatios[i-1];
+      D_TERM(m_dx[i][0] = m_dx[i-1][0] / m_refRatios[i-1];,
+             m_dx[i][1] = m_dx[i-1][1] / m_refRatios[i-1];,
+             m_dx[i][2] = m_dx[i-1][2] / m_refRatios[i-1];)
 
       m_domains[i] = m_domains[i-1];
       m_domains[i].refine(m_refRatios[i-1]);
 
-      m_exchangeCopiers[i].exchangeDefine(a_grids[i], IntVect::Unit);
-      m_exchangeCopiers[i].trimEdges(a_grids[i], IntVect::Unit);
-
-      m_cfregion[i].define(a_grids[i], m_domains[i]);
+      if (a_grids[i].isClosed())
+        {
+          m_exchangeCopiers[i].exchangeDefine(a_grids[i], IntVect::Unit);
+          m_exchangeCopiers[i].trimEdges(a_grids[i], IntVect::Unit);
+          m_cfregion[i].define(a_grids[i], m_domains[i]);
+        }
     }
 
   m_alpha = a_alpha;
@@ -921,6 +1184,12 @@ void VCAMRPoissonOp2Factory::define(const ProblemDomain&                        
 
   m_beta  = a_beta;
   m_bCoef = a_bCoef;
+
+  m_print = false;
+
+  m_relax_mode = 1;
+
+  m_use_FAS = a_use_FAS;
 }
 //-----------------------------------------------------------------------
 
@@ -932,7 +1201,7 @@ VCAMRPoissonOp2Factory::
 define(const ProblemDomain& a_coarseDomain,
        const Vector<DisjointBoxLayout>& a_grids,
        const Vector<int>& a_refRatios,
-       const Real& a_coarsedx,
+       const RealVect& a_coarsedx,
        BCHolder a_bc,
        const IntVect& a_ghostVect)
 {
@@ -956,10 +1225,18 @@ define(const ProblemDomain& a_coarseDomain,
     }
   }
   Real alpha = 1.0, beta = 1.0;
+  bool a_use_FAS = false;
   define(a_coarseDomain, a_grids, a_refRatios, a_coarsedx, a_bc,
-         alpha, aCoef, beta, bCoef);
+         alpha, aCoef, beta, bCoef, a_use_FAS);
 }
 //-----------------------------------------------------------------------
+
+//
+// ---------------------------------------------------------
+void VCAMRPoissonOp2Factory::setRelaxModeFactory(int a_relax_mode)
+{
+    m_relax_mode = a_relax_mode;
+}
 
 MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemDomain& a_indexSpace,
                                                                   int                  a_depth,
@@ -967,7 +1244,7 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 {
   CH_TIME("VCAMRPoissonOp2Factory::MGnewOp");
 
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   int ref;
 
@@ -983,11 +1260,13 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
 
   if (ref > 0)
   {
-    dxCrse = m_dx[ref-1];
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
+           dxCrse[2] = m_dx[ref-1][2];)
   }
 
   ProblemDomain domain(m_domains[ref]);
-  Real dx = m_dx[ref];
+  RealVect dx = m_dx[ref];
   int coarsening = 1;
 
   for (int i = 0; i < a_depth; i++)
@@ -1022,6 +1301,10 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
 
+  newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
+
   if (a_depth == 0)
     {
       // don't need to coarsen anything for this
@@ -1045,38 +1328,43 @@ MGLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::MGnewOp(const ProblemD
       CoarseAverageFace faceAverager(m_bCoef[ref]->getBoxes(),
                                      bCoef->nComp(), coarsening);
 
-      if (m_coefficient_average_type == CoarseAverage::arithmetic)
-        {
-          averager.averageToCoarse(*aCoef, *(m_aCoef[ref]));
-          faceAverager.averageToCoarse(*bCoef, *(m_bCoef[ref]));
-        }
-      else if (m_coefficient_average_type == CoarseAverage::harmonic)
+      //if (m_coefficient_average_type == CoarseAverage::arithmetic)
+      //  {
+      //    averager.averageToCoarse(*aCoef, *(m_aCoef[ref]));
+      //    faceAverager.averageToCoarse(*bCoef, *(m_bCoef[ref]));
+      //  }
+      //else if (m_coefficient_average_type == CoarseAverage::harmonic)
         {
           averager.averageToCoarseHarmonic(*aCoef, *(m_aCoef[ref]));
           faceAverager.averageToCoarseHarmonic(*bCoef, *(m_bCoef[ref]));
         }
-      else
-        {
-          MayDay::Abort("VCAMRPoissonOp2Factory::MGNewOp -- bad averagetype");
-        }
+      //else
+      //  {
+      //    MayDay::Abort("VCAMRPoissonOp2Factory::MGNewOp -- bad averagetype");
+      //  }
 
       newOp->m_aCoef = aCoef;
       newOp->m_bCoef = bCoef;
+
     }
 
   newOp->computeLambda();
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
+
+  newOp->m_use_FAS = m_use_FAS;
 
   return (MGLevelOp<LevelData<FArrayBox> >*)newOp;
 }
+
 
 AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const ProblemDomain& a_indexSpace)
 {
   CH_TIME("VCAMRPoissonOp2Factory::AMRnewOp");
 
   VCAMRPoissonOp2* newOp = new VCAMRPoissonOp2;
-  Real dxCrse = -1.0;
+  RealVect dxCrse = -IntVect::Unit;
 
   // Need to know how many components we're solving for
   int nComp = 1;
@@ -1107,7 +1395,7 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   if (ref == 0)
     {
       // coarsest AMR level
-      if (m_domains.size() == 1)
+      if (m_domains.size() == 1 || !m_boxes[1].isClosed())
         {
           // no finer level
           newOp->define(m_boxes[0], m_dx[0],
@@ -1128,7 +1416,9 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   }
   else if (ref ==  m_domains.size()-1)
   {
-    dxCrse = m_dx[ref-1];
+    D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+           dxCrse[1] = m_dx[ref-1][1];,
+           dxCrse[2] = m_dx[ref-1][2];)
 
     // finest AMR level
     newOp->define(m_boxes[ref], m_boxes[ref-1], m_dx[ref],
@@ -1144,7 +1434,9 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     }
   else
     {
-      dxCrse = m_dx[ref-1];
+      D_TERM(dxCrse[0] = m_dx[ref-1][0];,
+             dxCrse[1] = m_dx[ref-1][1];,
+             dxCrse[2] = m_dx[ref-1][2];)
 
       // intermediate AMR level, full define
     newOp->define(m_boxes[ref], m_boxes[ref+1], m_boxes[ref-1], m_dx[ref],
@@ -1157,6 +1449,10 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
   newOp->m_alpha = m_alpha;
   newOp->m_beta  = m_beta;
 
+  newOp->m_print = m_print;
+
+  newOp->m_relax_mode = m_relax_mode;
+
   newOp->m_aCoef = m_aCoef[ref];
   newOp->m_bCoef = m_bCoef[ref];
 
@@ -1165,7 +1461,14 @@ AMRLevelOp<LevelData<FArrayBox> >* VCAMRPoissonOp2Factory::AMRnewOp(const Proble
     newOp->computeLambda();
   }
 
-  newOp->m_dxCrse = dxCrse;
+  newOp->m_dxCrse      = dxCrse[0];
+  newOp->m_dxCrse_vect = dxCrse;
+
+  newOp->m_use_FAS = m_use_FAS;
+
+  if (m_use_FAS) {
+      pout() << "VCAMRPoissonOp2Factory::AMRnewOp use FAS \n";
+  }
 
   return (AMRLevelOp<LevelData<FArrayBox> >*)newOp;
 }

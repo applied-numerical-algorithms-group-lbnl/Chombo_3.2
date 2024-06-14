@@ -51,6 +51,16 @@ public:
                       LayoutData<TensorFineStencilSet> a_loTanStencilSets[SpaceDim],
                       LayoutData<TensorFineStencilSet> a_hiTanStencilSets[SpaceDim]);
 
+  static void
+  homogeneousCFInterp(LevelData<FArrayBox>& a_phif,
+                      LevelData<FArrayBox>& a_tanGrad,
+                      LayoutData<CFIVS> a_loCFIVS[SpaceDim],
+                      LayoutData<CFIVS> a_hiCFIVS[SpaceDim],
+                      RealVect a_dxLevel,
+                      RealVect a_dxCrse,
+                      int a_ncomp,
+                      LayoutData<TensorFineStencilSet> a_loTanStencilSets[SpaceDim],
+                      LayoutData<TensorFineStencilSet> a_hiTanStencilSets[SpaceDim]);
 
   ///
   /**
@@ -63,6 +73,18 @@ public:
                              Side::LoHiSide a_hiorlo,
                              Real a_dxLevel,
                              Real a_dxCrse,
+                             int a_ncomp,
+                             LayoutData<TensorFineStencilSet> a_loTanStencilSets[SpaceDim],
+                             LayoutData<TensorFineStencilSet> a_hiTanStencilSets[SpaceDim]);
+
+  static void
+  homogeneousCFInterpTanGrad(LevelData<FArrayBox>& a_tanGrad,
+                             const LevelData<FArrayBox>& a_phi,
+                             const DataIndex& a_DatInd,
+                             int a_idir,
+                             Side::LoHiSide a_hiorlo,
+                             RealVect a_dxLevel,
+                             RealVect a_dxCrse,
                              int a_ncomp,
                              LayoutData<TensorFineStencilSet> a_loTanStencilSets[SpaceDim],
                              LayoutData<TensorFineStencilSet> a_hiTanStencilSets[SpaceDim]);
@@ -80,6 +102,17 @@ public:
                          LayoutData<CFIVS> a_hiCFIVS[SpaceDim],
                          Real a_dxLevel,
                          Real a_dxCrse,
+                         int a_ncomp);
+
+  static void
+  homogeneousCFInterpPhi(LevelData<FArrayBox>& a_phif,
+                         const DataIndex& a_datInd,
+                         int a_idir,
+                         Side::LoHiSide a_hiorlo,
+                         LayoutData<CFIVS> a_loCFIVS[SpaceDim],
+                         LayoutData<CFIVS> a_hiCFIVS[SpaceDim],
+                         RealVect a_dxLevel,
+                         RealVect a_dxCrse,
                          int a_ncomp);
 
   static void
@@ -109,6 +142,14 @@ public:
                int a_nComp,
                const Box& a_domf);
 
+  QuadCFInterp(
+               const DisjointBoxLayout& a_fineBoxes,
+               const DisjointBoxLayout* a_coarBoxes,
+               RealVect  a_dxFine,
+               int       a_refRatio,
+               int       a_nComp,
+               const Box& a_domf);
+
   ///
   /**
      Full Constructor.  makes all coarse-fine
@@ -123,6 +164,14 @@ public:
                int a_nComp,
                const ProblemDomain& a_domf);
 
+  QuadCFInterp(
+               const DisjointBoxLayout& a_fineBoxes,
+               const DisjointBoxLayout* a_coarBoxes,
+               RealVect  a_dxFine,
+               int       a_refRatio,
+               int       a_nComp,
+               const ProblemDomain& a_domf);
+
   ///
   /**
      Full define function.  makes all coarse-fine
@@ -134,6 +183,14 @@ public:
               Real  a_dxFine,
               int a_refRatio,
               int a_nComp,
+              const ProblemDomain& a_domf);
+
+  void define(
+              const DisjointBoxLayout& a_fineBoxes,
+              const DisjointBoxLayout* a_coarBoxes,
+              RealVect  a_dxFine,
+              int       a_refRatio,
+              int       a_nComp,
               const ProblemDomain& a_domf);
 
   ///
@@ -182,7 +239,7 @@ protected:
   int m_refRatio;
 
   //mesh spacing at fine level
-  Real m_dxFine;
+  RealVect m_dxFine;
 
   //cfstencils on low-side faces
   //lives on fine input grid layout

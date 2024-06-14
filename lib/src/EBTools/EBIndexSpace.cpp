@@ -1674,15 +1674,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponents(int  
 
       for (DataIterator dit = copyEBISLevel->m_grids.dataIterator(); dit.ok(); ++dit)
       {
-//        copyEBISLevel->m_data[dit()].defineVoFData(ghostGraph[dit()],
-//                                                   copyEBISLevel->m_grids.get(dit()));
-//        copyEBISLevel->m_data[dit()].defineFaceData(ghostGraph[dit()],
-//                                                    copyEBISLevel->m_grids.get(dit()));
-
-        copyEBISLevel->m_data[dit()].define(ghostGraph[dit()],
-                                            copyEBISLevel->m_grids.get(dit()),
-                                            copyEBISLevel->m_dx, 
-                                            copyEBISLevel->m_hasMoments);
+        copyEBISLevel->m_data[dit()].defineVoFData(ghostGraph[dit()],
+                                                   copyEBISLevel->m_grids.get(dit()));
+        copyEBISLevel->m_data[dit()].defineFaceData(ghostGraph[dit()],
+                                                    copyEBISLevel->m_grids.get(dit()));
       }
     }
 
@@ -3380,14 +3375,10 @@ Vector<RefCountedPtr<EBIndexSpace> > EBIndexSpace::findConnectedComponentsNew(in
 
       for (DataIterator dit = copyEBISLevel->m_grids.dataIterator(); dit.ok(); ++dit)
       {
-//        copyEBISLevel->m_data[dit()].defineVoFData(ghostGraph[dit()],
-//                                                   copyEBISLevel->m_grids.get(dit()));
-//        copyEBISLevel->m_data[dit()].defineFaceData(ghostGraph[dit()],
-//                                                    copyEBISLevel->m_grids.get(dit()));
-        copyEBISLevel->m_data[dit()].define(ghostGraph[dit()],
-                                            copyEBISLevel->m_grids.get(dit()),
-                                            copyEBISLevel->m_dx, 
-                                            copyEBISLevel->m_hasMoments);
+        copyEBISLevel->m_data[dit()].defineVoFData(ghostGraph[dit()],
+                                                   copyEBISLevel->m_grids.get(dit()));
+        copyEBISLevel->m_data[dit()].defineFaceData(ghostGraph[dit()],
+                                                    copyEBISLevel->m_grids.get(dit()));
       }
     }
 

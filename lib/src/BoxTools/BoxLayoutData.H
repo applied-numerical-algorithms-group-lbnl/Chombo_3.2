@@ -359,6 +359,22 @@ public:
              const ProblemDomain& a_domain,
              const Copier& a_copier) const;
 
+
+   /**
+     Special version of generalCopyTo that performs increment-on-intersection of
+     the destination instead of replacement.  This version of addTo allows for split-phase
+     communication, where you call addToBegin on the source, then addToEnd on 
+     the destination.  This version *requires* the user to use a prebuilt Copier and ensure
+     it's lifetime lives past the call to addToEnd (I have my buffers in the Copier)
+  */
+  void addToBegin(const Interval& a_srcComps,
+                  BoxLayoutData<T>& a_dest,
+                  const Interval& a_destComps,
+                  const Copier& a_copier) const;
+
+  /// you call this on the destination BoxLayoutData, not the source.
+  void addToEnd(const Interval& a_destComps);
+  
     ///
   /* User writes a function with the signature:
 
@@ -381,7 +397,7 @@ public:
 
   virtual void clear() ;
 
-  static int s_verbosity;
+  int s_verbosity = 0;
 
 protected:
   int             m_comps;
@@ -418,9 +434,8 @@ protected:
                 const Copier&       a_copier,
                 const LDOperator<T>& a_op = LDOperator<T>()) const;
   void makeItSoEnd(
-                BoxLayoutData<T>&   a_dest,
                 const Interval&     a_destComps,
-                const LDOperator<T>& a_op = LDOperator<T>()) const;
+                const LDOperator<T>& a_op = LDOperator<T>());
 
   //========================================================================
   //
@@ -445,9 +460,9 @@ protected:
 
   void postReceivesToMe() const ;
 
-  void unpackReceivesToMe(BoxLayoutData<T>& a_dest,
+  void unpackReceivesToMe(
                           const Interval&   a_destComps,
-                          const LDOperator<T>& a_op) const ;
+                          const LDOperator<T>& a_op) ;
 
   void unpackReceivesToMe_append(LayoutData<Vector<RefCountedPtr<T> > >& a_dest,
                                  const Interval&   a_destComps,
@@ -469,12 +484,13 @@ protected:
 #ifndef DOXYGEN
 
 #endif
+// objects moved into Copier
 //   mutable std::vector<bufEntry> m_fromMe;
 //   mutable std::vector<bufEntry> m_toMe;
 
-  mutable Vector<MPI_Request>  m_sendRequests,  m_receiveRequests;
-  mutable Vector<MPI_Status>   m_receiveStatus, m_sendStatus;
-  mutable int numSends, numReceives;
+  // mutable Vector<MPI_Request>  m_sendRequests,  m_receiveRequests;
+  // mutable Vector<MPI_Status>   m_receiveStatus, m_sendStatus;
+  // mutable int numSends, numReceives;
 #endif
 
 };

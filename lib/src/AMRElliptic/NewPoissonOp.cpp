@@ -48,7 +48,7 @@ void NewPoissonOp::preCond(   FArrayBox& a_phi, const FArrayBox& a_rhs)
 
   a_phi *= mult;
 
-  relax(a_phi, a_rhs, 2);
+  relax(a_phi, a_rhs, 2, 0);
 }
 
 void NewPoissonOp::applyOp(   FArrayBox& a_lhs, const FArrayBox& a_phi,
@@ -113,11 +113,11 @@ Real NewPoissonOp::norm(const FArrayBox& a_x, int a_ord)
 
 void NewPoissonOp::relax(FArrayBox& a_e,
                          const FArrayBox& a_residual,
-                         int a_iterations)
+                         int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   for (int i=0; i<a_iterations; i++)
   {
-    levelGSRB(a_e, a_residual);
+    levelGSRB(a_e, a_residual, i, a_depth);
   }
 }
 
@@ -234,7 +234,8 @@ nextColor(IntVect& color,
 /***/
 void NewPoissonOp::
 levelGSRB(FArrayBox&       a_phi,
-          const FArrayBox& a_rhs)
+          const FArrayBox& a_rhs,
+          int a_ite, int a_depth)
 {
   CH_assert(a_phi.nComp() == a_rhs.nComp());
 

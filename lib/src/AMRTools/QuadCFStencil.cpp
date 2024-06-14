@@ -267,6 +267,100 @@ QuadCFStencil::computeMixedDerivative(
 #endif
 }
 
+Real
+QuadCFStencil::computeMixedDerivative(
+                                      const BaseFab<Real> & a_phic,
+                                      int a_ivar,
+                                      const IntVect& a_ivin,
+                                      RealVect a_dx) const
+{
+#if (CH_SPACEDIM == 3)
+  CH_assert(isDefined());
+  CH_assert(a_ivar >= 0);
+  CH_assert(a_ivar < a_phic.nComp());
+  CH_assert(!a_phic.box().isEmpty());
+  //CH_assert(a_dx > 0);
+  //compute derivative directions
+  //(defined as normal to m_direction)
+  int itran1,itran2;
+  if (m_direction==0)
+    {
+      itran2 =1;
+      itran1 =2;
+    }
+  else if (m_direction==1)
+    {
+      itran2 =0;
+      itran1 =2;
+    }
+  else if (m_direction==2)
+    {
+      itran2 =0;
+      itran1 =1;
+    }
+  else
+    {
+      std::cerr << "Quadcfstencil::define-bogus m_direction" << endl;
+      abort();
+    }
+
+  //use standard centered diff approx if
+  //a_ivin is contained in m_ivsStandard
+  Real mixedd;
+  if (m_ivsStandard.contains(a_ivin))
+    {
+      IntVect basex = BASISV(itran2);
+      IntVect basey = BASISV(itran1);
+      IntVect ivur = a_ivin + basex + basey;
+      IntVect ivul = a_ivin - basex + basey;
+      IntVect ivlr = a_ivin + basex - basey;
+      IntVect ivll = a_ivin - basex - basey;
+      CH_assert(a_phic.box().contains(ivur));
+      CH_assert(a_phic.box().contains(ivul));
+      CH_assert(a_phic.box().contains(ivlr));
+      CH_assert(a_phic.box().contains(ivll));
+      Real phiur = a_phic(ivur, a_ivar);
+      Real phiul = a_phic(ivul, a_ivar);
+      Real philr = a_phic(ivlr, a_ivar);
+      Real phill = a_phic(ivll, a_ivar);
+      mixedd = (phiur+phill-philr-phiul)/(4.*a_dx[itran1]*a_dx[itran2]);
+    }
+  else
+    {
+      CH_assert(m_ivsQuadd.contains(a_ivin));
+      CH_assert(m_dropOrd.box().contains(a_ivin));
+      if (m_dropOrd(a_ivin))
+        {
+          mixedd = 0.0;
+        }
+      else
+        {
+          CH_assert(m_mixedSten.box().contains(a_ivin));
+          const DerivStencil& dersten = m_mixedSten(a_ivin);
+          mixedd = 0.0;
+          bool keepzer = false;
+          for (int isten = 0; isten < dersten.size(); isten++)
+            {
+              Real wgt = dersten.getWeight(isten);
+              const IntVect& ivphi =  dersten.getIndex(isten);
+              //can't really assert this because blocking factor
+              //could screw it up (grid one cell wide and all that)
+              // CH_assert(a_phic.box().contains(ivphi));
+              if (a_phic.box().contains(ivphi))
+                mixedd += wgt*a_phic(ivphi, a_ivar);
+              else
+                keepzer = true;
+            }
+          if (keepzer) mixedd = 0.0;
+          mixedd /= (a_dx[itran1]*a_dx[itran2]);
+        }
+    }
+  return mixedd;
+#else
+  return 0.0;
+#endif
+}
+
 void
 QuadCFStencil::setDefaultValues()
 {

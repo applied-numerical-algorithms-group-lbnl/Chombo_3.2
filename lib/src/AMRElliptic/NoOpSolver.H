@@ -32,6 +32,10 @@ public:
   {
   }
 
+  virtual void setUseFas(bool a_use_FAS) 
+  {
+  }
+
   virtual void define(LinearOp<T>* a_factory, bool a_homogeneous)
   {
   }

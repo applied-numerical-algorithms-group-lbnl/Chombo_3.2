@@ -54,6 +54,9 @@ public:
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
                        const LevelData<FArrayBox>& a_residual);
 
+  virtual void preCond(LevelData<FArrayBox>&       a_correction,
+                       LevelData<FArrayBox>& a_res,
+                       const LevelData<FArrayBox>& a_rhs);
   ///
   virtual void applyOpI(LevelData<FArrayBox>&       a_lhs,
                         const LevelData<FArrayBox>& a_phi,
@@ -81,6 +84,10 @@ public:
   /**
      \name VCAMRPoissonOp2 functions */
   /*@{*/
+
+  virtual void setPrint(bool a_print);
+
+  virtual void setRelaxMode(int a_relax_mode);
 
   /// For tga stuff
   virtual void setAlphaAndBeta(const Real& a_alpha,
@@ -217,7 +224,8 @@ protected:
   bool m_lambdaNeedsResetting;
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
+                         const LevelData<FArrayBox>& a_rhs,
+                         int MGiter, int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);
@@ -233,6 +241,9 @@ protected:
 
   virtual void levelJacobi(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs);
+
+  virtual void levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                              const LevelData<FArrayBox>& a_rhs);
 
   /// computes flux over face-centered a_facebox.
   virtual void getFlux(FArrayBox&       a_flux,
@@ -278,12 +289,13 @@ public:
   void define(const ProblemDomain&                           a_coarseDomain,
               const Vector<DisjointBoxLayout>&               a_grids,
               const Vector<int>&                             a_refRatios,
-              const Real&                                    a_coarsedx,
+              const RealVect&                                a_coarsedx,
               BCHolder                                       a_bc,
               const Real&                                    a_alpha,
               Vector<RefCountedPtr<LevelData<FArrayBox> > >& a_aCoef,
               const Real&                                    a_beta,
-              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef);
+              Vector<RefCountedPtr<LevelData<FluxBox> > >&   a_bCoef,
+              bool                                           a_use_FAS=false);
 
   //! Defines a factory for VCAMRPoissonOp2 which allows the operators to
   //! allocate their own coefficient data. \f$\alpha\f$ and \f$\beta\f$
@@ -297,9 +309,14 @@ public:
   void define(const ProblemDomain&                           a_coarseDomain,
               const Vector<DisjointBoxLayout>&               a_grids,
               const Vector<int>&                             a_refRatios,
-              const Real&                                    a_coarsedx,
+              const RealVect&                                a_coarsedx,
               BCHolder                                       a_bc,
               const IntVect&                                 a_ghostVect);
+
+  ///
+  void setRelaxModeFactory(int a_relax_mode);
+
+  int getRelaxModeFactory(){return m_relax_mode;};
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
@@ -320,13 +337,19 @@ private:
   Vector<ProblemDomain>     m_domains;
   Vector<DisjointBoxLayout> m_boxes;
 
-  Vector<Real> m_dx;
+  Vector<RealVect> m_dx;
   Vector<int>  m_refRatios; // refinement to next coarser level
 
   BCHolder m_bc;
 
   Real m_alpha;
   Real m_beta;
+
+  bool m_use_FAS;
+
+  bool m_print;
+
+  int m_relax_mode;
 
   Vector<RefCountedPtr<LevelData<FArrayBox> > > m_aCoef;
   Vector<RefCountedPtr<LevelData<FluxBox> > >   m_bCoef;

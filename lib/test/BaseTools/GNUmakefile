@@ -10,7 +10,7 @@ makefiles+=lib_test_BaseTools
 
 ebase =  clock testTask testCH_Attach testRefCountedPtr \
    testRefCountedPtrConstruct testParmParse test_complex \
-   testRootSolver testChomboVersion
+   testRootSolver
 
 # note that BaseTools library should be included by default, even 
 # if we don't specify it here

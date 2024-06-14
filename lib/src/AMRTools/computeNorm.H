@@ -58,6 +58,13 @@ Real computeMax(const Vector<LevelData<FArrayBox>* >& a_phi,
                 const Interval                        a_comps = Interval(0,0),
                 const int                             a_lBase = 0);
 
+/// Returns the max value of phi over all valid regions
+Real computeMax(const Vector<RefCountedPtr<LevelData<FArrayBox>> >& a_phi,
+                const Vector<int>&                    a_nRefFine,
+                const Interval                        a_comps = Interval(0,0),
+                const int                             a_lBase = 0,
+                int                                   a_numLev = 0);
+
 /// Returns the maximum value of phi over the valid region
 Real computeMax(const LevelData<FArrayBox>& a_phi,
                 const DisjointBoxLayout*    a_finerGrids,
@@ -69,6 +76,13 @@ Real computeMin(const Vector<LevelData<FArrayBox>* >& a_phi,
                 const Vector<int>&                    a_nRefFine,
                 const Interval                        a_comps = Interval(0,0),
                 const int                             a_lBase = 0);
+
+/// Returns the min value of phil over all valid regions
+Real computeMin(const Vector<RefCountedPtr<LevelData<FArrayBox>> >& a_phi,
+                const Vector<int>&                    a_nRefFine,
+                const Interval                        a_comps = Interval(0,0),
+                const int                             a_lBase = 0,
+                int                                   a_numLev = 0);
 
 /// Returns the minimum value of phi over the valid region
 Real computeMin(const LevelData<FArrayBox>& a_phi,

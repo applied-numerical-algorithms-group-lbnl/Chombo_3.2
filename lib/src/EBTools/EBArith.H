@@ -139,9 +139,9 @@ public:
                const  EBISLayout&              a_ebislCoar,
                const Box&                      a_coarseDom,
                int                             a_testverbosity,
-               fstream*                        a_fout,
-               Vector<string>                  a_names,
-               string  a_prefix)          ;
+               fstream*                        a_fout = NULL,
+               Vector<string>                  a_names = Vector<string>(),
+               string  a_prefix = string())          ;
   ///
   /**o
    */

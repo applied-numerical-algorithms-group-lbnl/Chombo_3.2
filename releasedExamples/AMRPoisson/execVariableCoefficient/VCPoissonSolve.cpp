@@ -98,10 +98,10 @@ setBCoef(LevelData<FluxBox>& a_bCoef,
 
 
 /******/
-int poissonSolve(Vector<LevelData<FArrayBox>* >& a_phi,
-                 Vector<LevelData<FArrayBox>* >& a_rhs,
+int poissonSolve(Vector<LevelData<FArrayBox>* >&      a_phi,
+                 Vector<LevelData<FArrayBox>* >&      a_rhs,
                  const Vector< DisjointBoxLayout >&   a_grids,
-                 const VCPoissonParameters&             a_params)
+                 const VCPoissonParameters&           a_params)
 {
   ParmParse pp;
 
@@ -172,18 +172,17 @@ int poissonSolve(Vector<LevelData<FArrayBox>* >& a_phi,
   bool homogeneousBC = false;
   solver.define(&mlOp, homogeneousBC);
   solver.m_verbosity = a_params.verbosity;
-  solver.m_normType = 0;
-  solver.m_eps = tolerance;
-  solver.m_imax = max_iter;
+  solver.m_normType  = 0;
+  solver.m_eps       = tolerance;
+  solver.m_imax      = max_iter;
 
   solver.solve(a_phi, a_rhs);
 
   // check that we can still access solver state
-  int iterations = solver.m_iter;
+  int iterations       = solver.m_iter;
   Real initialResidual = solver.m_initial_residual;
-  Real finalResidual = solver.m_residual;
-  
-  int exitStatus = solver.m_exitStatus;
+  Real finalResidual   = solver.m_residual;
+  int exitStatus       = solver.m_exitStatus;
   // note that for AMRMultiGrid, success = 1.
   exitStatus -= 1;
 
@@ -195,10 +194,9 @@ int poissonSolve(Vector<LevelData<FArrayBox>* >& a_phi,
              << endl;
     }
   
-  
   return exitStatus;
-
 }
+
 /***************/
 void outputData(const Vector<LevelData<FArrayBox>* >&   a_phi,
                 const Vector<LevelData<FArrayBox>* >&   a_rhs,
@@ -223,7 +221,6 @@ void outputData(const Vector<LevelData<FArrayBox>* >&   a_phi,
     phiNames[0] = "phi";
     phiNames[1] = "rhs";
 
-
     CH_assert(a_phi.size() == a_rhs.size());
     Vector<LevelData<FArrayBox>* > tempData(a_phi.size(), NULL);
     for (int level=0; level<a_phi.size(); level++)
@@ -237,13 +234,12 @@ void outputData(const Vector<LevelData<FArrayBox>* >&   a_phi,
                              *tempData[level], rhsComps);
       }
 
-
     Real fakeTime = 1.0;
     Real fakeDt = 1.0;
     WriteAMRHierarchyHDF5(fileName, a_grids,
                           tempData, phiNames,
                           a_params.coarsestDomain.domainBox(),
-                          a_params.coarsestDx,
+                          a_params.coarsestDx[0], // this will write down a HOMO mesh
                           fakeDt, fakeTime,
                           a_params.refRatio,
                           a_params.numLevels);
@@ -257,9 +253,6 @@ void outputData(const Vector<LevelData<FArrayBox>* >&   a_phi,
 #endif
 
 }
-
-
-
 
 int main(int argc, char* argv[])
 {
@@ -312,7 +305,6 @@ int main(int argc, char* argv[])
             rhs[level] = NULL;
           }
       }
-
   }// End scoping trick
 
 #ifdef CH_MPI

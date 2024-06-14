@@ -49,7 +49,8 @@ void NewPoissonOp4::preCond(   FArrayBox& a_phi, const FArrayBox& a_rhs)
 
   a_phi *= mult;
 
-  relax(a_phi, a_rhs, 2);
+  int dummyIt = 0;
+  relax(a_phi, a_rhs, 2, dummyIt);
 }
 
 void NewPoissonOp4::applyOp(   FArrayBox& a_lhs, const FArrayBox& a_phi,
@@ -118,11 +119,11 @@ Real NewPoissonOp4::norm(const FArrayBox& a_x, int a_ord)
 
 void NewPoissonOp4::relax(FArrayBox& a_e,
                          const FArrayBox& a_residual,
-                         int a_iterations)
+                         int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   for (int i=0; i<a_iterations; i++)
   {
-    levelGSRB(a_e, a_residual);
+    levelGSRB(a_e, a_residual, a_iterations, a_depth);
   }
 }
 
@@ -197,7 +198,8 @@ void NewPoissonOp4::prolongIncrement(FArrayBox& a_phiThisLevel,
 /***/
 void NewPoissonOp4::
 levelGSRB(FArrayBox&       a_phi,
-          const FArrayBox& a_rhs)
+          const FArrayBox& a_rhs,
+          int a_ite, int a_depth)
 {
   CH_assert(a_phi.nComp() == a_rhs.nComp());
 

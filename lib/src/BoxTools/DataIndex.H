@@ -83,9 +83,11 @@ public:
   */
   virtual void output() const
   {
-    pout() << "(" << m_index << "," << m_datInd << ")" << endl;
+    pout() << *this << endl;
   }
 
+  friend std::ostream& operator<< (std::ostream&   os,
+                                   const LayoutIndex& dit);
 private:
   friend class DataIterator;
   friend class LayoutIterator;
@@ -140,6 +142,8 @@ private:
   {
   }
 };
+
+
 
 #ifndef WRAPPER
 inline LayoutIndex::LayoutIndex()

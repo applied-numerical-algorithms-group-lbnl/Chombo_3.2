@@ -313,7 +313,9 @@ RealVect& getTrigRV()
 void TrigValueNeum(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,
-                   Real* a_values)
+                   Real* a_values,
+                   Real* b_values,
+                   Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -327,12 +329,16 @@ void TrigValueNeum(Real* pos,
                        CHF_CONST_REALVECT(xval));
 
   a_values[0] = gradPhi[*dir];
+  b_values[0]=0.;
+  c_values[0]=0.;
 }
 
 void ResistDiri(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -352,13 +358,17 @@ void ResistDiri(Real* pos,
                              CHF_INT(icomp),
                              CHF_INT(whichMag));
       a_values[icomp] = value;
+      b_values[icomp]=0.;
+      c_values[icomp]=0.;
     }
 }
 
 void ViscousDiri(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -378,6 +388,8 @@ void ViscousDiri(Real* pos,
                              CHF_INT(icomp),
                              CHF_INT(whichMag));
       a_values[icomp] = value;
+      b_values[icomp] = 0.0;
+      c_values[icomp] = 0.0;
     }
 }
 
@@ -385,7 +397,9 @@ void ViscousDiri(Real* pos,
 void TrigValueDiri(Real* pos,
                    int* dir,
                    Side::LoHiSide* side,
-                   Real* a_values)
+                   Real* a_values,
+                   Real* b_values,
+                   Real* c_values)
 {
   RealVect& trig = getTrigRV();
   RealVect xval;
@@ -398,6 +412,8 @@ void TrigValueDiri(Real* pos,
                    CHF_CONST_REALVECT(trig),
                    CHF_CONST_REALVECT(xval));
   a_values[0] = value;
+  b_values[0] = 0.0;
+  c_values[0] = 0.0;
 }
 
 void
@@ -813,12 +829,16 @@ int setGrids(Vector<DisjointBoxLayout>& vectGrids,
 void ParseValue(Real* pos,
                 int* dir,
                 Side::LoHiSide* side,
-                Real* a_values)
+                Real* a_values,
+                Real* b_values,
+                Real* c_values)
 {
   ParmParse pp;
   Real bcVal;
   pp.get("bc_value",bcVal);
   a_values[0]=bcVal;
+  b_values[0]=0.;
+  c_values[0]=0.;
 }
 
 

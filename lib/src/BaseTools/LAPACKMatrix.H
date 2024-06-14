@@ -215,6 +215,12 @@ public:
 
   ///
   /**
+   *  Solves A*X = B using Double General Solve 
+  */
+  friend int solveGeneralSolve(LAPACKMatrix& A, LAPACKMatrix& B);
+
+  ///
+  /**
      Solves A*X = B using general least squares, for each column of B
   */
   friend int solveLeastSquares(LAPACKMatrix& A, LAPACKMatrix& B);
@@ -297,6 +303,12 @@ void multiply(LAPACKMatrix& a_product,
               const LAPACKMatrix& a_right);
 
 ///below stuff is shamelessly stolen from lapackwrapper class
+
+///
+/**
+ *  Solves A*X = B using Double General Solve 
+*/
+int solveGeneralSolve(LAPACKMatrix& A, LAPACKMatrix& B);
 
 ///
 /**

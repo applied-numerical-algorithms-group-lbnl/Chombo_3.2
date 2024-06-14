@@ -136,9 +136,7 @@ public:
               const DisjointBoxLayout& a_grids,
               const int& a_nghost,
               const LevelData<EBGraph>& a_graph,
-              const LevelData<EBData> & a_data,
-              const Real& a_dx,
-              bool a_hasMoments);
+              const LevelData<EBData> & a_data);
 
   bool isDefined() const;
 
@@ -259,9 +257,7 @@ public:
               const DisjointBoxLayout& a_grids,
               const int& a_nghost,
               const LevelData<EBGraph>& a_graph,
-              const LevelData<EBData> & a_data,
-              const Real& a_dx,
-              bool a_hasMoments);
+              const LevelData<EBData> & a_data);
 
   ///
   static void setVerbose(bool a_verbose);

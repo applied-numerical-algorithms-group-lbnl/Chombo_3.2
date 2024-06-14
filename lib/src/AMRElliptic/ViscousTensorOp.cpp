@@ -29,7 +29,7 @@ int ViscousTensorOpFactory::s_coefficientAverageType = 1;
 int ViscousTensorOp::s_prolongType = linearInterp;
 // true (default) -- only do exchange once per multicolored smooth cycle,
 // false -- do exchange before each multicolored pass (4x per cycle)
-bool ViscousTensorOp::s_lazy_gsrb = true;
+bool ViscousTensorOp::s_lazy_gsrb = false;
 
 
 void
@@ -576,7 +576,18 @@ void ViscousTensorOp::preCond(LevelData<FArrayBox>&       a_phi,
   //slc : down here, we don't want to change from the default behaviour
   m_relaxTolerance = 0.0;
   m_relaxMinIter = 40;
-  relax(a_phi, a_rhs, 1);
+  relax(a_phi, a_rhs, 1, 0);
+}
+
+void ViscousTensorOp::preCond(LevelData<FArrayBox>&       a_phi,
+                              const LevelData<FArrayBox>& a_res,
+                              const LevelData<FArrayBox>& a_rhs)
+{
+  CH_TIME("ViscousTensorOp::preCond");
+  //slc : down here, we don't want to change from the default behaviour
+  m_relaxTolerance = 0.0;
+  m_relaxMinIter = 40;
+  relax(a_phi, a_rhs, 1, 0);
 }
 
 /***/
@@ -1120,7 +1131,7 @@ void
 ViscousTensorOp::
 relax(LevelData<FArrayBox>&       a_phi,
       const LevelData<FArrayBox>& a_rhs,
-      int a_iterations)
+      int a_iterations, int a_AMRFASMGiter, int a_depth)
 {
   CH_TIME("ViscousTensorOp::relax");
 
@@ -1143,8 +1154,6 @@ relax(LevelData<FArrayBox>&       a_phi,
   int whichIter = 0;
   bool done = false;
 
-
-  
   while (whichIter < a_iterations && !done)
     {
       if (whichIter > m_relaxMinIter && m_relaxTolerance >  TINY_NORM)
@@ -1161,6 +1170,7 @@ relax(LevelData<FArrayBox>&       a_phi,
       for (int icolor = 0; icolor < m_colors.size(); icolor++)
         {
           const IntVect& color= m_colors[icolor];
+
 
           // "lazy" = call once/iteration. "not lazy" = call every color
           if (!s_lazy_gsrb)

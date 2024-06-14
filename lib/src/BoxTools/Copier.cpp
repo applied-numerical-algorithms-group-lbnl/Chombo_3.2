@@ -1613,19 +1613,19 @@ ostream& operator<< (ostream& os, const Copier& copier)
   os << "local(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::LOCAL); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << '\n'
          << "          ";
     }
   os << "\nfrom(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::FROM); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << "[" << it().procID << "]" << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << "[" << it().procID << "]" << '\n'
          << "         ";
     }
   os << "\nto(" << procID() << "): ";
   for (CopyIterator it(copier, CopyIterator::TO); it.ok(); ++it)
     {
-      os << " from "  << it().fromRegion << " to "  << it().toRegion << "[" <<it().procID << "]" << '\n'
+      os << " from " << it().fromIndex << it().fromRegion << " to " << it().toIndex << it().toRegion << "[" <<it().procID << "]" << '\n'
          << "       ";
     }
   os << "\n";

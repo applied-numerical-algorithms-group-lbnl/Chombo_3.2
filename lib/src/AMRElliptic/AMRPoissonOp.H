@@ -59,7 +59,7 @@ public:
   void define(const DisjointBoxLayout&   a_grids,
               const DisjointBoxLayout&   a_gridsFiner,
               const DisjointBoxLayout&   a_gridsCoarser,
-              const Real&                a_dxLevel,
+              const RealVect&            a_dxLevel,
               int                        a_refRatio,
               int                        a_refRatioFiner,
               const ProblemDomain&       a_domain,
@@ -71,7 +71,7 @@ public:
   /** full define function for AMRLevelOp with finer levels, but no coarser */
   void define(const DisjointBoxLayout&   a_grids,
               const DisjointBoxLayout&   a_gridsFiner,
-              const Real&                a_dxLevel,
+              const RealVect&            a_dxLevel,
               int                        a_refRatio, // dummy arg, send in 1
               int                        a_refRatioFiner,
               const ProblemDomain&       a_domain,
@@ -87,7 +87,7 @@ public:
   */
   void define(const DisjointBoxLayout&   a_grids,
               const DisjointBoxLayout&   a_baseBAPtr,
-              const Real&                a_dxLevel,
+              const RealVect&            a_dxLevel,
               int                        a_refRatio,
               const ProblemDomain&       a_domain,
               BCHolder                   a_bc,
@@ -100,7 +100,7 @@ public:
      define function for AMRLevelOp which has no finer or coarser AMR level
    */
   void define(const DisjointBoxLayout&   a_grids,
-              const Real&                a_dx,
+              const RealVect&            a_dx,
               const ProblemDomain&       a_domain,
               BCHolder                   a_bc,
               const Copier&              a_exchange,
@@ -111,7 +111,7 @@ public:
      define function for AMRLevelOp which has no finer or coarser AMR level
    */
   void define(const DisjointBoxLayout&   a_grids,
-              const Real&                a_dx,
+              const RealVect&            a_dx,
               const ProblemDomain&       a_domain,
               BCHolder                   a_bc);
 
@@ -121,7 +121,7 @@ public:
   */
   void define(const DisjointBoxLayout& a_grids,
               const DisjointBoxLayout* a_baseBAPtr,
-              Real                     a_dxLevel,
+              RealVect                 a_dxLevel,
               int                      a_refRatio,
               const ProblemDomain&     a_domain,
               BCHolder                 a_bc);
@@ -146,12 +146,28 @@ public:
                          const LevelData<FArrayBox>& a_rhs,
                          bool                        a_homogeneous = false);
 
+  virtual void preCond(   LevelData<FArrayBox>& a_correction,
+                          const LevelData<FArrayBox>& a_residual);
+
   virtual void preCond(LevelData<FArrayBox>&       a_correction,
-                       const LevelData<FArrayBox>& a_residual);
+                       LevelData<FArrayBox>& a_res,
+                       const LevelData<FArrayBox>& a_rhs);
+
+  virtual void preCond(LevelData<FArrayBox>&       a_correction,
+                       LevelData<FArrayBox>& a_res,
+                       const LevelData<FArrayBox>& a_rhs,
+                       int iter);
 
   virtual void applyOp(LevelData<FArrayBox>&       a_lhs,
                        const LevelData<FArrayBox>& a_phi,
                        bool                        a_homogeneous = false);
+
+  // FAS Multigrid needs access to a method which will apply an operator
+ virtual void applyOpMg(LevelData<FArrayBox>& a_lhs,
+                        LevelData<FArrayBox>& a_phi,
+                        LevelData<FArrayBox>* a_phiCoarse,
+                        bool a_homogeneous);
+
 
   /// despite what you might think, the "I" here means "Ignore the coarse-fine boundary"
   virtual void applyOpI(LevelData<FArrayBox>&       a_lhs,
@@ -198,6 +214,9 @@ public:
                     const LevelData<FArrayBox>& a_x,
                     Real                        a_scale);
 
+  virtual void mult( LevelData<FArrayBox>& a_lhs, 
+                     const LevelData<FArrayBox>& a_x);
+
   virtual void axby(LevelData<FArrayBox>&       a_lhs,
                     const LevelData<FArrayBox>& a_x,
                     const LevelData<FArrayBox>& a_y,
@@ -219,9 +238,7 @@ public:
      \name MGLevelOp functions */
   /*@{*/
 
-  virtual void relax(LevelData<FArrayBox>&       a_e,
-                     const LevelData<FArrayBox>& a_residual,
-                     int                         a_iterations);
+  virtual void relax(LevelData<FArrayBox>& a_e, const LevelData<FArrayBox>& a_residual, int a_iterations, int a_AMRFASMGiter, int a_depth = 0);
 
   /// Do CF interpolation then relax as normal
   /** useful for full-multigrid/FAS schemes
@@ -229,7 +246,8 @@ public:
   virtual void relaxNF(LevelData<FArrayBox>& a_phi,
                        const LevelData<FArrayBox>* a_phiCoarse,
                        const LevelData<FArrayBox>& a_rhs,
-                       int a_iterations);
+                       int a_iterations, int MGiter, int a_depth,
+                       bool a_print = false);
 
   virtual void createCoarser(LevelData<FArrayBox>&       a_coarse,
                              const LevelData<FArrayBox>& a_fine,
@@ -242,6 +260,9 @@ public:
                                 LevelData<FArrayBox>&       a_phiFine,
                                 const LevelData<FArrayBox>& a_rhsFine);
 
+  virtual void restrictR(LevelData<FArrayBox>& a_phiCoarse,
+                         const LevelData<FArrayBox>& a_phiFine);
+  
   /**
      correct the fine solution based on coarse correction
      a_phiThisLevel += I[2h->h](a_correctCoarse)
@@ -377,6 +398,10 @@ public:
                        const int&                  a_refRat,
                        const int&                  a_ord);
 
+  virtual void setPrint(bool a_print);
+
+  virtual void setRelaxMode(int a_relax_mode);
+
   /// For tga to reset stuff
   /**
   */
@@ -430,13 +455,19 @@ public:
   /// public constants
   Real m_alpha, m_beta, m_aCoef, m_bCoef;
 
+  bool m_print;
+
+  int m_relax_mode;
+
   // needed for homogeneous interpolation
   // set by the factory
-  Real  m_dxCrse;
+  Real      m_dxCrse;
+  RealVect  m_dxCrse_vect;
+
+  bool m_use_FAS;
 
   Vector<IntVect> m_colors;
   static int s_exchangeMode;
-  static int s_relaxMode;
   static int s_maxCoarse;
   static int s_prolongType;
 
@@ -447,6 +478,7 @@ public:
 
 protected:
   Real                    m_dx;
+  RealVect                m_dx_vect;
   ProblemDomain           m_domain;
 
   LevelDataOps<FArrayBox> m_levelOps;
@@ -465,7 +497,8 @@ protected:
   int                     m_refToFiner;
 
   virtual void levelGSRB(LevelData<FArrayBox>&       a_phi,
-                         const LevelData<FArrayBox>& a_rhs);
+                         const LevelData<FArrayBox>& a_rhs,
+                         int MGiter, int a_ite, int a_depth);
 
   virtual void levelMultiColor(LevelData<FArrayBox>&       a_phi,
                                const LevelData<FArrayBox>& a_rhs);
@@ -481,6 +514,9 @@ protected:
 
   virtual void levelJacobi(LevelData<FArrayBox>&       a_phi,
                            const LevelData<FArrayBox>& a_rhs);
+
+  virtual void levelZlineGSRB(LevelData<FArrayBox>&       a_phi,
+                              const LevelData<FArrayBox>& a_rhs);
 
   virtual void homogeneousCFInterp(LevelData<FArrayBox>& a_phif);
 
@@ -535,19 +571,24 @@ public:
   void define(const ProblemDomain&             a_coarseDomain,
               const Vector<DisjointBoxLayout>& a_grids,
               const Vector<int>&               a_refRatios,
-              const Real&                      a_coarsedx,
+              const RealVect&                  a_coarsedx,
               BCHolder                         a_bc,
               Real                             a_alpha = 0.0,
-              Real                             a_beta  = 1.0);
+              Real                             a_beta  = 1.0,
+              bool                             a_use_FAS=false);
 
   // regular multigrid definition function --deprecated
   void define(const ProblemDomain&     a_domain,
               const DisjointBoxLayout& a_grid,
-              const Real&              a_dx,
+              const RealVect&          a_dx,
               BCHolder                 a_bc,
               int                      a_maxDepth = -1,
               Real                     a_alpha = 0.0,
-              Real                     a_beta  = 1.0);
+              Real                     a_beta  = 1.0,
+              bool                     a_use_FAS=false);
+
+  ///
+  void setRelaxModeFactory(int a_relax_mode);
 
   ///
   virtual MGLevelOp<LevelData<FArrayBox> >* MGnewOp(const ProblemDomain& a_FineindexSpace,
@@ -564,13 +605,19 @@ private:
   Vector<ProblemDomain>     m_domains;
   Vector<DisjointBoxLayout> m_boxes;
 
-  Vector<Real> m_dx;
+  Vector<RealVect> m_dx;
   Vector<int>  m_refRatios; // refinement to next coarser level
 
   BCHolder m_bc;
 
   Real m_alpha;
   Real m_beta;
+
+  bool m_use_FAS;
+
+  bool m_print;
+
+  int m_relax_mode;
 
   Vector<Copier>   m_exchangeCopiers;
   Vector<CFRegion> m_cfregion;
