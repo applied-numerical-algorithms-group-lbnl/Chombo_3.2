@@ -44,32 +44,6 @@ void CellToEdgeHarm(const LevelData<FArrayBox>& a_cellData,
 }
 
 
-#ifdef USE_PROTO
-using Proto::Point;
-using Proto::BoxData;
-using Proto::Var;
-using Proto::Stencil;
-using CH_XD::IntVect;
-using CH_XD::Box;
-using CH_XD::BaseFab;
-
-void
-ProtoCellToEdgePatch(BaseFab<Real>      & a_edgeData, 
-                     const int          & a_edgeComp,
-                     const BaseFab<Real>& a_cellData, 
-                     const int          & a_cellComp, 
-                     const Box          & a_edgeBox, 
-                     const int          & a_idir)
-{
-  BoxData<double, 1> bdcell, bdedge;
-  ProtoCh::aliasBoxData<double, 1>(bdedge, a_edgeData, a_edgeComp);
-  ProtoCh::aliasBoxData<double, 1>(bdcell, a_cellData, a_cellComp);
-  Proto::Box edgebx = ProtoCh::getProtoBox(a_edgeBox);
-  Stencil<double> cellToEdgeSten = (0.5)*Proto::Shift::Basis(a_idir, -1) + (0.5)*Proto::Shift::Zeros();
-  bdedge |= cellToEdgeSten(bdcell, edgebx);
-}
-
-#endif
 
 ///
 void CellToEdge(const FArrayBox& a_cellData,
@@ -100,16 +74,11 @@ void CellToEdge(const FArrayBox& a_cellData,
         cellcomp = SpaceDim*comp + dir;
       }
 
-#ifdef USE_PROTO
-      ProtoCellToEdgePatch(a_edgeData[dir], comp,
-                           a_cellData, cellcomp, 
-                           edgeBox, dir);
-#else
       FORT_CELLTOEDGE(CHF_CONST_FRA1(a_cellData, cellcomp),
                       CHF_FRA1(a_edgeData[dir], comp),
                       CHF_BOX(edgeBox),
                       CHF_CONST_INT(dir));
-#endif
+
     }
   }
 }
@@ -176,16 +145,11 @@ void CellToEdge(const FArrayBox& a_cellData, FArrayBox& a_edgeData,
       cellComp = SpaceDim*comp + a_dir;
     }
 
-#ifdef USE_PROTO
-    ProtoCellToEdgePatch(a_edgeData, comp,
-                         a_cellData, cellComp, 
-                         edgeBox, a_dir);
-#else
     FORT_CELLTOEDGE(CHF_CONST_FRA1(a_cellData, cellComp),
                     CHF_FRA1(a_edgeData, comp),
                     CHF_BOX(edgeBox),
                     CHF_CONST_INT(a_dir));
-#endif
+
   }
 
 }
@@ -201,16 +165,11 @@ Box edgeBox = surroundingNodes(a_cellData.box(),a_dir);
 edgeBox.grow(a_dir, -1);
 edgeBox &= a_edgeData.box();
 
-#ifdef USE_PROTO
-ProtoCellToEdgePatch(a_edgeData, a_edgeComp,
-                       a_cellData, a_cellComp, 
-                       edgeBox, a_dir);
-#else
 FORT_CELLTOEDGE(CHF_CONST_FRA1(a_cellData,a_cellComp),
                   CHF_FRA1(a_edgeData,a_edgeComp),
                   CHF_BOX(edgeBox),
                   CHF_CONST_INT(a_dir));
-#endif
+
 }
 
 

@@ -416,19 +416,13 @@ void LevelData<T>::exchange(const Interval& comps)
     {
       if(!m_exchangeCopier.isDefined())
         {
-#ifdef USE_PROTO
-            PR_TIME("Chombo::LevelData::exchange (defining copier)");
-#else
             CH_TIME("LevelData::exchange (defining copier)");
-#endif
+
           m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
         }
         {
-#ifdef USE_PROTO
-            PR_TIME("Chombo::LevelData::exchange (actual exchange)");
-#else
             CH_TIME("LevelData::exchange (actual exchange)");
-#endif
+
           exchange(comps, m_exchangeCopier);
         }
     }
@@ -455,11 +449,8 @@ void LevelData<T>::exchange(const Interval& comps,
                             const Copier& copier,
                             const LDOperator<T>& a_op)
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::exchange");
-#else 
   CH_TIME("exchange");
-#endif
+
 #ifdef CH_MPI
   {
 //    CH_TIME("MPI_Barrier exchange");

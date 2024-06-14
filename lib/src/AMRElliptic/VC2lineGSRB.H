@@ -2,7 +2,7 @@
 #include "Lapack.H"
 #include <cassert>
 #include "CH_Timer.H"
-
+#include "NamespaceHeader.H"
 // Special line solver for variable coef AMRPoissonOp, "VC2"
 class VC2lineGSRB
 {
@@ -256,3 +256,4 @@ public:
   int m_verbosity = 0; // 0 - no output, 1 - high-level, 2 - details, 3 - lots
 };
 
+#include "NamespaceFooter.H"
