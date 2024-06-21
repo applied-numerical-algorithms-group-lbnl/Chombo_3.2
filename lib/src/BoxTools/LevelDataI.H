@@ -176,11 +176,8 @@ template<class T>
 void LevelData<T>::define(const LevelData<T>& da, const Interval& comps,
                           const DataFactory<T>& a_factory)
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::define");
-#else
   CH_TIME("LevelData<T>::define(LevelData<T>,comps,factory)");
-#endif
+
   // clear exchange copier if it's already been defined
   if (this->m_exchangeCopier.isDefined() )
     {
@@ -222,20 +219,14 @@ void LevelData<T>::copyTo(const Interval& srcComps,
                           BoxLayoutData<T>& dest,
                           const Interval& destComps) const
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::copyTo");
-#else
   CH_TIME("copyTo");
-#endif
+
   if ((BoxLayoutData<T>*)this == &dest) return;
   
   if (this->boxLayout() == dest.boxLayout())
     {
-#ifdef USE_PROTO
-      PR_TIME("Chombo::LevelData::copyTo::local");
-#else
       CH_TIME("local copy");
-#endif
+
       // parallel direct copy here, no communication issues
       DataIterator it = this->dataIterator();
       int nbox = it.size();
@@ -260,11 +251,8 @@ void LevelData<T>::localCopyTo(const Interval& srcComps,
                                LevelData<T>& dest,
                                const Interval& destComps) const
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::localCopyTo");
-#else
   CH_TIME("LevelData::localCopyTo");
-#endif
+
   if ((BoxLayoutData<T>*)this == &dest) return;
 
   if(this->disjointBoxLayout() == dest.disjointBoxLayout())
@@ -363,11 +351,8 @@ void LevelData<T>::copyTo(const Interval& srcComps,
                           const Copier& copier,
                           const LDOperator<T>& a_op) const
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::copyTo");
-#else
   CH_TIME("copyTo");
-#endif
+
 #ifdef CH_MPI
   {
 //    CH_TIME("MPI_Barrier copyTo");
@@ -398,11 +383,8 @@ void LevelData<T>::copyTo(const Interval& srcComps,
                           const Copier& copier,
                           const LDOperator<T>& a_op) const
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::copyTo");
-#else
   CH_TIME("LevelData::copyTo");
-#endif
+
 #ifdef CH_MPI
   {
 //    CH_TIME("MPI_Barrier copyTo");
@@ -428,11 +410,8 @@ void LevelData<T>::copyTo(LevelData<T>& dest,
 template<class T>
 void LevelData<T>::exchange(const Interval& comps)
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::exchange (exchange + copier)");
-#else
   CH_TIME("LevelData::exchange (exchange + copier)");
-#endif
+
   // later on we can code this part as a direct algorithm
   // by copying and pasting the code from the Copier::define code
   // for now, just do the easy to debug approach.
@@ -440,19 +419,11 @@ void LevelData<T>::exchange(const Interval& comps)
     {
       if(!m_exchangeCopier.isDefined())
         {
-#ifdef USE_PROTO
-            PR_TIME("Chombo::LevelData::exchange (defining copier)");
-#else
             CH_TIME("LevelData::exchange (defining copier)");
-#endif
           m_exchangeCopier.define(m_disjointBoxLayout, m_disjointBoxLayout, m_ghost, true);
         }
         {
-#ifdef USE_PROTO
-            PR_TIME("Chombo::LevelData::exchange (actual exchange)");
-#else
             CH_TIME("LevelData::exchange (actual exchange)");
-#endif
           exchange(comps, m_exchangeCopier);
         }
     }
@@ -479,11 +450,8 @@ void LevelData<T>::exchange(const Interval& comps,
                             const Copier& copier,
                             const LDOperator<T>& a_op)
 {
-#ifdef USE_PROTO
-  PR_TIME("Chombo::LevelData::exchange");
-#else 
   CH_TIME("exchange");
-#endif
+
 #ifdef CH_MPI
   {
 //    CH_TIME("MPI_Barrier exchange");
