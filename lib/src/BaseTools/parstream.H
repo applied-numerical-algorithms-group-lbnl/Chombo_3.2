@@ -8,8 +8,8 @@
  */
 #endif
 
-#ifndef _PARSTREAM_H_
-#define _PARSTREAM_H_
+#ifndef _CHOMBO_PARSTREAM_H_
+#define _CHOMBO_PARSTREAM_H_
 
 #include <iostream>
 #include <string>
