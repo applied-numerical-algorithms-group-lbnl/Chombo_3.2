@@ -392,6 +392,7 @@ public:
 
   /// initial residual from this solve
   Real m_initial_rnorm;
+  Real m_final_rnorm;
   
   // used to give an additional cushion in the EPS used for bottom solves
   Real m_bottomSolverEpsCushion;
@@ -1176,6 +1177,7 @@ void AMRMultiGrid<T>::relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& 
       goIter = iter < m_iterMax;                            //keep iterating if iter < max iteration count
       goHang = iter < m_imin || rnorm <(1-m_hang)*norm_last;//keep iterating if we didn't hang
     }
+  m_final_rnorm = rnorm;  //for diagnostics
   m_exitStatus = 0;
   for (int i = 0; i < m_op.size(); i++)
     {
