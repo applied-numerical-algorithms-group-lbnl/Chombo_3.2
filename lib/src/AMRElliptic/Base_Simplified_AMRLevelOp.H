@@ -301,10 +301,6 @@ public:
                        const level_data_type &  a_phiFine, 
                        const level_data_type &  a_phiCoar,
                        ch_amrlevelop*   a_finerOp)=0;
-//  {
-//    ch_mayday::Error("Doh! not implemented");
-//  }
-//
 }; // end class Base_Simplified_AMRLevelOp
 
 #include "NamespaceFooter.H"
