@@ -360,6 +360,15 @@ public:
                                 int l_max, int l_base, bool a_zeroPhi=true,
                                 bool forceHomogeneous = false);
 
+  ///recover initial and final norms computed during solve
+  virtual void recoverInitialAndFinalRNorms(Real & a_initial_rnorm,
+                                            Real & a_final_rnorm)
+  {
+    a_initial_rnorm = m_initial_rnorm;
+    a_final_rnorm = m_final_rnorm;
+  }
+                                   
+  
   void relaxOnlyHomogeneous(Vector<T*>& a_phi, const Vector<T*>& a_rhs,
                             int l_max, int l_base);
 
