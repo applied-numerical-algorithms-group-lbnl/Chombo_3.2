@@ -96,6 +96,16 @@ public:
     this->relax(a_cor, a_res, num_relax);
   }
 
+  ///NULL phi_coarse means homogeneous on coarse-fine interfaces
+  virtual void
+  fillGhostData(level_data_type        & a_phi_medi,
+                const level_data_type  * a_phi_coar_ptr)
+  {
+    ch_dom domain = this->getDomainFromData(a_phi_medi);
+    fillGhostDataOverCoarseFineInterface(   a_phi_medi, a_phi_coar_ptr);
+    fillGhostDataOutsideDomain(             a_phi_medi, domain);
+    fillGhostDataOverFineFineInterface(     a_phi_medi                  );
+  }
   ///
   virtual void
   applyOp(level_data_type      & a_lhs,
@@ -103,11 +113,9 @@ public:
           bool a_homogeneous = false)
   {
     CH_TIME("Base_Simplified_AMRLevelOp::applyOp");
-    ch_dom domain = this->getDomainFromData(a_phi);
+
     level_data_type& castphi = (level_data_type&)(a_phi);
-    
-    fillGhostDataOverFineFineInterface(castphi);
-    fillGhostDataOutsideDomain(castphi, domain);
+    fillGhostData(castphi, NULL);
     this->applyOperator(a_lhs, a_phi);
   }
 
@@ -146,10 +154,9 @@ public:
   {
     CH_TIME("Base_Simplified_AMRLevelOp::AMROperator");
     ch_dom domain = getDomainFromData(a_phiMedi);
-    level_data_type& castphi = (level_data_type&)(a_phiMedi);
-    this->fillGhostDataOverCoarseFineInterface(castphi, a_phiCoar);
-    this->fillGhostDataOutsideDomain(castphi, domain);
-    this->fillGhostDataOverFineFineInterface(castphi);
+    level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
+    fillGhostData(castphi_medi, &a_phiCoar);
+
     applyOperator(a_lphMedi, a_phiMedi);
     this->refluxFineCorrection(a_lphMedi, a_phiFine, a_phiMedi, a_finerOp);
   }
@@ -215,8 +222,8 @@ public:
     ch_dom domain = this->getDomainFromData(a_phiMedi);
     level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
     level_data_type& castphi_coar = (level_data_type&)(a_phiCoar);
-    fillGhostDataOverCoarseFineInterface(castphi_medi, castphi_coar);
-    fillGhostDataOutsideDomain(castphi_medi, domain);
+    fillGhostData(castphi_medi, &castphi_coar);
+
     applyOperator(a_lphMedi, a_phiMedi);
       
   }
@@ -233,8 +240,8 @@ public:
     ch_dom domain = getDomainFromData(a_phiMedi);
     level_data_type& castphi_medi = (level_data_type&)(a_phiMedi);
     level_data_type& castphi_fine = (level_data_type&)(a_phiFine);
-    fillGhostDataOutsideDomain(        castphi_medi, domain);
-    fillGhostDataOverFineFineInterface(castphi_medi);
+    fillGhostData(castphi_medi, NULL);
+
     applyOperator(a_lphMedi, a_phiMedi);
     //finer level should always be defined if you got here.
     this->refluxFineCorrection(a_lphMedi, castphi_fine, castphi_medi, a_finerOp);
@@ -291,11 +298,14 @@ public:
               level_data_type & a_resFine,
               int ref_rat) = 0;
 
-  /// amr thing
+  ///
+  /**
+     phi_coar == NULL means homogeneous  interpolation at coarse-fine interface.
+   **/
   virtual void
   fillGhostDataOverCoarseFineInterface(level_data_type       &  a_phiFine, 
-                                       const level_data_type &  a_phiCoar) = 0;
-  /// amr thing
+                                       const level_data_type *  a_phiCoar) = 0;
+  /// Finite volume correction.   Strong conservation is always a good idea.
   virtual void
   refluxFineCorrection(level_data_type       &  a_lphCoar,
                        const level_data_type &  a_phiFine, 
