@@ -26,6 +26,11 @@ INPUT = sphere.inputs
 
 include $(CHOMBO_HOME)/mk/Make.example
 
+main:
+	make realclean
+	make -j32 all
+	mv *.ex main.exe
+
 # application-specific variables
 
 # application-specific targets
